@@ -8,7 +8,6 @@
 - `debugging/`        —— iOS 调试与问题排查
 - `git-workflow/`     —— Git 工作流与协作
 - `ios-base/`         —— iOS/Swift/SwiftUI/UIKit 基础开发
-- `pdf/`              —— PDF 相关技能（如有）
 - `refactoring/`      —— 代码重构与异味识别
 - `sdk-architecture/` —— SDK/Framework 架构设计
 - `testing/`          —— iOS 测试编写与自动化
@@ -19,6 +18,7 @@
 1. **复制技能目录**
    - 对于 Claude，请将本目录复制到 `.claude/skills` 下。
    - 对于 Codex，请将本目录复制到 `.codex/skills` 下。
+   - 对应 VC Code Copilot 会自动加载`.claude/skills`下的技能目录。
 
 2. **Agent 自动加载**
    - Agent 会自动识别并加载该目录下的所有技能，无需额外配置。
