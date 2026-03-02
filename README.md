@@ -8,8 +8,10 @@
 - `debugging/`        —— iOS 调试与问题排查
 - `git-workflow/`     —— Git 工作流与协作
 - `ios-base/`         —— iOS/Swift/SwiftUI/UIKit 基础开发
+- `apple-docs/`       —— Apple 官方文档、API 与 WWDC 资料检索
 - `refactoring/`      —— 代码重构与异味识别
 - `sdk-architecture/` —— SDK/Framework 架构设计
+- `swift-expert/`     —— Swift 进阶能力（并发、协议导向、性能优化）
 - `testing/`          —— iOS 测试编写与自动化
 - `xcode-build/`      —— Xcode 构建、配置与 CI/CD
 
@@ -38,6 +40,8 @@
 ## 适用场景
 
 - iOS/Swift/SwiftUI 应用开发
+- Apple 官方文档与 WWDC 知识检索
+- Swift 并发与协议导向进阶开发
 - SDK/组件开发与架构设计
 - 代码审查、重构与协作
 - 自动化测试与 CI/CD
