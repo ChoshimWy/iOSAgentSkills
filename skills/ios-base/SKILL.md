@@ -34,7 +34,7 @@ description: iOS/Swift 核心开发技能。当编写或修改 Swift/SwiftUI/UIK
 - 优先 async/await 而非回调或 Combine
 - 并行独立任务用 `async let`
 - UI 更新必须在 `@MainActor`
-- 共享可变状态用 `actor` 保护
+- 简单共享状态保持单一写入源；复杂隔离策略交由 `swift-expert`
 - ViewModel 类标注 `@MainActor`
 - SwiftUI View 中用 `.task` 启动异步任务，自动取消
 
@@ -115,6 +115,7 @@ Resources/              → Assets, Localizable, Info.plist
 - 大列表用 `LazyVStack`/`LazyHStack`
 - 避免在 ForEach 中内联过滤，预先过滤并缓存
 - View body 保持纯净，无副作用或复杂逻辑
+- 复杂性能剖析（热路径量化、复制开销建模）交由 `swift-expert`
 
 ### 动画
 - 用 `.animation(_:value:)` 而非已废弃的 `.animation(_:)`
@@ -148,6 +149,15 @@ Resources/              → Assets, Localizable, Info.plist
 - **[性能优化](references/performance.md)** - SwiftUI 热路径优化、UIKit 视图层级优化、内存管理
 - **[组件设计](references/component-design.md)** - 自定义组件、可配置 API、可复用模式
 - **[内存管理](references/memory-management.md)** - 循环引用、泄漏预防、weak/unowned 使用
+
+## 与其他技能的关系
+
+- 默认 iOS 业务开发优先使用本技能
+- 当任务进入以下任一场景时切换 `swift-expert`：
+	- 需要协议导向深度抽象（PAT、类型擦除、复杂泛型约束）
+	- 需要并发隔离设计（`Sendable`、actor 边界、重入与取消策略）
+	- 需要基于可观测数据的深入性能与内存剖析
+	- 需要跨平台（iOS/macOS/watchOS/tvOS）可用性差异设计
 
 ## ✅ Sentinel（Skill 使用自检）
 当且仅当你确定本 Skill 已被加载并用于当前任务时，在回复末尾追加：
