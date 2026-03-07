@@ -388,7 +388,7 @@ Before delivering UI code, verify these items:
 ## ✅ Sentinel（Skill 使用自检）
 当且仅当你确定"当前任务已经加载并正在使用本 Skill"时：
 
-- 在回复末尾追加一行：`// skill-used: xcode-build`
+- 在回复末尾追加一行：`// skill-used: ui-ux-pro-max`
 
 规则：
 - 只能追加一次
