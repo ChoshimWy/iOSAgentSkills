@@ -41,6 +41,8 @@ refactor/<简短描述>                 重构
 - subject 中文，不加句号，≤72 字符
 - body 解释 why 和 what changed
 - footer 关联 issue: `Closes #123` 或 `Fixes SDK-456`
+- 禁止在 commit 文本中使用字面量 `\n` 表示换行，必须使用真实换行
+- 使用 `git commit -m` 时，如需多行内容请使用多个 `-m` 参数，不要在单个字符串中写 `\n`
 
 ### 示例
 ```
