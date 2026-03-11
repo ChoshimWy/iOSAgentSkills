@@ -21,6 +21,10 @@
    - 对于 Claude，请将本目录复制到 `.claude/skills` 下。
    - 对于 Codex，请将本目录复制到 `.codex/skills` 下。
    - 对应 VC Code Copilot 会自动加载`.claude/skills`下的技能目录。
+   - 或者使用软连接方式，将各个 AI 工具对应的 skills 目录连接到该项目 `skills` 目录。示例：
+   ```bash
+   ln -s iOSAgentSkills/skills .claude/skills
+   ```
 
 2. **Agent 自动加载**
    - Agent 会自动识别并加载该目录下的所有技能，无需额外配置。
