@@ -1,6 +1,6 @@
 ---
 name: git-workflow
-description: Git 工作流技能。当涉及 Git 操作、创建分支、编写 commit message、提交本次 git 更新、准备 PR 描述、处理 .gitignore 时使用。遵循 Conventional Commits 规范、标准分支命名、结构化 PR 描述模板。
+description: Git 工作流技能。当涉及 Git 操作、创建分支、编写 commit message、提交本次更新、提交更新、提交本次 git 更新、准备 PR 描述、处理 .gitignore 时使用。遵循 Conventional Commits 规范、标准分支命名、结构化 PR 描述模板。
 ---
 
 # Git 工作流
