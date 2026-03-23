@@ -1,55 +1,39 @@
 ---
 name: swiftui-ui-patterns
-description: 提供构建 SwiftUI 视图与组件的最佳实践和示例导向指南，覆盖导航层级、自定义 view modifier，以及基于 stack / grid 的响应式布局。当任务涉及创建或重构 SwiftUI UI、设计 `TabView` 架构、组合 `VStack` / `HStack` 屏幕、管理 `@State` / `@Binding`，或需要组件级模式与示例时使用。
+description: 提供“新建或模式选型”阶段的 SwiftUI UI 最佳实践与示例导向指南，覆盖导航层级、自定义 view modifier，以及基于 stack / grid 的响应式布局；不负责视觉设计系统生成、已有巨型 SwiftUI view 清理或性能审计。
 ---
 
 # SwiftUI UI 模式
 
+## 角色定位
+- 专项型 skill。
+- 只负责新页面搭建、模式选型和组件级实现路线。
+- 不负责跨栈设计系统或已有视图文件清理。
+
 ## 适用场景
-- 需要设计或重构 SwiftUI 页面与组件。
-- 需要为 `TabView`、`NavigationStack`、`sheet`、`List`、`Grid` 等交互选择合适模式。
-- 需要为新页面快速找到与现有项目一致的状态管理和布局策略。
+- 设计新的 SwiftUI 页面、组件和导航模式。
+- 为 `TabView`、`NavigationStack`、`sheet`、`List`、`Grid` 选择合适实现路径。
+- 为新 feature 确定状态归属、路由组织和组件拆分方式。
 
-## 核心规则
-- 优先使用现代 SwiftUI 状态管理：`@State`、`@Binding`、`@Observable`、`@Environment`。
-- 先决定状态归属，再决定用哪种 wrapper。
-- 共享依赖进 `@Environment`，局部依赖优先显式初始化注入。
-- 大页面要拆成小视图，避免把布局、路由、网络和业务逻辑混在同一文件。
-- 涉及低版本兼容时，明确标注最低系统版本和替代方案。
-
-## 工作流
-1. 识别页面类型
-- 先判断当前页面是列表、详情、表单、设置、标签页还是滚动驱动交互。
-- 再从 `references/components-index.md` 进入对应参考文档。
-
-2. 确定状态与路由
-- 局部状态用 `@State`，父子值传递用 `@Binding`。
-- 共享服务和应用级配置用 `@Environment`。
-- 需要复杂导航时，优先阅读 `references/navigationstack.md`、`references/sheets.md`、`references/deeplinks.md`。
-
-3. 先搭结构，再补异步与性能
-- 新项目从 `references/app-wiring.md` 起步。
-- 需要异步加载时看 `references/async-state.md`。
-- 页面较大、滚动频繁或更新密集时看 `references/performance.md`。
+## 核心工作流
+1. 先判断页面类型。
+2. 再决定状态归属与路由结构。
+3. 最后从 `references/components-index.md` 进入对应组件参考。
 
 ## 参考资源
-- `references/components-index.md`：组件与横切参考总入口。
-- `references/app-wiring.md`：根视图、依赖图和应用壳体装配。
-- `references/async-state.md`：异步状态、取消、重启和防抖。
-- `references/navigationstack.md`：导航状态与路由组织。
-- `references/sheets.md`：模态与 `sheet` 路由。
-- `references/previews.md`：`#Preview`、fixture 和隔离注入。
+- `references/components-index.md`
+- `references/app-wiring.md`
+- `references/async-state.md`
+- `references/navigationstack.md`
+- `references/sheets.md`
+- `references/previews.md`
 
-## 输出要求
-- 输出具体建议时，说明：
-  - 当前页面属于哪一类 UI。
-  - 状态应归属在哪里。
-  - 应使用哪个参考文件继续实现。
-- 重构建议应避免以下反模式：
-  - 一个视图同时承担布局、业务逻辑、网络请求和路由。
-  - 用多个布尔值描述互斥的 `sheet`、`alert` 或导航目的地。
-  - 在 `body` 驱动路径中直接调用实时服务。
-  - 为规避类型问题而滥用 `AnyView`。
+## 与其他技能的关系
+- 新建 SwiftUI 页面或做模式选型时优先使用本技能。
+- 如果目标是整理已有 SwiftUI 巨型 view 文件，切换到 `swiftui-view-refactor`。
+- 如果目标是视觉设计系统、色板、字体、无障碍和跨栈 UI/UX 方向，切换到 `ui-ux-pro-max`。
+- 如果是 Liquid Glass 专项设计与实现，切换到 `swiftui-liquid-glass`。
+- 如果是 SwiftUI 运行时卡顿、掉帧和 profiling，切换到 `swiftui-performance-audit`。
 
 ## ✅ Sentinel（Skill 使用自检）
 当且仅当你确定"当前任务已经加载并正在使用本 Skill"时：

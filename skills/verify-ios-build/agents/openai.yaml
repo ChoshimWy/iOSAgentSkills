@@ -1,4 +1,4 @@
 interface:
-  display_name: "Verify iOS Build"
-  short_description: "Run xcodebuild once at task end"
-  default_prompt: "Use verify-ios-build to finish this iOS task and validate the final code with xcodebuild."
+  display_name: "iOS 构建校验"
+  short_description: "任务结束时运行一次 xcodebuild"
+  default_prompt: "使用 $verify-ios-build 在本次 iOS 任务完成后运行一次 `xcodebuild` 做最终构建校验，不处理签名、Archive 或 CI 配置。"

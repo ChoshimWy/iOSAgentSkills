@@ -1,83 +1,51 @@
 ---
 name: git-workflow
-description: Git 工作流技能。当涉及 Git 操作、创建分支、编写 commit message、提交本次更新、提交更新、提交本次 git 更新、准备 PR 描述、处理 .gitignore 时使用。遵循 Conventional Commits 规范、标准分支命名、结构化 PR 描述模板。
+description: Git 通用工作流技能。用于分支命名、commit message、PR 描述模板、`.gitignore` 和常规 Git 操作规范；不负责使用 GitHub CLI（`gh`）一条龙执行提审流程，该场景交给 `gh-pr-flow`。
 ---
 
 # Git 工作流
 
-## 分支命名
-```
-feature/<ticket-id>-<简短描述>     新功能
-bugfix/<ticket-id>-<简短描述>      Bug 修复
-hotfix/<ticket-id>-<简短描述>      紧急修复
-release/<version>                  版本发布
-refactor/<简短描述>                 重构
-```
-示例: `feature/SDK-123-user-auth`, `bugfix/SDK-456-token-refresh`
+## 角色定位
+- 默认型辅助 skill。
+- 负责通用 Git 规范和提交文案质量。
+- 不负责显式执行 `gh` 提审流程。
 
-## Commit Message (Conventional Commits)
+## 适用场景
+- 需要创建或规范分支名。
+- 需要编写 Conventional Commit。
+- 需要整理 PR 描述模板或 `.gitignore`。
+- 需要在不依赖 `gh` 的前提下执行常规 Git 操作。
+
+## 核心规则
+- 分支命名默认使用：
+
+```text
+feature/<ticket-id>-<简短描述>
+bugfix/<ticket-id>-<简短描述>
+hotfix/<ticket-id>-<简短描述>
+release/<version>
+refactor/<简短描述>
 ```
+
+- Commit 使用 Conventional Commits：
+
+```text
 <type>(<scope>): <subject>
-
-<body>
-
-<footer>
 ```
 
-### Type 选择
-| type | 用途 |
-|------|------|
-| feat | 新功能 |
-| fix | Bug 修复 |
-| refactor | 重构 |
-| perf | 性能优化 |
-| test | 测试 |
-| docs | 文档 |
-| style | 格式 |
-| chore | 构建/工具/依赖 |
-| ci | CI 配置 |
+- `subject` 中文、不加句号、长度不超过 72 字符。
+- 多行 commit 内容使用多个 `-m` 参数，不在单个字符串里写 `\n`。
+- 提交前检查 diff，避免调试代码、临时文件和敏感信息。
 
-### 规则
-- subject 中文，不加句号，≤72 字符
-- body 解释 why 和 what changed
-- footer 关联 issue: `Closes #123` 或 `Fixes SDK-456`
-- 禁止在 commit 文本中使用字面量 `\n` 表示换行，必须使用真实换行
-- 使用 `git commit -m` 时，如需多行内容请使用多个 `-m` 参数，不要在单个字符串中写 `\n`
+## 输出要求
+- 默认给出 branch、commit 和 PR 描述建议。
+- 需要 PR 模板时，至少覆盖：概述、变更类型、改动详情、测试情况、影响范围、关联 Issue。
+- iOS 仓库应明确忽略：`DerivedData/`、`*.xcuserdata/`、`.DS_Store`、`Pods/`、`.build/` 等常见噪音。
 
-### 示例
-```
-feat(auth): 实现 OAuth 2.0 PKCE 流程
-
-添加 PKCE code verifier 和 challenge 生成逻辑，
-构建授权 URL 并实现 token 交换功能。
-
-Closes SDK-123
-```
-
-## PR 描述模板
-1. **概述** — 改了什么，为什么改
-2. **变更类型** — Feature / Bugfix / Refactor / Perf
-3. **改动详情** — 具体实现方案
-4. **测试情况** — 通过了哪些测试
-5. **影响范围** — 影响哪些模块/功能
-6. **关联 Issue** — Closes #xxx
-
-## .gitignore (iOS)
-```
-DerivedData/
-*.xcuserdata/
-*.ipa
-*.dSYM.zip
-.DS_Store
-Pods/
-.build/
-fastlane/report.xml
-```
-
-## Git 操作行为准则
-- 提交前检查 diff，确保没有调试代码或临时文件
-- 不提交敏感信息 (token, key, password)
-- 多个不相关变更拆成多个 commit
+## 与其他技能的关系
+- 如果只是规范 Git 操作和文本，优先使用本技能。
+- 如果用户明确要求用 `gh` 完成暂存、提交、推送和开 PR，切换到 `gh-pr-flow`。
+- 如果任务主目标是代码评审、重构或调试，本技能只作为收尾辅助技能使用。
 
 ## ✅ Sentinel（Skill 使用自检）
 当且仅当你确定本 Skill 已被加载并用于当前任务时，在回复末尾追加：

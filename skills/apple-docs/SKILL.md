@@ -1,65 +1,51 @@
 ---
 name: apple-docs
-description: Apple 官方文档检索技能。当需要查询 Apple Developer Documentation、框架 API、平台兼容性、WWDC 视频与示例工程时使用。适用于 SwiftUI/UIKit/Objective-C/Swift 相关资料检索。
+description: Apple 官方文档检索辅助技能。只在需要查询 Apple Developer Documentation、框架 API、平台可用性、WWDC 视频或示例工程时使用；不要把它当作默认主开发、重构、调试或构建技能。
 metadata: {"clawdbot":{"emoji":"🍎","requires":{"bins":["node"]}}}
 ---
 
 # Apple 官方文档检索
 
+## 角色定位
+- 辅助型 skill。
+- 负责检索 Apple 官方 API、平台兼容性、WWDC 内容和示例工程，为其它 Apple 平台 skill 提供事实依据。
+- 不负责主导实现代码、替代架构判断或直接承担调试、重构、构建配置任务。
+
 ## 适用场景
-- 查询 Apple 官方 API 文档与符号定义
-- 确认类/协议的平台可用性与版本要求
-- 查找替代 API（如废弃接口替换建议）
-- 搜索 WWDC 2014-2025 相关视频、主题与讲稿
-- 浏览技术总览和示例工程
+- 需要确认 Apple 官方 API 定义、可用性、废弃替代方案。
+- 需要查询 SwiftUI、UIKit、Foundation、AppKit 等框架的官方说明。
+- 需要追溯 WWDC 会话、示例工程或技术总览。
+- 用户明确要求“查 Apple 官方文档”或需要最新官方依据时。
 
-## 常用命令
+## 核心工作流
+1. 先缩小搜索范围
+- 使用 `apple-docs search "关键词"` 或 `apple-docs symbols "UIView"` 检索目标。
+- 涉及技术总览或示例时，使用 `apple-docs overview "SwiftUI"`、`apple-docs samples "Vision"`。
 
-### 文档检索
-- `apple-docs search "关键词"`：搜索 Apple 文档
-- `apple-docs symbols "UIView"`：按符号名检索类/结构体/协议
-- `apple-docs doc "/documentation/..."`：按文档路径读取详情
+2. 读取官方详情
+- 使用 `apple-docs doc "/documentation/..."` 打开文档详情。
+- 需要继承链、协议遵循或平台信息时，使用 `apple-docs apis "UIViewController"`、`apple-docs platform "UIScrollView"`。
 
-### API 探索
-- `apple-docs apis "UIViewController"`：查看继承链和协议遵循
-- `apple-docs platform "UIScrollView"`：查看平台与版本兼容性
-- `apple-docs similar "UIPickerView"`：查找推荐替代 API
-
-### 技术与样例
-- `apple-docs tech`：列出技术分类
-- `apple-docs overview "SwiftUI"`：查看技术总览
-- `apple-docs samples "Vision"`：查询示例工程
-
-### WWDC 视频
-- `apple-docs wwdc-search "async await"`：搜索会话
-- `apple-docs wwdc-video 2024-100`：查看会话详情/讲稿/代码资源
-- `apple-docs wwdc-topics`：查看主题分类
-- `apple-docs wwdc-years`：查看年份与视频数量
-
-## 常用选项
-- `--limit <n>`：限制结果数量
-- `--category`：按技术分类过滤
-- `--framework`：按框架名过滤
-- `--year`：按 WWDC 年份过滤
-- `--no-transcript`：WWDC 结果中跳过讲稿
-- `--no-inheritance`：`apis` 命令不返回继承信息
-- `--no-conformances`：`apis` 命令不返回协议遵循信息
-
-## 建议工作流
-1. 先用 `search`/`symbols` 缩小范围
-2. 再用 `doc`/`apis` 深挖细节与关系
-3. 若是新技术学习，补充 `overview`/`samples`
-4. 若涉及历史演进，用 `wwdc-search` + `wwdc-video` 交叉验证
+3. 交叉核对历史资料
+- 涉及新旧方案演进时，使用 `apple-docs wwdc-search "async await"` 与 `apple-docs wwdc-video 2024-100` 交叉验证。
+- 涉及替代 API 时，优先给出官方推荐路径，而不是自行猜测。
 
 ## 输出要求
-- 回答中优先给出：API 定义、平台可用性、官方建议替代方案
-- 涉及版本差异时，明确标注平台与最低系统版本
-- 对不确定结论，说明“基于当前检索结果”并给出可继续查证的命令
+- 优先给出：API 定义、平台可用性、版本要求和官方建议替代方案。
+- 回答中明确区分“官方文档事实”和“基于文档的推断”。
+- 涉及版本差异时，必须标注平台与最低系统版本。
+- 若当前检索结果不足以支持结论，直接说明缺口并给出下一步检索命令。
 
 ## 参考资源
-- MCP Server: https://github.com/kimsungwhee/apple-docs-mcp
-- Apple Developer Documentation: https://developer.apple.com/documentation/
-- Apple Developer: https://developer.apple.com/
+- `cli.js`：Apple Docs MCP 命令入口。
+- Apple Developer Documentation：`https://developer.apple.com/documentation/`
+- Apple Developer：`https://developer.apple.com/`
+
+## 与其他技能的关系
+- 需要写或改 iOS/macOS 业务代码时，主技能应是 `ios-base`、`swift-expert`、`swiftui-ui-patterns`、`swiftui-liquid-glass` 或对应专项 skill，`apple-docs` 只作为辅助查询。
+- 需要运行时排障时，切换到 `debugging`。
+- 需要构建配置、签名、Archive 或 CI 时，切换到 `xcode-build`。
+- 需要官方 API 依据来支撑其它技能的结论时，再附带使用本 skill。
 
 ## ✅ Sentinel（Skill 使用自检）
 当且仅当你确定本 Skill 已被加载并用于当前任务时，在回复末尾追加：

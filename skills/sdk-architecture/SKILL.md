@@ -1,61 +1,44 @@
 ---
 name: sdk-architecture
-description: SDK/Framework 架构设计技能。当设计 SDK 架构、模块划分、对外 API、SDK 入口类、Configuration、分发策略时使用。也适用于为 SDK 编写测试、设计可测试架构、创建 Mock/Stub 时触发。覆盖分层架构、SPM 模块化、XCFramework 分发。
+description: SDK/Framework 架构设计技能。只在设计 SDK 模块边界、对外 API、入口类、Configuration、分发策略或可测试架构时使用；不要用于普通应用页面开发、一般 SwiftUI 实现或一次性构建校验。
 ---
 
 # SDK 架构设计
 
-## 设计原则
-1. **最小暴露** — 只暴露必要的 public API
-2. **最小依赖** — 尽量零外部依赖，避免冲突
-3. **透明无侵入** — 不 swizzle 宿主方法，不修改全局设置，异常内部吞掉
-4. **向后兼容** — 旧 API 废弃但不删除，breaking change 走 major 版本
+## 角色定位
+- 专项型 skill。
+- 负责 SDK / Framework 的分层、公共 API、模块边界、可测试性与分发策略。
+- 不负责普通应用功能开发，也不替代单纯的测试补写或构建收尾校验。
 
-## 分层架构
-```
-Public API Layer   — 宿主唯一接触点 (SDK入口, Configuration, 公开Model)
-Feature Layer      — 功能模块 (各业务功能)
-Core Layer         — 基础设施 (Network, Storage, Logger)
-Platform Layer     — 系统适配 (iOS/macOS 特定代码)
-```
-依赖方向：上层依赖下层，下层不依赖上层。
+## 适用场景
+- 设计 SDK 架构、模块划分、对外 API、SDK 入口类和 `Configuration`。
+- 规划 `SPM` 模块化、`XCFramework` 分发或多平台适配边界。
+- 为 SDK 设计可测试架构、Mock/Stub 注入点和版本演进策略。
 
-## SDK 入口类模式
-```swift
-public final class MySDK {
-    public static let version = "x.y.z"
-    public static let shared = MySDK()
-    public private(set) var isInitialized = false
-    private init() {}
-    
-    public func initialize(with config: Configuration) throws { ... }
-    public func shutdown() { ... }
-}
-```
-- 入口类 `final class`，单例模式
-- `initialize` 检查重复初始化，验证 configuration
-- 提供 `shutdown` 释放资源
+## 核心规则
+- 只暴露必要的 `public API`，把可变实现细节留在内部模块。
+- 分层依赖固定为：`Public API Layer -> Feature Layer -> Core Layer -> Platform Layer`。
+- 入口类负责初始化、生命周期和配置校验，不承担业务实现细节。
+- 分发优先 `SPM`，二进制分发使用 `XCFramework`，版本遵循 `SemVer`。
+- 任何 breaking change 都必须通过显式版本策略表达，而不是静默替换行为。
 
-## Configuration 设计
-- 必填参数放 init，可选参数用属性默认值
-- 提供 `Environment` enum: `.development`, `.staging`, `.production`
-- 网络 timeout、日志级别等作为可选配置
+## 参考资源
+- `references/design-guidelines.md`：API 设计准则、稳定性、防御、安全和版本演进策略。
+- `references/sdk-testing.md`：SDK 可测试设计、Mock 模式和覆盖率目标。
 
-## 内部组件
-- 网络层: 独立 `URLSession`（不影响宿主），不用 `.shared`
-- 日志: 内部 Logger，支持级别控制和外部自定义 handler
-- 错误: `SDKError` enum，含 errorCode 便于排查
+## 输出要求
+- 默认至少回答以下问题：
+  - 宿主会接触到哪些 `public` 类型和入口方法。
+  - 模块如何拆分，依赖如何单向流动。
+  - 初始化、配置、日志、错误和关闭流程如何设计。
+  - 如何做测试注入、版本演进和分发。
+- 需要示例时，优先给入口类、`Configuration`、模块边界和依赖方向示意，而不是完整业务实现。
 
-## 分发
-- 优先 SPM，次选 CocoaPods
-- Package.swift 按功能拆分 target（Core + 可选模块）
-- 二进制分发用 XCFramework (真机 + 模拟器)
-- 版本号遵循 SemVer: MAJOR.MINOR.PATCH
-
-## 详细参考
-- **设计准则**: 参见 [references/design-guidelines.md](references/design-guidelines.md) — API 设计准则、架构准则、稳定性/防御/安全准则、性能预算、版本演进策略
-- **测试策略**: 参见 [references/sdk-testing.md](references/sdk-testing.md) — 可测试设计、Mock 模式、覆盖率目标
-
+## 与其他技能的关系
+- 如果只是普通应用功能开发，切换到 `ios-base` 或对应 SwiftUI 专项 skill。
+- 如果只是补单元测试或 UI 测试，切换到 `testing`。
+- 如果任务重点是构建签名、Archive、导出或 CI，切换到 `xcode-build`。
+- 需要审查公开 API 设计质量时，可联动 `code-review`。
 
 ## ✅ Sentinel（Skill 使用自检）
 当且仅当你确定本 Skill 已被加载并用于当前任务时，在回复末尾追加：

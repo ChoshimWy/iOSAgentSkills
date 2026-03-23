@@ -1,6 +1,6 @@
 interface:
   display_name: "GitHub 一条龙提交"
   short_description: "暂存、提交并创建 PR"
-  icon_small: "./assets/yeet-small.svg"
-  icon_large: "./assets/yeet.png"
+  icon_small: "./assets/gh-pr-flow-small.svg"
+  icon_large: "./assets/gh-pr-flow.png"
   default_prompt: "把当前分支整理成可审查状态：暂存目标改动、写清晰提交，并使用 gh 创建 Pull Request。"
