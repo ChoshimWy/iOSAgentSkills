@@ -1,0 +1,4 @@
+interface:
+  display_name: "Verify iOS Build"
+  short_description: "Run xcodebuild once at task end"
+  default_prompt: "Use verify-ios-build to finish this iOS task and validate the final code with xcodebuild."
