@@ -1,0 +1,4 @@
+interface:
+  display_name: "SwiftUI UI 模式"
+  short_description: "应用实用的 SwiftUI UI 模式"
+  default_prompt: "使用 $swiftui-ui-patterns 以稳定、实用的默认模式设计或重构这段 SwiftUI UI。"

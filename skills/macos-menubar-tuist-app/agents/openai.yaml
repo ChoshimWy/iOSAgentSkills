@@ -1,0 +1,4 @@
+interface:
+  display_name: "macOS 菜单栏 Tuist 应用"
+  short_description: "构建与维护基于 Tuist 的菜单栏应用"
+  default_prompt: "使用 $macos-menubar-tuist-app 构建、重构或审查基于 Tuist 的 macOS 菜单栏应用，并保持分层状态架构与脚本化运行校验。"

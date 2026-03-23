@@ -1,0 +1,4 @@
+interface:
+  display_name: "SwiftUI 性能审计"
+  short_description: "审计 SwiftUI 运行时性能"
+  default_prompt: "使用 $swiftui-performance-audit 审查这段 SwiftUI 代码的性能问题，并给出具体修复建议。"

@@ -72,7 +72,7 @@ API_BASE_URL = https://staging.api.company.com
 
 ### 编译项目
 ```bash
-# workspace
+##workspace
 xcodebuild \
   -workspace MyApp.xcworkspace \
   -scheme MyApp \
@@ -81,7 +81,7 @@ xcodebuild \
   -destination 'generic/platform=iOS' \
   clean build
 
-# project
+##project
 xcodebuild \
   -project MyApp.xcodeproj \
   -scheme MyApp \
@@ -91,7 +91,7 @@ xcodebuild \
 
 ### Archive + Export
 ```bash
-# 1. Archive
+##1. Archive
 xcodebuild archive \
   -workspace MyApp.xcworkspace \
   -scheme MyApp \
@@ -101,7 +101,7 @@ xcodebuild archive \
   CODE_SIGN_IDENTITY="Apple Distribution" \
   DEVELOPMENT_TEAM="TEAM_ID"
 
-# 2. Export IPA
+##2. Export IPA
 xcodebuild -exportArchive \
   -archivePath ./build/MyApp.xcarchive \
   -exportPath ./build/IPA \
@@ -135,19 +135,19 @@ xcodebuild -exportArchive \
 
 ### 运行测试
 ```bash
-# 单元测试
+##单元测试
 xcodebuild test \
   -workspace MyApp.xcworkspace \
   -scheme MyApp \
   -destination 'platform=iOS Simulator,name=iPhone 15 Pro,OS=17.0' \
   -resultBundlePath ./test_results.xcresult
 
-# 代码覆盖率
+##代码覆盖率
 xcodebuild test \
   -enableCodeCoverage YES \
   -resultBundlePath ./coverage.xcresult
 
-# 提取覆盖率报告
+##提取覆盖率报告
 xcrun xccov view --report coverage.xcresult
 ```
 
@@ -159,17 +159,17 @@ xcrun xccov view --report coverage.xcresult
 
 ### CI 中配置证书
 ```bash
-# 1. 导入证书
+##1. 导入证书
 security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
 security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
 security import cert.p12 -k build.keychain -P "$P12_PASSWORD" -T /usr/bin/codesign
 security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" build.keychain
 
-# 2. 复制配置文件
+##2. 复制配置文件
 mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
 cp *.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
 
-# 3. 构建时指定
+##3. 构建时指定
 xcodebuild ... \
   CODE_SIGN_IDENTITY="Apple Distribution: Company Name (TEAM_ID)" \
   PROVISIONING_PROFILE_SPECIFIER="ProfileName"
@@ -179,7 +179,7 @@ xcodebuild ... \
 
 ### SwiftLint 集成
 ```bash
-# Build Phase: Run Script
+##Build Phase: Run Script
 if which swiftlint >/dev/null; then
   swiftlint
 else
@@ -189,7 +189,7 @@ fi
 
 ### 版本号自动递增
 ```bash
-# Build Phase: Run Script
+##Build Phase: Run Script
 buildNumber=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" "${INFOPLIST_FILE}")
 buildNumber=$(($buildNumber + 1))
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $buildNumber" "${INFOPLIST_FILE}"
@@ -197,8 +197,8 @@ buildNumber=$(($buildNumber + 1))
 
 ### 环境变量注入
 ```bash
-# Build Phase: Run Script
-# 从 xcconfig 注入到 Info.plist
+##Build Phase: Run Script
+##从 xcconfig 注入到 Info.plist
 /usr/libexec/PlistBuddy -c "Set :APIBaseURL ${API_BASE_URL}" "${BUILT_PRODUCTS_DIR}/${INFOPLIST_PATH}"
 ```
 
@@ -254,7 +254,7 @@ jobs:
 
 ### Fastlane 配置
 ```ruby
-# fastlane/Fastfile
+##fastlane/Fastfile
 default_platform(:ios)
 
 platform :ios do
@@ -293,7 +293,7 @@ end
 
 ### 创建 XCFramework
 ```bash
-# 1. 编译各平台 archive
+##1. 编译各平台 archive
 xcodebuild archive \
   -scheme MyFramework \
   -archivePath ./build/ios.xcarchive \
@@ -308,7 +308,7 @@ xcodebuild archive \
   SKIP_INSTALL=NO \
   BUILD_LIBRARY_FOR_DISTRIBUTION=YES
 
-# 2. 创建 XCFramework
+##2. 创建 XCFramework
 xcodebuild -create-xcframework \
   -framework ./build/ios.xcarchive/Products/Library/Frameworks/MyFramework.framework \
   -framework ./build/ios-simulator.xcarchive/Products/Library/Frameworks/MyFramework.framework \
@@ -344,13 +344,13 @@ ENABLE_BITCODE = NO                        // 移除 Bitcode（已废弃）
 
 ### dSYM 管理
 ```bash
-# 生成 dSYM
+##生成 dSYM
 DEBUG_INFORMATION_FORMAT = dwarf-with-dsym
 
-# 从 xcarchive 提取
+##从 xcarchive 提取
 cp -r MyApp.xcarchive/dSYMs ./Symbols/
 
-# 上传到 Firebase Crashlytics
+##上传到 Firebase Crashlytics
 ./Pods/FirebaseCrashlytics/upload-symbols \
   -gsp GoogleService-Info.plist \
   -p ios ./Symbols/MyApp.app.dSYM
@@ -366,13 +366,13 @@ cp -r MyApp.xcarchive/dSYMs ./Symbols/
 
 ### Debug 构建命令
 ```bash
-# 详细输出
+##详细输出
 xcodebuild -verbose ...
 
-# 仅显示命令
+##仅显示命令
 xcodebuild -dry-run ...
 
-# 显示 Build Settings
+##显示 Build Settings
 xcodebuild -showBuildSettings \
   -workspace MyApp.xcworkspace \
   -scheme MyApp
