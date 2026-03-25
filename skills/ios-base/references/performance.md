@@ -695,6 +695,10 @@ class ViewController: UIViewController {
 - **SwiftUI**: SwiftUI 视图性能分析
 - **App Launch**: 启动性能分析
 
+### 深度 Profiling / Benchmark
+- `measure(metrics:)`、`XCTApplicationLaunchMetric`、`xcrun xctrace`、Instruments 模板选择和 trace 证据分析统一切到 `ios-performance`。
+- 本文档只保留常规性能守则，不再承担专门的性能分析与测试工作流。
+
 ### SwiftUI Debug
 ```swift
 // 查看视图重绘

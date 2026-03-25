@@ -1,0 +1,4 @@
+interface:
+  display_name: "iOS 性能分析"
+  short_description: "统一处理 benchmark 与 xctrace"
+  default_prompt: "使用 $ios-performance 分析这个 iOS 功能的性能问题，并给出 XCTest 基线与 xctrace / Instruments 取证方案。"

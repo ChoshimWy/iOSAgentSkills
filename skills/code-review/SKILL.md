@@ -44,7 +44,7 @@ description: iOS/Swift 代码审查技能。只在需要 review 代码、审查 
 
 ## 与其他技能的关系
 - 需要真正修复代码异味时，切换到 `refactoring`、`swiftui-view-refactor` 或对应实现型 skill。
-- 需要复现 crash、卡顿、泄漏等运行时问题时，切换到 `debugging` 或 `swiftui-performance-audit`。
+- 需要复现 crash、异常、卡顿、启动慢、泄漏或做 `xctrace` 取证时，切换到 `debugging` 或 `ios-performance`。
 - 需要设计 SDK 对外接口边界时，可联动 `sdk-architecture`。
 - 本 skill 只负责审查与结论，不作为默认实现 skill。
 

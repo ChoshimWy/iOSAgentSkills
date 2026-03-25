@@ -220,33 +220,8 @@ class FakeDatabase: Database {
 
 ## Performance Testing
 
-```swift
-final class PerformanceTests: XCTestCase {
-    func testSortingPerformance() {
-        let numbers = (0..<10000).shuffled()
-
-        measure {
-            _ = numbers.sorted()
-        }
-    }
-
-    func testCustomMetrics() {
-        let metrics: [XCTMetric] = [
-            XCTClockMetric(),
-            XCTCPUMetric(),
-            XCTMemoryMetric(),
-            XCTStorageMetric()
-        ]
-
-        let options = XCTMeasureOptions()
-        options.iterationCount = 10
-
-        measure(metrics: metrics, options: options) {
-            performExpensiveOperation()
-        }
-    }
-}
-```
+- Dedicated benchmark cases, `measure(metrics:)`, `xctrace`, and Instruments evidence collection are handled by `ios-performance`.
+- This reference stays focused on functional and async testing patterns used by `swift-expert`.
 
 ## UI Testing
 

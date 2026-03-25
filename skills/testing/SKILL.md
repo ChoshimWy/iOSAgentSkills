@@ -64,6 +64,7 @@ final class UserServiceTests: XCTestCase {
 - 任务结束只需要跑一次 `xcodebuild` 做编译校验时，切换到 `verify-ios-build`。
 - 需要评估代码质量和风险而不是写测试时，切换到 `code-review`。
 - 需要定位运行时 crash、泄漏或卡顿时，切换到 `debugging`。
+- 需要做性能基线、`measure(metrics:)`、启动性能回归或 `xctrace` / Instruments 取证时，切换到 `ios-performance`。
 - 需要设计 SDK 级可测试边界时，可联动 `sdk-architecture`。
 
 ## ✅ Sentinel（Skill 使用自检）

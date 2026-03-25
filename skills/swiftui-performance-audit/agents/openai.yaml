@@ -1,4 +1,4 @@
 interface:
-  display_name: "SwiftUI 性能审计"
-  short_description: "定位运行时性能瓶颈"
-  default_prompt: "使用 $swiftui-performance-audit 审查这段 SwiftUI 代码的运行时性能问题，并给出可验证的修复建议。"
+  display_name: "SwiftUI 性能审计（旧名兼容）"
+  short_description: "旧名兼容，默认改用 ios-performance"
+  default_prompt: "识别这是旧的 $swiftui-performance-audit 入口，并将新的性能分析与测试任务切换到 $ios-performance。"

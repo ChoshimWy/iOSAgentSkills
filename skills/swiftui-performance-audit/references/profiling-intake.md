@@ -15,9 +15,20 @@
 指导用户：
 - 尽量使用 Release 构建运行应用。
 - 使用 SwiftUI Instruments 模板录制。
+- 如果不方便通过 Xcode GUI 录制，可用 `xcrun xctrace` 录 `.trace` 文件后回传。
 - 只重现目标交互，时间够抓到问题即可，不要把多种操作混在一次录制里。
 - 同时保留 SwiftUI timeline 和 Time Profiler。
 - 导出 trace，或至少提供关键 lane 与 call tree 的截图。
+
+```bash
+xcrun xctrace record \
+  --template 'SwiftUI' \
+  --device 'iPhone 16 Pro' \
+  --attach 'MyApp' \
+  --time-limit 15s \
+  --output /tmp/MyApp-SwiftUI.trace \
+  --no-prompt
+```
 
 ## 需要的材料
 - 相关 SwiftUI lane 的 trace 导出或截图。

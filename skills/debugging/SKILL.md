@@ -1,6 +1,6 @@
 ---
 name: debugging
-description: iOS 调试与问题排查技能。只在遇到 crash、异常、运行时错误、内存泄漏、内存增长、ViewController 未释放、UI 卡顿、掉帧、启动慢等问题并需要诊断根因时使用；不要把它当作静态 code review、普通重构或构建配置技能。
+description: iOS 调试与问题排查技能。只在遇到 crash、异常、运行时错误、内存泄漏、ViewController 未释放、僵死等问题并需要诊断根因时使用；不要把它当作静态 code review、性能分析测试或构建配置技能。
 ---
 
 # iOS 调试与问题排查
@@ -36,7 +36,6 @@ description: iOS 调试与问题排查技能。只在遇到 crash、异常、运
 
 ## 参考资源
 - `references/memory-leak.md`：常见泄漏模式与 Memory Graph 使用。
-- `references/performance-debugging.md`：卡顿、启动慢、内存高的排查路径。
 - 常用 LLDB 命令：`po <变量>`、`bt`、`bt all`、`expr <表达式>`。
 
 ## 输出要求
@@ -54,7 +53,7 @@ description: iOS 调试与问题排查技能。只在遇到 crash、异常、运
 
 ## 与其他技能的关系
 - 只是静态代码质量审查时，切换到 `code-review`。
-- SwiftUI 运行时更新频率、布局抖动、渲染卡顿等专项性能问题，优先切换到 `swiftui-performance-audit`。
+- 掉帧、启动慢、CPU / 内存异常、`measure(metrics:)`、`xctrace` 或 Instruments 模板选择等性能问题，优先切换到 `ios-performance`。
 - 需要构建签名、Archive、导出或 CI 配置时，切换到 `xcode-build`。
 - 需要直接整理实现代码而非定位运行时根因时，切换到 `refactoring`、`swiftui-view-refactor` 或其它实现型 skill。
 

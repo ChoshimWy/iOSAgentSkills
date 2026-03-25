@@ -45,7 +45,7 @@ description: 使用 iOS 26+ 的 Liquid Glass API 构建、审查或改进 SwiftU
 ## 与其他技能的关系
 - 新建普通 SwiftUI 页面、`TabView` 架构或布局模式，切换到 `swiftui-ui-patterns`。
 - 需要先做跨技术栈视觉方向、配色、排版和设计系统方案时，切换到 `ui-ux-pro-max`。
-- 需要运行时性能诊断时，切换到 `swiftui-performance-audit`。
+- 需要运行时性能诊断或 `xctrace` 取证时，切换到 `ios-performance`。
 - 需要官方 API 事实依据时，可辅以 `apple-docs`。
 
 ## ✅ Sentinel（Skill 使用自检）
