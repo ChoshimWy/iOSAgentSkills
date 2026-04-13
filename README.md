@@ -38,6 +38,7 @@
 - `gh-pr-flow/` —— GitHub CLI 一条龙提交流程
 
 ### Document / Productivity
+- `office-docx/` —— `.docx` / Word 文档读取、模板编辑、从零生成、批注修订与 QA
 - `office-pptx/` —— `.pptx` / PowerPoint 演示文稿读取、模板编辑、从零生成与 QA
 
 ### Platform / Legacy
@@ -66,6 +67,7 @@
      - “帮我设计一个新的 SwiftUI 设置页结构”
      - “帮我在连接中的 iPad 真机上跑一次 test”
      - “帮我配置 archive/export 的 xcodebuild 流程”
+     - “帮我把这份合同模板改成新的 .docx”
      - “帮我读取这个 .pptx 模板并改成新的 deck”
 
 4. **技能扩展**
@@ -81,6 +83,7 @@
 ## 适用场景
 - iOS / macOS / Swift / SwiftUI / UIKit / Objective-C 开发
 - Apple 官方文档与 WWDC 知识检索
+- Word / `.docx` 文档读取、模板编辑、批注修订与生成
 - PowerPoint / `.pptx` 演示文稿读取、模板编辑与生成
 - Swift 并发与协议导向进阶设计
 - SDK / 组件开发与架构设计

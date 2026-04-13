@@ -1,0 +1,4 @@
+interface:
+  display_name: "Word DOCX 文档"
+  short_description: "读取、编辑、生成、修订与校验 Word / DOCX 文档"
+  default_prompt: "使用 $office-docx 读取、编辑、生成或校验 .docx / Word 文档；如果任务不涉及实际 Word 文件，不要使用它。"

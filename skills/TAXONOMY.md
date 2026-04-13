@@ -8,6 +8,7 @@
 - `Automation / Build / Validation`：自动化执行、构建配置与收尾验收技能。
 - `Diagnostics`：发现问题、分析风险、定位根因的技能。
 - `Research / Design / Release`：资料检索、设计方向、发布文案与机会研究技能。
+- `Document / Productivity`：Office 文件类技能，处理 `.docx` / `.pptx` 等实际文档文件。
 - `Platform / Legacy`：平台专项或历史兼容入口。
 
 ## 严格路由总则
@@ -90,6 +91,13 @@
 | `app-store-changelog` | 发布文案整理 | 根据 tag 或提交历史生成用户可见的 App Store 更新说明 | Git 提交、PR 创建、构建配置、内部改动总结 | `git-workflow`、`gh-pr-flow`、`xcode-build` |
 | `app-store-opportunity-research` | App Store 赛道研究 | 赛道选择、竞品缺口分析、Top-3 机会排序与 MVP PRD | 直接实现业务代码、构建配置、上架执行 | `ios-feature-implementation`、`swiftui-ui-patterns`、`xcode-build` |
 | `gh-pr-flow` | `gh` 一条龙 PR 流程 | 用户明确要求使用 `gh` 执行 `stage + commit + push + open PR` | 普通 Git 操作、只写 commit message、只整理 PR 模板 | `git-workflow` |
+
+## Document / Productivity
+
+| Skill | 角色 | 主触发场景 | 不要触发的场景 | 切换到 |
+| --- | --- | --- | --- | --- |
+| `office-docx` | Word / DOCX 文档处理 | 读取、编辑、生成、批注、修订、校验 `.docx` / Word 文档 | `.pptx` / `.xlsx`、Google Docs、普通文案写作 | `office-pptx` |
+| `office-pptx` | PowerPoint 演示文稿处理 | 读取、编辑、生成、校验 `.pptx` / PowerPoint 演示文稿 | `docx` / `xlsx`、普通文案写作、纯视觉方向讨论 | `office-docx` |
 
 ## Platform / Legacy
 
