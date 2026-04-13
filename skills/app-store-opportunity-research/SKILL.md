@@ -59,11 +59,11 @@ description: App Store 机会研究技能。用于在指定赛道中识别可商
 
 ## 与其他技能的关系 / Skill Boundaries
 - 需要生成 App Store 发布文案时，切换到 `app-store-changelog`。
-- 需要落地 iOS 业务代码实现时，切换到 `ios-base` 或 `swiftui-ui-patterns`。
+- 需要落地 iOS 业务代码实现时，切换到 `ios-feature-implementation`、`swiftui-feature-implementation` 或 `swiftui-ui-patterns`。
 - 需要构建配置、签名、Archive/Export、CI/CD 时，切换到 `xcode-build`。
 
 ## ✅ Sentinel（Skill 使用自检）
-当且仅当你确定"当前任务已经加载并正在使用本 Skill"时：
+当且仅当你确定当前任务已经加载并正在使用本 Skill 时：
 
 - 在回复末尾追加一行：`// skill-used: app-store-opportunity-research`
 

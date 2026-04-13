@@ -1,0 +1,4 @@
+interface:
+  display_name: "Apple 官方文档"
+  short_description: "检索 Apple API、可用性与 WWDC 官方资料"
+  default_prompt: "使用 $apple-docs 查询当前 Apple API、平台可用性或 WWDC 官方文档依据。"

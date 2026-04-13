@@ -1,33 +1,62 @@
 ---
 name: verify-ios-build
-description: 仅在 iOS/Swift/Objective-C/Xcode 工程任务收尾阶段执行一次 `xcodebuild` 构建校验。用于最终确认当前仓库仍能编译；不负责 Build Settings、签名、Archive/Export 或 CI/CD 配置，这些场景交给 `xcode-build`。
+description: 在 iOS/Swift/Objective-C/Xcode 工程任务收尾阶段，先对当前未提交代码（staged、unstaged、untracked）做一次静态代码审查，再在没有 🔴 严重问题时执行一次 `xcodebuild` 构建校验。用于最终质量门禁与编译确认；不负责 Build Settings、签名、Archive/Export 或 CI/CD 配置，这些场景交给 `xcode-build`。
 ---
 
-# Verify iOS Build（任务收尾编译校验）
+# Verify iOS Build（收尾审查 + 编译校验）
 
 ## 角色定位
-- 验证型 skill。
-- 只负责任务末尾的一次性 `xcodebuild` 编译验收。
+- 将本 skill 作为任务末尾的质量门禁。
+- 先审查当前工作区未提交变更，再决定是否执行一次性 `xcodebuild`。
 - 不负责构建系统设计、签名配置或 Archive/Export 流程。
 
 ## 适用场景
 - 本次任务修改了会影响 iOS 构建的文件。
 - 用户明确要求“编译验证”“构建检查”“跑一下 xcodebuild”。
-- 在最终回复前需要确认当前仓库仍能编译。
+- 在最终回复前需要确认当前仓库既没有明显严重问题，又仍能编译。
+- 只对当前工作区未提交变更负责；完整 PR 审查或历史代码审查交给 `code-review`。
 
 ## 核心工作流
-1. 完成实现后运行 `scripts/build-check.sh`。
-2. 构建失败时先抓第一个真实编译错误。
-3. 如果错误在本次任务范围内，修复后重跑一次。
-4. 最终回复中明确说明 workspace/project、scheme、结果和阻塞点。
+1. 先收集本次未提交变更，默认覆盖：
+   - `git diff --cached`
+   - `git diff`
+   - `git ls-files --others --exclude-standard`
+2. 基于这些变更做静态代码审查，优先级固定为：正确性 → 安全性 → 内存 → 并发 → 性能 → 可维护性 → 一致性。
+3. 复用 `code-review` 的分级语义输出 findings：
+   - `🔴` 严重问题：阻塞 `xcodebuild`
+   - `🟡` 建议问题：记录但不阻塞
+   - `✅` 优点：按需补充
+4. 尽量为每条 finding 绑定文件与行号；如果无法精确定位，明确说明原因。
+5. 如果存在任意 `🔴`，立即停止，并在最终回复中明确写出“因审查发现严重问题，未执行 xcodebuild”。
+6. 如果没有 `🔴`，再运行当前 skill 自带的 `scripts/build-check.sh <目标仓库根目录>`。
+   - `scripts/build-check.sh` 指的是 **本 skill 目录下** 的脚本路径，不是目标仓库根目录里的同名脚本。
+   - 不要因为目标仓库没有 `scripts/build-check.sh` 就误判 skill 不可执行。
+7. 构建失败时先抓第一个真实编译错误；如果错误在本次任务范围内，修复后重跑一次。
+8. 最终回复先给审查结论，再给构建结果。
+
+## 特殊情况
+- 如果工作区没有未提交改动，明确说明“没有待审查 diff”，然后直接执行当前 skill 自带的 `scripts/build-check.sh <目标仓库根目录>`。
+- 不要让 `.codex/xcodebuild.env` 覆盖配置绕过前置审查；它只用于指定 workspace/project/scheme/configuration/destination。
+- 如果仓库不是 Xcode 工程，直接说明本 skill 不适用，而不是伪造构建结论。
+
+## 输出要求
+按以下顺序组织最终回复：
+1. 未提交代码范围（staged / unstaged / untracked 的实际情况）
+2. 审查 findings（按严重度排序；`🔴` 优先）
+3. 是否放行 `xcodebuild`
+4. `xcodebuild` 使用的 workspace/project、scheme、configuration、destination 和结果
+5. 如果被阻塞或失败，明确阻塞点或首个真实错误
 
 ## 参考资源
+- `scripts/build-check.sh`
 - `references/override-config.md`
 
 ## 与其他技能的关系
-- 当任务已经实现完成，需要在最终回复前确认“还能编译”时，优先使用本技能。
+- 当任务已经实现完成，需要在最终回复前确认“没有严重问题且还能编译”时，优先使用本技能。
+- 需要完整 diff/PR 审查、API 设计评审或非收尾阶段 code review 时，切换到 `code-review`。
 - 如果任务本身是在改 Build Settings、签名、Archive/Export、CI 或构建脚本，主技能应是 `xcode-build`。
 - 本技能不替代测试编写；需要补单元测试或 UI 测试时切换到 `testing`。
+- 本技能只在“收尾门禁 + 最终构建确认”场景下复用审查标准，不替代通用 code review 流程。
 
 ## ✅ Sentinel（Skill 使用自检）
 当且仅当你确定"当前任务已经加载并正在使用本 Skill"时：

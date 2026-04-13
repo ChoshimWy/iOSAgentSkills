@@ -18,17 +18,9 @@ metadata: {"clawdbot":{"emoji":"🍎","requires":{"bins":["node"]}}}
 - 用户明确要求“查 Apple 官方文档”或需要最新官方依据时。
 
 ## 核心工作流
-1. 先缩小搜索范围
-- 使用 `apple-docs search "关键词"` 或 `apple-docs symbols "UIView"` 检索目标。
-- 涉及技术总览或示例时，使用 `apple-docs overview "SwiftUI"`、`apple-docs samples "Vision"`。
-
-2. 读取官方详情
-- 使用 `apple-docs doc "/documentation/..."` 打开文档详情。
-- 需要继承链、协议遵循或平台信息时，使用 `apple-docs apis "UIViewController"`、`apple-docs platform "UIScrollView"`。
-
-3. 交叉核对历史资料
-- 涉及新旧方案演进时，使用 `apple-docs wwdc-search "async await"` 与 `apple-docs wwdc-video 2024-100` 交叉验证。
-- 涉及替代 API 时，优先给出官方推荐路径，而不是自行猜测。
+1. 先缩小搜索范围。
+2. 读取官方详情。
+3. 交叉核对历史资料。
 
 ## 输出要求
 - 优先给出：API 定义、平台可用性、版本要求和官方建议替代方案。
@@ -42,7 +34,7 @@ metadata: {"clawdbot":{"emoji":"🍎","requires":{"bins":["node"]}}}
 - Apple Developer：`https://developer.apple.com/`
 
 ## 与其他技能的关系
-- 需要写或改 iOS/macOS 业务代码时，主技能应是 `ios-base`、`swift-expert`、`swiftui-ui-patterns`、`swiftui-liquid-glass` 或对应专项 skill，`apple-docs` 只作为辅助查询。
+- 需要写或改 iOS/macOS 业务代码时，主技能应是 `ios-feature-implementation`、`swiftui-feature-implementation`、`uikit-feature-implementation`、`swift-expert`、`swiftui-ui-patterns`、`swiftui-liquid-glass` 或对应专项 skill，`apple-docs` 只作为辅助查询。
 - 需要运行时排障时，切换到 `debugging`。
 - 需要构建配置、签名、Archive 或 CI 时，切换到 `xcode-build`。
 - 需要官方 API 依据来支撑其它技能的结论时，再附带使用本 skill。

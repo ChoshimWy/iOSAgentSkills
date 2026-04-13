@@ -21,6 +21,7 @@ XCODE_DERIVED_DATA="$PWD/.codex-derived-data"
 - `XCODE_SCHEME` 建议显式配置，避免多 scheme 仓库误判
 - 默认不做 `clean build`
 - 默认关闭签名，适用于大多数本地或 CI 编译校验场景
+- 这些覆盖配置只影响 `xcodebuild` 参数，不会跳过 `verify-ios-build` 的前置代码审查
 
 ## 示例
 

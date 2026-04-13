@@ -16,20 +16,10 @@ description: 使用 iOS 26+ 的 Liquid Glass API 构建、审查或改进 SwiftU
 - 需要把按钮、卡片、胶囊、工具条等表面改造为玻璃化视觉。
 
 ## 核心工作流
-1. 先确认 Liquid Glass 是否真的需要
-- 只有在任务明确要求玻璃化视觉或已经采用 Liquid Glass 时再触发本 skill。
-- 新页面的普通结构和模式选型仍优先交给 `swiftui-ui-patterns`。
-
-2. 设计玻璃层级
-- 优先使用原生 API：`glassEffect`、`GlassEffectContainer`、`.buttonStyle(.glass)`、`.buttonStyle(.glassProminent)`。
-- 多个玻璃元素同时出现时，优先使用 `GlassEffectContainer` 统一管理。
-- `.glassEffect(...)` 放在布局和基础视觉修饰之后。
-- 仅对真实可交互元素使用 `.interactive()`。
-
-3. 做兼容性和一致性校验
-- 必须使用 `#available(iOS 26, *)` 并提供非玻璃回退。
-- 同一功能内保持形状、间距、`tint` 和层级一致。
-- 如需最新 API 细节，优先查询 Apple 官方文档。
+1. 先确认 Liquid Glass 是否真的需要。
+2. 设计玻璃层级，优先使用 `glassEffect`、`GlassEffectContainer`、`.buttonStyle(.glass)`、`.buttonStyle(.glassProminent)`。
+3. 做兼容性和一致性校验，并在需要时查询 Apple 官方文档。
+4. 如果实现中新增 `.swift` 文件且项目要求文件头，`Created by` 必须使用本机用户名称 `Choshim.Wei`，不要写 `Codex`；日期默认使用 `YYYY/M/D`，例如 `Created by Choshim.Wei on 2026/4/11.`。
 
 ## 参考资源
 - `references/liquid-glass.md`：Liquid Glass 的基础用法、形状、过渡和最佳实践。
@@ -44,12 +34,13 @@ description: 使用 iOS 26+ 的 Liquid Glass API 构建、审查或改进 SwiftU
 
 ## 与其他技能的关系
 - 新建普通 SwiftUI 页面、`TabView` 架构或布局模式，切换到 `swiftui-ui-patterns`。
-- 需要先做跨技术栈视觉方向、配色、排版和设计系统方案时，切换到 `ui-ux-pro-max`。
+- 页面模式已经明确、只需要普通 SwiftUI 落地时，切换到 `swiftui-feature-implementation`。
+- 需要先做跨技术栈视觉方向、配色、排版和设计系统方案时，切换到 `ui-ux-design-system`。
 - 需要运行时性能诊断或 `xctrace` 取证时，切换到 `ios-performance`。
 - 需要官方 API 事实依据时，可辅以 `apple-docs`。
 
 ## ✅ Sentinel（Skill 使用自检）
-当且仅当你确定"当前任务已经加载并正在使用本 Skill"时：
+当且仅当你确定当前任务已经加载并正在使用本 Skill 时：
 
 - 在回复末尾追加一行：`// skill-used: swiftui-liquid-glass`
 

@@ -20,6 +20,7 @@ description: Xcode 构建与配置技能。仅用于 Xcode 项目配置、Build 
 1. 先明确入口：`workspace` / `project` / `scheme`。
 2. 再确认配置目标：本地构建、Archive、导出、CI 或签名。
 3. 最后根据目标选择 `build`、`test`、`archive` 或 `-exportArchive` 流程。
+4. 如果需要为目标项目新增 `.swift`、`.h`、`.m`、`.mm` 等源码文件且项目要求文件头，`Created by` 必须使用本机用户名称 `Choshim.Wei`，不要写 `Codex`；日期默认使用 `YYYY/M/D`，例如 `Created by Choshim.Wei on 2026/4/11.`。
 
 ## 参考资源
 - `references/build-settings.md`

@@ -1,0 +1,57 @@
+---
+name: ios-device-automation
+description: iOS 真机自动化技能。用于在连接或已配对的 physical device 上发现与选择目标设备、执行 build/test、安装 app、启动/终止进程、查询设备信息并做常见真机诊断；不要用于 Build Settings/签名策略设计、纯 Simulator 自动化或普通业务代码实现。
+---
+
+# iOS 真机自动化
+
+## 角色定位
+- 专项自动化 skill，负责连接中的 iPhone / iPad 真机选择、构建、安装、启动、测试与诊断。
+- 默认优先使用 Apple 官方工具链：`xcrun devicectl` 与 `xcodebuild -destination 'id=...'`。
+- 不负责 Build Settings / 签名策略设计，也不替代普通业务实现与代码重构。
+
+## 适用场景
+- 需要在已连接或已配对的真机上跑 build、test、install、launch。
+- 需要在多台连接中的设备里自动选择最合适的真机目标。
+- 需要查看设备详情、已装 app、运行中进程，或收集真机侧诊断信息。
+- 需要对 pairing、DDI、锁屏、开发者模式、信任关系等常见真机问题做初步排查。
+
+## 核心工作流
+1. 先列出并筛选设备：`python3 scripts/device_list.py`、`python3 scripts/device_selector.py`
+2. 再对选中的真机执行构建或测试：`python3 scripts/device_build_and_test.py <repo-root>`
+3. 需要安装或启动 app 时，执行：`python3 scripts/device_install_and_launch.py --app <path> --bundle-id <bundle_id>`
+4. 需要设备详情或诊断时，执行：`bash scripts/device_diagnose.sh --device <device-id>`
+
+## 默认设备选择策略
+1. 优先 `connected`
+2. 其次 `available (paired)`
+3. 再使用用户显式指定的设备名称或 UDID
+4. `unavailable` 仅作为诊断对象，不作为默认运行目标
+
+## 执行约定
+- 真机构建默认用 `xcodebuild -destination 'id=<device-id>'`，不替代签名配置；签名问题交给 `xcode-build`。
+- 使用 `devicectl` 做设备信息、安装、进程启动、终止与诊断。
+- 如果自动设备发现暂时不可用，优先回退到用户显式提供的 `--device-id` / 设备名称，而不是伪造设备选择结果。
+- 输出中必须明确写出：设备范围、最终选择结果、实际命令、执行结果与阻塞点。
+- 如果任务中新建 `.swift`、`.h`、`.m`、`.mm` 等源码文件且项目要求文件头，`Created by` 必须使用本机用户名称 `Choshim.Wei`，不要写 `Codex`；日期默认使用 `YYYY/M/D`，例如 `Created by Choshim.Wei on 2026/4/11.`。
+
+## 参考资源
+- `references/devicectl-quick.md`
+- `references/troubleshooting.md`
+
+## 与其他技能的关系
+- 需要 Simulator 自动化、语义导航或模拟器生命周期管理时，切换到 `ios-simulator-automation`。
+- 需要普通 iOS 业务实现时，切换到 `ios-feature-implementation`、`swiftui-feature-implementation` 或 `uikit-feature-implementation`。
+- 需要 Build Settings、签名、Archive/Export 或 CI/CD 时，切换到 `xcode-build`。
+- 需要收尾的一次性构建验收时，切换到 `verify-ios-build`。
+- 需要补单元测试或 UI 测试代码时，切换到 `testing`。
+
+## ✅ Sentinel（Skill 使用自检）
+当且仅当你确定当前任务已经加载并正在使用本 Skill 时：
+
+- 在回复末尾追加一行：`// skill-used: ios-device-automation`
+
+规则：
+- 只能追加一次
+- 如果不确定是否加载，禁止输出 sentinel
+- 输出 sentinel 代表你已遵守本 Skill 的配置规范与执行约定

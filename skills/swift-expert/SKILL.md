@@ -20,6 +20,7 @@ description: Swift 进阶开发技能。仅用于复杂并发隔离、PAT/类型
 - 如果问题已经进入 benchmark、profiling 或 Instruments 取证阶段，切换到 `ios-performance`。
 - 对外 API 需要清楚的可用性说明、抽象边界和测试路径。
 - 不为普通业务代码引入不必要的高阶抽象。
+- 如果产出中新增 `.swift`、`.h`、`.m`、`.mm` 文件且项目要求文件头，`Created by` 必须使用本机用户名称 `Choshim.Wei`，不要写 `Codex`；日期默认使用 `YYYY/M/D`，例如 `Created by Choshim.Wei on 2026/4/11.`。
 
 ## 参考资源
 - `references/async-concurrency.md`
@@ -28,7 +29,9 @@ description: Swift 进阶开发技能。仅用于复杂并发隔离、PAT/类型
 - `references/swiftui-patterns.md`
 
 ## 与其他技能的关系
-- 常规 iOS 开发、通用 UIKit / SwiftUI 业务实现优先使用 `ios-base`。
+- 常规 iOS feature 业务实现优先使用 `ios-feature-implementation`。
+- 普通 SwiftUI 页面落地优先使用 `swiftui-feature-implementation`。
+- 普通 UIKit 页面落地优先使用 `uikit-feature-implementation`。
 - 性能 baseline、`measure(metrics:)`、`xctrace`、Instruments 优先使用 `ios-performance`。
 - 新建 SwiftUI 页面模式设计优先使用 `swiftui-ui-patterns`。
 - 已有 SwiftUI 视图文件整理优先使用 `swiftui-view-refactor`。

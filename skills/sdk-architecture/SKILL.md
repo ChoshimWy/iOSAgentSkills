@@ -21,6 +21,7 @@ description: SDK/Framework 架构设计技能。只在设计 SDK 模块边界、
 - 入口类负责初始化、生命周期和配置校验，不承担业务实现细节。
 - 分发优先 `SPM`，二进制分发使用 `XCFramework`，版本遵循 `SemVer`。
 - 任何 breaking change 都必须通过显式版本策略表达，而不是静默替换行为。
+- 如果示例或目标项目需要新增 `.swift`、`.h`、`.m`、`.mm` 文件且项目要求文件头，`Created by` 必须使用本机用户名称 `Choshim.Wei`，不要写 `Codex`；日期默认使用 `YYYY/M/D`，例如 `Created by Choshim.Wei on 2026/4/11.`。
 
 ## 参考资源
 - `references/design-guidelines.md`：API 设计准则、稳定性、防御、安全和版本演进策略。
@@ -35,7 +36,7 @@ description: SDK/Framework 架构设计技能。只在设计 SDK 模块边界、
 - 需要示例时，优先给入口类、`Configuration`、模块边界和依赖方向示意，而不是完整业务实现。
 
 ## 与其他技能的关系
-- 如果只是普通应用功能开发，切换到 `ios-base` 或对应 SwiftUI 专项 skill。
+- 如果只是普通应用功能开发，切换到 `ios-feature-implementation`、`swiftui-feature-implementation` 或 `uikit-feature-implementation`。
 - 如果只是补单元测试或 UI 测试，切换到 `testing`。
 - 如果任务重点是构建签名、Archive、导出或 CI，切换到 `xcode-build`。
 - 需要审查公开 API 设计质量时，可联动 `code-review`。

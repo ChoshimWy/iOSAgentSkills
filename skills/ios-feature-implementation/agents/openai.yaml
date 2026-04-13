@@ -1,0 +1,4 @@
+interface:
+  display_name: "iOS Feature 实现"
+  short_description: "通用 iOS feature 业务实现与导航接线"
+  default_prompt: "使用 $ios-feature-implementation 落地当前 iOS feature 的 service、view model、导航接线与常规 async/await 业务实现。"

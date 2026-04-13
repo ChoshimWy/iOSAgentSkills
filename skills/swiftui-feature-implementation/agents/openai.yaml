@@ -1,0 +1,4 @@
+interface:
+  display_name: "SwiftUI Feature 实现"
+  short_description: "按既定模式落地普通 SwiftUI 页面与组件"
+  default_prompt: "使用 $swiftui-feature-implementation 在既定模式下实现当前 SwiftUI 页面、状态绑定与组件交互。"

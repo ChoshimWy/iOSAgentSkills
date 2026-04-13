@@ -1,0 +1,4 @@
+interface:
+  display_name: "iOS 真机自动化"
+  short_description: "在连接中的真机上执行构建、安装、启动与测试"
+  default_prompt: "使用 $ios-device-automation 选择当前连接中的 iOS 真机，并执行 build/test、安装或启动流程。"
