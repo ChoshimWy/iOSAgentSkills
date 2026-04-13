@@ -1,4 +1,4 @@
 interface:
   display_name: "iOS 模拟器自动化"
   short_description: "在 Simulator 中执行自动化、验证与设备管理"
-  default_prompt: "使用 $ios-simulator-automation 在 iOS Simulator 中完成设备选择、自动化验证与语义交互。"
+  default_prompt: "使用 $ios-simulator-automation 仅在 iOS Simulator 中完成设备选择、语义交互、无障碍检查与自动化验证；如果目标是真机，请改用 $ios-device-automation。"

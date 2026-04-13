@@ -1,6 +1,6 @@
 ---
 name: ui-ux-design-system
-description: 辅助型跨技术栈 UI/UX 设计与设计系统技能。用于视觉方向、设计系统、交互规则、色板、字体与实现前的 UI/UX 决策；不要用于 SwiftUI 具体落地实现、已有 SwiftUI 大 view 重构或 Liquid Glass API 级实现。
+description: 辅助型跨技术栈 UI/UX 设计与设计系统技能。只用于视觉方向、设计系统、交互规则、色板、字体与实现前的 UI/UX 决策；如果用户要的是 SwiftUI / UIKit API 级落地实现、已有 SwiftUI 大 view 重构或 Liquid Glass API 级实现，不要使用本 skill 作为主 skill。
 ---
 
 # UI/UX Design System
@@ -9,6 +9,11 @@ description: 辅助型跨技术栈 UI/UX 设计与设计系统技能。用于视
 - 辅助型 skill。
 - 负责视觉方向、设计系统、交互规则和跨技术栈 UI/UX 检索。
 - 不直接承担 SwiftUI 页面落地，也不处理 Liquid Glass API 专项实现。
+
+## 触发判定（硬边界）
+- 用户主要在问视觉风格、设计 token、色板、字体、交互规则、无障碍和设计系统方向时，使用本 skill。
+- 如果用户需要的是 SwiftUI / UIKit 代码、页面结构、状态归属或具体 modifier / layout 写法，不要用本 skill 作为主 skill。
+- 如果问题核心已经收缩到 Liquid Glass API 的具体实现细节，切换到 `swiftui-liquid-glass`。
 
 ## 适用场景
 - 设计新页面、组件或完整设计系统。
@@ -34,7 +39,7 @@ description: 辅助型跨技术栈 UI/UX 设计与设计系统技能。用于视
 
 ## 与其他技能的关系
 - 当任务重点是视觉风格、设计系统、色板、字体、无障碍或跨技术栈 UI/UX 方向时，优先使用本技能。
-- 如果目标已经明确为 SwiftUI 页面落地、状态与路由模式设计，切换到 `swiftui-ui-patterns` 或 `swiftui-feature-implementation`。
+- 如果目标已经明确为 SwiftUI 页面落地、状态与路由模式设计，主 skill 切换到 `swiftui-ui-patterns` 或 `swiftui-feature-implementation`。
 - 如果是 iOS 26+ 的 Liquid Glass 专项设计与实现，切换到 `swiftui-liquid-glass`。
 - 如果是已有 SwiftUI 视图文件重构或性能审计，不使用本技能作为主技能。
 

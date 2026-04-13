@@ -10,6 +10,28 @@
 - `Research / Design / Release`：资料检索、设计方向、发布文案与机会研究技能。
 - `Platform / Legacy`：平台专项或历史兼容入口。
 
+## 严格路由总则
+先按下面 3 组问题做一次硬判定，再选 skill：
+
+1. **先看设备 / 构建维度**
+   - Simulator 自动化、语义导航、`simctl`：`ios-simulator-automation`
+   - 连接中的真机构建、安装、启动、`devicectl`：`ios-device-automation`
+   - Build Settings、签名、Archive/Export、CI/CD：`xcode-build`
+   - 任务收尾的一次性门禁构建：`verify-ios-build`
+2. **再看 UI 技术栈与页面阶段**
+   - 通用业务层与导航接线：`ios-feature-implementation`
+   - 新建 SwiftUI 页面 / 模式选型：`swiftui-ui-patterns`
+   - 已有模式下的普通 SwiftUI 落地：`swiftui-feature-implementation`
+   - 已有模式下的普通 UIKit 落地：`uikit-feature-implementation`
+   - 已有大 SwiftUI 文件整理：`swiftui-view-refactor`
+   - iOS 26+ Liquid Glass API：`swiftui-liquid-glass`
+   - 视觉方向 / 设计系统 / 色板 / 字体：`ui-ux-design-system`
+3. **最后看问题类型**
+   - 静态代码审查 / diff review：`code-review`
+   - crash / 异常 / 运行时根因：`debugging`
+   - 掉帧 / 启动慢 / `measure(metrics:)` / `xctrace`：`ios-performance`
+   - 补测试代码 / Mock / Stub / Spy：`testing`
+
 ## 命名迁移
 
 | 旧 skill | 新 skill | 说明 |

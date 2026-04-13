@@ -1,4 +1,4 @@
 interface:
   display_name: "iOS 代码审查"
   short_description: "审查 Swift / iOS diff、风险与 public API 设计"
-  default_prompt: "使用 $code-review 审查当前 iOS / Swift 改动，按严重度输出 findings 与建议。"
+  default_prompt: "使用 $code-review 对当前 iOS / Swift 改动做静态审查，按严重度输出 findings 与风险，不把静态结论包装成已复现的运行时问题。"

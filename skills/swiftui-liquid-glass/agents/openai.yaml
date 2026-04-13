@@ -1,4 +1,4 @@
 interface:
   display_name: "SwiftUI Liquid Glass"
   short_description: "Liquid Glass 专项实现与审查"
-  default_prompt: "使用 $swiftui-liquid-glass 基于 iOS 26+ Liquid Glass API 实现、重构或审查一个 SwiftUI 功能，并提供兼容性回退。"
+  default_prompt: "使用 $swiftui-liquid-glass 仅在问题核心是 iOS 26+ Liquid Glass API（如 glassEffect / GlassEffectContainer）实现或审查时工作，并提供兼容性回退。"

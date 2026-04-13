@@ -1,4 +1,4 @@
 interface:
   display_name: "UIKit Feature 实现"
   short_description: "按既定架构落地 UIKit 页面与组件实现"
-  default_prompt: "使用 $uikit-feature-implementation 在现有架构下实现当前 UIKit 页面、布局与交互逻辑。"
+  default_prompt: "使用 $uikit-feature-implementation 在页面职责与架构边界已明确的前提下实现 UIKit 页面、布局与交互逻辑。"

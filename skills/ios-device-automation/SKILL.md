@@ -1,6 +1,6 @@
 ---
 name: ios-device-automation
-description: iOS 真机自动化技能。用于在连接或已配对的 physical device 上发现与选择目标设备、执行 build/test、安装 app、启动/终止进程、查询设备信息并做常见真机诊断；不要用于 Build Settings/签名策略设计、纯 Simulator 自动化或普通业务代码实现。
+description: iOS 真机自动化技能。只在连接或已配对的 physical device 上发现与选择目标设备、执行 build/test、安装 app、启动/终止进程、查询设备信息并做常见真机诊断；如果目标是 Simulator、Build Settings / 签名策略设计或普通业务代码实现，不要使用本 skill 作为主 skill。
 ---
 
 # iOS 真机自动化
@@ -9,6 +9,11 @@ description: iOS 真机自动化技能。用于在连接或已配对的 physical
 - 专项自动化 skill，负责连接中的 iPhone / iPad 真机选择、构建、安装、启动、测试与诊断。
 - 默认优先使用 Apple 官方工具链：`xcrun devicectl` 与 `xcodebuild -destination 'id=...'`。
 - 不负责 Build Settings / 签名策略设计，也不替代普通业务实现与代码重构。
+
+## 触发判定（硬边界）
+- 先按设备维度判断：目标是连接中的 iPhone / iPad 真机时才使用本 skill。
+- 如果任务核心是 Simulator、语义 UI 导航或模拟器生命周期，不要用本 skill 作为主 skill，切换到 `ios-simulator-automation`。
+- 如果阻塞点已经收缩成签名、证书、Build Settings、Archive 或 CI，不要继续把本 skill 当作主 skill，切换到 `xcode-build`。
 
 ## 适用场景
 - 需要在已连接或已配对的真机上跑 build、test、install、launch。

@@ -1,4 +1,4 @@
 interface:
   display_name: "iOS 运行时排障"
   short_description: "分析 crash、异常、泄漏与运行时根因"
-  default_prompt: "使用 $debugging 基于日志、调用栈和运行时症状定位当前 iOS 问题的根因。"
+  default_prompt: "使用 $debugging 基于日志、调用栈、复现步骤和运行时症状定位当前 iOS 问题的根因；如果核心是 profiling 或 benchmark，请改用 $ios-performance。"

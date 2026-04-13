@@ -1,6 +1,6 @@
 ---
 name: ios-performance
-description: iOS 性能分析与测试技能。只在需要处理 UIKit / SwiftUI 的掉帧、启动慢、CPU / 内存异常、性能回归基线、`measure(metrics:)`、`xctrace` 或 Instruments 取证时使用；不要把它当作通用业务实现、普通单元/UI 测试补齐或泛化 crash 排查技能。
+description: iOS 性能分析与测试技能。只在需要处理 UIKit / SwiftUI 的掉帧、启动慢、CPU / 内存压力、性能回归基线、`measure(metrics:)`、`xctrace` 或 Instruments 取证时使用；如果问题核心是 crash、异常、对象未释放根因、纯静态审查或普通单元/UI 测试补齐，不要把它当作主 skill。
 ---
 
 # iOS 性能分析与测试
@@ -9,6 +9,11 @@ description: iOS 性能分析与测试技能。只在需要处理 UIKit / SwiftU
 - 专项型 skill。
 - 负责性能基线设计、profiling 取证、模板选择、优化方向和 before/after 验证。
 - 不负责默认业务实现，也不替代普通测试编写和泛化 crash 调试。
+
+## 触发判定（硬边界）
+- 用户主要在问掉帧、启动慢、CPU / 内存压力、性能回归、`measure(metrics:)`、`xctrace` 或 Instruments 时，使用本 skill。
+- 如果问题核心是 crash、异常、`unrecognized selector`、野指针或对象未释放根因，不要用本 skill 作为主 skill，切换到 `debugging`。
+- 如果只是补业务单元测试、UI 测试或测试替身，切换到 `testing`。
 
 ## 适用场景
 - UIKit / SwiftUI 列表滚动掉帧、动画卡顿、页面进入慢、启动慢。

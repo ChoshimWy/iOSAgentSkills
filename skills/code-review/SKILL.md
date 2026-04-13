@@ -1,6 +1,6 @@
 ---
 name: code-review
-description: iOS/Swift 代码审查技能。只在需要 review 代码、审查 PR diff、检查代码质量或评审 public API 设计时使用；不要把它当作直接修复实现、运行时排障或构建配置技能。
+description: iOS/Swift 代码审查技能。只在需要 review 代码、审查 PR diff、检查代码质量或评审 public API 设计时使用；它只输出基于静态代码证据的审查结论，不承担直接修复实现、运行时排障、性能 profiling 或构建配置。
 ---
 
 # 代码审查
@@ -20,6 +20,7 @@ description: iOS/Swift 代码审查技能。只在需要 review 代码、审查 
 - Findings 必须优先输出，且按严重程度排序。
 - 结论要绑定文件与行号；没有定位信息时要明确说明原因。
 - 只根据代码和已知上下文下结论；缺少运行时证据时，不要伪装成已复现问题。
+- 如果用户问题本质上是“为什么会 crash / 卡顿 / 泄漏”，不要把本 skill 当作主 skill，切换到 `debugging` 或 `ios-performance`。
 
 ## 输出要求
 - 使用以下分级格式：

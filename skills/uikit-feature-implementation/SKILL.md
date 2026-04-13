@@ -1,6 +1,6 @@
 ---
 name: uikit-feature-implementation
-description: UIKit 常规页面落地技能。用于在既定架构下实现 ViewController、UIView、布局、列表、交互与界面装配；不要用于通用业务建模、SwiftUI 页面模式、新旧构建配置、模拟器/真机自动化、性能取证或官方文档检索。
+description: UIKit 常规页面落地技能。只在页面职责、架构边界和业务输入已经明确时，用于实现 ViewController、UIView、布局、列表、交互与界面装配；如果任务核心是通用业务建模、SwiftUI 页面模式、新旧构建配置、模拟器/真机自动化、性能取证或官方文档检索，不要使用本 skill 作为主 skill。
 ---
 
 # UIKit Feature 实现
@@ -9,6 +9,11 @@ description: UIKit 常规页面落地技能。用于在既定架构下实现 Vie
 - 专注于普通 UIKit 页面与组件落地的实现型 skill。
 - 负责把现有业务输入接入 ViewController、UIView、列表与交互层。
 - 不承担通用业务建模、构建配置、自动化或 Apple 文档检索。
+
+## 触发判定（硬边界）
+- 已有明确的页面职责、业务输入和 UIKit 架构，只差 `UIViewController` / `UIView` / 布局 / 列表代码时，使用本 skill。
+- 如果还需要先设计 `repository`、`use case`、`coordinator`、导航 wiring 或通用业务模型，先切回 `ios-feature-implementation`。
+- 如果任务核心是 SwiftUI 页面、构建链路、设备自动化或性能 profiling，不要用本 skill 作为主 skill。
 
 ## 适用场景
 - 编写或修改 `UIViewController`、`UIView`、`UICollectionView` / `UITableView` 页面。
@@ -26,7 +31,7 @@ description: UIKit 常规页面落地技能。用于在既定架构下实现 Vie
 
 ## 与其他技能的关系
 - 已有 UIKit 架构或页面模式时，普通页面落地优先使用本技能。
-- 如果需要先设计通用业务类型、service、repository 或导航 wiring，切换到 `ios-feature-implementation`。
+- 如果需要先设计通用业务类型、service、repository 或导航 wiring，主 skill 切换到 `ios-feature-implementation`。
 - 如果任务是构建配置、签名、Archive/Export 或 CI，切换到 `xcode-build`。
 - 如果任务是 crash、异常或对象未释放等运行时问题，切换到 `debugging`。
 - 如果任务已经进入性能 profiling、启动慢或滚动卡顿诊断，切换到 `ios-performance`。

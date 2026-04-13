@@ -1,4 +1,4 @@
 interface:
   display_name: "UI/UX 设计系统"
   short_description: "生成视觉方向、设计系统与跨栈 UI/UX 方案"
-  default_prompt: "使用 $ui-ux-design-system 生成当前产品的视觉方向、设计系统与跨技术栈 UI/UX 建议。"
+  default_prompt: "使用 $ui-ux-design-system 生成当前产品的视觉方向、设计系统、色板、排版与交互规则，不直接承担 SwiftUI 或 UIKit API 级实现。"

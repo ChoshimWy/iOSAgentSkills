@@ -1,4 +1,4 @@
 interface:
   display_name: "Xcode 构建配置"
   short_description: "处理 Build Settings、签名、Archive 与 CI/CD"
-  default_prompt: "使用 $xcode-build 处理当前 Xcode 工程的 Build Settings、签名、Archive/Export 或 CI/CD 配置。"
+  default_prompt: "使用 $xcode-build 处理当前 Xcode 工程的 Build Settings、签名、Archive/Export、CI/CD 或构建脚本；如果只是收尾跑一次 xcodebuild，请改用 $verify-ios-build。"

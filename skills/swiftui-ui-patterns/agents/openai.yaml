@@ -1,4 +1,4 @@
 interface:
   display_name: "SwiftUI UI 模式"
   short_description: "新建页面与模式选型"
-  default_prompt: "使用 $swiftui-ui-patterns 为新的 SwiftUI 页面或组件选择稳定、实用的 UI 模式与结构，不处理既有大型视图清理。"
+  default_prompt: "使用 $swiftui-ui-patterns 为新的 SwiftUI 页面或组件做页面结构、导航模式与状态归属选型；如果结构已明确，只做实现请改用 $swiftui-feature-implementation。"

@@ -1,6 +1,6 @@
 ---
 name: swiftui-liquid-glass
-description: 使用 iOS 26+ 的 Liquid Glass API 构建、审查或改进 SwiftUI 功能。只在需要采用 `glassEffect`、`GlassEffectContainer` 或玻璃按钮样式时使用；不要把它当作通用 SwiftUI 页面模式、跨技术栈视觉设计或普通性能审计技能。
+description: 使用 iOS 26+ 的 Liquid Glass API 构建、审查或改进 SwiftUI 功能。只在问题核心是 `glassEffect`、`GlassEffectContainer`、玻璃按钮样式与兼容性回退时使用；不要把它当作通用 SwiftUI 页面模式、跨技术栈视觉设计、普通页面落地或性能审计技能。
 ---
 
 # SwiftUI Liquid Glass
@@ -9,6 +9,11 @@ description: 使用 iOS 26+ 的 Liquid Glass API 构建、审查或改进 SwiftU
 - 专项型 skill。
 - 负责 iOS 26+ `Liquid Glass` 视觉体系的实现、审查和回退策略。
 - 不负责一般 SwiftUI 页面模式选型，也不替代跨技术栈 UI/UX 设计或通用性能审计。
+
+## 触发判定（硬边界）
+- 用户明确在问 `glassEffect`、`GlassEffectContainer`、`.buttonStyle(.glass)`、玻璃层级或 iOS 26+ 兼容性回退时，使用本 skill。
+- 如果问题只是普通 SwiftUI 页面结构、导航模式或组件组织，不要用本 skill 作为主 skill，切换到 `swiftui-ui-patterns` 或 `swiftui-feature-implementation`。
+- 如果问题核心是品牌气质、色板、排版和设计系统方向，而不是 Liquid Glass API 本身，切换到 `ui-ux-design-system`。
 
 ## 适用场景
 - 需要在 iOS 26+ 的 SwiftUI 界面中引入 Liquid Glass。

@@ -1,6 +1,6 @@
 ---
 name: debugging
-description: iOS 调试与问题排查技能。只在遇到 crash、异常、运行时错误、内存泄漏、ViewController 未释放、僵死等问题并需要诊断根因时使用；不要把它当作静态 code review、性能分析测试或构建配置技能。
+description: iOS 调试与问题排查技能。只在存在 crash、异常、运行时错误、对象未释放、内存泄漏、僵死等症状并需要诊断根因时使用；不要把它当作静态 code review、benchmark / profiling / `xctrace` 或构建配置技能。
 ---
 
 # iOS 调试与问题排查
@@ -9,6 +9,11 @@ description: iOS 调试与问题排查技能。只在遇到 crash、异常、运
 - 诊断型 skill。
 - 负责根据症状、日志、调用栈和运行时行为定位根因，并给出复现路径、LLDB 命令和修复方向。
 - 不负责替代代码审查、构建设置设计或泛化重构。
+
+## 触发判定（硬边界）
+- 至少已有日志、调用栈、错误信息、复现步骤或明确运行时症状之一时，使用本 skill。
+- 如果手头只有静态 diff、没有运行时证据，主 skill 应切换到 `code-review`。
+- 如果问题核心是 benchmark、`measure(metrics:)`、`xctrace`、Instruments、掉帧或启动性能，不要用本 skill 作为主 skill，切换到 `ios-performance`。
 
 ## 适用场景
 - 需要分析 crash、异常、僵死、主线程阻塞、内存泄漏、视图未释放。

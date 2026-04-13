@@ -1,4 +1,4 @@
 interface:
   display_name: "SwiftUI 视图重构"
   short_description: "重构既有 SwiftUI 视图文件"
-  default_prompt: "使用 $swiftui-view-refactor 在不改变行为的前提下清理、拆分并稳定化现有 SwiftUI 视图文件。"
+  default_prompt: "使用 $swiftui-view-refactor 重构已存在的 SwiftUI 视图文件，清理过长 body、错位状态与副作用；如果是新页面设计请改用 $swiftui-ui-patterns。"
