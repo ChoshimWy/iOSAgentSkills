@@ -1,0 +1,4 @@
+interface:
+  display_name: "PPTX 演示文稿"
+  short_description: "读取、编辑、生成与校验 PowerPoint 演示文稿"
+  default_prompt: "使用 $office-pptx 读取、编辑、生成或校验 .pptx / PowerPoint 演示文稿；如果任务不涉及实际幻灯片文件，不要使用它。"

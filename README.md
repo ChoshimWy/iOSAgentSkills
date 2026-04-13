@@ -37,6 +37,9 @@
 - `app-store-opportunity-research/` —— App Store 赛道与商业机会研究
 - `gh-pr-flow/` —— GitHub CLI 一条龙提交流程
 
+### Document / Productivity
+- `office-pptx/` —— `.pptx` / PowerPoint 演示文稿读取、模板编辑、从零生成与 QA
+
 ### Platform / Legacy
 - `macos-menubar-tuist-app/` —— Tuist + SwiftUI macOS 菜单栏应用
 - `macos-spm-app-packaging/` —— 无 Xcode 工程的 macOS SwiftPM App 打包
@@ -63,6 +66,7 @@
      - “帮我设计一个新的 SwiftUI 设置页结构”
      - “帮我在连接中的 iPad 真机上跑一次 test”
      - “帮我配置 archive/export 的 xcodebuild 流程”
+     - “帮我读取这个 .pptx 模板并改成新的 deck”
 
 4. **技能扩展**
    - 新增技能：在本目录下新建子文件夹，包含 `SKILL.md` 及相关参考文档。
@@ -77,6 +81,7 @@
 ## 适用场景
 - iOS / macOS / Swift / SwiftUI / UIKit / Objective-C 开发
 - Apple 官方文档与 WWDC 知识检索
+- PowerPoint / `.pptx` 演示文稿读取、模板编辑与生成
 - Swift 并发与协议导向进阶设计
 - SDK / 组件开发与架构设计
 - 代码审查、重构、调试与性能分析
