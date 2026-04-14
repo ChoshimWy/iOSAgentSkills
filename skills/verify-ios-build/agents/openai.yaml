@@ -1,4 +1,4 @@
 interface:
   display_name: "iOS 构建门禁校验"
-  short_description: "先审查未提交代码，再运行最终 xcodebuild"
-  default_prompt: "使用 $verify-ios-build 仅在任务收尾阶段先审查当前未提交的 iOS 代码，并且只有在没有 🔴 严重问题时才运行一次 `xcodebuild` 做最终门禁。"
+  short_description: "先审查未提交代码，再做 simulator 优先 / 真机回退的最终 xcodebuild 校验"
+  default_prompt: "使用 $verify-ios-build 仅在任务收尾阶段先审查当前未提交的 iOS 代码；只有在没有 🔴 严重问题时，才运行 simulator 优先且在必要时自动回退真机的 `xcodebuild` 最终门禁。"

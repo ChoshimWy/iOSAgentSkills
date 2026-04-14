@@ -75,6 +75,22 @@
    - 参考现有技能目录结构与文档规范。
    - 所有新增 `SKILL.md` 末尾都必须包含 sentinel 规则。
 
+## Git 提交门禁
+
+- 本仓库使用 `.githooks/commit-msg` + `scripts/commitlint.py` 校验 commit message。
+- 规则与 `git-workflow` skill 保持一致：
+  - 格式必须为 `<type>(<scope>): <subject>`
+  - `subject` 必须包含中文
+  - `subject` 不能以句号结尾
+  - 首行长度不超过 72 字符
+- 首次 clone 后执行：
+
+```bash
+./scripts/install-git-hooks.sh
+```
+
+- 安装后，类似 `fix: persist group fixture state for 3D virtual fixture sync` 这类不合规消息会被直接拒绝。
+
 ## 通用约定
 - 对应项目中新建 `.swift`、`.h`、`.m`、`.mm` 等源码文件且项目要求文件头时，`Created by` 必须使用**本机用户名称**，不能写 `Codex`。
 - 当前环境下默认作者名取自本机用户信息：`Choshim.Wei`。

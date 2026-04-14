@@ -41,6 +41,7 @@ refactor/<简短描述>
 - 默认给出 branch、commit 和 PR 描述建议。
 - 需要 PR 模板时，至少覆盖：概述、变更类型、改动详情、测试情况、影响范围、关联 Issue。
 - iOS 仓库应明确忽略：`DerivedData/`、`*.xcuserdata/`、`.DS_Store`、`Pods/`、`.build/` 等常见噪音。
+- 如果仓库已配置 `commit-msg` / commitlint 门禁，提交文案必须先本地过钩子校验，再执行 `git commit`。
 
 ## 与其他技能的关系
 - 如果只是规范 Git 操作和文本，优先使用本技能。
