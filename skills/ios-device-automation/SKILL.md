@@ -22,20 +22,23 @@ description: iOS 真机自动化技能。只在连接或已配对的 physical de
 - 需要对 pairing、DDI、锁屏、开发者模式、信任关系等常见真机问题做初步排查。
 
 ## 核心工作流
-1. 先列出并筛选设备：`python3 scripts/device_list.py`、`python3 scripts/device_selector.py`
-2. 再对选中的真机执行构建或测试：`python3 scripts/device_build_and_test.py <repo-root>`
-3. 需要安装或启动 app 时，执行：`python3 scripts/device_install_and_launch.py --app <path> --bundle-id <bundle_id>`
-4. 需要设备详情或诊断时，执行：`bash scripts/device_diagnose.sh --device <device-id>`
+1. 手动查看真机时直接用官方命令：
+   - `xcrun devicectl list devices`：查看 `devicectl` 设备标识（安装 / 启动 / 诊断使用）
+   - `xcodebuild -showdestinations -workspace <workspace> -scheme <scheme>`：查看 `xcodebuild` destination id（build / test 使用）
+2. 对真机执行构建或测试：`bash scripts/device_build_and_test.sh <repo-root>`
+3. 需要安装或启动 app 时，执行：`bash scripts/device_install_and_launch.sh --app <path> --bundle-id <bundle_id>`
+4. 需要设备详情或诊断时，执行：`bash scripts/device_diagnose.sh --device <devicectl-device-id>`
 
 ## 默认设备选择策略
-1. 优先 `connected`
-2. 其次 `available (paired)`
-3. 再使用用户显式指定的设备名称或 UDID
-4. `unavailable` 仅作为诊断对象，不作为默认运行目标
+1. build / test：优先使用 `xcodebuild -showdestinations` 返回的首个真实 iOS destination；若显式传 `--device-id`，直接使用该 destination id
+2. install / launch / diagnose：优先 `connected`
+3. 其次 `available (paired)`
+4. 再使用用户显式指定的设备名称或 identifier
+5. `unavailable` 仅作为诊断对象，不作为默认运行目标
 
 ## 执行约定
-- 真机构建默认用 `xcodebuild -destination 'id=<device-id>'`，不替代签名配置；签名问题交给 `xcode-build`。
-- 使用 `devicectl` 做设备信息、安装、进程启动、终止与诊断。
+- 真机构建默认用 `xcodebuild -destination 'id=<destination-id>'`，不替代签名配置；签名问题交给 `xcode-build`。
+- 安装、启动、进程查询与诊断使用 `devicectl` 的 device identifier；不要把 `xcodebuild` destination id 与 `devicectl` device identifier 混用。
 - 如果自动设备发现暂时不可用，优先回退到用户显式提供的 `--device-id` / 设备名称，而不是伪造设备选择结果。
 - 输出中必须明确写出：设备范围、最终选择结果、实际命令、执行结果与阻塞点。
 - 如果任务中新建 `.swift`、`.h`、`.m`、`.mm` 等源码文件且项目要求文件头，`Created by` 必须使用本机用户名称 `Choshim.Wei`，不要写 `Codex`；日期默认使用 `YYYY/M/D`，例如 `Created by Choshim.Wei on 2026/4/11.`。

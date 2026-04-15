@@ -12,13 +12,6 @@ from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 VERIFY_SKILL_DIR = SCRIPT_DIR.parent
-DEVICE_SCRIPTS_DIR = VERIFY_SKILL_DIR.parent / "ios-device-automation" / "scripts"
-
-if str(DEVICE_SCRIPTS_DIR) not in sys.path:
-    sys.path.insert(0, str(DEVICE_SCRIPTS_DIR))
-
-from device_list import list_devices  # noqa: E402
-from device_selector import choose_device  # noqa: E402
 
 THIRD_PARTY_MARKERS = ("Pods", "Carthage", "SourcePackages")
 SIMULATOR_DESTINATION_PATTERN = re.compile(r"simulator", re.IGNORECASE)
@@ -109,18 +102,36 @@ class BuildConfig:
         return command
 
 
+OVERRIDABLE_ENV_KEYS = (
+    "XCODE_WORKSPACE",
+    "XCODE_PROJECT",
+    "XCODE_SCHEME",
+    "XCODE_CONFIGURATION",
+    "XCODE_ACTION",
+    "XCODE_DESTINATION",
+    "XCODE_DERIVED_DATA",
+    "XCODE_DEVICE_FALLBACK",
+    "XCODE_DEVICE_ID",
+    "XCODE_DEVICE_NAME",
+    "XCODE_PREFER_MODEL",
+    "XCODEBUILD_SHOW_OUTPUT",
+)
+
+
 def load_env(root: Path) -> dict[str, str]:
     env_file = root / ".codex" / "xcodebuild.env"
     values: dict[str, str] = {}
-    if not env_file.exists():
-        return values
+    if env_file.exists():
+        for raw in env_file.read_text().splitlines():
+            line = raw.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            values[key.strip()] = value.strip().strip('"').strip("'")
 
-    for raw in env_file.read_text().splitlines():
-        line = raw.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, value = line.split("=", 1)
-        values[key.strip()] = value.strip().strip('"').strip("'")
+    for key in OVERRIDABLE_ENV_KEYS:
+        if key in os.environ:
+            values[key] = os.environ[key]
     return values
 
 
@@ -205,6 +216,42 @@ def resolve_build_config(root: Path) -> BuildConfig:
 
 def is_simulator_destination(destination: str) -> bool:
     return bool(SIMULATOR_DESTINATION_PATTERN.search(destination))
+
+
+def load_selected_device_from_env(prefix: str) -> tuple[dict[str, str] | None, str | None]:
+    identifier = os.environ.get(f"{prefix}ID")
+    name = os.environ.get(f"{prefix}NAME") or identifier
+    reason = os.environ.get(f"{prefix}REASON")
+    state = os.environ.get(f"{prefix}STATE", "selected")
+    model = os.environ.get(f"{prefix}MODEL", "")
+    if not any((identifier, name, reason)):
+        return None, None
+
+    return (
+        {
+            "name": name or "selected-device",
+            "identifier": identifier or "",
+            "state": state,
+            "model": model,
+            "hostname": "",
+        },
+        reason or "selected by shell wrapper",
+    )
+
+
+def explicit_selected_device(config: BuildConfig) -> tuple[dict[str, str] | None, str | None]:
+    if config.explicit_device_id and not config.explicit_device_name and not config.preferred_model:
+        return (
+            {
+                "name": config.explicit_device_id,
+                "identifier": config.explicit_device_id,
+                "state": "explicit",
+                "model": "unknown",
+                "hostname": "",
+            },
+            "using explicit device identifier",
+        )
+    return None, None
 
 
 def run_git_lines(root: Path, args: list[str]) -> list[str]:
@@ -517,37 +564,23 @@ def describe_issue(issue: BuildIssue | None, config: BuildConfig, changed_files:
     )
 
 
-def select_physical_device(config: BuildConfig) -> tuple[dict[str, str], str]:
-    if config.explicit_device_id and not config.explicit_device_name and not config.preferred_model:
-        return (
-            {
-                "name": config.explicit_device_id,
-                "identifier": config.explicit_device_id,
-                "state": "explicit",
-                "model": "unknown",
-                "hostname": "",
-            },
-            "using explicit device identifier",
-        )
-
-    devices = list_devices()
-    selected, reason = choose_device(
-        devices,
-        name=config.explicit_device_name,
-        identifier=config.explicit_device_id,
-        prefer_model=config.preferred_model,
-    )
-    if not selected:
-        raise RuntimeError(reason)
-    return selected, reason
-
-
 def resolve_initial_destination(config: BuildConfig) -> tuple[str, dict[str, str] | None, str | None]:
     if config.destination:
-        return config.destination, None, None
+        selected_device, selection_reason = load_selected_device_from_env("XCODE_SELECTED_DEVICE_")
+        return config.destination, selected_device, selection_reason
 
-    selected_device, selection_reason = select_physical_device(config)
-    return f"id={selected_device['identifier']}", selected_device, selection_reason
+    selected_device, selection_reason = explicit_selected_device(config)
+    if selected_device:
+        shell_selected_device, shell_selection_reason = load_selected_device_from_env("XCODE_SELECTED_DEVICE_")
+        return (
+            f"id={selected_device['identifier']}",
+            shell_selected_device or selected_device,
+            shell_selection_reason or selection_reason,
+        )
+
+    raise RuntimeError(
+        "no physical device destination resolved; run via build-check.sh or set XCODE_DESTINATION / XCODE_DEVICE_ID"
+    )
 
 
 def should_attempt_device_fallback(
@@ -663,10 +696,21 @@ def main() -> int:
     if not should_fallback:
         return initial_attempt.exit_code
 
-    try:
-        selected_device, device_reason = select_physical_device(config)
-    except Exception as exc:
-        print(f"Device fallback blocked: {exc}", file=sys.stderr)
+    selected_device, device_reason = explicit_selected_device(config)
+    fallback_device, fallback_reason = load_selected_device_from_env("XCODE_FALLBACK_DEVICE_")
+    if fallback_device:
+        selected_device = fallback_device
+        device_reason = fallback_reason or device_reason
+
+    if not selected_device:
+        fallback_error = os.environ.get("XCODE_FALLBACK_DEVICE_ERROR")
+        if fallback_error:
+            print(f"Device fallback blocked: {fallback_error}", file=sys.stderr)
+        else:
+            print(
+                "Device fallback blocked: no physical device destination resolved; set XCODE_DEVICE_ID or run via build-check.sh",
+                file=sys.stderr,
+            )
         return 1
 
     device_destination = f"id={selected_device['identifier']}"

@@ -1,7 +1,8 @@
 # devicectl Quick Reference
 
 ## 常用命令
-- 列出设备：`xcrun devicectl list devices`
+- 列出 `devicectl` 设备：`xcrun devicectl list devices`
+- 查看 `xcodebuild` 可用真机 destination：`xcodebuild -showdestinations -workspace <workspace> -scheme <scheme>`
 - 查看设备详情：`xcrun devicectl device info details --device <device-id>`
 - 查看已装 app：`xcrun devicectl device info apps --device <device-id>`
 - 查看运行中进程：`xcrun devicectl device info processes --device <device-id>`
@@ -14,10 +15,12 @@
 - 解除配对：`xcrun devicectl manage unpair --device <device-id>`
 
 ## 真机构建
-- Build：`xcodebuild -workspace <workspace> -scheme <scheme> -destination 'id=<device-id>' build`
-- Test：`xcodebuild -workspace <workspace> -scheme <scheme> -destination 'id=<device-id>' test`
+- 查看 build / test 用的 destination id：`xcodebuild -showdestinations -workspace <workspace> -scheme <scheme>`
+- Build：`xcodebuild -workspace <workspace> -scheme <scheme> -destination 'id=<destination-id>' build`
+- Test：`xcodebuild -workspace <workspace> -scheme <scheme> -destination 'id=<destination-id>' test`
 
 ## 约定
+- Build / test 使用 `xcodebuild` destination id；安装 / 启动 / 诊断使用 `devicectl` device identifier。
+- 这两套 identifier 可能不同，不要混用。
 - 优先使用 `connected` 设备；只有用户明确指定时才使用非默认候选。
-- `devicectl` 的结构化输出优先使用 `--json-output <path>`；若 JSON 不可用，再回退文本解析。
 - 真机构建依赖项目已有签名与开发者配置；签名错误不在本 skill 内修复。
