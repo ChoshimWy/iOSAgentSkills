@@ -76,7 +76,7 @@ class BuildConfig:
     scheme: str
     configuration: str
     action: str
-    destination: str
+    destination: str | None
     derived_data: str
     device_fallback_enabled: bool
     explicit_device_id: str | None
@@ -193,7 +193,7 @@ def resolve_build_config(root: Path) -> BuildConfig:
         scheme=pick_scheme(root, env),
         configuration=env.get("XCODE_CONFIGURATION", "Debug"),
         action=env.get("XCODE_ACTION", "build"),
-        destination=env.get("XCODE_DESTINATION", "generic/platform=iOS Simulator"),
+        destination=env.get("XCODE_DESTINATION"),
         derived_data=env.get("XCODE_DERIVED_DATA", str(root / ".codex-derived-data")),
         device_fallback_enabled=truthy(env.get("XCODE_DEVICE_FALLBACK"), default=True),
         explicit_device_id=env.get("XCODE_DEVICE_ID"),
@@ -517,7 +517,7 @@ def describe_issue(issue: BuildIssue | None, config: BuildConfig, changed_files:
     )
 
 
-def select_device_for_fallback(config: BuildConfig) -> tuple[dict[str, str], str]:
+def select_physical_device(config: BuildConfig) -> tuple[dict[str, str], str]:
     if config.explicit_device_id and not config.explicit_device_name and not config.preferred_model:
         return (
             {
@@ -540,6 +540,14 @@ def select_device_for_fallback(config: BuildConfig) -> tuple[dict[str, str], str
     if not selected:
         raise RuntimeError(reason)
     return selected, reason
+
+
+def resolve_initial_destination(config: BuildConfig) -> tuple[str, dict[str, str] | None, str | None]:
+    if config.destination:
+        return config.destination, None, None
+
+    selected_device, selection_reason = select_physical_device(config)
+    return f"id={selected_device['identifier']}", selected_device, selection_reason
 
 
 def should_attempt_device_fallback(
@@ -571,7 +579,7 @@ def should_attempt_device_fallback(
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Run simulator-first xcodebuild verification with optional physical-device fallback"
+        description="Run physical-device-first xcodebuild verification with optional simulator override"
     )
     parser.add_argument("root", nargs="?", default=".", help="Target repo root")
     parser.add_argument(
@@ -590,9 +598,26 @@ def main() -> int:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
 
+    try:
+        initial_destination, initial_device, initial_device_reason = resolve_initial_destination(config)
+    except Exception as exc:
+        print(f"Initial physical-device validation blocked: {exc}", file=sys.stderr)
+        return 1
+
     changed_files = collect_changed_files(root)
-    simulator_command = config.command_for_destination(config.destination)
-    print_attempt_header(config, "Simulator build validation", config.destination, simulator_command)
+    initial_label = (
+        "Simulator build validation"
+        if is_simulator_destination(initial_destination)
+        else "Physical device build validation"
+    )
+    initial_command = config.command_for_destination(initial_destination)
+    print_attempt_header(config, initial_label, initial_destination, initial_command)
+    if initial_device:
+        print(
+            "Selected device: "
+            f"{initial_device['name']} [{initial_device['identifier']}] ({initial_device['state']})"
+        )
+        print(f"Selection reason: {initial_device_reason}")
     if changed_files:
         print(f"Changed files detected: {len(changed_files)}")
     else:
@@ -600,39 +625,46 @@ def main() -> int:
 
     if dry_run:
         print("Dry run: xcodebuild was not executed")
-        print(
-            "Device fallback enabled: "
-            + ("yes" if config.device_fallback_enabled else "no")
-        )
+        if is_simulator_destination(initial_destination):
+            print(
+                "Device fallback enabled: "
+                + ("yes" if config.device_fallback_enabled else "no")
+            )
         return 0
 
-    simulator_attempt = run_build(
-        simulator_command,
+    initial_attempt = run_build(
+        initial_command,
         cwd=root,
-        label="Simulator build validation",
-        destination=config.destination,
+        label=initial_label,
+        destination=initial_destination,
     )
-    simulator_attempt.issues = parse_build_issues(simulator_attempt.combined_output, root)
+    initial_attempt.issues = parse_build_issues(initial_attempt.combined_output, root)
 
-    print(f"Result: {'SUCCESS' if simulator_attempt.exit_code == 0 else 'FAILED'}")
-    maybe_print_output(simulator_attempt, config.show_output)
+    print(f"Result: {'SUCCESS' if initial_attempt.exit_code == 0 else 'FAILED'}")
+    maybe_print_output(initial_attempt, config.show_output)
 
-    if simulator_attempt.exit_code == 0:
+    if initial_attempt.exit_code == 0:
         return 0
+
+    primary_issue = select_primary_issue(initial_attempt.issues)
+
+    if not is_simulator_destination(initial_destination):
+        describe_issue(primary_issue, config, changed_files)
+        return initial_attempt.exit_code
 
     should_fallback, fallback_reason, primary_issue = should_attempt_device_fallback(
         config,
-        simulator_attempt,
+        initial_attempt,
         changed_files,
     )
     describe_issue(primary_issue, config, changed_files)
     print(f"Device fallback decision: {'run' if should_fallback else 'skip'} ({fallback_reason})")
 
     if not should_fallback:
-        return simulator_attempt.exit_code
+        return initial_attempt.exit_code
 
     try:
-        selected_device, device_reason = select_device_for_fallback(config)
+        selected_device, device_reason = select_physical_device(config)
     except Exception as exc:
         print(f"Device fallback blocked: {exc}", file=sys.stderr)
         return 1

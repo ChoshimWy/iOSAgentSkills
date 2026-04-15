@@ -1,6 +1,6 @@
 ---
 name: testing
-description: iOS 测试编写技能。只在需要为 iOS/macOS 代码编写或补充单元测试、UI 测试、Mock/Stub/Spy 和 async 测试代码时使用；不要把它当作一次性 `xcodebuild` 构建门禁、性能 benchmark / `measure(metrics:)`、代码审查或运行时排障技能。
+description: iOS 测试编写技能。只在需要为 iOS/macOS 代码编写或补充单元测试、UI 测试、Mock/Stub/Spy 和 async 测试代码时使用；不要把“编译验证 / 构建验证 / 构建检查 / 门禁验收 / 最后验证一下能不能编译 / 跑一下 xcodebuild”误判到本 skill，这类收尾验证统一交给 `verify-ios-build`；也不要把它当作性能 benchmark / `measure(metrics:)`、代码审查或运行时排障技能。
 ---
 
 # iOS 测试编写

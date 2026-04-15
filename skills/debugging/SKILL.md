@@ -1,6 +1,6 @@
 ---
 name: debugging
-description: iOS 调试与问题排查技能。只在存在 crash、异常、运行时错误、对象未释放、内存泄漏、僵死等症状并需要诊断根因时使用；不要把它当作静态 code review、benchmark / profiling / `xctrace` 或构建配置技能。
+description: iOS 调试与问题排查技能。只在存在 crash、异常、运行时错误、对象未释放、内存泄漏、僵死等症状并需要诊断根因时使用；不要把“编译验证 / 构建验证 / 构建检查 / 门禁验收 / 最后验证一下能不能编译 / 跑一下 xcodebuild”这类收尾门禁请求误判到本 skill，这类请求统一交给 `verify-ios-build`；也不要把它当作静态 code review、benchmark / profiling / `xctrace` 或构建配置技能。
 ---
 
 # iOS 调试与问题排查

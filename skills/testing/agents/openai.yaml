@@ -1,4 +1,4 @@
 interface:
   display_name: "iOS 测试编写"
   short_description: "补齐单元测试、UI 测试与测试替身设计"
-  default_prompt: "使用 $testing 为当前 iOS / macOS 代码编写或补齐单元测试、UI 测试与测试替身；如果只是跑一次构建门禁，请改用 $verify-ios-build。"
+  default_prompt: "使用 $testing 为当前 iOS / macOS 代码编写或补齐单元测试、UI 测试与测试替身；如果只是“最后验证一下”、做构建检查、确认还能编译，或跑一次 xcodebuild 门禁，请改用 $verify-ios-build。"
