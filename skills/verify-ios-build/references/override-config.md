@@ -1,6 +1,6 @@
 # `.codex/xcodebuild.env` 覆盖配置
 
-当自动发现的 workspace、project、scheme 或真机 destination 不正确时，在仓库根目录创建 `.codex/xcodebuild.env`。
+当自动发现的 workspace、project、scheme 或 destination 不正确时，在仓库根目录创建 `.codex/xcodebuild.env`。
 
 ## 支持的变量
 
@@ -28,14 +28,16 @@ XCODE_PREFER_MODEL="iPad"
 - 如果两个都配置，脚本优先使用 `XCODE_WORKSPACE`
 - `XCODE_SCHEME` 建议显式配置，避免多 scheme 仓库误判
 - 默认不做 `clean build`
-- 默认优先真机校验；如果未设置 `XCODE_DESTINATION`，脚本会自动从 `xcodebuild -showdestinations` 中选择首个真实 iOS destination
-- `XCODE_DEVICE_ID`、`XCODE_DEVICE_NAME`、`XCODE_PREFER_MODEL` 只影响真机 destination 的自动选择与 simulator → 真机回退阶段
+- 最终门禁仍必须在目标项目根目录的项目环境执行；`.codex/xcodebuild.env` 只负责补充参数，不会把最终验证降级成沙箱构建
+- iOS 工程默认优先真机校验；如果未设置 `XCODE_DESTINATION`，脚本会先尝试“已连接真机”，找不到连接中的真机时自动回退到 `generic/platform=iOS Simulator`
+- macOS Xcode 工程在未显式指定 destination 时走宿主机 `xcodebuild build`
+- `XCODE_DEVICE_ID`、`XCODE_DEVICE_NAME`、`XCODE_PREFER_MODEL` 只影响“已连接真机”的自动选择与 simulator → 真机回退阶段
 - `XCODE_DEVICE_ID` 必须填写 `xcodebuild` 的 destination id；不要填写 `devicectl` device identifier
 - 只有 simulator destination 会关闭签名，适用于需要显式保留 simulator 构建校验的场景
-- 如果显式 simulator 阶段失败且命中第三方依赖的 simulator-only 链接白名单错误，脚本默认会自动切真机重跑一次 `build`
+- 如果显式 simulator 阶段失败且命中第三方依赖的 simulator-only 链接白名单错误，脚本默认会自动切到已连接真机重跑一次 `build`
 - 真机回退默认开启：`XCODE_DEVICE_FALLBACK=1`；它只在首次 destination 是 simulator 时生效
 - 设置 `XCODE_DEVICE_FALLBACK=0` 可关闭自动真机回退，保留“只跑显式配置 destination”的行为
-- 这些覆盖配置只影响 `xcodebuild` 参数，不会跳过 `verify-ios-build` 的前置代码审查
+- 这些覆盖配置只影响 `xcodebuild` 参数，不会跳过 `verify-ios-build` 的前置代码审查，也不会改变“`.xcworkspace` 优先于 `.xcodeproj`”的默认规则
 
 ## 示例
 

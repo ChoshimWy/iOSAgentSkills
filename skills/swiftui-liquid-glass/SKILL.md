@@ -1,6 +1,6 @@
 ---
 name: swiftui-liquid-glass
-description: 使用 iOS 26+ 的 Liquid Glass API 构建、审查或改进 SwiftUI 功能。只在问题核心是 `glassEffect`、`GlassEffectContainer`、玻璃按钮样式与兼容性回退时使用；不要把它当作通用 SwiftUI 页面模式、跨技术栈视觉设计、普通页面落地或性能审计技能。
+description: 使用 iOS 26+ 的 Liquid Glass API 构建、审查或改进 SwiftUI 功能。只在问题核心是 `glassEffect`、`GlassEffectContainer`、玻璃按钮样式与兼容性回退时使用；不要把它当作通用 SwiftUI 页面模式、跨技术栈视觉设计、普通页面落地或性能审计技能；若任务产出修改了 Apple Xcode 项目相关内容，收尾必须切到 `verify-ios-build` 并在项目环境完成最终验证。
 ---
 
 # SwiftUI Liquid Glass
@@ -36,6 +36,12 @@ description: 使用 iOS 26+ 的 Liquid Glass API 构建、审查或改进 SwiftU
   - 交互态是否只用于可操作元素。
   - 形状与视觉层级是否统一。
 - 新实现或重构时，优先给出可直接落地的 `SwiftUI` 写法和兼容性分支。
+
+## 强制收尾验证
+- 只要当前任务产出修改了 Apple Xcode 项目相关内容（代码、测试、资源、工程文件、构建脚本、plist / entitlements / xcconfig / scheme 或项目内环境配置），最终必须切到 `verify-ios-build`。
+- 最终门禁必须在目标项目根目录的项目环境执行；沙箱内的构建结果不能作为最终验收结论。
+- 对 iOS 项目，`verify-ios-build` 必须优先 `.xcworkspace`（当 `.xcworkspace` 与 `.xcodeproj` 同时存在时），并默认优先已连接真机；找不到连接中的真机时再回退到 simulator。
+- 在 `verify-ios-build` 成功前，不得把任务表述为“已完成”；只能明确说明“实现已完成，但验证未完成/失败，任务未完成”。
 
 ## 与其他技能的关系
 - 新建普通 SwiftUI 页面、`TabView` 架构或布局模式，切换到 `swiftui-ui-patterns`。

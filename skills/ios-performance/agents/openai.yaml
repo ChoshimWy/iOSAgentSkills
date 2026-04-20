@@ -1,4 +1,4 @@
 interface:
   display_name: "iOS 性能分析"
-  short_description: "统一处理 benchmark 与 xctrace"
-  default_prompt: "使用 $ios-performance 分析当前 iOS 功能的掉帧、启动慢、CPU / 内存压力或性能回归，并给出 XCTest 指标与 xctrace / Instruments 取证方案。"
+  short_description: "统一处理 benchmark、xctrace 与性能回归门禁"
+  default_prompt: "使用 $ios-performance 分析当前 iOS 功能的掉帧、启动慢、CPU / 内存压力或性能回归，并给出 XCTest 指标与 xctrace / Instruments 取证方案；若任务产出修改了 Apple Xcode 项目相关内容，收尾必须切到 $verify-ios-build，并在目标项目的项目环境完成最终验证：iOS 项目若同时存在 `.xcworkspace` 与 `.xcodeproj` 必须优先 `.xcworkspace`，默认优先已连接真机，找不到连接中的真机时再回退到 simulator。"

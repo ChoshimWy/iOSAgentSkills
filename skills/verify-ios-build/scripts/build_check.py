@@ -40,7 +40,7 @@ class BuildIssue:
 @dataclass
 class BuildAttempt:
     label: str
-    destination: str
+    destination: str | None
     command: list[str]
     exit_code: int
     stdout: str
@@ -75,9 +75,10 @@ class BuildConfig:
     explicit_device_id: str | None
     explicit_device_name: str | None
     preferred_model: str | None
+    validation_platform: str | None
     show_output: bool
 
-    def command_for_destination(self, destination: str) -> list[str]:
+    def command_for_destination(self, destination: str | None) -> list[str]:
         command = ["xcodebuild"]
         if self.workspace:
             command += ["-workspace", self.workspace]
@@ -89,8 +90,12 @@ class BuildConfig:
             self.scheme,
             "-configuration",
             self.configuration,
-            "-destination",
-            destination,
+        ]
+
+        if destination:
+            command += ["-destination", destination]
+
+        command += [
             "-derivedDataPath",
             self.derived_data,
         ]
@@ -210,12 +215,13 @@ def resolve_build_config(root: Path) -> BuildConfig:
         explicit_device_id=env.get("XCODE_DEVICE_ID"),
         explicit_device_name=env.get("XCODE_DEVICE_NAME"),
         preferred_model=env.get("XCODE_PREFER_MODEL"),
+        validation_platform=os.environ.get("XCODE_VALIDATION_PLATFORM"),
         show_output=truthy(env.get("XCODEBUILD_SHOW_OUTPUT"), default=False),
     )
 
 
-def is_simulator_destination(destination: str) -> bool:
-    return bool(SIMULATOR_DESTINATION_PATTERN.search(destination))
+def is_simulator_destination(destination: str | None) -> bool:
+    return bool(destination and SIMULATOR_DESTINATION_PATTERN.search(destination))
 
 
 def load_selected_device_from_env(prefix: str) -> tuple[dict[str, str] | None, str | None]:
@@ -529,7 +535,12 @@ def maybe_print_output(attempt: BuildAttempt, show_output: bool) -> None:
         print(attempt.stderr.rstrip())
 
 
-def print_attempt_header(config: BuildConfig, label: str, destination: str, command: list[str]) -> None:
+def print_attempt_header(
+    config: BuildConfig,
+    label: str,
+    destination: str | None,
+    command: list[str],
+) -> None:
     print(f"=== {label} ===")
     print(f"Root: {config.root}")
     if config.workspace:
@@ -539,7 +550,7 @@ def print_attempt_header(config: BuildConfig, label: str, destination: str, comm
     print(f"Scheme: {config.scheme}")
     print(f"Configuration: {config.configuration}")
     print(f"Action: {config.action}")
-    print(f"Destination: {destination}")
+    print(f"Destination: {destination or 'default host build (no explicit destination)'}")
     print(f"Command: {' '.join(shlex.quote(part) for part in command)}")
 
 
@@ -564,10 +575,14 @@ def describe_issue(issue: BuildIssue | None, config: BuildConfig, changed_files:
     )
 
 
-def resolve_initial_destination(config: BuildConfig) -> tuple[str, dict[str, str] | None, str | None]:
+def resolve_initial_destination(config: BuildConfig) -> tuple[str | None, dict[str, str] | None, str | None]:
     if config.destination:
         selected_device, selection_reason = load_selected_device_from_env("XCODE_SELECTED_DEVICE_")
         return config.destination, selected_device, selection_reason
+
+    if config.validation_platform == "macos":
+        selected_device, selection_reason = load_selected_device_from_env("XCODE_SELECTED_DEVICE_")
+        return None, selected_device, selection_reason
 
     selected_device, selection_reason = explicit_selected_device(config)
     if selected_device:
@@ -638,11 +653,11 @@ def main() -> int:
         return 1
 
     changed_files = collect_changed_files(root)
-    initial_label = (
-        "Simulator build validation"
-        if is_simulator_destination(initial_destination)
-        else "Physical device build validation"
-    )
+    initial_label = "Physical device build validation"
+    if config.validation_platform == "macos":
+        initial_label = "macOS host build validation"
+    elif is_simulator_destination(initial_destination):
+        initial_label = "Simulator build validation"
     initial_command = config.command_for_destination(initial_destination)
     print_attempt_header(config, initial_label, initial_destination, initial_command)
     if initial_device:
@@ -680,6 +695,10 @@ def main() -> int:
         return 0
 
     primary_issue = select_primary_issue(initial_attempt.issues)
+
+    if config.validation_platform == "macos":
+        describe_issue(primary_issue, config, changed_files)
+        return initial_attempt.exit_code
 
     if not is_simulator_destination(initial_destination):
         describe_issue(primary_issue, config, changed_files)

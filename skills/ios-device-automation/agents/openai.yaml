@@ -1,4 +1,4 @@
 interface:
   display_name: "iOS 真机自动化"
-  short_description: "在连接中的真机上执行构建、安装、启动与测试"
-  default_prompt: "使用 $ios-device-automation 在连接中的 iPhone 或 iPad 真机上选择目标设备，并执行 build/test、安装、启动或诊断流程；如果目标是 Simulator，请改用 $ios-simulator-automation。"
+  short_description: "在连接中的真机上执行构建、安装、启动与测试流程验证"
+  default_prompt: "使用 $ios-device-automation 在连接中的 iPhone 或 iPad 真机上选择目标设备，并执行 build/test、安装、启动或诊断流程；若任务最终修改了工程内容，收尾仍必须切到 $verify-ios-build，并在项目环境完成最终验证：优先 `.xcworkspace`、默认优先已连接真机、找不到连接中的真机时回退到 simulator。"

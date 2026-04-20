@@ -1,4 +1,4 @@
 interface:
   display_name: "SwiftUI 性能审计（旧名兼容）"
-  short_description: "旧名兼容，默认改用 ios-performance"
-  default_prompt: "识别这是旧的 $swiftui-performance-audit 入口，并将新的性能分析与测试任务切换到 $ios-performance。"
+  short_description: "旧名兼容入口，新的性能任务统一切到 ios-performance"
+  default_prompt: "识别这是旧的 $swiftui-performance-audit 入口，并将新的性能分析与测试任务切换到 $ios-performance；若兼容路径最终修改了工程内容，仍必须切到 $verify-ios-build 做最终门禁，并在项目环境执行：优先 `.xcworkspace`、默认优先已连接真机、找不到连接中的真机时回退到 simulator。"

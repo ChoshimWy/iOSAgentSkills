@@ -1,4 +1,4 @@
 interface:
   display_name: "iOS 模拟器自动化"
-  short_description: "在 Simulator 中执行自动化、验证与设备管理"
-  default_prompt: "使用 $ios-simulator-automation 仅在 iOS Simulator 中完成设备选择、语义交互、无障碍检查与自动化验证；如果目标是真机，请改用 $ios-device-automation。"
+  short_description: "在 Simulator 中执行自动化、验证与设备管理流程"
+  default_prompt: "使用 $ios-simulator-automation 仅在 iOS Simulator 中完成设备选择、语义交互、无障碍检查与自动化验证；若任务最终修改了工程内容，收尾仍必须切到 $verify-ios-build，并在项目环境完成最终验证：优先 `.xcworkspace`、默认优先已连接真机、找不到连接中的真机时回退到 simulator。"

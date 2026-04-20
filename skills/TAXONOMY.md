@@ -12,6 +12,13 @@
 - `Platform / Legacy`：平台专项或历史兼容入口。
 
 ## 严格路由总则
+在进入具体 skill 选择之前，先应用一个全局完成条件：
+
+- **只要任务产出修改了 Apple Xcode 项目相关内容，最终都必须切到 `verify-ios-build` 做收尾门禁。**
+- 最终门禁必须在目标项目根目录的项目环境执行，而不是把沙箱内构建结果当作最终结论。
+- iOS 项目如果同时存在 `.xcworkspace` 与 `.xcodeproj`，门禁必须优先 `.xcworkspace`；默认优先已连接真机，找不到连接中的真机时再回退到 simulator。
+- 在 `verify-ios-build` 成功前，任何技能都不能把任务表述为“已完成”。
+
 先按下面 3 组问题做一次硬判定，再选 skill：
 
 1. **先看设备 / 构建维度**
@@ -71,7 +78,7 @@
 | `ios-simulator-automation` | Simulator 自动化 | boot/shutdown/create/delete、语义导航、无障碍检查、模拟器验证 | 真机运行、Build Settings/签名策略、普通业务实现 | `ios-device-automation`、`xcode-build`、`ios-feature-implementation` |
 | `ios-device-automation` | 真机自动化 | 连接中的真机构建、安装、启动、测试、设备诊断 | 纯 Simulator 自动化、Build Settings/签名策略设计、普通业务实现 | `ios-simulator-automation`、`xcode-build`、`ios-feature-implementation` |
 | `xcode-build` | 构建配置与交付链路 | Build Settings、签名、Archive、导出 IPA、CI/CD | 任务末尾只跑一次编译验收 | `verify-ios-build` |
-| `verify-ios-build` | 收尾审查门禁 + 构建验收 | 未提交代码审查通过后运行一次 `xcodebuild` 最终确认 | 构建签名、Archive、导出、CI 设计 | `xcode-build` |
+| `verify-ios-build` | 收尾审查门禁 + 构建验收 | 任何 Apple Xcode 项目相关改动的强制最终门禁；未提交代码审查通过后运行一次 `xcodebuild` 最终确认 | 构建签名、Archive、导出、CI 设计 | `xcode-build` |
 | `testing` | 测试编写专项 | 单元测试、UI 测试、Mock/Stub/Spy、异步测试 | 性能 benchmark、`measure(metrics:)`、`xctrace`、一次性 `xcodebuild` 校验 | `ios-performance`、`verify-ios-build`、`code-review`、`debugging` |
 
 ## Diagnostics

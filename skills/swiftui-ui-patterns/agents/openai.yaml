@@ -1,4 +1,4 @@
 interface:
   display_name: "SwiftUI UI 模式"
-  short_description: "新建页面与模式选型"
-  default_prompt: "使用 $swiftui-ui-patterns 为新的 SwiftUI 页面或组件做页面结构、导航模式与状态归属选型；如果结构已明确，只做实现请改用 $swiftui-feature-implementation。"
+  short_description: "新建页面模式选型、状态归属设计与强制收尾验证门禁要求"
+  default_prompt: "使用 $swiftui-ui-patterns 为新的 SwiftUI 页面或组件做页面结构、导航模式与状态归属选型；如果结构已明确，只做实现请改用 $swiftui-feature-implementation；若任务产出修改了 Apple Xcode 项目相关内容，收尾必须切到 $verify-ios-build，并在目标项目的项目环境完成最终验证：iOS 项目若同时存在 `.xcworkspace` 与 `.xcodeproj` 必须优先 `.xcworkspace`，默认优先已连接真机，找不到连接中的真机时再回退到 simulator。"

@@ -1,6 +1,6 @@
 ---
 name: macos-menubar-tuist-app
-description: 使用 Tuist 与 SwiftUI 构建、重构或审查 macOS 菜单栏应用。仅适用于 `LSUIElement` 菜单栏工具与 Tuist manifest 驱动的工程；不要用于无 Xcode 工程的 SwiftPM 打包，后者应交给 `macos-spm-app-packaging`。
+description: 使用 Tuist 与 SwiftUI 构建、重构或审查 macOS 菜单栏应用。仅适用于 `LSUIElement` 菜单栏工具与 Tuist manifest 驱动的工程；不要用于无 Xcode 工程的 SwiftPM 打包，后者应交给 `macos-spm-app-packaging`；若任务产出修改了 Apple Xcode 项目相关内容，收尾必须切到 `verify-ios-build` 并在项目环境完成最终验证。
 ---
 
 # macOS 菜单栏 Tuist 应用
@@ -57,6 +57,12 @@ TUIST_SKIP_UPDATE_CHECK=1 tuist build <TargetName> --configuration Debug
 ```bash
 ./run-menubar.sh
 ```
+
+## 强制收尾验证
+- 只要当前任务产出修改了 Apple Xcode 项目相关内容（代码、测试、资源、工程文件、构建脚本、plist / entitlements / xcconfig / scheme 或项目内环境配置），最终必须切到 `verify-ios-build`。
+- 最终门禁必须在目标项目根目录的项目环境执行；沙箱内的构建结果不能作为最终验收结论。
+- 对 iOS 项目，`verify-ios-build` 必须优先 `.xcworkspace`（当 `.xcworkspace` 与 `.xcodeproj` 同时存在时），并默认优先已连接真机；找不到连接中的真机时再回退到 simulator。
+- 对 macOS Xcode 工程，`verify-ios-build` 走宿主机 `xcodebuild build` 门禁；在成功前同样不得宣告任务已完成，必须明确写出“任务未完成”。
 
 ## 与其他技能的关系
 - 如果目标是无 `.xcodeproj` 的 SwiftPM 打包、签名、公证和 appcast，切换到 `macos-spm-app-packaging`。

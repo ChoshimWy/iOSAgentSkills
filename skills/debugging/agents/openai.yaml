@@ -1,4 +1,4 @@
 interface:
   display_name: "iOS 运行时排障"
-  short_description: "分析 crash、异常、泄漏与运行时根因"
-  default_prompt: "使用 $debugging 基于日志、调用栈、复现步骤和运行时症状定位当前 iOS 问题的根因；如果只是收尾编译验证、构建检查或跑一次 xcodebuild，请改用 $verify-ios-build；如果核心是 profiling 或 benchmark，请改用 $ios-performance。"
+  short_description: "分析 crash、异常、泄漏与运行时根因并保留门禁"
+  default_prompt: "使用 $debugging 基于日志、调用栈、复现步骤和运行时症状定位当前 iOS 问题的根因；如果只是收尾编译验证、构建检查或跑一次 xcodebuild，请改用 $verify-ios-build；如果核心是 profiling 或 benchmark，请改用 $ios-performance；若任务产出修改了 Apple Xcode 项目相关内容，收尾必须切到 $verify-ios-build，并在目标项目的项目环境完成最终验证：iOS 项目若同时存在 `.xcworkspace` 与 `.xcodeproj` 必须优先 `.xcworkspace`，默认优先已连接真机，找不到连接中的真机时再回退到 simulator。"

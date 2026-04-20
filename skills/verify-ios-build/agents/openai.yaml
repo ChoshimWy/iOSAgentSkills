@@ -1,4 +1,4 @@
 interface:
   display_name: "iOS 最后验证门禁"
-  short_description: "处理“最后验证一下 / 跑一下 xcodebuild / 构建检查”这类收尾请求，默认真机校验"
-  default_prompt: "使用 $verify-ios-build 处理 iOS 收尾阶段的“最后验证一下”“最后确认还能编译”“编译验证”“构建检查”“门禁验收”或“跑一下 xcodebuild”请求：先审查当前未提交代码；只有在没有 🔴 严重问题时，才运行默认优先真机的 `xcodebuild` 最终门禁；若显式指定 simulator destination，必要时再自动回退真机。"
+  short_description: "强制收尾审查门禁：项目环境、.xcworkspace 优先与真机优先"
+  default_prompt: "使用 $verify-ios-build 处理 Apple Xcode 工程收尾阶段的最终门禁：先审查当前未提交代码，再在目标项目的项目环境执行最终验证；iOS 项目若同时存在 `.xcworkspace` 与 `.xcodeproj` 必须优先 `.xcworkspace`，默认优先已连接真机，找不到连接中的真机时回退到 simulator；若验证未完成或失败，必须明确任务未完成。"

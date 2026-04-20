@@ -135,7 +135,7 @@ is_simulator_destination_text() {
   printf '%s' "$1" | grep -qi 'simulator'
 }
 
-list_xcode_physical_destinations_tsv() {
+xcode_showdestinations() {
   local root="$1"
   local workspace="$2"
   local project="$3"
@@ -149,13 +149,47 @@ list_xcode_physical_destinations_tsv() {
   fi
   command+=( -scheme "$scheme" -showdestinations )
 
-  "${command[@]}" | sed -nE 's/.*\{ platform:iOS,([^}]*) id:([^,]+), name:([^}]+) \}.*/\3\t\2/p' | while IFS=$'\t' read -r name identifier; do
+  "${command[@]}"
+}
+
+list_xcode_physical_destinations_tsv() {
+  local root="$1"
+  local workspace="$2"
+  local project="$3"
+  local scheme="$4"
+
+  xcode_showdestinations "$root" "$workspace" "$project" "$scheme" | sed -nE 's/.*\{ platform:iOS,([^}]*) id:([^,]+), name:([^}]+) \}.*/\3\t\2/p' | while IFS=$'\t' read -r name identifier; do
     name="$(trim_device_value "$name")"
     identifier="$(trim_device_value "$identifier")"
     [[ -n "$name" && -n "$identifier" ]] || continue
     [[ "$identifier" == dvtdevice-* || "$identifier" == *placeholder* ]] && continue
     printf '%s\t%s\n' "$name" "$identifier"
   done
+}
+
+list_xcode_simulator_destinations_tsv() {
+  local root="$1"
+  local workspace="$2"
+  local project="$3"
+  local scheme="$4"
+
+  xcode_showdestinations "$root" "$workspace" "$project" "$scheme" | sed -nE 's/.*\{ platform:iOS Simulator,([^}]*) id:([^,]+), name:([^}]+) \}.*/\3\t\2/p' | while IFS=$'\t' read -r name identifier; do
+    name="$(trim_device_value "$name")"
+    identifier="$(trim_device_value "$identifier")"
+    [[ -n "$name" && -n "$identifier" ]] || continue
+    [[ "$identifier" == dvtdevice-* || "$identifier" == *placeholder* ]] && continue
+    printf '%s\t%s\n' "$name" "$identifier"
+  done
+}
+
+supports_xcode_platform() {
+  local root="$1"
+  local workspace="$2"
+  local project="$3"
+  local scheme="$4"
+  local platform_fragment="$5"
+
+  xcode_showdestinations "$root" "$workspace" "$project" "$scheme" | grep -q "platform:${platform_fragment}"
 }
 
 list_devicectl_devices_tsv() {
@@ -203,7 +237,7 @@ rank_device_state() {
   esac
 }
 
-select_xcode_destination() {
+select_connected_xcode_destination() {
   local root="$1"
   local workspace="$2"
   local project="$3"
@@ -212,6 +246,145 @@ select_xcode_destination() {
   local explicit_id="$6"
   local prefer_model="$7"
   clear_selected_device
+
+  if [[ -n "$explicit_id" && -z "$explicit_name" && -z "$prefer_model" ]]; then
+    set_selected_device "$explicit_id" "$explicit_id" 'explicit' '' 'using explicit device identifier'
+    return 0
+  fi
+
+  if [[ -z "$workspace" ]]; then
+    workspace="$(pick_workspace "$root" || true)"
+  fi
+  if [[ -z "$project" ]]; then
+    project="$(pick_project "$root" || true)"
+  fi
+  if [[ -z "$workspace" && -z "$project" ]]; then
+    SELECT_DEVICE_ERROR="No .xcworkspace or .xcodeproj found in $root"
+    return 1
+  fi
+  if [[ -z "$scheme" ]]; then
+    scheme="$(pick_scheme "$root" || true)"
+  fi
+  if [[ -z "$scheme" ]]; then
+    SELECT_DEVICE_ERROR='No shared scheme found'
+    return 1
+  fi
+
+  local destinations_file connected_file
+  destinations_file="$(mktemp)"
+  connected_file="$(mktemp)"
+
+  if ! list_xcode_physical_destinations_tsv "$root" "$workspace" "$project" "$scheme" > "$destinations_file"; then
+    rm -f "$destinations_file" "$connected_file"
+    SELECT_DEVICE_ERROR="xcodebuild -showdestinations failed for scheme '$scheme'"
+    return 1
+  fi
+
+  if [[ ! -s "$destinations_file" ]]; then
+    rm -f "$destinations_file" "$connected_file"
+    SELECT_DEVICE_ERROR="no physical iOS destinations available for scheme '$scheme'"
+    return 1
+  fi
+
+  if [[ -n "$explicit_name" ]]; then
+    local current_name current_id
+    while IFS=$'\t' read -r current_name current_id; do
+      current_name="$(trim_device_value "$current_name")"
+      current_id="$(trim_device_value "$current_id")"
+      if [[ "$current_name" == "$explicit_name" ]]; then
+        rm -f "$destinations_file" "$connected_file"
+        set_selected_device "$current_name" "$current_id" 'destination' '' 'matched explicit name'
+        return 0
+      fi
+    done < "$destinations_file"
+
+    rm -f "$destinations_file" "$connected_file"
+    SELECT_DEVICE_ERROR="name not found: $explicit_name"
+    return 1
+  fi
+
+  if ! list_devicectl_devices_tsv > "$connected_file"; then
+    rm -f "$destinations_file" "$connected_file"
+    SELECT_DEVICE_ERROR='xcrun devicectl list devices failed while looking for connected devices'
+    return 1
+  fi
+
+  local prefer_lower
+  prefer_lower="$(to_lower "$prefer_model")"
+
+  local preferred_connected_name=""
+  local preferred_connected_id=""
+  local preferred_connected_model=""
+  local first_connected_name=""
+  local first_connected_id=""
+  local first_connected_model=""
+
+  local current_name current_id current_device_name current_host current_device_id current_state current_model current_name_lower current_haystack
+  while IFS=$'\t' read -r current_name current_id; do
+    current_name="$(trim_device_value "$current_name")"
+    current_id="$(trim_device_value "$current_id")"
+    [[ -n "$current_name" && -n "$current_id" ]] || continue
+
+    while IFS=$'\t' read -r current_device_name current_host current_device_id current_state current_model; do
+      current_device_name="$(trim_device_value "$current_device_name")"
+      current_state="$(trim_device_value "$current_state")"
+      current_model="$(trim_device_value "$current_model")"
+      [[ "$current_state" == 'connected' ]] || continue
+      current_name_lower="$(to_lower "$current_name")"
+      if [[ "$current_name_lower" != "$(to_lower "$current_device_name")" ]]; then
+        continue
+      fi
+
+      [[ -n "$first_connected_id" ]] || {
+        first_connected_name="$current_name"
+        first_connected_id="$current_id"
+        first_connected_model="$current_model"
+      }
+
+      if [[ -n "$prefer_lower" ]]; then
+        current_haystack="$(to_lower "$current_name $current_model")"
+        if [[ "$current_haystack" == *"$prefer_lower"* ]]; then
+          preferred_connected_name="$current_name"
+          preferred_connected_id="$current_id"
+          preferred_connected_model="$current_model"
+          break 2
+        fi
+      fi
+
+      break
+    done < "$connected_file"
+  done < "$destinations_file"
+  rm -f "$destinations_file" "$connected_file"
+
+  if [[ -n "$preferred_connected_id" ]]; then
+    set_selected_device "$preferred_connected_name" "$preferred_connected_id" 'connected' "$preferred_connected_model" 'selected first connected xcodebuild destination matching preferred model'
+    return 0
+  fi
+
+  if [[ -n "$first_connected_id" ]]; then
+    set_selected_device "$first_connected_name" "$first_connected_id" 'connected' "$first_connected_model" 'selected first connected xcodebuild destination'
+    return 0
+  fi
+
+  SELECT_DEVICE_ERROR="no connected physical iOS destinations available for scheme '$scheme'"
+  return 1
+}
+
+select_xcode_destination() {
+  local root="$1"
+  local workspace="$2"
+  local project="$3"
+  local scheme="$4"
+  local explicit_name="$5"
+  local explicit_id="$6"
+  local prefer_model="$7"
+  local selection_mode="${8:-any-physical}"
+  clear_selected_device
+
+  if [[ "$selection_mode" == 'connected-only' ]]; then
+    select_connected_xcode_destination "$root" "$workspace" "$project" "$scheme" "$explicit_name" "$explicit_id" "$prefer_model"
+    return $?
+  fi
 
   if [[ -n "$explicit_id" && -z "$explicit_name" && -z "$prefer_model" ]]; then
     set_selected_device "$explicit_id" "$explicit_id" 'explicit' '' 'using explicit device identifier'

@@ -1,4 +1,4 @@
 interface:
   display_name: "macOS 菜单栏 Tuist 应用"
-  short_description: "仅限 Tuist 菜单栏工程"
-  default_prompt: "使用 $macos-menubar-tuist-app 构建、重构或审查基于 Tuist 的 macOS 菜单栏应用，并保持 `LSUIElement`、分层状态架构与脚本化运行校验。"
+  short_description: "仅限 Tuist 菜单栏 Xcode 工程实现、重构与验证"
+  default_prompt: "使用 $macos-menubar-tuist-app 构建、重构或审查基于 Tuist 的 macOS 菜单栏应用，并保持 `LSUIElement`、分层状态架构与脚本化运行校验；若任务修改了 Xcode 工程内容，收尾仍必须切到 $verify-ios-build，并在项目环境完成最终验证：优先 `.xcworkspace`，iOS 路径默认优先已连接真机，找不到连接中的真机时回退到 simulator。"

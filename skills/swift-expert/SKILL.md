@@ -1,6 +1,6 @@
 ---
 name: swift-expert
-description: Swift 进阶开发技能。仅用于复杂并发隔离、PAT/类型擦除、跨平台可用性策略和高阶 API 设计等 Swift 问题；不处理常规 iOS 业务实现、性能分析测试或一般 UI 重构。
+description: Swift 进阶开发技能。仅用于复杂并发隔离、PAT/类型擦除、跨平台可用性策略和高阶 API 设计等 Swift 问题；不处理常规 iOS 业务实现、性能分析测试或一般 UI 重构；若任务产出修改了 Apple Xcode 项目相关内容，收尾必须切到 `verify-ios-build` 并在项目环境完成最终验证。
 ---
 
 # Swift 进阶开发
@@ -27,6 +27,12 @@ description: Swift 进阶开发技能。仅用于复杂并发隔离、PAT/类型
 - `references/memory-performance.md`
 - `references/protocol-oriented.md`
 - `references/swiftui-patterns.md`
+
+## 强制收尾验证
+- 只要当前任务产出修改了 Apple Xcode 项目相关内容（代码、测试、资源、工程文件、构建脚本、plist / entitlements / xcconfig / scheme 或项目内环境配置），最终必须切到 `verify-ios-build`。
+- 最终门禁必须在目标项目根目录的项目环境执行；沙箱内的构建结果不能作为最终验收结论。
+- 对 iOS 项目，`verify-ios-build` 必须优先 `.xcworkspace`（当 `.xcworkspace` 与 `.xcodeproj` 同时存在时），并默认优先已连接真机；找不到连接中的真机时再回退到 simulator。
+- 在 `verify-ios-build` 成功前，不得把任务表述为“已完成”；只能明确说明“实现已完成，但验证未完成/失败，任务未完成”。
 
 ## 与其他技能的关系
 - 常规 iOS feature 业务实现优先使用 `ios-feature-implementation`。

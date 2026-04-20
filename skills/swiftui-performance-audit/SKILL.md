@@ -1,6 +1,6 @@
 ---
 name: swiftui-performance-audit
-description: 旧名兼容 skill。仅用于兼容历史 prompt 中的 `swiftui-performance-audit` 名称；新的 UIKit / SwiftUI / 启动 / 内存 / `xctrace` / 性能测试任务统一使用 `ios-performance`。
+description: 旧名兼容 skill。仅用于兼容历史 prompt 中的 `swiftui-performance-audit` 名称；新的 UIKit / SwiftUI / 启动 / 内存 / `xctrace` / 性能测试任务统一使用 `ios-performance`；若兼容路径最终修改了 Apple Xcode 项目相关内容，收尾仍必须切到 `verify-ios-build` 并在项目环境完成最终验证。
 ---
 
 # SwiftUI 性能审计（旧名兼容）
@@ -18,6 +18,12 @@ description: 旧名兼容 skill。仅用于兼容历史 prompt 中的 `swiftui-p
 1. 说明该名称已被 `ios-performance` 取代。
 2. 如果任务仍然是 SwiftUI 性能问题，用 `ios-performance` 的流程继续处理。
 3. 仅在解释旧名来源或兼容旧文档时保留本 skill。
+
+## 强制收尾验证
+- 如果兼容路径最终修改了 Apple Xcode 项目相关内容（代码、测试、资源、工程文件、构建脚本、plist / entitlements / xcconfig / scheme 或项目内环境配置），最终必须切到 `verify-ios-build`。
+- 最终门禁必须在目标项目根目录的项目环境执行；沙箱内的构建结果不能作为最终验收结论。
+- 对 iOS 项目，`verify-ios-build` 必须优先 `.xcworkspace`（当 `.xcworkspace` 与 `.xcodeproj` 同时存在时），并默认优先已连接真机；找不到连接中的真机时再回退到 simulator。
+- 在 `verify-ios-build` 成功前，不得把任务表述为“已完成”；只能明确说明“实现已完成，但验证未完成/失败，任务未完成”。
 
 ## 与其他技能的关系
 - 新的性能分析、benchmark、`measure(metrics:)`、`xctrace`、Instruments 任务统一使用 `ios-performance`。

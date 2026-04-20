@@ -1,6 +1,6 @@
 ---
 name: sdk-architecture
-description: SDK/Framework 架构设计技能。只在设计 SDK 模块边界、对外 API、入口类、Configuration、分发策略或可测试架构时使用；不要用于普通应用页面开发、一般 SwiftUI 实现或一次性构建校验。
+description: SDK/Framework 架构设计技能。只在设计 SDK 模块边界、对外 API、入口类、Configuration、分发策略或可测试架构时使用；不要用于普通应用页面开发、一般 SwiftUI 实现或一次性构建校验；若任务产出修改了 Apple Xcode 项目相关内容，收尾必须切到 `verify-ios-build` 并在项目环境完成最终验证。
 ---
 
 # SDK 架构设计
@@ -34,6 +34,12 @@ description: SDK/Framework 架构设计技能。只在设计 SDK 模块边界、
   - 初始化、配置、日志、错误和关闭流程如何设计。
   - 如何做测试注入、版本演进和分发。
 - 需要示例时，优先给入口类、`Configuration`、模块边界和依赖方向示意，而不是完整业务实现。
+
+## 强制收尾验证
+- 只要当前任务产出修改了 Apple Xcode 项目相关内容（代码、测试、资源、工程文件、构建脚本、plist / entitlements / xcconfig / scheme 或项目内环境配置），最终必须切到 `verify-ios-build`。
+- 最终门禁必须在目标项目根目录的项目环境执行；沙箱内的构建结果不能作为最终验收结论。
+- 对 iOS 项目，`verify-ios-build` 必须优先 `.xcworkspace`（当 `.xcworkspace` 与 `.xcodeproj` 同时存在时），并默认优先已连接真机；找不到连接中的真机时再回退到 simulator。
+- 在 `verify-ios-build` 成功前，不得把任务表述为“已完成”；只能明确说明“实现已完成，但验证未完成/失败，任务未完成”。
 
 ## 与其他技能的关系
 - 如果只是普通应用功能开发，切换到 `ios-feature-implementation`、`swiftui-feature-implementation` 或 `uikit-feature-implementation`。

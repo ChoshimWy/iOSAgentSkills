@@ -1,4 +1,4 @@
 interface:
   display_name: "iOS Feature 实现"
-  short_description: "通用 iOS feature 业务实现与导航接线"
-  default_prompt: "使用 $ios-feature-implementation 处理与具体 UI 技术栈无关的 iOS 业务层代码：service、repository、use case、view model、依赖注入与导航接线。"
+  short_description: "通用 iOS feature 业务实现、导航接线与强制收尾门禁"
+  default_prompt: "使用 $ios-feature-implementation 处理与具体 UI 技术栈无关的 iOS 业务层代码：service、repository、use case、view model、依赖注入与导航接线；若任务产出修改了 Apple Xcode 项目相关内容，收尾必须切到 $verify-ios-build，并在目标项目的项目环境完成最终验证：iOS 项目若同时存在 `.xcworkspace` 与 `.xcodeproj` 必须优先 `.xcworkspace`，默认优先已连接真机，找不到连接中的真机时再回退到 simulator。"
