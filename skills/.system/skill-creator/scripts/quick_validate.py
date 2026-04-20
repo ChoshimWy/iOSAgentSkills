@@ -7,9 +7,59 @@ import re
 import sys
 from pathlib import Path
 
-import yaml
-
 MAX_SKILL_NAME_LENGTH = 64
+
+
+def parse_frontmatter(frontmatter_text):
+    top_level = {}
+    current_multiline_key = None
+    multiline_indent = None
+    multiline_lines = []
+
+    def flush_multiline():
+        nonlocal current_multiline_key, multiline_indent, multiline_lines
+        if current_multiline_key is None:
+            return
+        top_level[current_multiline_key] = "\n".join(multiline_lines).rstrip()
+        current_multiline_key = None
+        multiline_indent = None
+        multiline_lines = []
+
+    for raw_line in frontmatter_text.splitlines():
+        if current_multiline_key is not None:
+            if raw_line.strip() and (len(raw_line) - len(raw_line.lstrip(" "))) >= multiline_indent:
+                multiline_lines.append(raw_line[multiline_indent:])
+                continue
+            flush_multiline()
+
+        stripped = raw_line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+
+        if raw_line.startswith((" ", "\t", "-")):
+            # Nested / list content belongs to the last parsed top-level key.
+            continue
+
+        match = re.match(r"^([A-Za-z0-9_-]+):\s*(.*)$", raw_line)
+        if not match:
+            continue
+
+        key = match.group(1)
+        value = match.group(2).strip()
+        if value in {"|", ">"}:
+            current_multiline_key = key
+            multiline_indent = 2
+            multiline_lines = []
+            continue
+
+        if not value:
+            top_level[key] = {}
+            continue
+
+        top_level[key] = value.strip().strip('"').strip("'")
+
+    flush_multiline()
+    return top_level
 
 
 def validate_skill(skill_path):
@@ -30,12 +80,9 @@ def validate_skill(skill_path):
 
     frontmatter_text = match.group(1)
 
-    try:
-        frontmatter = yaml.safe_load(frontmatter_text)
-        if not isinstance(frontmatter, dict):
-            return False, "Frontmatter must be a YAML dictionary"
-    except yaml.YAMLError as e:
-        return False, f"Invalid YAML in frontmatter: {e}"
+    frontmatter = parse_frontmatter(frontmatter_text)
+    if not isinstance(frontmatter, dict):
+        return False, "Frontmatter must be a YAML dictionary"
 
     allowed_properties = {"name", "description", "license", "allowed-tools", "metadata"}
 
