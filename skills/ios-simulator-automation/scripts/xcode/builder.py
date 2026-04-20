@@ -66,7 +66,7 @@ class BuildRunner:
         try:
             result = subprocess.run(cmd, capture_output=True, text=True, check=True)
 
-            # Parse schemes from output
+            schemes: list[str] = []
             in_schemes_section = False
             for line in result.stdout.split("\n"):
                 line = line.strip()
@@ -76,8 +76,33 @@ class BuildRunner:
                     continue
 
                 if in_schemes_section and line and not line.startswith("Build"):
-                    # First scheme in list
-                    return line
+                    schemes.append(line)
+
+            if not schemes:
+                return None
+
+            def is_tests_preferred_scheme(name: str) -> bool:
+                return bool(
+                    re.search(r"(?:^|[_-])UITESTS?$", name, re.IGNORECASE)
+                    or re.search(r"(?:^|[_-])TESTS?$", name, re.IGNORECASE)
+                    or re.search(r"(?:Tests|UITests)$", name)
+                )
+
+            for scheme in schemes:
+                if is_tests_preferred_scheme(scheme):
+                    return scheme
+
+            for scheme in schemes:
+                if not re.search(r"(Tests|UITests)$", scheme) and not re.search(
+                    r"(^|[_-])(DEV|TEST|UAT|STAGING)$", scheme
+                ):
+                    return scheme
+
+            for scheme in schemes:
+                if not re.search(r"(Tests|UITests)$", scheme):
+                    return scheme
+
+            return schemes[0]
 
         except subprocess.CalledProcessError as e:
             print(f"Error auto-detecting scheme: {e}", file=sys.stderr)

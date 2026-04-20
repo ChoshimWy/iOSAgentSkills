@@ -109,6 +109,13 @@ pick_scheme() {
 
   local scheme
   for scheme in "${schemes[@]}"; do
+    if [[ "$scheme" =~ (Tests|UITests)$ ]] || [[ "$scheme" =~ (^|[_-])UITESTS?$ ]] || [[ "$scheme" =~ (^|[_-])TESTS?$ ]]; then
+      printf '%s\n' "$scheme"
+      return 0
+    fi
+  done
+
+  for scheme in "${schemes[@]}"; do
     if [[ ! "$scheme" =~ (Tests|UITests)$ ]] && [[ ! "$scheme" =~ (^|[_-])(DEV|TEST|UAT|STAGING)$ ]]; then
       printf '%s\n' "$scheme"
       return 0

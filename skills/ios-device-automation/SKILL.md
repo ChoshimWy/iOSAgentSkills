@@ -36,6 +36,12 @@ description: iOS 真机自动化技能。只在连接或已配对的 physical de
 4. 再使用用户显式指定的设备名称或 identifier
 5. `unavailable` 仅作为诊断对象，不作为默认运行目标
 
+## 默认 scheme 选择策略
+1. 如果用户或 `.codex/xcodebuild.env` 显式指定了 scheme，直接复用
+2. 如果未显式指定且仓库存在带测试标记的 scheme，默认优先选择这类 scheme（例如 `*Tests`、`*UITests`、`*_TEST`）
+3. 如果不存在带测试标记的 scheme，再回退到其他共享 scheme
+4. 如果同一任务后续还要执行 `verify-ios-build`，最终门禁默认复用这次 build / test 的 workspace / scheme / destination 基线；不要无说明切换
+
 ## 执行约定
 - 真机构建默认用 `xcodebuild -destination 'id=<destination-id>'`，不替代签名配置；签名问题交给 `xcode-build`。
 - 安装、启动、进程查询与诊断使用 `devicectl` 的 device identifier；不要把 `xcodebuild` destination id 与 `devicectl` device identifier 混用。
@@ -50,6 +56,8 @@ description: iOS 真机自动化技能。只在连接或已配对的 physical de
 ## 强制收尾验证
 - 只要当前任务产出修改了 Apple Xcode 项目相关内容（代码、测试、资源、工程文件、构建脚本、plist / entitlements / xcconfig / scheme 或项目内环境配置），最终必须切到 `verify-ios-build`。
 - 最终门禁必须在目标项目根目录的项目环境执行；沙箱内的构建结果不能作为最终验收结论。
+- 如果同一任务里已经先跑过定向测试或真机构建，`verify-ios-build` 默认复用同一套 workspace / scheme / destination 基线；不要无说明切到另一个 scheme。
+- 如果用户没有显式指定 scheme，定向测试与最终门禁默认优先选择带测试标记的 scheme（例如 `*Tests`、`*UITests`、`*_TEST`）。
 - 对 iOS 项目，`verify-ios-build` 必须优先 `.xcworkspace`（当 `.xcworkspace` 与 `.xcodeproj` 同时存在时），并默认优先已连接真机；找不到连接中的真机时再回退到 simulator。
 - 在 `verify-ios-build` 成功前，不得把任务表述为“已完成”；只能明确说明“实现已完成，但验证未完成/失败，任务未完成”。
 

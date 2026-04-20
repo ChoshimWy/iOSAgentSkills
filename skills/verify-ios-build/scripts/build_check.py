@@ -181,6 +181,17 @@ def pick_scheme(root: Path, env: dict[str, str]) -> str:
     if not schemes:
         raise RuntimeError("No shared scheme found")
 
+    def is_tests_preferred_scheme(name: str) -> bool:
+        return bool(
+            re.search(r"(?:^|[_-])UITESTS?$", name, re.IGNORECASE)
+            or re.search(r"(?:^|[_-])TESTS?$", name, re.IGNORECASE)
+            or re.search(r"(?:Tests|UITests)$", name)
+        )
+
+    for scheme in schemes:
+        if is_tests_preferred_scheme(scheme):
+            return scheme
+
     for scheme in schemes:
         if not re.search(r"(Tests|UITests)$", scheme) and not re.search(
             r"(^|[_-])(DEV|TEST|UAT|STAGING)$", scheme

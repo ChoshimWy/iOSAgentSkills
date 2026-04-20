@@ -1,4 +1,4 @@
 interface:
   display_name: "iOS 测试编写"
   short_description: "补齐单元测试、UI 测试与测试替身设计并保留门禁要求"
-  default_prompt: "使用 $testing 为当前 iOS / macOS 代码编写或补齐单元测试、UI 测试与测试替身；如果只是最后验证、构建检查或确认还能编译，请改用 $verify-ios-build；若任务产出修改了 Apple Xcode 项目相关内容，收尾必须切到 $verify-ios-build，并在目标项目的项目环境完成最终验证：iOS 项目若同时存在 `.xcworkspace` 与 `.xcodeproj` 必须优先 `.xcworkspace`，默认优先已连接真机，找不到连接中的真机时再回退到 simulator。"
+  default_prompt: "使用 $testing 为当前 iOS / macOS 代码编写或补齐单元测试、UI 测试与测试替身；若需要实际执行定向测试而用户未显式指定 scheme，默认优先带测试标记的 scheme（例如 `*Tests`、`*UITests`、`*_TEST`）；如果同一任务后续还要执行 $verify-ios-build，最终门禁默认在目标项目的项目环境复用同一套 workspace / scheme / destination 基线，并继续优先 `.xcworkspace`。"

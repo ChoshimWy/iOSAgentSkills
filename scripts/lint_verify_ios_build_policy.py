@@ -44,6 +44,8 @@ def main() -> int:
             "强制 `verify-ios-build` 门禁",
             "目标项目环境",
             "如果同时存在 `.xcworkspace` 和 `.xcodeproj`，验证必须使用 `.xcworkspace`。",
+            "最终门禁默认复用同一套 workspace / scheme / destination 基线",
+            "默认优先选择带测试标记的 scheme",
             "已连接真机",
             "在 `verify-ios-build` 成功之前，任务都不算完成",
         ],
@@ -97,10 +99,23 @@ def main() -> int:
                     "$verify-ios-build",
                     "项目环境",
                     ".xcworkspace",
-                    "已连接真机",
                 ],
                 failures,
             )
+
+    for targeted_skill in (
+        "testing",
+        "ios-device-automation",
+        "ios-simulator-automation",
+    ):
+        require_contains(
+            ROOT / "skills" / targeted_skill / "SKILL.md",
+            [
+                "workspace / scheme / destination 基线",
+                "带测试标记的 scheme",
+            ],
+            failures,
+        )
 
     require_contains(
         ROOT / "skills" / "verify-ios-build" / "SKILL.md",
@@ -108,6 +123,8 @@ def main() -> int:
             "强制收尾验证技能",
             "项目环境",
             "sandbox_permissions=\\\"require_escalated\\\"",
+            "默认复用同一套 workspace / scheme / destination 基线",
+            "默认优先选择带测试标记的 scheme",
             ".xcworkspace",
             "已连接真机",
             "任务未完成",
@@ -119,6 +136,8 @@ def main() -> int:
         ROOT / "skills" / "verify-ios-build" / "references" / "override-config.md",
         [
             "项目环境",
+            "带测试标记的 scheme",
+            "复用同一套 workspace / scheme / destination 基线",
             "已连接真机",
             "generic/platform=iOS Simulator",
             "宿主机 `xcodebuild build`",
@@ -139,6 +158,7 @@ def main() -> int:
     require_contains(
         ROOT / "skills" / "verify-ios-build" / "scripts" / "build_check.py",
         [
+            "is_tests_preferred_scheme",
             'validation_platform=os.environ.get("XCODE_VALIDATION_PLATFORM")',
             'if config.validation_platform == "macos":',
             'default host build (no explicit destination)',
@@ -148,6 +168,7 @@ def main() -> int:
     require_contains(
         ROOT / "skills" / "ios-device-automation" / "scripts" / "device_helpers.sh",
         [
+            "(^|[_-])TESTS?$",
             "select_connected_xcode_destination",
             "connected-only",
             "selected first connected xcodebuild destination",
@@ -166,6 +187,21 @@ def main() -> int:
                 ".xcworkspace",
                 "已连接真机",
                 "simulator",
+            ],
+            failures,
+        )
+
+    for targeted_openai in (
+        ROOT / "skills" / "testing" / "agents" / "openai.yaml",
+        ROOT / "skills" / "ios-device-automation" / "agents" / "openai.yaml",
+        ROOT / "skills" / "ios-simulator-automation" / "agents" / "openai.yaml",
+    ):
+        require_contains(
+            targeted_openai,
+            [
+                "$verify-ios-build",
+                "scheme",
+                "基线",
             ],
             failures,
         )
