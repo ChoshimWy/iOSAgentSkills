@@ -4,6 +4,11 @@
 
 ## 目录结构
 
+### Shared Config
+- `AGENTS.md` —— 团队共享规则与长期稳定偏好单一来源
+- `config/codex.shared.toml` —— 可版本化、可跨设备复用的 Codex 共享默认配置
+- `CLAUDE.md` —— Claude 入口薄包装，导入 `AGENTS.md`
+
 ### Core Implementation
 - `ios-feature-implementation/` —— 通用 iOS feature 业务实现、service / view model / 导航接线
 - `swiftui-feature-implementation/` —— 在既定模式下落地普通 SwiftUI 页面与组件
@@ -51,7 +56,7 @@
 1. **推荐：一键接入本地 Agent 配置**
    - 任意设备 clone 仓库后，优先执行：
    ```bash
-   bash scripts/install-local-agent-config.sh
+   bash install-local-agent-config.sh
    ```
    - 脚本会自动使用**当前 clone 的仓库路径**生成本地入口，不依赖固定仓库位置，也不需要你手工改路径。
    - 脚本会默认同时配置 Codex 与 Claude：
@@ -59,12 +64,15 @@
      - `~/.codex/skills`
      - `~/.claude/CLAUDE.md`
      - `~/.claude/skills`
-   - 同时会自动修复 `~/.codex/config.toml` 中的 `model_instructions_file` 指向 `~/.codex/AGENTS.md`。
+   - 同时会自动同步 `config/codex.shared.toml` 到 `~/.codex/config.toml`：
+     - `model_instructions_file` 指向 `~/.codex/AGENTS.md`
+     - 写入仓库托管的共享默认项，例如 model / reasoning / features / memories / MCP / plugins / tui
+     - 保留本机未托管配置，例如项目 trust、认证、历史、缓存、memory 文件与额外本地自定义项
    - 如果本地已有冲突文件、目录或错误链接，脚本会先备份到：
      - `~/.agent-skills-backups/iOSAgentSkills/<timestamp>/`
    - 如需先查看将要发生的变更，可执行：
    ```bash
-   bash scripts/install-local-agent-config.sh --dry-run
+   bash install-local-agent-config.sh --dry-run
    ```
    - 正式执行后，脚本会立即做一轮安装后自检；只有输出 `Verification: OK` 才表示当前设备已经可以直接使用这套配置。
 
@@ -99,6 +107,8 @@
 
 - 本仓库以根目录 `AGENTS.md` 作为**单一规则源**。
 - `AGENTS.md` 同时承载团队共享规则与当前默认行为约定；以后修改规则时，只编辑这一份文件。
+- 其中“默认回复语言”和“长期稳定偏好”属于适合跨 session 复用的稳定约定；按 OpenAI 官方建议，必须长期生效的要求继续放在 `AGENTS.md`，memory 只作为辅助 recall。
+- Codex 的**可共享默认配置**统一维护在 `config/codex.shared.toml`；它只放适合跨设备同步的内容，不放本机状态。
 - Codex 全局入口建议保持为 `~/.codex/AGENTS.md`，并通过本地软连接指向本仓库的 `AGENTS.md`，这样无需改动既有 `config.toml` 入口。
 - Claude 项目入口使用仓库根目录 `CLAUDE.md`，其内容仅导入 `@AGENTS.md`，避免两份正文漂移。
 - Claude 全局入口使用 `~/.claude/CLAUDE.md`，并通过绝对路径导入本仓库 `AGENTS.md`，从而让全局会话也继承同一份规则。
@@ -106,8 +116,28 @@
   - 不要分别手改 `~/.codex/AGENTS.md` 与 `~/.claude/CLAUDE.md` 的正文；
   - `CLAUDE.md` 只做薄包装导入；
   - 规则正文统一维护在仓库 `AGENTS.md`。
-  - 任意设备 clone 后优先运行 `bash scripts/install-local-agent-config.sh`，不要手工重复拼装本地入口。
+  - Codex 共享默认项统一改 `config/codex.shared.toml`，然后重新运行 `bash install-local-agent-config.sh` 同步到本机。
+  - 任意设备 clone 后优先运行 `bash install-local-agent-config.sh`，不要手工重复拼装本地入口。
   - 脚本会把本地入口绑定到**当前 clone 的仓库路径**，因此换目录重新 clone 后，应从新的仓库目录再执行一次脚本。
+
+## Codex 共享配置边界
+
+- **应放 Git 的共享项**
+  - `AGENTS.md`
+  - `skills/`
+  - `config/codex.shared.toml`
+  - 安装脚本与校验脚本
+- **应保留在每台机器本地的项**
+  - `~/.codex/auth.json`
+  - `~/.codex/history.jsonl`
+  - `~/.codex/sessions/`
+  - `~/.codex/log*`、`~/.codex/cache/`、`~/.codex/tmp/`
+  - `~/.codex/memories/`
+  - `~/.codex/config.toml` 中的本机路径、项目 trust 和其他设备特有项
+- 当前安装脚本采用“**共享默认 + 保留本地**”策略：
+  - 仓库托管的共享键会被同步覆盖
+  - 本机未托管键会被保留
+  - `mcp_servers` / `plugins` 中，仓库已声明的条目视为托管条目；仓库未声明的本地条目保持不动
 
 ## Git 提交门禁
 

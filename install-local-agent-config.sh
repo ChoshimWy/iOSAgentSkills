@@ -3,14 +3,16 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: bash scripts/install-local-agent-config.sh [--dry-run]
+Usage: bash install-local-agent-config.sh [--dry-run]
 
 Configure local Codex and Claude entrypoints to use this cloned iOSAgentSkills repo:
   - ~/.codex/AGENTS.md -> <repo>/AGENTS.md
   - ~/.codex/skills -> <repo>/skills
   - ~/.claude/CLAUDE.md -> @<repo>/AGENTS.md
   - ~/.claude/skills -> <repo>/skills
+  - ~/.codex/config.toml -> merge repo config/codex.shared.toml into local shared defaults
   - ~/.codex/config.toml -> ensure model_instructions_file points to ~/.codex/AGENTS.md
+  - ~/.codex/config.toml -> keep Codex memories enabled without overwriting local-only state
 
 When conflicting local files or directories already exist, the script backs them up to:
   ~/.agent-skills-backups/iOSAgentSkills/<timestamp>/
@@ -37,9 +39,11 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-REPO_ROOT="$(cd -P "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
+REPO_ROOT="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 REPO_AGENTS="$REPO_ROOT/AGENTS.md"
 REPO_SKILLS="$REPO_ROOT/skills"
+REPO_CODEX_SHARED_CONFIG="$REPO_ROOT/config/codex.shared.toml"
+CODEX_SYNC_SCRIPT="$REPO_ROOT/scripts/sync_codex_shared_config.py"
 
 HOME_DIR="${HOME:?HOME is required}"
 CODEX_DIR="$HOME_DIR/.codex"
@@ -206,73 +210,44 @@ ensure_text_file() {
 build_config_candidate() {
   local config_path="$1"
   local target_agents_path="$2"
-  local input_exists="$3"
+  local existing_config_path=''
 
-  python3 - "$config_path" "$target_agents_path" "$input_exists" <<'PY'
-from pathlib import Path
-import sys
+  if [[ -f "$config_path" && ! -L "$config_path" ]]; then
+    existing_config_path="$config_path"
+  fi
 
-config_path = Path(sys.argv[1])
-agents_path = sys.argv[2]
-input_exists = sys.argv[3] == "1"
-target_line = f'model_instructions_file = "{agents_path}"'
-
-text = config_path.read_text() if input_exists else ""
-if not text:
-    sys.stdout.write(target_line + "\n")
-    raise SystemExit
-
-lines = text.splitlines(keepends=True)
-new_lines = []
-found = False
-
-for line in lines:
-    stripped = line.lstrip()
-    if stripped.startswith("model_instructions_file") and "=" in stripped:
-        if not found:
-            new_lines.append(target_line + "\n")
-            found = True
-        continue
-    new_lines.append(line)
-
-if not found:
-    if new_lines and not new_lines[-1].endswith("\n"):
-        new_lines[-1] = new_lines[-1] + "\n"
-    new_lines.append(target_line + "\n")
-
-sys.stdout.write("".join(new_lines))
-PY
+  python3 "$CODEX_SYNC_SCRIPT" \
+    --shared-config "$REPO_CODEX_SHARED_CONFIG" \
+    --existing-config "$existing_config_path" \
+    --agents-path "$target_agents_path"
 }
 
 ensure_codex_config() {
   local action='created'
-  local has_regular_file='0'
   local candidate_file
 
   ensure_directory "$CODEX_DIR"
 
-  if [[ -f "$CODEX_CONFIG" && ! -L "$CODEX_CONFIG" ]]; then
-    has_regular_file='1'
-  elif [[ -e "$CODEX_CONFIG" || -L "$CODEX_CONFIG" ]]; then
+  if [[ ! -f "$CODEX_CONFIG" && ( -e "$CODEX_CONFIG" || -L "$CODEX_CONFIG" ) ]]; then
     backup_existing_path "$CODEX_CONFIG"
   fi
 
   candidate_file="$(mktemp)"
-  build_config_candidate "$CODEX_CONFIG" "$CODEX_AGENTS" "$has_regular_file" > "$candidate_file"
+  build_config_candidate "$CODEX_CONFIG" "$CODEX_AGENTS" > "$candidate_file"
 
-  if [[ "$has_regular_file" == '1' ]] && cmp -s "$CODEX_CONFIG" "$candidate_file"; then
+  if [[ -f "$CODEX_CONFIG" && ! -L "$CODEX_CONFIG" ]] && cmp -s "$CODEX_CONFIG" "$candidate_file"; then
     rm -f "$candidate_file"
     log "unchanged: ~/.codex/config.toml"
     record_change unchanged
     return 0
   fi
 
-  if [[ "$has_regular_file" == '1' ]]; then
+  if [[ -f "$CODEX_CONFIG" && ! -L "$CODEX_CONFIG" ]]; then
     backup_existing_path "$CODEX_CONFIG"
     action='updated'
   fi
 
-  log "$action: ~/.codex/config.toml (model_instructions_file)"
+  log "$action: ~/.codex/config.toml (shared defaults + local preservation)"
   if [[ "$DRY_RUN" == '0' ]]; then
     cat "$candidate_file" > "$CODEX_CONFIG"
   fi
@@ -290,7 +265,71 @@ if [[ ! -d "$REPO_SKILLS" ]]; then
   exit 1
 fi
 
+if [[ ! -f "$REPO_CODEX_SHARED_CONFIG" ]]; then
+  echo "Error: missing shared Codex config: $REPO_CODEX_SHARED_CONFIG" >&2
+  exit 1
+fi
+
+if [[ ! -f "$CODEX_SYNC_SCRIPT" ]]; then
+  echo "Error: missing Codex config sync script: $CODEX_SYNC_SCRIPT" >&2
+  exit 1
+fi
+
 CLAUDE_IMPORT_LINE="@${REPO_AGENTS}"
+
+verify_codex_config() {
+  python3 - "$CODEX_CONFIG" "$REPO_CODEX_SHARED_CONFIG" "$CODEX_AGENTS" <<'PY'
+from pathlib import Path
+import sys
+import tomllib
+
+config_path = Path(sys.argv[1])
+shared_path = Path(sys.argv[2])
+agents_path = sys.argv[3]
+
+config = tomllib.loads(config_path.read_text())
+shared = tomllib.loads(shared_path.read_text())
+
+errors = []
+
+if config.get("model_instructions_file") != agents_path:
+    errors.append("model_instructions_file does not point to ~/.codex/AGENTS.md")
+
+def lookup(mapping, path):
+    value = mapping
+    for key in path:
+        if not isinstance(value, dict) or key not in value:
+            return None
+        value = value[key]
+    return value
+
+def compare_shared(shared_value, actual_value, path):
+    if isinstance(shared_value, dict):
+        if not isinstance(actual_value, dict):
+            errors.append("missing table: " + ".".join(path))
+            return
+
+        if path and path[0] in {"mcp_servers", "plugins"} and len(path) == 2:
+            if actual_value != shared_value:
+                errors.append("managed subtree mismatch: " + ".".join(path))
+            return
+
+        for key, child in shared_value.items():
+            compare_shared(child, actual_value.get(key), path + [key])
+        return
+
+    if actual_value != shared_value:
+        errors.append("managed value mismatch: " + ".".join(path))
+
+for key, value in shared.items():
+    compare_shared(value, config.get(key), [key])
+
+if errors:
+    for message in errors:
+        print(message, file=sys.stderr)
+    raise SystemExit(1)
+PY
+}
 
 verify_installation() {
   [[ -L "$CODEX_AGENTS" ]] || fail "~/.codex/AGENTS.md is not a symlink"
@@ -306,7 +345,7 @@ verify_installation() {
   [[ "$(cat "$CLAUDE_MD")" == "$CLAUDE_IMPORT_LINE" ]] || fail "~/.claude/CLAUDE.md does not import this cloned repo"
 
   [[ -f "$CODEX_CONFIG" && ! -L "$CODEX_CONFIG" ]] || fail "~/.codex/config.toml is missing or not a regular file"
-  grep -Fq "model_instructions_file = \"$CODEX_AGENTS\"" "$CODEX_CONFIG" || fail "~/.codex/config.toml does not point model_instructions_file to ~/.codex/AGENTS.md"
+  verify_codex_config || fail "~/.codex/config.toml does not match repo-managed Codex shared config"
 }
 
 ensure_symlink "$CODEX_AGENTS" "$REPO_AGENTS" "~/.codex/AGENTS.md"
