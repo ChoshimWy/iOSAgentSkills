@@ -48,7 +48,27 @@
 
 ## 使用方法
 
-1. **复制技能目录**
+1. **推荐：一键接入本地 Agent 配置**
+   - 任意设备 clone 仓库后，优先执行：
+   ```bash
+   bash scripts/install-local-agent-config.sh
+   ```
+   - 脚本会自动使用**当前 clone 的仓库路径**生成本地入口，不依赖固定仓库位置，也不需要你手工改路径。
+   - 脚本会默认同时配置 Codex 与 Claude：
+     - `~/.codex/AGENTS.md`
+     - `~/.codex/skills`
+     - `~/.claude/CLAUDE.md`
+     - `~/.claude/skills`
+   - 同时会自动修复 `~/.codex/config.toml` 中的 `model_instructions_file` 指向 `~/.codex/AGENTS.md`。
+   - 如果本地已有冲突文件、目录或错误链接，脚本会先备份到：
+     - `~/.agent-skills-backups/iOSAgentSkills/<timestamp>/`
+   - 如需先查看将要发生的变更，可执行：
+   ```bash
+   bash scripts/install-local-agent-config.sh --dry-run
+   ```
+   - 正式执行后，脚本会立即做一轮安装后自检；只有输出 `Verification: OK` 才表示当前设备已经可以直接使用这套配置。
+
+2. **手工方式（备选）**
    - 对于 Claude，请将本目录复制到 `.claude/skills` 下。
    - 对于 Codex，请将本目录复制到 `.codex/skills` 下。
    - 对应 VS Code Copilot 会自动加载 `.claude/skills` 下的技能目录。
@@ -57,10 +77,10 @@
    ln -s iOSAgentSkills/skills .claude/skills
    ```
 
-2. **Agent 自动加载**
+3. **Agent 自动加载**
    - Agent 会自动识别并加载该目录下的所有技能，无需额外配置。
 
-3. **技能调用**
+4. **技能调用**
    - 在对话中描述需求，Agent 会根据意图自动调用合适的技能。
    - 例如：
      - “帮我 review 下面这段 Swift 代码”
@@ -70,10 +90,24 @@
      - “帮我把这份合同模板改成新的 .docx”
      - “帮我读取这个 .pptx 模板并改成新的 deck”
 
-4. **技能扩展**
+5. **技能扩展**
    - 新增技能：在本目录下新建子文件夹，包含 `SKILL.md` 及相关参考文档。
    - 参考现有技能目录结构与文档规范。
    - 所有新增 `SKILL.md` 末尾都必须包含 sentinel 规则。
+
+## 规则主文件架构
+
+- 本仓库以根目录 `AGENTS.md` 作为**单一规则源**。
+- `AGENTS.md` 同时承载团队共享规则与当前默认行为约定；以后修改规则时，只编辑这一份文件。
+- Codex 全局入口建议保持为 `~/.codex/AGENTS.md`，并通过本地软连接指向本仓库的 `AGENTS.md`，这样无需改动既有 `config.toml` 入口。
+- Claude 项目入口使用仓库根目录 `CLAUDE.md`，其内容仅导入 `@AGENTS.md`，避免两份正文漂移。
+- Claude 全局入口使用 `~/.claude/CLAUDE.md`，并通过绝对路径导入本仓库 `AGENTS.md`，从而让全局会话也继承同一份规则。
+- 维护原则：
+  - 不要分别手改 `~/.codex/AGENTS.md` 与 `~/.claude/CLAUDE.md` 的正文；
+  - `CLAUDE.md` 只做薄包装导入；
+  - 规则正文统一维护在仓库 `AGENTS.md`。
+  - 任意设备 clone 后优先运行 `bash scripts/install-local-agent-config.sh`，不要手工重复拼装本地入口。
+  - 脚本会把本地入口绑定到**当前 clone 的仓库路径**，因此换目录重新 clone 后，应从新的仓库目录再执行一次脚本。
 
 ## Git 提交门禁
 
@@ -89,7 +123,25 @@
 ./scripts/install-git-hooks.sh
 ```
 
+- `install-git-hooks.sh` 与 `install-local-agent-config.sh` 是两个独立步骤：
+  - 前者只负责 Git hooks
+  - 后者只负责本地 Codex / Claude 接入
+
 - 安装后，类似 `fix: persist group fixture state for 3D virtual fixture sync` 这类不合规消息会被直接拒绝。
+
+## 强制 `verify-ios-build` 收尾门禁
+
+- 只要任务产出修改了 Apple Xcode 项目相关内容，最终必须切到 `verify-ios-build` 做收尾验证。
+- “Apple Xcode 项目相关内容”包括：代码、测试、资源、`.xcodeproj` / `.xcworkspace` / `.pbxproj`、`xcconfig`、scheme、`Info.plist`、entitlements、构建脚本，以及项目内 `.codex/xcodebuild.env` 一类环境配置。
+- 最终门禁必须在**目标项目根目录的项目环境**执行，不能把沙箱内构建结果当成最终验收。
+- 如果同时存在 `.xcworkspace` 与 `.xcodeproj`，验证必须优先 `.xcworkspace`。
+- 对 iOS 项目，验证默认优先已连接真机；找不到连接中的真机时，自动回退到 simulator。
+- 在 `verify-ios-build` 成功前，任务不能宣告“已完成”。
+- 可用以下脚本检查本仓库的技能规则是否仍满足该门禁策略：
+
+```bash
+python3 scripts/lint_verify_ios_build_policy.py
+```
 
 ## 通用约定
 - 对应项目中新建 `.swift`、`.h`、`.m`、`.mm` 等源码文件且项目要求文件头时，`Created by` 必须使用**本机用户名称**，不能写 `Codex`。
