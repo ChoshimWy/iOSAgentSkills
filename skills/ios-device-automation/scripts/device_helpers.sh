@@ -98,38 +98,98 @@ pick_scheme() {
     return 0
   fi
 
-  local schemes=()
+  local scheme_paths=()
+  local path
   while IFS= read -r path; do
-    schemes+=("$(basename "$path" .xcscheme)")
+    scheme_paths+=("$path")
   done < <(find "$root" -name '*.xcscheme' ! -path '*/Pods/*' | sort)
 
-  if [[ ${#schemes[@]} -eq 0 ]]; then
+  if [[ ${#scheme_paths[@]} -eq 0 ]]; then
     return 1
   fi
 
-  local scheme
-  for scheme in "${schemes[@]}"; do
-    if [[ "$scheme" =~ (Tests|UITests)$ ]] || [[ "$scheme" =~ (^|[_-])UITESTS?$ ]] || [[ "$scheme" =~ (^|[_-])TESTS?$ ]]; then
-      printf '%s\n' "$scheme"
-      return 0
-    fi
-  done
+  local preferred_scheme
+  preferred_scheme="$(
+    python3 - "${scheme_paths[@]}" <<'PY'
+import re
+import sys
+import xml.etree.ElementTree as ET
+from pathlib import Path
 
-  for scheme in "${schemes[@]}"; do
-    if [[ ! "$scheme" =~ (Tests|UITests)$ ]] && [[ ! "$scheme" =~ (^|[_-])(DEV|TEST|UAT|STAGING)$ ]]; then
-      printf '%s\n' "$scheme"
-      return 0
-    fi
-  done
+UI_TEST_PATTERN = re.compile(r"(?:^|[_-])UITESTS?$", re.IGNORECASE)
+UNIT_TEST_TOKEN_PATTERN = re.compile(r"(?:^|[_-])TESTS$", re.IGNORECASE)
+GENERIC_TEST_PATTERN = re.compile(r"(?:^|[_-])TEST$", re.IGNORECASE)
+NON_PRODUCTION_PATTERN = re.compile(r"(^|[_-])(DEV|TEST|UAT|STAGING)$", re.IGNORECASE)
 
-  for scheme in "${schemes[@]}"; do
-    if [[ ! "$scheme" =~ (Tests|UITests)$ ]]; then
-      printf '%s\n' "$scheme"
-      return 0
-    fi
-  done
 
-  printf '%s\n' "${schemes[0]}"
+def is_ui(name: str) -> bool:
+    return bool(UI_TEST_PATTERN.search(name) or re.search(r"UITests?$", name, re.IGNORECASE))
+
+
+def is_unit(name: str) -> bool:
+    return bool(
+        (UNIT_TEST_TOKEN_PATTERN.search(name) or re.search(r"(?<!UI)Tests$", name, re.IGNORECASE))
+        and not is_ui(name)
+    )
+
+
+def is_generic_test(name: str) -> bool:
+    return bool(GENERIC_TEST_PATTERN.search(name) and not is_ui(name))
+
+
+def iter_testable_names(path: Path) -> list[str]:
+    try:
+        root = ET.parse(path).getroot()
+    except Exception:
+        return []
+
+    names: list[str] = []
+    for reference in root.findall(".//TestAction//TestableReference//BuildableReference"):
+        for key in ("BuildableName", "BlueprintName"):
+            value = reference.get(key)
+            if value:
+                names.append(Path(value).stem)
+    return names
+
+
+def has_unit_binding(path) -> bool:
+    return bool(path and any(is_unit(name) for name in iter_testable_names(path)))
+
+
+def has_ui_binding(path) -> bool:
+    return bool(path and any(is_ui(name) for name in iter_testable_names(path)))
+
+
+def sort_key(name: str, path):
+    if has_unit_binding(path):
+        return (0, name.lower())
+    if is_unit(name):
+        return (1, name.lower())
+    if is_generic_test(name):
+        return (2, name.lower())
+    if has_ui_binding(path):
+        return (3, name.lower())
+    if is_ui(name):
+        return (4, name.lower())
+    if not NON_PRODUCTION_PATTERN.search(name):
+        return (5, name.lower())
+    if not is_ui(name):
+        return (6, name.lower())
+    return (7, name.lower())
+
+
+scheme_paths: dict[str, Path] = {}
+for raw in sys.argv[1:]:
+    path = Path(raw)
+    scheme_paths.setdefault(path.stem, path)
+
+if scheme_paths:
+    print(min(scheme_paths, key=lambda name: sort_key(name, scheme_paths.get(name))))
+PY
+  )"
+
+  [[ -n "$preferred_scheme" ]] || return 1
+  printf '%s\n' "$preferred_scheme"
 }
 
 destination_to_device_id() {

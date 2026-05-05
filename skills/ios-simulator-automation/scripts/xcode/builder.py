@@ -7,10 +7,84 @@ Handles xcodebuild command construction and execution with xcresult generation.
 import re
 import subprocess
 import sys
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from .cache import XCResultCache
 from .config import Config
+
+UI_TEST_SCHEME_NAME_PATTERN = re.compile(r"(?:^|[_-])UITESTS?$", re.IGNORECASE)
+UNIT_TEST_SCHEME_TOKEN_PATTERN = re.compile(r"(?:^|[_-])TESTS$", re.IGNORECASE)
+GENERIC_TEST_SCHEME_NAME_PATTERN = re.compile(r"(?:^|[_-])TEST$", re.IGNORECASE)
+NON_PRODUCTION_SCHEME_PATTERN = re.compile(r"(^|[_-])(DEV|TEST|UAT|STAGING)$", re.IGNORECASE)
+
+
+def is_ui_test_preferred_scheme(name: str) -> bool:
+    return bool(
+        UI_TEST_SCHEME_NAME_PATTERN.search(name)
+        or re.search(r"UITests?$", name, re.IGNORECASE)
+    )
+
+
+def is_unit_test_preferred_scheme(name: str) -> bool:
+    return bool(
+        (
+            UNIT_TEST_SCHEME_TOKEN_PATTERN.search(name)
+            or re.search(r"(?<!UI)Tests$", name, re.IGNORECASE)
+        )
+        and not is_ui_test_preferred_scheme(name)
+    )
+
+
+def is_generic_test_scheme(name: str) -> bool:
+    return bool(
+        GENERIC_TEST_SCHEME_NAME_PATTERN.search(name)
+        and not is_ui_test_preferred_scheme(name)
+    )
+
+
+def iter_scheme_testable_names(path: Path | None) -> list[str]:
+    if path is None:
+        return []
+
+    try:
+        root = ET.parse(path).getroot()
+    except (ET.ParseError, OSError):
+        return []
+
+    names: list[str] = []
+    for reference in root.findall(".//TestAction//TestableReference//BuildableReference"):
+        for key in ("BuildableName", "BlueprintName"):
+            value = reference.get(key)
+            if value:
+                names.append(Path(value).stem)
+    return names
+
+
+def scheme_has_unit_test_binding(path: Path | None) -> bool:
+    return any(is_unit_test_preferred_scheme(name) for name in iter_scheme_testable_names(path))
+
+
+def scheme_has_ui_test_binding(path: Path | None) -> bool:
+    return any(is_ui_test_preferred_scheme(name) for name in iter_scheme_testable_names(path))
+
+
+def scheme_sort_key(name: str, path: Path | None) -> tuple[int, str]:
+    if scheme_has_unit_test_binding(path):
+        return (0, name.lower())
+    if is_unit_test_preferred_scheme(name):
+        return (1, name.lower())
+    if is_generic_test_scheme(name):
+        return (2, name.lower())
+    if scheme_has_ui_test_binding(path):
+        return (3, name.lower())
+    if is_ui_test_preferred_scheme(name):
+        return (4, name.lower())
+    if not NON_PRODUCTION_SCHEME_PATTERN.search(name):
+        return (5, name.lower())
+    if not is_ui_test_preferred_scheme(name):
+        return (6, name.lower())
+    return (7, name.lower())
 
 
 class BuildRunner:
@@ -81,32 +155,31 @@ class BuildRunner:
             if not schemes:
                 return None
 
-            def is_tests_preferred_scheme(name: str) -> bool:
-                return bool(
-                    re.search(r"(?:^|[_-])UITESTS?$", name, re.IGNORECASE)
-                    or re.search(r"(?:^|[_-])TESTS?$", name, re.IGNORECASE)
-                    or re.search(r"(?:Tests|UITests)$", name)
-                )
+            search_root = None
+            if self.workspace_path:
+                search_root = Path(self.workspace_path).parent
+            elif self.project_path:
+                search_root = Path(self.project_path).parent
 
-            for scheme in schemes:
-                if is_tests_preferred_scheme(scheme):
-                    return scheme
+            scheme_paths = {
+                scheme: self._find_scheme_path(search_root, scheme) for scheme in schemes
+            }
 
-            for scheme in schemes:
-                if not re.search(r"(Tests|UITests)$", scheme) and not re.search(
-                    r"(^|[_-])(DEV|TEST|UAT|STAGING)$", scheme
-                ):
-                    return scheme
-
-            for scheme in schemes:
-                if not re.search(r"(Tests|UITests)$", scheme):
-                    return scheme
-
-            return schemes[0]
+            return sorted(schemes, key=lambda name: scheme_sort_key(name, scheme_paths.get(name)))[0]
 
         except subprocess.CalledProcessError as e:
             print(f"Error auto-detecting scheme: {e}", file=sys.stderr)
 
+        return None
+
+    def _find_scheme_path(self, search_root: Path | None, scheme_name: str) -> Path | None:
+        if search_root is None:
+            return None
+
+        for path in sorted(search_root.rglob(f"{scheme_name}.xcscheme")):
+            if "Pods" in path.parts:
+                continue
+            return path
         return None
 
     def get_simulator_destination(self) -> str:

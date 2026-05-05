@@ -1,0 +1,59 @@
+{
+  "generated_at": 1776821711.9559639,
+  "repo_name": "iOSAgentSkills",
+  "repo_path": "/Users/choshim/Desktop/Aputure/Code/Components/iOSAgentSkills",
+  "focus": null,
+  "counts": {
+    "queued": 0,
+    "accepted": 0,
+    "preparing": 0,
+    "running": 0,
+    "verifying": 0,
+    "pr_open": 0,
+    "waiting_ci": 0,
+    "repairing": 0,
+    "completed": 0,
+    "merged": 0,
+    "failed": 0,
+    "rejected": 0,
+    "superseded": 0
+  },
+  "status_order": [
+    "queued",
+    "accepted",
+    "preparing",
+    "running",
+    "verifying",
+    "pr_open",
+    "waiting_ci",
+    "repairing",
+    "completed",
+    "merged",
+    "failed",
+    "rejected",
+    "superseded"
+  ],
+  "columns": {
+    "queued": [],
+    "accepted": [],
+    "preparing": [],
+    "running": [],
+    "verifying": [],
+    "pr_open": [],
+    "waiting_ci": [],
+    "repairing": [],
+    "completed": [],
+    "merged": [],
+    "failed": [],
+    "rejected": [],
+    "superseded": []
+  },
+  "cards": [],
+  "journal": [],
+  "policies": {
+    "autopilot": "/Users/choshim/Desktop/Aputure/Code/Components/iOSAgentSkills/.openharness/autopilot/autopilot_policy.yaml",
+    "verification": "/Users/choshim/Desktop/Aputure/Code/Components/iOSAgentSkills/.openharness/autopilot/verification_policy.yaml",
+    "release": "/Users/choshim/Desktop/Aputure/Code/Components/iOSAgentSkills/.openharness/autopilot/release_policy.yaml"
+  },
+  "active_context": "# Active Repo Context\n\nGenerated at: 2026-04-22 01:35:11 UTC\n\n## Current Task Focus\n- No active repo task focus yet.\n\n## In Progress\n- None.\n\n## Next Up\n- No queued items.\n\n## Recently Completed\n- None yet.\n\n## Recent Failures\n- None.\n\n## Recent Repo Journal\n- Journal is empty.\n\n## Policies\n- Autopilot: /Users/choshim/Desktop/Aputure/Code/Components/iOSAgentSkills/.openharness/autopilot/autopilot_policy.yaml\n- Verification: /Users/choshim/Desktop/Aputure/Code/Components/iOSAgentSkills/.openharness/autopilot/verification_policy.yaml\n- Release: /Users/choshim/Desktop/Aputure/Code/Components/iOSAgentSkills/.openharness/autopilot/release_policy.yaml"
+}

@@ -165,6 +165,7 @@
 - “Apple Xcode 项目相关内容”包括：代码、测试、资源、`.xcodeproj` / `.xcworkspace` / `.pbxproj`、`xcconfig`、scheme、`Info.plist`、entitlements、构建脚本，以及项目内 `.codex/xcodebuild.env` 一类环境配置。
 - 最终门禁必须在**目标项目根目录的项目环境**执行，不能把沙箱内构建结果当成最终验收。
 - 如果同时存在 `.xcworkspace` 与 `.xcodeproj`，验证必须优先 `.xcworkspace`。
+- 如果没有用户显式指定 scheme，定向测试与最终门禁默认优先选择绑定了单元测试 `*Tests` target / bundle 的 scheme；若不存在，再回退到其它测试 scheme（例如 `*UITests`、`*_TEST`）。
 - 对 iOS 项目，验证默认优先已连接真机；找不到连接中的真机时，自动回退到 simulator。
 - 在 `verify-ios-build` 成功前，任务不能宣告“已完成”。
 - 可用以下脚本检查本仓库的技能规则是否仍满足该门禁策略：
