@@ -27,7 +27,7 @@ XCODE_PREFER_MODEL="iPad"
 - `XCODE_WORKSPACE` 与 `XCODE_PROJECT` 二选一即可
 - 如果两个都配置，脚本优先使用 `XCODE_WORKSPACE`
 - `XCODE_SCHEME` 建议显式配置，避免多 scheme 仓库误判
-- 如果未显式设置 `XCODE_SCHEME`，脚本默认优先带测试标记的 scheme（例如 `*Tests`、`*UITests`、`*_TEST`）
+- 如果未显式设置 `XCODE_SCHEME`，脚本默认优先选择绑定了单元测试 `*Tests` target / bundle 的 scheme；若不存在，再回退到其它测试 scheme（例如 `*UITests`、`*_TEST`）
 - 如果当前任务里已经先跑过定向测试，最终门禁应优先复用同一套 workspace / scheme / destination 基线；必要时用 `XCODE_SCHEME` / `XCODE_DESTINATION` 显式固定
 - 默认不做 `clean build`
 - 最终门禁仍必须在目标项目根目录的项目环境执行；`.codex/xcodebuild.env` 只负责补充参数，不会把最终验证降级成沙箱构建

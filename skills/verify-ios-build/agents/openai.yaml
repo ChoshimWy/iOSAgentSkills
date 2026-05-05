@@ -1,4 +1,4 @@
 interface:
   display_name: "iOS 最后验证门禁"
   short_description: "强制收尾审查门禁：项目环境、.xcworkspace 优先与真机优先"
-  default_prompt: "使用 $verify-ios-build 处理 Apple Xcode 工程收尾阶段的最终门禁：先审查当前未提交代码，再在目标项目的项目环境执行最终验证；如果同一任务里已经先跑过定向测试，最终门禁默认复用同一套 workspace / scheme / destination 基线，并继续优先 `.xcworkspace`；若用户未显式指定 scheme，默认优先带测试标记的 scheme（例如 `*Tests`、`*UITests`、`*_TEST`）；iOS 项目默认优先已连接真机，找不到连接中的真机时回退到 simulator；若验证未完成或失败，必须明确任务未完成。"
+  default_prompt: "使用 $verify-ios-build 处理 Apple Xcode 工程收尾阶段的最终门禁：先审查当前未提交代码，再在目标项目的项目环境执行最终验证；如果同一任务里已经先跑过定向测试，最终门禁默认复用同一套 workspace / scheme / destination 基线，并继续优先 `.xcworkspace`；若用户未显式指定 scheme，默认优先选择绑定了单元测试 `*Tests` target / bundle 的 scheme；若不存在，再回退到其它测试 scheme（例如 `*UITests`、`*_TEST`）；iOS 项目默认优先已连接真机，找不到连接中的真机时回退到 simulator；若验证未完成或失败，必须明确任务未完成。"

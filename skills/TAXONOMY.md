@@ -17,6 +17,7 @@
 - **只要任务产出修改了 Apple Xcode 项目相关内容，最终都必须切到 `verify-ios-build` 做收尾门禁。**
 - 最终门禁必须在目标项目根目录的项目环境执行，而不是把沙箱内构建结果当作最终结论。
 - iOS 项目如果同时存在 `.xcworkspace` 与 `.xcodeproj`，门禁必须优先 `.xcworkspace`；默认优先已连接真机，找不到连接中的真机时再回退到 simulator。
+- 如果没有用户显式指定 scheme，定向测试与最终门禁默认优先选择绑定了单元测试 `*Tests` target / bundle 的 scheme；若不存在，再回退到其它测试 scheme（例如 `*UITests`、`*_TEST`）。
 - 在 `verify-ios-build` 成功前，任何技能都不能把任务表述为“已完成”。
 
 先按下面 3 组问题做一次硬判定，再选 skill：

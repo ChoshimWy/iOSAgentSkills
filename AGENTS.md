@@ -40,7 +40,7 @@
 - 在 Codex 中，如果 sandbox 执行会导致最终验证仍停留在 sandbox 内，则最终 `verify-ios-build` 必须通过 `functions.exec_command` 且使用 `sandbox_permissions="require_escalated"` 来执行。
 - 如果同时存在 `.xcworkspace` 和 `.xcodeproj`，验证必须使用 `.xcworkspace`。
 - 如果同一任务里已经先跑过定向测试，最终门禁默认复用同一套 workspace / scheme / destination 基线；不要无说明切换 scheme。
-- 如果没有用户显式指定 scheme，定向测试与最终门禁默认优先选择带测试标记的 scheme（例如 `*Tests`、`*UITests`、`*_TEST`）。
+- 如果没有用户显式指定 scheme，定向测试与最终门禁默认优先选择绑定了单元测试 `*Tests` target / bundle 的 scheme；若不存在，再回退到其它测试 scheme（例如 `*UITests`、`*_TEST`）。
 - 对 iOS 项目，验证默认优先使用已连接真机；如果没有已连接真机，则回退到 simulator。
 - 在 `verify-ios-build` 成功之前，任务都不算完成；如果验证被阻塞、未执行或失败，回复中必须明确说明实现已完成，但任务仍未完成。
 - 换句话说：只有 `verify-ios-build` 成功后，任务才算完成。

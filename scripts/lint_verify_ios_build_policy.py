@@ -45,7 +45,7 @@ def main() -> int:
             "目标项目环境",
             "如果同时存在 `.xcworkspace` 和 `.xcodeproj`，验证必须使用 `.xcworkspace`。",
             "最终门禁默认复用同一套 workspace / scheme / destination 基线",
-            "默认优先选择带测试标记的 scheme",
+            "绑定了单元测试 `*Tests` target / bundle 的 scheme",
             "已连接真机",
             "在 `verify-ios-build` 成功之前，任务都不算完成",
         ],
@@ -57,6 +57,7 @@ def main() -> int:
             "强制 `verify-ios-build` 收尾门禁",
             "目标项目根目录的项目环境",
             "优先 `.xcworkspace`",
+            "绑定了单元测试 `*Tests` target / bundle 的 scheme",
             "已连接真机",
             "python3 scripts/lint_verify_ios_build_policy.py",
         ],
@@ -68,6 +69,7 @@ def main() -> int:
             "最终都必须切到 `verify-ios-build` 做收尾门禁",
             "目标项目根目录的项目环境",
             "优先 `.xcworkspace`",
+            "绑定了单元测试 `*Tests` target / bundle 的 scheme",
             "已连接真机",
             "不能把任务表述为“已完成”",
         ],
@@ -112,7 +114,7 @@ def main() -> int:
             ROOT / "skills" / targeted_skill / "SKILL.md",
             [
                 "workspace / scheme / destination 基线",
-                "带测试标记的 scheme",
+                "绑定了单元测试 `*Tests` target / bundle 的 scheme",
             ],
             failures,
         )
@@ -124,7 +126,7 @@ def main() -> int:
             "项目环境",
             "sandbox_permissions=\\\"require_escalated\\\"",
             "默认复用同一套 workspace / scheme / destination 基线",
-            "默认优先选择带测试标记的 scheme",
+            "绑定了单元测试 `*Tests` target / bundle 的 scheme",
             ".xcworkspace",
             "已连接真机",
             "任务未完成",
@@ -136,7 +138,7 @@ def main() -> int:
         ROOT / "skills" / "verify-ios-build" / "references" / "override-config.md",
         [
             "项目环境",
-            "带测试标记的 scheme",
+            "绑定了单元测试 `*Tests` target / bundle 的 scheme",
             "复用同一套 workspace / scheme / destination 基线",
             "已连接真机",
             "generic/platform=iOS Simulator",
@@ -158,7 +160,9 @@ def main() -> int:
     require_contains(
         ROOT / "skills" / "verify-ios-build" / "scripts" / "build_check.py",
         [
-            "is_tests_preferred_scheme",
+            "is_unit_test_preferred_scheme",
+            "scheme_has_unit_test_binding",
+            "BuildableName",
             'validation_platform=os.environ.get("XCODE_VALIDATION_PLATFORM")',
             'if config.validation_platform == "macos":',
             'default host build (no explicit destination)',
@@ -168,10 +172,21 @@ def main() -> int:
     require_contains(
         ROOT / "skills" / "ios-device-automation" / "scripts" / "device_helpers.sh",
         [
-            "(^|[_-])TESTS?$",
+            "BuildableName",
+            "TestableReference",
             "select_connected_xcode_destination",
             "connected-only",
             "selected first connected xcodebuild destination",
+        ],
+        failures,
+    )
+    require_contains(
+        ROOT / "skills" / "ios-simulator-automation" / "scripts" / "xcode" / "builder.py",
+        [
+            "is_unit_test_preferred_scheme",
+            "scheme_has_unit_test_binding",
+            "BuildableName",
+            "TestableReference",
         ],
         failures,
     )

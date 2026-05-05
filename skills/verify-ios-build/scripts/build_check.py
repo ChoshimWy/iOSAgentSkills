@@ -7,6 +7,7 @@ import re
 import shlex
 import subprocess
 import sys
+import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -21,6 +22,10 @@ COMPILATION_ERROR_PATTERN = re.compile(
 FRAMEWORK_NOT_FOUND_PATTERN = re.compile(r"ld:\s+framework\s+'(?P<name>[^']+)'\s+not found")
 LIBRARY_NOT_FOUND_PATTERN = re.compile(r"ld:\s+library\s+'(?P<name>[^']+)'\s+not found")
 QUOTED_PATH_PATTERN = re.compile(r"""['"](?P<path>[^'"]+)['"]""")
+UI_TEST_SCHEME_NAME_PATTERN = re.compile(r"(?:^|[_-])UITESTS?$", re.IGNORECASE)
+UNIT_TEST_SCHEME_TOKEN_PATTERN = re.compile(r"(?:^|[_-])TESTS$", re.IGNORECASE)
+GENERIC_TEST_SCHEME_NAME_PATTERN = re.compile(r"(?:^|[_-])TEST$", re.IGNORECASE)
+NON_PRODUCTION_SCHEME_PATTERN = re.compile(r"(^|[_-])(DEV|TEST|UAT|STAGING)$", re.IGNORECASE)
 
 
 @dataclass
@@ -168,41 +173,89 @@ def pick_project(root: Path, env: dict[str, str]) -> str | None:
     return str(sorted(candidates)[0].relative_to(root)) if candidates else None
 
 
+def is_ui_test_preferred_scheme(name: str) -> bool:
+    return bool(
+        UI_TEST_SCHEME_NAME_PATTERN.search(name)
+        or re.search(r"UITests?$", name, re.IGNORECASE)
+    )
+
+
+def is_unit_test_preferred_scheme(name: str) -> bool:
+    return bool(
+        (
+            UNIT_TEST_SCHEME_TOKEN_PATTERN.search(name)
+            or re.search(r"(?<!UI)Tests$", name, re.IGNORECASE)
+        )
+        and not is_ui_test_preferred_scheme(name)
+    )
+
+
+def is_generic_test_scheme(name: str) -> bool:
+    return bool(
+        GENERIC_TEST_SCHEME_NAME_PATTERN.search(name)
+        and not is_ui_test_preferred_scheme(name)
+    )
+
+
+def iter_scheme_testable_names(path: Path | None) -> list[str]:
+    if path is None:
+        return []
+
+    try:
+        root = ET.parse(path).getroot()
+    except (ET.ParseError, OSError):
+        return []
+
+    names: list[str] = []
+    for reference in root.findall(".//TestAction//TestableReference//BuildableReference"):
+        for key in ("BuildableName", "BlueprintName"):
+            value = reference.get(key)
+            if value:
+                names.append(Path(value).stem)
+    return names
+
+
+def scheme_has_unit_test_binding(path: Path | None) -> bool:
+    return any(is_unit_test_preferred_scheme(name) for name in iter_scheme_testable_names(path))
+
+
+def scheme_has_ui_test_binding(path: Path | None) -> bool:
+    return any(is_ui_test_preferred_scheme(name) for name in iter_scheme_testable_names(path))
+
+
+def scheme_sort_key(name: str, path: Path | None) -> tuple[int, str]:
+    if scheme_has_unit_test_binding(path):
+        return (0, name.lower())
+    if is_unit_test_preferred_scheme(name):
+        return (1, name.lower())
+    if is_generic_test_scheme(name):
+        return (2, name.lower())
+    if scheme_has_ui_test_binding(path):
+        return (3, name.lower())
+    if is_ui_test_preferred_scheme(name):
+        return (4, name.lower())
+    if not NON_PRODUCTION_SCHEME_PATTERN.search(name):
+        return (5, name.lower())
+    if not is_ui_test_preferred_scheme(name):
+        return (6, name.lower())
+    return (7, name.lower())
+
+
 def pick_scheme(root: Path, env: dict[str, str]) -> str:
     if env.get("XCODE_SCHEME"):
         return env["XCODE_SCHEME"]
 
-    schemes: list[str] = []
+    scheme_paths: dict[str, Path] = {}
     for path in sorted(root.rglob("*.xcscheme")):
         if "Pods" in path.parts:
             continue
-        schemes.append(path.stem)
+        scheme_paths.setdefault(path.stem, path)
 
+    schemes = list(scheme_paths.keys())
     if not schemes:
         raise RuntimeError("No shared scheme found")
 
-    def is_tests_preferred_scheme(name: str) -> bool:
-        return bool(
-            re.search(r"(?:^|[_-])UITESTS?$", name, re.IGNORECASE)
-            or re.search(r"(?:^|[_-])TESTS?$", name, re.IGNORECASE)
-            or re.search(r"(?:Tests|UITests)$", name)
-        )
-
-    for scheme in schemes:
-        if is_tests_preferred_scheme(scheme):
-            return scheme
-
-    for scheme in schemes:
-        if not re.search(r"(Tests|UITests)$", scheme) and not re.search(
-            r"(^|[_-])(DEV|TEST|UAT|STAGING)$", scheme
-        ):
-            return scheme
-
-    for scheme in schemes:
-        if not re.search(r"(Tests|UITests)$", scheme):
-            return scheme
-
-    return schemes[0]
+    return sorted(schemes, key=lambda name: scheme_sort_key(name, scheme_paths.get(name)))[0]
 
 
 def resolve_build_config(root: Path) -> BuildConfig:

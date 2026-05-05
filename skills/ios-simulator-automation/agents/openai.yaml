@@ -1,4 +1,4 @@
 interface:
   display_name: "iOS 模拟器自动化"
   short_description: "在 Simulator 中执行自动化、验证与设备管理流程"
-  default_prompt: "使用 $ios-simulator-automation 仅在 iOS Simulator 中完成设备选择、语义交互、无障碍检查与自动化验证；若需要实际执行 build / test 且用户未显式指定 scheme，默认优先带测试标记的 scheme（例如 `*Tests`、`*UITests`、`*_TEST`）；如果同一任务后续还要执行 $verify-ios-build，最终门禁默认在目标项目的项目环境复用同一套 workspace / scheme / destination 基线，并继续优先 `.xcworkspace`。"
+  default_prompt: "使用 $ios-simulator-automation 仅在 iOS Simulator 中完成设备选择、语义交互、无障碍检查与自动化验证；若需要实际执行 build / test 且用户未显式指定 scheme，默认优先选择绑定了单元测试 `*Tests` target / bundle 的 scheme；若不存在，再回退到其它测试 scheme（例如 `*UITests`、`*_TEST`）；如果同一任务后续还要执行 $verify-ios-build，最终门禁默认在目标项目的项目环境复用同一套 workspace / scheme / destination 基线，并继续优先 `.xcworkspace`。"
