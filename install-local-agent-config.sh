@@ -3,16 +3,24 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: bash install-local-agent-config.sh [--dry-run]
+Usage: bash install-local-agent-config.sh [--dry-run] [--ccswitch]
 
 Configure local Codex and Claude entrypoints to use this cloned iOSAgentSkills repo:
   - ~/.codex/AGENTS.md -> <repo>/AGENTS.md
-  - ~/.codex/skills -> <repo>/skills
+  - ~/.codex/skills -> <repo>/skills (默认)
+  - ~/.codex/skills -> ~/.cc-switch/iOSAgentSkills/skills（当启用 --ccswitch 时）
   - ~/.claude/CLAUDE.md -> @<repo>/AGENTS.md
-  - ~/.claude/skills -> <repo>/skills
+  - ~/.claude/skills -> <repo>/skills (默认)
+  - ~/.claude/skills -> ~/.cc-switch/iOSAgentSkills/skills（当启用 --ccswitch 时）
+  - ~/.cc-switch/skills -> <repo>/skills（固定不随 --ccswitch 切换）
   - ~/.codex/config.toml -> merge repo config/codex.shared.toml into local shared defaults
   - ~/.codex/config.toml -> ensure model_instructions_file points to ~/.codex/AGENTS.md
   - ~/.codex/config.toml -> keep Codex memories enabled without overwriting local-only state
+
+When --ccswitch is specified, the script synchronizes skills into:
+  ~/.cc-switch/iOSAgentSkills/skills
+and links ~/.codex/skills / ~/.claude/skills to that staging directory, avoiding CC Switch import actions
+from deleting files in the current checked-out repository.
 
 When conflicting local files or directories already exist, the script backs them up to:
   ~/.agent-skills-backups/iOSAgentSkills/<timestamp>/
@@ -20,11 +28,16 @@ EOF
 }
 
 DRY_RUN='0'
+CCSWITCH_MODE='0'
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --dry-run)
       DRY_RUN='1'
+      shift
+      ;;
+    --ccswitch)
+      CCSWITCH_MODE='1'
       shift
       ;;
     --help|-h)
@@ -53,6 +66,10 @@ CODEX_SKILLS="$CODEX_DIR/skills"
 CLAUDE_MD="$CLAUDE_DIR/CLAUDE.md"
 CLAUDE_SKILLS="$CLAUDE_DIR/skills"
 CODEX_CONFIG="$CODEX_DIR/config.toml"
+CCSWITCH_PUBLIC_SKILLS="$HOME_DIR/.cc-switch/skills"
+CCSWITCH_CACHE_ROOT="$HOME_DIR/.cc-switch/iOSAgentSkills"
+CCSWITCH_SKILLS="$CCSWITCH_CACHE_ROOT/skills"
+TARGET_SKILLS="$REPO_SKILLS"
 
 BACKUP_BASE="$HOME_DIR/.agent-skills-backups/iOSAgentSkills"
 BACKUP_DIR=""
@@ -255,6 +272,30 @@ ensure_codex_config() {
   record_change "$action"
 }
 
+sync_skills_to_ccswitch_cache() {
+  if [[ "$CCSWITCH_MODE" == '0' ]]; then
+    return 0
+  fi
+
+  if [[ "$DRY_RUN" == '1' ]]; then
+    log "dry-run: sync skills to staging cache: $REPO_SKILLS -> $CCSWITCH_SKILLS"
+    return 0
+  fi
+
+  log "sync: copy skills into staging cache: $REPO_SKILLS -> $CCSWITCH_SKILLS"
+  ensure_directory "$CCSWITCH_CACHE_ROOT"
+  ensure_directory "$CCSWITCH_SKILLS"
+
+  if command -v rsync >/dev/null 2>&1; then
+    rsync -a --delete "$REPO_SKILLS/" "$CCSWITCH_SKILLS/"
+  else
+    rm -rf "$CCSWITCH_SKILLS"/*
+    cp -R "$REPO_SKILLS"/. "$CCSWITCH_SKILLS"/
+  fi
+
+  TARGET_SKILLS="$CCSWITCH_SKILLS"
+}
+
 if [[ ! -f "$REPO_AGENTS" ]]; then
   echo "Error: missing AGENTS.md in repo root: $REPO_AGENTS" >&2
   exit 1
@@ -276,6 +317,9 @@ if [[ ! -f "$CODEX_SYNC_SCRIPT" ]]; then
 fi
 
 CLAUDE_IMPORT_LINE="@${REPO_AGENTS}"
+if [[ "$CCSWITCH_MODE" == '1' ]]; then
+  TARGET_SKILLS="$CCSWITCH_SKILLS"
+fi
 
 verify_codex_config() {
   python3 - "$CODEX_CONFIG" "$REPO_CODEX_SHARED_CONFIG" "$CODEX_AGENTS" <<'PY'
@@ -336,22 +380,31 @@ verify_installation() {
   [[ "$(resolve_physical_path "$CODEX_AGENTS")" == "$(resolve_physical_path "$REPO_AGENTS")" ]] || fail "~/.codex/AGENTS.md does not point to this cloned repo"
 
   [[ -L "$CODEX_SKILLS" ]] || fail "~/.codex/skills is not a symlink"
-  [[ "$(resolve_physical_path "$CODEX_SKILLS")" == "$(resolve_physical_path "$REPO_SKILLS")" ]] || fail "~/.codex/skills does not point to this cloned repo"
+  [[ "$(resolve_physical_path "$CODEX_SKILLS")" == "$(resolve_physical_path "$TARGET_SKILLS")" ]] || fail "~/.codex/skills does not point to expected skills path"
 
   [[ -L "$CLAUDE_SKILLS" ]] || fail "~/.claude/skills is not a symlink"
-  [[ "$(resolve_physical_path "$CLAUDE_SKILLS")" == "$(resolve_physical_path "$REPO_SKILLS")" ]] || fail "~/.claude/skills does not point to this cloned repo"
+  [[ "$(resolve_physical_path "$CLAUDE_SKILLS")" == "$(resolve_physical_path "$TARGET_SKILLS")" ]] || fail "~/.claude/skills does not point to expected skills path"
+
+  if [[ "$CCSWITCH_MODE" == '1' ]]; then
+    [[ "$(resolve_physical_path "$TARGET_SKILLS")" != "$(resolve_physical_path "$REPO_SKILLS")" ]] || fail "--ccswitch mode should use staging cache, not repo/skills"
+  fi
 
   [[ -f "$CLAUDE_MD" && ! -L "$CLAUDE_MD" ]] || fail "~/.claude/CLAUDE.md is missing or not a regular file"
   [[ "$(cat "$CLAUDE_MD")" == "$CLAUDE_IMPORT_LINE" ]] || fail "~/.claude/CLAUDE.md does not import this cloned repo"
+
+  [[ -L "$CCSWITCH_PUBLIC_SKILLS" ]] || fail "~/.cc-switch/skills is not a symlink"
+  [[ "$(resolve_physical_path "$CCSWITCH_PUBLIC_SKILLS")" == "$(resolve_physical_path "$REPO_SKILLS")" ]] || fail "~/.cc-switch/skills does not point to repo skills"
 
   [[ -f "$CODEX_CONFIG" && ! -L "$CODEX_CONFIG" ]] || fail "~/.codex/config.toml is missing or not a regular file"
   verify_codex_config || fail "~/.codex/config.toml does not match repo-managed Codex shared config"
 }
 
 ensure_symlink "$CODEX_AGENTS" "$REPO_AGENTS" "~/.codex/AGENTS.md"
-ensure_symlink "$CODEX_SKILLS" "$REPO_SKILLS" "~/.codex/skills"
+sync_skills_to_ccswitch_cache
+ensure_symlink "$CODEX_SKILLS" "$TARGET_SKILLS" "~/.codex/skills"
 ensure_text_file "$CLAUDE_MD" "$CLAUDE_IMPORT_LINE" "~/.claude/CLAUDE.md"
-ensure_symlink "$CLAUDE_SKILLS" "$REPO_SKILLS" "~/.claude/skills"
+ensure_symlink "$CLAUDE_SKILLS" "$TARGET_SKILLS" "~/.claude/skills"
+ensure_symlink "$CCSWITCH_PUBLIC_SKILLS" "$REPO_SKILLS" "~/.cc-switch/skills"
 ensure_codex_config
 
 printf '\nSummary:\n'

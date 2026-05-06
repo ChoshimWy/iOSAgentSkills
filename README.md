@@ -58,6 +58,11 @@
    ```bash
    bash install-local-agent-config.sh
    ```
+   - 如果你通过 CC Switch 管理 Agent，建议执行：
+   ```bash
+   bash install-local-agent-config.sh --ccswitch
+   ```
+   - `--ccswitch` 会先将 `skills/` 同步到 `~/.cc-switch/iOSAgentSkills/skills`（镜像目录），再把 `~/.codex/skills`、`~/.claude/skills` 链接到该镜像目录；此外，会把 `~/.cc-switch/skills` 直接指向仓库 `skills/`（`<repo>/skills`）。
    - 脚本会自动使用**当前 clone 的仓库路径**生成本地入口，不依赖固定仓库位置，也不需要你手工改路径。
    - 脚本会默认同时配置 Codex 与 Claude：
      - `~/.codex/AGENTS.md`
