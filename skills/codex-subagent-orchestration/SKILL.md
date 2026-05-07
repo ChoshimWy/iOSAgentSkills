@@ -25,6 +25,26 @@ description: 默认优先使用的多 Agent 编排入口；它负责统一编排
 7. 当代码、审查与测试预检收敛后，主 Agent 自己执行最终 `verify-ios-build`。
 8. 如果最终门禁失败，主 Agent 把首个真实失败点、影响范围和验证基线回写给 coder，再进入下一轮修复。
 
+## Plan 输出模板（建议在需要时直接使用）
+
+当用户要求我给出计划（例如 `proposed_plan`）且任务包含实现/验证链路时，默认按以下结构输出：
+
+- **Step 1 主 Agent 计划拆解**
+  - 目标、边界、成功标准、workspace/scheme/destination 基线、回退条件
+- **Step 2 coder worker**
+  - 代码变更任务（含 ownership 与禁止项）
+- **Step 3 reviewer explorer 并行**
+  - `blocking_findings` / `non_blocking_findings` 关注点
+- **Step 4 tester explorer 并行**
+  - `test_scope`、`suggested_validation`、`failure_attribution`、`needs_test_code`
+- **Step 5 主 Agent 聚合与裁决**
+  - 回写规则、回环轮次、`verify-ios-build` 门禁
+
+如果是私有库本地调试场景，新增补充步骤：
+- 私有库本地修改与验证（`pod :path` / 本地引用）
+- 私有库提交/推送
+- 主项目回到线上版本化引用并复测
+
 ## 角色边界
 - `coder worker`
   - 只负责实现或修复代码。

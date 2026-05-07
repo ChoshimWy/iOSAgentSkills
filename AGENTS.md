@@ -75,6 +75,7 @@
 - 仓库默认优先走多 Agent 流程：主 Agent 优先使用 `spawn_agent`、`send_input`、`wait_agent`、`close_agent` 显式编排编码、审查、测试与最终门禁，不要假设存在声明式自动流转流水线。
 - 运行时默认只使用内建 `worker` 与 `explorer` 两类 subAgent，不额外发明新的底层 Agent 类型；通过复用现有 skills 区分编码、审查、测试与门禁职责。
 - 默认采用四角色编排：`coder worker` 实现、`reviewer explorer` 并行读审、`tester` 负责测试预检与失败归因、`主 Agent` 负责聚合与最终裁决。
+- 当输出 `proposed_plan` 或需求拆解计划时，必须默认把上述四角色顺序（主 Agent / coder / reviewer / tester / 主 Agent）写入 plan，明确并行关系与阻塞回环条件（包含回写 coder 的触发条件、回写轮次上限和 `blocked` 条件）。
 - 如果当前运行时、上层策略或用户约束要求显式授权 `subAgent`，而用户尚未授权，则临时回退为单 Agent；一旦授权条件满足，应恢复多 Agent 流程，不要长期停留在单 Agent。
 - `coder worker` 只负责实现或修复代码；prompt 中必须写清 ownership、成功标准、禁止无关改动、不要回滚他人改动，并优先复用 `ios-feature-implementation`、`uikit-feature-implementation`、`swiftui-feature-implementation`、`swift-expert` 等现有实现 skills。
 - `coder worker` 的输出除 `changed_files`、`summary`、`known_risks` 外，还必须补 `test_impact` 或 `no_test_reason`；如果改动了公共接口、配置前提或调用契约，必须显式写出影响面，不要把这类变化藏在摘要里。
@@ -94,3 +95,4 @@
 - 只要相关，就明确指出准确的 Apple 平台和最低版本要求。
 - 优先给出具体修复、可复现的调试步骤，以及有理有据的技术权衡，而不是泛泛建议。
 - 输出方案、计划、修复思路或架构建议时，默认主动考虑并说明关键边界问题，包括适用范围与非目标范围、职责 / 模块边界、平台 / OS / SDK / 依赖版本边界、线程 / 状态 / 数据边界、兼容性 / 回退路径 / 失败路径，以及关键前提假设；若边界暂不明确且无法从本地事实确认，必须显式标注为假设、风险或待确认点；不要为凑完整度而发散穷举与当前问题无关的边界。
+- 生成计划时，如果任务涉及编码实现，则默认将 `codex-subagent-orchestration` 的执行序列作为主干（必要时附带降级说明）。

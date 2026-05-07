@@ -70,3 +70,20 @@
 - 不改业务实现文件
 - 输出 changed_test_files / new_test_coverage
 ```
+
+## 主 Agent Plan 模板（计划输出）
+
+```text
+当任务涉及实现并要求给出 plan 时，先输出 `proposed_plan`：
+
+1. 主 Agent：任务边界、成功标准、基线（workspace / scheme / destination）
+2. coder worker：实现任务与 ownership
+3. reviewer explorer：并行读审，给 blocking_findings / non_blocking_findings
+4. tester explorer：并行验证面分析，给 test_scope / suggested_validation / executed_validation / failure_attribution / needs_test_code
+5. 主 Agent 聚合：回写规则、回环（默认最多 2 轮）、何时 blocked
+6. `verify-ios-build`：最终门禁与 completion 判定
+
+私有库链路补充：
+- SLSyncLib 等依赖先本地 path 验证
+- 私有库推送成功后，主项目恢复线上引用再复测同一基线
+```
