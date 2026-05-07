@@ -24,10 +24,6 @@ approval_mode = "approve"
 command = "npx"
 args = ["-y", "@kimsungwhee/apple-docs-mcp@latest"]
 
-[mcp_servers.gitnexus]
-command = "npx"
-args = ["-y", "gitnexus@latest", "mcp"]
-
 [tui]
 status_line = ["model-with-reasoning", "used-tokens", "project-root", "context-remaining"]
 
