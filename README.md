@@ -181,6 +181,14 @@
 python3 scripts/lint_verify_ios_build_policy.py
 ```
 
+## 多 Agent 编排规则校验
+
+- 可用以下脚本检查 `AGENTS.md`、`README.md`、`skills/TAXONOMY.md` 与 `codex-subagent-orchestration` 是否仍保持默认多 Agent + 运行时受限时单 Agent fallback 的一致语义：
+
+```bash
+python3 scripts/lint_subagent_orchestration_policy.py
+```
+
 ## 通用约定
 - 对应项目中新建 `.swift`、`.h`、`.m`、`.mm` 等源码文件且项目要求文件头时，`Created by` 必须使用**本机用户名称**，不能写 `Codex`。
 - 当前环境下默认作者名取自本机用户信息：`Choshim.Wei`。

@@ -14,7 +14,8 @@
 - 只改 ownership 内文件
 - 不要回滚他人改动
 - 不做无关重构
-- 输出 changed_files / summary / known_risks
+- 如果改动了公共接口、配置前提或调用契约，必须显式说明影响面
+- 输出 changed_files / summary / known_risks / test_impact 或 no_test_reason
 ```
 
 ## reviewer explorer
@@ -33,6 +34,10 @@
 输出：
 - blocking_findings
 - non_blocking_findings
+
+要求：
+- blocking_findings 只放真实阻塞项
+- findings 按严重度降序输出
 ```
 
 ## tester explorer
@@ -47,10 +52,12 @@
 - 判断是否必须补测试代码
 
 输出：
-- test_scope
-- validation_result
-- failure_reason
-- suggested_fix
+- `test_scope`
+- `suggested_validation`
+- `executed_validation`
+- `failure_attribution`
+- `needs_test_code`
+- `suggested_fix`
 ```
 
 ## tester worker

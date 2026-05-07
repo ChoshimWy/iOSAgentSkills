@@ -3,6 +3,7 @@
 ## 固定原则
 - 最终 `verify-ios-build` 只能由主 Agent 执行。
 - 最终门禁必须在目标项目环境执行，不能把 sandbox 结果当最终结论。
+- 如果最终门禁需要越过 sandbox 才能在目标项目环境成立，由主 Agent 使用 `functions.exec_command` 并按需设置 `sandbox_permissions=\"require_escalated\"`。
 - 如果同时存在 `.xcworkspace` 与 `.xcodeproj`，必须优先 `.xcworkspace`。
 - iOS 项目默认优先已连接真机；找不到连接中的真机时才回退到 simulator。
 

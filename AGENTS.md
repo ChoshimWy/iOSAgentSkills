@@ -77,10 +77,15 @@
 - 默认采用四角色编排：`coder worker` 实现、`reviewer explorer` 并行读审、`tester` 负责测试预检与失败归因、`主 Agent` 负责聚合与最终裁决。
 - 如果当前运行时、上层策略或用户约束要求显式授权 `subAgent`，而用户尚未授权，则临时回退为单 Agent；一旦授权条件满足，应恢复多 Agent 流程，不要长期停留在单 Agent。
 - `coder worker` 只负责实现或修复代码；prompt 中必须写清 ownership、成功标准、禁止无关改动、不要回滚他人改动，并优先复用 `ios-feature-implementation`、`uikit-feature-implementation`、`swiftui-feature-implementation`、`swift-expert` 等现有实现 skills。
+- `coder worker` 的输出除 `changed_files`、`summary`、`known_risks` 外，还必须补 `test_impact` 或 `no_test_reason`；如果改动了公共接口、配置前提或调用契约，必须显式写出影响面，不要把这类变化藏在摘要里。
 - `reviewer explorer` 只做静态读审，不改代码、不执行最终门禁；默认复用 `code-review`，重点检查并发隔离、API availability、边界遗漏、架构越界与潜在回归风险。
+- `reviewer explorer` 必须按严重度输出 findings；`blocking_findings` 只放真实阻塞项，优化建议、风格建议或可延后事项只能放在 `non_blocking_findings`。
 - `tester` 默认先使用 `explorer` 做测试面分析、定向验证建议、失败归因与日志解释；只有在明确需要补测试代码时才升级为 `worker`，并复用 `testing`、`ios-device-automation`、`ios-simulator-automation`。
+- `tester` 的结论必须明确区分 `suggested_validation`、`executed_validation`、`failure_attribution`、`needs_test_code`；不要把“建议跑什么”和“已经实际验证了什么”混写成同一条结论。
 - 最终 completion gate 始终由主 Agent 独占执行 `verify-ios-build`；tester 或其它 subAgent 可以做预检，但不能替代最终门禁，也不能决定任务已完成。
 - 主 Agent 在启动 subAgent 前先本地确定目标文件范围、成功标准，以及需要复用的 workspace / scheme / destination 基线；若 reviewer、tester 或最终门禁发现阻塞问题，主 Agent 必须把首个真实失败点、影响范围和验证基线精确回写给 coder，再进入下一轮修复。
+- 多 Agent 流程中的工具选择默认遵循固定矩阵：Apple API、availability、WWDC 与 framework 指导优先 `appleDeveloperDocs`；构建、测试、simulator、真机、截图与日志优先 `Build iOS Apps` / `xcodebuildmcp` 相关工具；需要在目标项目环境执行最终门禁或越过 sandbox 时，由主 Agent 使用 `functions.exec_command` 并按需申请升级。
+- 只有在多个开发者工具彼此独立、不会共享写集，也不涉及 `apply_patch` 这类写操作时，才允许用 `multi_tool_use.parallel` 并行；否则保持串行，避免 reviewer / tester / gate 之间产生假并行与结果漂移。
 - 若任务极小、单文件、无明确测试面，或用户明确要求简化流程，可降级为 `coder + reviewer + 主 Agent gate`；但涉及 Apple Xcode 项目改动时，最终 `verify-ios-build` 门禁仍不可省略。
 
 ## 输出偏好

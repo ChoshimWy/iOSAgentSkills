@@ -13,6 +13,7 @@
 - `changed_files`
 - `summary`
 - `known_risks`
+- `test_impact` 或 `no_test_reason`
 
 ### 不负责
 - 最终完成态裁决
@@ -30,6 +31,10 @@
 - `blocking_findings`
 - `non_blocking_findings`
 
+### 额外要求
+- `blocking_findings` 只放真实阻塞项
+- findings 默认按严重度降序输出
+
 ### 不负责
 - 直接改代码
 - 跑最终门禁
@@ -44,8 +49,10 @@
 
 ### explorer 模式输出
 - `test_scope`
-- `validation_result`
-- `failure_reason`
+- `suggested_validation`
+- `executed_validation`
+- `failure_attribution`
+- `needs_test_code`
 - `suggested_fix`
 
 ### worker 模式额外输出
@@ -59,7 +66,7 @@
 ## main agent
 
 ### 固定职责
-- 选择是否启用多 Agent
+- 默认保持多 Agent，必要时明确说明单 Agent fallback
 - 启动与回收 subAgent
 - 聚合 coder / reviewer / tester 输出
 - 精确回写 coder

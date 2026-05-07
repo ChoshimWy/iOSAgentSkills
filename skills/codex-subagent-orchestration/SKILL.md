@@ -29,12 +29,15 @@ description: 默认优先使用的多 Agent 编排入口；它负责统一编排
 - `coder worker`
   - 只负责实现或修复代码。
   - prompt 必须写清 ownership、成功标准、禁止无关改动、不要回滚他人改动。
+  - 输出除 `changed_files`、`summary`、`known_risks` 外，还必须补 `test_impact` 或 `no_test_reason`。
   - 编码阶段优先复用：`ios-feature-implementation`、`uikit-feature-implementation`、`swiftui-feature-implementation`、`swift-expert`。
 - `reviewer explorer`
   - 只做静态读审，不改代码、不执行最终门禁。
+  - `blocking_findings` 只放真实阻塞项，其余建议全部留在 `non_blocking_findings`。
   - 默认复用 `code-review`，重点检查并发隔离、API availability、边界遗漏、架构越界与潜在回归风险。
 - `tester`
   - 默认先用 `explorer` 做测试面分析、定向验证建议、失败归因与日志解释。
+  - 结论必须明确区分 `suggested_validation`、`executed_validation`、`failure_attribution`、`needs_test_code`。
   - 只有在明确需要补测试代码时才升级为 `worker`。
   - 默认复用：`testing`、`ios-device-automation`、`ios-simulator-automation`。
 - `main agent`
@@ -43,11 +46,15 @@ description: 默认优先使用的多 Agent 编排入口；它负责统一编排
 ## 核心规则
 - 在不引入额外外部 orchestrator 的前提下，默认使用原生 `spawn_agent`、`send_input`、`wait_agent`、`close_agent` 显式编排；不要假设存在自动流转流水线。
 - 运行时默认只使用内建 `worker` 与 `explorer`，不额外发明新的底层 Agent 类型。
+- Apple API、availability、WWDC 与 framework 指导优先 `appleDeveloperDocs`；构建、测试、simulator、真机、截图与日志优先 `Build iOS Apps` / `xcodebuildmcp` 相关工具；需要在目标项目环境越过 sandbox 时，由主 Agent 使用 `functions.exec_command` 并按需申请升级。
+- 只有当多个开发者工具彼此独立、不会共享写集，也不涉及 `apply_patch` 这类写操作时，才允许使用 `multi_tool_use.parallel`；否则保持串行。
 - 最终 completion gate 始终由主 Agent 独占执行 `verify-ios-build`；任何 subAgent 都不能替代最终门禁，也不能决定任务已完成。
 - 如果同一任务中已经先跑过定向测试或其它 build/test，最终门禁默认复用同一套 workspace / scheme / destination 基线。
 - 若任务极小、单文件、无明确测试面，或用户明确要求简化流程，可降级为 `coder + reviewer + 主 Agent gate`；但涉及 Apple Xcode 项目改动时，最终 `verify-ios-build` 仍不可省略。
 
 ## 按需阅读的参考文件
+- `references/coding-standards.md`：coder / reviewer / tester / main 的编码与输出规范。
+- `references/tool-routing.md`：角色到 MCP / 工具 / 升级策略的固定矩阵。
 - `references/role-contracts.md`：四个角色的输入输出契约。
 - `references/prompt-templates.md`：coder / reviewer / tester 的 prompt 模板。
 - `references/handoff-loop.md`：失败回环、回写与停止条件。
