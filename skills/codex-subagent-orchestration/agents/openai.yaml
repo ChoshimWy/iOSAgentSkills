@@ -1,0 +1,7 @@
+interface:
+  display_name: "Codex 多 Agent 编排"
+  short_description: "默认优先的多 Agent 编排：编码、审查、测试与最终门禁协同"
+  default_prompt: "默认优先使用 $codex-subagent-orchestration 拆分并编排编码、审查、测试与最终 verify-ios-build 门禁；若当前运行时或上层策略限制未获授权，则临时回退单 Agent。"
+
+policy:
+  allow_implicit_invocation: false

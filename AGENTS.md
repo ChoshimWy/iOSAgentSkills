@@ -68,6 +68,20 @@
 - 使用 `code-review` 处理静态代码审查、diff review 与公开 API 设计评审。
 - 使用 `debugging` 处理运行时故障、崩溃、泄漏和生命周期问题。
 - 使用 `ios-performance` 处理 profiling、回归、启动耗时、动画卡顿以及内存 / CPU 分析。
+- 默认优先使用 `codex-subagent-orchestration` 统一编排编码、审查、测试与最终门禁；如果当前运行时或上层策略要求显式授权 `subAgent`，而用户尚未授权，则临时回退为单 Agent，并在适当时机说明可切换到多 Agent 流程。
+
+## Codex subAgent 编排
+
+- 仓库默认优先走多 Agent 流程：主 Agent 优先使用 `spawn_agent`、`send_input`、`wait_agent`、`close_agent` 显式编排编码、审查、测试与最终门禁，不要假设存在声明式自动流转流水线。
+- 运行时默认只使用内建 `worker` 与 `explorer` 两类 subAgent，不额外发明新的底层 Agent 类型；通过复用现有 skills 区分编码、审查、测试与门禁职责。
+- 默认采用四角色编排：`coder worker` 实现、`reviewer explorer` 并行读审、`tester` 负责测试预检与失败归因、`主 Agent` 负责聚合与最终裁决。
+- 如果当前运行时、上层策略或用户约束要求显式授权 `subAgent`，而用户尚未授权，则临时回退为单 Agent；一旦授权条件满足，应恢复多 Agent 流程，不要长期停留在单 Agent。
+- `coder worker` 只负责实现或修复代码；prompt 中必须写清 ownership、成功标准、禁止无关改动、不要回滚他人改动，并优先复用 `ios-feature-implementation`、`uikit-feature-implementation`、`swiftui-feature-implementation`、`swift-expert` 等现有实现 skills。
+- `reviewer explorer` 只做静态读审，不改代码、不执行最终门禁；默认复用 `code-review`，重点检查并发隔离、API availability、边界遗漏、架构越界与潜在回归风险。
+- `tester` 默认先使用 `explorer` 做测试面分析、定向验证建议、失败归因与日志解释；只有在明确需要补测试代码时才升级为 `worker`，并复用 `testing`、`ios-device-automation`、`ios-simulator-automation`。
+- 最终 completion gate 始终由主 Agent 独占执行 `verify-ios-build`；tester 或其它 subAgent 可以做预检，但不能替代最终门禁，也不能决定任务已完成。
+- 主 Agent 在启动 subAgent 前先本地确定目标文件范围、成功标准，以及需要复用的 workspace / scheme / destination 基线；若 reviewer、tester 或最终门禁发现阻塞问题，主 Agent 必须把首个真实失败点、影响范围和验证基线精确回写给 coder，再进入下一轮修复。
+- 若任务极小、单文件、无明确测试面，或用户明确要求简化流程，可降级为 `coder + reviewer + 主 Agent gate`；但涉及 Apple Xcode 项目改动时，最终 `verify-ios-build` 门禁仍不可省略。
 
 ## 输出偏好
 

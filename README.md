@@ -29,6 +29,7 @@
 - `testing/` —— 单元测试、UI 测试、Mock/Stub/Spy 与 async 测试
 - `xcode-build/` —— Xcode 构建配置、签名、Archive/Export 与 CI/CD
 - `verify-ios-build/` —— 收尾代码审查门禁 + 一次性 `xcodebuild` 验收
+- `codex-subagent-orchestration/` —— 默认优先的多 Agent 编排入口，统一协调编码、审查、测试与最终门禁；若当前运行时限制未获授权，则临时回退单 Agent
 
 ### Diagnostics
 - `code-review/` —— 代码审查与 API 设计评审
@@ -102,6 +103,7 @@
      - “帮我配置 archive/export 的 xcodebuild 流程”
      - “帮我把这份合同模板改成新的 .docx”
      - “帮我读取这个 .pptx 模板并改成新的 deck”
+     - “帮我用多个 Agent 把编码、代码审查、测试和最后门禁分开处理”
 
 5. **技能扩展**
    - 新增技能：在本目录下新建子文件夹，包含 `SKILL.md` 及相关参考文档。
