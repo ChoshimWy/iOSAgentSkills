@@ -28,9 +28,13 @@
 - 当涉及 Apple API 细节、平台可用性或 WWDC 指导时，优先使用 Apple 官方文档，并明确区分“文档事实”和“你的推断”。
 - 当你需要 Apple Developer Documentation、Swift / Objective-C API 参考、WWDC session、framework 可用性或当前 Apple 平台指导时，始终优先使用 `appleDeveloperDocs` MCP server。
 - 将 OS 版本、SDK 版本、Xcode 版本、真机 / 模拟器、Swift 语言模式视为一等约束，只要它们会影响结论，就必须明确考虑。
+- 当结论依赖最低系统版本、Swift 语言模式、SDK availability、编译条件或依赖管理约束时，先从项目配置、manifest、`.pbxproj`、`xcconfig`、`Package.swift` 等真实来源读取事实，不要凭经验假设。
+- 采用较新的 Apple API、Swift 并发能力或框架特性时，必须明确最低系统版本、Swift 语言模式，以及是否需要 `@available`、条件分支或 fallback。
 - 除非代码库或用户请求明确要求 Objective-C 或旧式模式，否则新实现优先使用 Swift 与结构化并发。
+- 默认保持 `@MainActor`、`actor`、`Sendable` 与结构化并发边界；不要用 `@unchecked Sendable`、`@preconcurrency`、`nonisolated(unsafe)`、`Task.detached` 等例外机制掩盖隔离问题；若必须使用，需明确说明原因、风险边界，以及为什么常规方案不可行。
 - UI 更新必须保持在主线程，或放在 `@MainActor` 隔离下执行。
 - 优先使用显式访问控制、小而专注的类型，并把业务逻辑从 view 和 view controller 中移出。
+- 对有明确回归面的补充修复或新增功能，优先补最小定向测试；如果本次不补测试，必须明确说明原因。
 - 避免对 Apple framework 做猜测性陈述；如果行为不确定或与版本强相关，先验证再下结论。
 
 ## 强制 `verify-ios-build` 门禁
@@ -50,13 +54,18 @@
 ## Skill 路由
 
 - 使用 `ios-feature-implementation` 处理标准 Apple 平台实现工作。
+- 使用 `uikit-feature-implementation` 处理在既定架构下的 UIKit 页面、布局与交互落地。
 - 使用 `swift-expert` 处理高级 Swift 抽象、并发隔离、类型擦除和跨平台可用性策略。
+- 使用 `sdk-architecture` 处理 SDK / Framework 模块边界、公共 API、配置与分发策略。
 - 当需要官方 API 参考或当前 Apple 文档时，使用 `apple-docs`。
 - 使用 `swiftui-ui-patterns` 处理新的 SwiftUI 页面或组件模式。
 - 使用 `swiftui-view-refactor` 重构已有的大型 SwiftUI 视图。
+- 使用 `ios-device-automation` 处理连接中的 iPhone / iPad 真机构建、安装、启动、测试与诊断。
+- 使用 `ios-simulator-automation` 处理 iOS Simulator 自动化、语义导航与模拟器验证。
 - 使用 `xcode-build` 处理构建设置、签名、archive / export 与 CI 配置。
 - 使用 `verify-ios-build` 作为 Apple Xcode 项目变更的强制最终验证门禁。
 - 使用 `testing` 编写单元测试与 UI 测试。
+- 使用 `code-review` 处理静态代码审查、diff review 与公开 API 设计评审。
 - 使用 `debugging` 处理运行时故障、崩溃、泄漏和生命周期问题。
 - 使用 `ios-performance` 处理 profiling、回归、启动耗时、动画卡顿以及内存 / CPU 分析。
 
