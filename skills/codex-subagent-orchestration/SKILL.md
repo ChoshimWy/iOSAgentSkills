@@ -25,6 +25,20 @@ description: 默认优先使用的多 Agent 编排入口；它负责统一编排
 7. 当代码、审查与测试预检收敛后，主 Agent 自己执行最终 `verify-ios-build`。
 8. 如果最终门禁失败，主 Agent 把首个真实失败点、影响范围和验证基线回写给 coder，再进入下一轮修复。
 
+## 可选：按角色指定 subAgent 模型（推荐）
+当你需要“coder=强模型 / reviewer=快模型 / tester=强模型（中推理）”这类分工时：
+- 在 `spawn_agent` 时为每个 subAgent **单独传 `model`**（不传则继承主 Agent 的默认模型）。
+- 如需控制推理强度，可为每个 subAgent **单独传 `reasoning_effort`**（例如 `medium`）。
+
+推荐默认（可按项目/预算调整）：
+- `coder worker`: 强模型（实现质量优先）
+- `reviewer explorer`: 快模型（读审吞吐优先）
+- `tester explorer`: 强模型 + `reasoning_effort=medium`（定位/归因质量优先）
+
+注意：
+- 具体可用的 `model` 取决于当前运行时/账号；不可用时应回退为不指定（继承默认）。
+- 本 Skill 只规定“如何表达分工”，不强行绑定某个具体模型名（避免随平台迭代过期）。
+
 ## Plan 输出模板（建议在需要时直接使用）
 
 当用户要求我给出计划（例如 `proposed_plan`）且任务包含实现/验证链路时，默认按以下结构输出：
@@ -75,6 +89,7 @@ description: 默认优先使用的多 Agent 编排入口；它负责统一编排
 ## 按需阅读的参考文件
 - `references/coding-standards.md`：coder / reviewer / tester / main 的编码与输出规范。
 - `references/tool-routing.md`：角色到 MCP / 工具 / 升级策略的固定矩阵。
+- `references/model-selection.md`：按角色自动挑选 subAgent 模型与回退策略（强/快/中推理）。
 - `references/role-contracts.md`：四个角色的输入输出契约。
 - `references/prompt-templates.md`：coder / reviewer / tester 的 prompt 模板。
 - `references/handoff-loop.md`：失败回环、回写与停止条件。

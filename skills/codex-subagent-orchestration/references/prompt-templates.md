@@ -1,5 +1,17 @@
 # Prompt 模板
 
+## subAgent 模型分工（可选，但推荐）
+
+当用户明确要求分工时，主 Agent 在 `spawn_agent` 参数里按角色指定 `model` / `reasoning_effort`：
+
+- coder：强模型
+- reviewer：快模型
+- tester：强模型 + `reasoning_effort=medium`
+
+说明：
+- 这里不写死具体模型名；由主 Agent 按当前运行时可用模型选择。
+- 不传 `model` 时，subAgent 会继承主 Agent 默认模型。
+
 ## coder worker
 
 ```text
@@ -86,4 +98,18 @@
 私有库链路补充：
 - SLSyncLib 等依赖先本地 path 验证
 - 私有库推送成功后，主项目恢复线上引用再复测同一基线
+```
+
+## spawn_agent 参数示例（概念示例）
+
+> 注意：以下是“参数形态示例”，模型名仅占位；以当前运行时实际可用为准。
+
+```json
+{
+  "agent_type": "worker",
+  "fork_context": true,
+  "model": "<strong-model>",
+  "reasoning_effort": "high",
+  "message": "负责实现；只改 ownership 内文件；不要无关重构。"
+}
 ```

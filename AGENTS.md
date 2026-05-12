@@ -73,6 +73,7 @@
 ## Codex subAgent 编排
 
 - 仓库默认优先走多 Agent 流程：主 Agent 优先使用 `spawn_agent`、`send_input`、`wait_agent`、`close_agent` 显式编排编码、审查、测试与最终门禁，不要假设存在声明式自动流转流水线。
+- 当用户要求“coder=强模型 / reviewer=快模型 / tester=强模型（中推理）”之类分工时，主 Agent 需要在 `spawn_agent` 中**按角色自动挑选 `model` / `reasoning_effort`**；若指定模型不可用，按候选列表**自动回退**，最后回退到“不指定 `model`（继承默认模型）”，确保编排不中断（见 `skills/codex-subagent-orchestration/references/model-selection.md`）。
 - 运行时默认只使用内建 `worker` 与 `explorer` 两类 subAgent，不额外发明新的底层 Agent 类型；通过复用现有 skills 区分编码、审查、测试与门禁职责。
 - 默认采用四角色编排：`coder worker` 实现、`reviewer explorer` 并行读审、`tester` 负责测试预检与失败归因、`主 Agent` 负责聚合与最终裁决。
 - 当输出 `proposed_plan` 或需求拆解计划时，必须默认把上述四角色顺序（主 Agent / coder / reviewer / tester / 主 Agent）写入 plan，明确并行关系与阻塞回环条件（包含回写 coder 的触发条件、回写轮次上限和 `blocked` 条件）。
