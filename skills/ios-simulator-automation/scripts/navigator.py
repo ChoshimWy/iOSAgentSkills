@@ -58,6 +58,7 @@ import argparse
 import json
 import subprocess
 import sys
+import time
 from dataclasses import dataclass
 
 from common import (
@@ -149,18 +150,36 @@ class Navigator:
         index: int = 0,
         fuzzy: bool = True,
     ) -> Element | None:
+        elements = self.find_elements(
+            text=text,
+            element_type=element_type,
+            identifier=identifier,
+            fuzzy=fuzzy,
+        )
+        if elements and index < len(elements):
+            return elements[index]
+        return None
+
+    def find_elements(
+        self,
+        text: str | None = None,
+        element_type: str | None = None,
+        identifier: str | None = None,
+        fuzzy: bool = True,
+        include_disabled: bool = False,
+    ) -> list[Element]:
         """
-        Find element by various criteria.
+        Find elements by various criteria.
 
         Args:
             text: Text to search in label/value
             element_type: Type of element (Button, TextField, etc.)
             identifier: Accessibility identifier
-            index: Which matching element to return (0-based)
             fuzzy: Use fuzzy matching for text
+            include_disabled: Include disabled elements in matching
 
         Returns:
-            Element if found, None otherwise
+            List of matching elements
         """
         tree = self.get_accessibility_tree()
         elements = self._flatten_tree(tree)
@@ -169,7 +188,7 @@ class Navigator:
 
         for elem in elements:
             # Skip disabled elements
-            if not elem.enabled:
+            if not include_disabled and not elem.enabled:
                 continue
 
             # Check type
@@ -191,10 +210,84 @@ class Navigator:
 
             matches.append(elem)
 
-        if matches and index < len(matches):
-            return matches[index]
+        return matches
 
-        return None
+    def wait_for_expectations(
+        self,
+        expect_id: str | None = None,
+        expect_text: str | None = None,
+        expect_value: str | None = None,
+        timeout: float = 10.0,
+        poll_interval: float = 0.3,
+        fail_on_duplicate_id: bool = True,
+    ) -> tuple[bool, str]:
+        """
+        Poll accessibility tree until expected post-condition is met.
+
+        Returns:
+            (success, message)
+        """
+        deadline = time.monotonic() + max(0.1, timeout)
+        poll_interval = max(0.1, poll_interval)
+        last_message = "Expectation not met"
+
+        while True:
+            elements = self.list_elements(force_refresh=True)
+
+            if expect_id:
+                id_matches = [elem for elem in elements if elem.identifier == expect_id]
+                if fail_on_duplicate_id and len(id_matches) > 1:
+                    return (False, f"Expectation failed: duplicate AXUniqueId '{expect_id}'")
+                if len(id_matches) == 0:
+                    last_message = f"Waiting for id='{expect_id}'"
+                else:
+                    last_message = f"Found id='{expect_id}'"
+
+            if expect_text:
+                text_matches = [
+                    elem
+                    for elem in elements
+                    if expect_text.lower() in ((elem.label or "") + " " + (elem.value or "")).lower()
+                ]
+                if len(text_matches) == 0:
+                    last_message = f"Waiting for text containing '{expect_text}'"
+                elif not expect_id:
+                    last_message = f"Found text containing '{expect_text}'"
+
+            if expect_value:
+                value_matches = [elem for elem in elements if (elem.value or "") == expect_value]
+                if len(value_matches) == 0:
+                    last_message = f"Waiting for value='{expect_value}'"
+                elif not expect_id and not expect_text:
+                    last_message = f"Found value='{expect_value}'"
+
+            id_ok = True
+            text_ok = True
+            value_ok = True
+
+            if expect_id:
+                id_count = sum(1 for elem in elements if elem.identifier == expect_id)
+                if fail_on_duplicate_id and id_count > 1:
+                    return (False, f"Expectation failed: duplicate AXUniqueId '{expect_id}'")
+                id_ok = id_count == 1 if fail_on_duplicate_id else id_count >= 1
+
+            if expect_text:
+                text_ok = any(
+                    expect_text.lower()
+                    in ((elem.label or "") + " " + (elem.value or "")).lower()
+                    for elem in elements
+                )
+
+            if expect_value:
+                value_ok = any((elem.value or "") == expect_value for elem in elements)
+
+            if id_ok and text_ok and value_ok:
+                return (True, "Expectation satisfied")
+
+            if time.monotonic() >= deadline:
+                return (False, f"Expectation timeout: {last_message}")
+
+            time.sleep(poll_interval)
 
     def tap(self, element: Element) -> bool:
         """Tap on an element."""
@@ -312,6 +405,36 @@ def main():
     parser.add_argument("--tap", action="store_true", help="Tap the found element")
     parser.add_argument("--tap-at", help="Tap at coordinates (x,y)")
     parser.add_argument("--enter-text", help="Enter text into element")
+    parser.add_argument(
+        "--expect-id",
+        help="Expected AXUniqueId after action. Polls until found or timeout.",
+    )
+    parser.add_argument(
+        "--expect-text",
+        help="Expected text (label/value contains) after action. Polls until found or timeout.",
+    )
+    parser.add_argument(
+        "--expect-value",
+        help="Expected exact AXValue after action. Polls until found or timeout.",
+    )
+    parser.add_argument(
+        "--timeout",
+        type=float,
+        default=10.0,
+        help="Expectation timeout in seconds (default: 10)",
+    )
+    parser.add_argument(
+        "--poll-interval",
+        type=float,
+        default=0.3,
+        help="Expectation polling interval in seconds (default: 0.3)",
+    )
+    parser.add_argument(
+        "--fail-on-duplicate-id",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Fail when AXUniqueId is duplicated (default: true)",
+    )
 
     # Coordinate transformation
     parser.add_argument(
@@ -450,6 +573,19 @@ def main():
             print(f"Found: {element.description} at {element.center}")
         else:
             print("Element not found")
+            sys.exit(1)
+
+    if args.expect_id or args.expect_text or args.expect_value:
+        ok, expectation_message = navigator.wait_for_expectations(
+            expect_id=args.expect_id,
+            expect_text=args.expect_text,
+            expect_value=args.expect_value,
+            timeout=args.timeout,
+            poll_interval=args.poll_interval,
+            fail_on_duplicate_id=args.fail_on_duplicate_id,
+        )
+        print(expectation_message)
+        if not ok:
             sys.exit(1)
 
 

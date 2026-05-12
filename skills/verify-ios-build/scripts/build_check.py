@@ -26,6 +26,16 @@ UI_TEST_SCHEME_NAME_PATTERN = re.compile(r"(?:^|[_-])UITESTS?$", re.IGNORECASE)
 UNIT_TEST_SCHEME_TOKEN_PATTERN = re.compile(r"(?:^|[_-])TESTS$", re.IGNORECASE)
 GENERIC_TEST_SCHEME_NAME_PATTERN = re.compile(r"(?:^|[_-])TEST$", re.IGNORECASE)
 NON_PRODUCTION_SCHEME_PATTERN = re.compile(r"(^|[_-])(DEV|TEST|UAT|STAGING)$", re.IGNORECASE)
+UI_SENSITIVE_FILE_PATTERNS = (
+    re.compile(r".*ViewController.*\.swift$", re.IGNORECASE),
+    re.compile(r".*View.*\.swift$", re.IGNORECASE),
+    re.compile(r".*Router.*\.swift$", re.IGNORECASE),
+    re.compile(r".*Coordinator.*\.swift$", re.IGNORECASE),
+    re.compile(r".*\.storyboard$", re.IGNORECASE),
+    re.compile(r".*\.xib$", re.IGNORECASE),
+)
+UI_SENSITIVE_PATH_PREFIXES = ("Assets.xcassets/",)
+UI_SMOKE_MODE_VALUES = {"off", "auto", "required"}
 
 
 @dataclass
@@ -82,6 +92,8 @@ class BuildConfig:
     preferred_model: str | None
     validation_platform: str | None
     show_output: bool
+    ui_smoke_mode: str
+    ui_smoke_spec: str
 
     def command_for_destination(self, destination: str | None) -> list[str]:
         command = ["xcodebuild"]
@@ -125,7 +137,16 @@ OVERRIDABLE_ENV_KEYS = (
     "XCODE_DEVICE_NAME",
     "XCODE_PREFER_MODEL",
     "XCODEBUILD_SHOW_OUTPUT",
+    "XCODE_UI_SMOKE_MODE",
+    "XCODE_UI_SMOKE_SPEC",
 )
+
+
+@dataclass
+class UISmokeResult:
+    should_run: bool
+    success: bool
+    message: str
 
 
 def load_env(root: Path) -> dict[str, str]:
@@ -149,6 +170,15 @@ def truthy(value: str | None, default: bool = False) -> bool:
     if value is None:
         return default
     return value.strip().lower() not in {"0", "false", "no", "off"}
+
+
+def normalize_ui_smoke_mode(value: str | None) -> str:
+    if value is None:
+        return "auto"
+    mode = value.strip().lower()
+    if mode in UI_SMOKE_MODE_VALUES:
+        return mode
+    return "auto"
 
 
 def pick_workspace(root: Path, env: dict[str, str]) -> str | None:
@@ -281,6 +311,8 @@ def resolve_build_config(root: Path) -> BuildConfig:
         preferred_model=env.get("XCODE_PREFER_MODEL"),
         validation_platform=os.environ.get("XCODE_VALIDATION_PLATFORM"),
         show_output=truthy(env.get("XCODEBUILD_SHOW_OUTPUT"), default=False),
+        ui_smoke_mode=normalize_ui_smoke_mode(env.get("XCODE_UI_SMOKE_MODE")),
+        ui_smoke_spec=env.get("XCODE_UI_SMOKE_SPEC", ".codex/ui-smoke.yml"),
     )
 
 
@@ -346,6 +378,20 @@ def collect_changed_files(root: Path) -> set[str]:
     for command in commands:
         changed.update(run_git_lines(root, command))
     return changed
+
+
+def is_ui_sensitive_path(path: str) -> bool:
+    normalized = path.replace("\\", "/")
+    if any(
+        normalized.startswith(prefix) or f"/{prefix}" in normalized
+        for prefix in UI_SENSITIVE_PATH_PREFIXES
+    ):
+        return True
+    return any(pattern.match(normalized) for pattern in UI_SENSITIVE_FILE_PATTERNS)
+
+
+def has_ui_sensitive_changes(changed_files: set[str]) -> bool:
+    return any(is_ui_sensitive_path(path) for path in changed_files)
 
 
 def normalize_path(path: str, root: Path) -> Path:
@@ -689,6 +735,87 @@ def should_attempt_device_fallback(
     return True, "third-party simulator-only linker failure", issue
 
 
+def run_ui_smoke_if_needed(
+    config: BuildConfig,
+    changed_files: set[str],
+    initial_destination: str | None,
+) -> UISmokeResult:
+    mode = config.ui_smoke_mode
+    if mode == "off":
+        return UISmokeResult(False, True, "UI smoke skipped: XCODE_UI_SMOKE_MODE=off")
+
+    ui_sensitive = has_ui_sensitive_changes(changed_files)
+    if not ui_sensitive:
+        return UISmokeResult(False, True, "UI smoke skipped: no UI-sensitive file changes detected")
+
+    if not is_simulator_destination(initial_destination):
+        message = "UI smoke skipped: initial destination is not iOS Simulator"
+        if mode == "required":
+            message = (
+                "UI smoke required but initial destination is not iOS Simulator. "
+                "Set XCODE_DESTINATION to a simulator destination."
+            )
+            return UISmokeResult(True, False, message)
+        return UISmokeResult(False, True, message)
+
+    spec_path = (config.root / config.ui_smoke_spec).resolve()
+    if not spec_path.exists():
+        if mode == "required":
+            return UISmokeResult(
+                True,
+                False,
+                f"UI smoke required but spec not found: {spec_path}",
+            )
+        return UISmokeResult(
+            False,
+            True,
+            f"UI smoke skipped: spec not found ({spec_path})",
+        )
+
+    runner = VERIFY_SKILL_DIR.parent / "ios-simulator-automation" / "scripts" / "ui_smoke_runner.py"
+    if not runner.exists():
+        return UISmokeResult(True, False, f"UI smoke runner missing: {runner}")
+
+    artifacts_dir = config.root / ".codex" / "ui-smoke-artifacts"
+    command = [
+        "python3",
+        str(runner),
+        "--spec",
+        str(spec_path),
+        "--output-dir",
+        str(artifacts_dir),
+    ]
+
+    print("=== UI smoke validation ===")
+    print(f"Spec: {spec_path}")
+    print(f"Runner: {runner}")
+    print(f"Command: {' '.join(shlex.quote(part) for part in command)}")
+
+    completed = subprocess.run(
+        command,
+        cwd=config.root,
+        capture_output=True,
+        text=True,
+        errors="replace",
+    )
+
+    if completed.stdout.strip():
+        print("--- ui smoke stdout ---")
+        print(completed.stdout.rstrip())
+    if completed.stderr.strip():
+        print("--- ui smoke stderr ---")
+        print(completed.stderr.rstrip())
+
+    if completed.returncode != 0:
+        return UISmokeResult(
+            True,
+            False,
+            f"UI smoke failed with exit code {completed.returncode}",
+        )
+
+    return UISmokeResult(True, True, "UI smoke passed")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Run physical-device-first xcodebuild verification with optional simulator override"
@@ -756,6 +883,10 @@ def main() -> int:
     maybe_print_output(initial_attempt, config.show_output)
 
     if initial_attempt.exit_code == 0:
+        ui_smoke_result = run_ui_smoke_if_needed(config, changed_files, initial_destination)
+        print(ui_smoke_result.message)
+        if not ui_smoke_result.success:
+            return 1
         return 0
 
     primary_issue = select_primary_issue(initial_attempt.issues)

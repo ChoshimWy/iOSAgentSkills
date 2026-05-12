@@ -1,0 +1,29 @@
+app_bundle_id: com.example.app
+
+flows:
+  - name: app_launch_smoke
+    steps:
+      - action: assert
+        target:
+          id: home_screen_root
+
+  - name: login_smoke
+    steps:
+      - action: tap
+        target:
+          id: login_button
+        expect:
+          id: account_input
+
+      - action: set_value
+        target:
+          id: account_input
+        value_env: ACRUX_UI_E2E_ACCOUNT
+        expect:
+          value_from_env: ACRUX_UI_E2E_ACCOUNT
+
+      - action: tap
+        target:
+          id: submit_button
+        expect:
+          id: home_screen_root

@@ -131,6 +131,8 @@ def main() -> int:
             "已连接真机",
             "任务未完成",
             "macOS Xcode 工程",
+            "XCODE_UI_SMOKE_MODE",
+            "text-first",
         ],
         failures,
     )
@@ -190,6 +192,19 @@ def main() -> int:
         ],
         failures,
     )
+
+    require_contains(
+        ROOT / "skills" / "ios-simulator-automation" / "SKILL.md",
+        [
+            "text-before-pixels",
+            "ui_smoke_runner.py",
+        ],
+        failures,
+    )
+
+    ui_smoke_runner = ROOT / "skills" / "ios-simulator-automation" / "scripts" / "ui_smoke_runner.py"
+    if not ui_smoke_runner.exists():
+        failures.append(f"{ui_smoke_runner.relative_to(ROOT)} missing")
 
     verify_openai = ROOT / "skills" / "verify-ios-build" / "agents" / "openai.yaml"
     if not verify_openai.exists():

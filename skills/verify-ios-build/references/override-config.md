@@ -20,6 +20,9 @@ XCODE_DEVICE_FALLBACK="1"
 XCODE_DEVICE_ID="00008110-001234567890001E"
 XCODE_DEVICE_NAME="Choshim's iPhone"
 XCODE_PREFER_MODEL="iPad"
+# UI smoke（可选）
+XCODE_UI_SMOKE_MODE="auto"
+XCODE_UI_SMOKE_SPEC=".codex/ui-smoke.yml"
 ```
 
 ## 规则
@@ -39,6 +42,9 @@ XCODE_PREFER_MODEL="iPad"
 - 如果显式 simulator 阶段失败且命中第三方依赖的 simulator-only 链接白名单错误，脚本默认会自动切到已连接真机重跑一次 `build`
 - 真机回退默认开启：`XCODE_DEVICE_FALLBACK=1`；它只在首次 destination 是 simulator 时生效
 - 设置 `XCODE_DEVICE_FALLBACK=0` 可关闭自动真机回退，保留“只跑显式配置 destination”的行为
+- `XCODE_UI_SMOKE_MODE` 控制 UI smoke：`off`（关闭）、`auto`（命中 UI 改动且 spec 存在时执行）、`required`（命中 UI 改动时强制执行并阻塞失败）
+- `XCODE_UI_SMOKE_SPEC` 指定 smoke spec 路径，默认 `.codex/ui-smoke.yml`
+- UI smoke 默认采用 text-first 断言（accessibility tree），截图用于失败证据
 - 这些覆盖配置只影响 `xcodebuild` 参数，不会跳过 `verify-ios-build` 的前置代码审查，也不会改变“`.xcworkspace` 优先于 `.xcodeproj`”的默认规则
 
 ## 示例
