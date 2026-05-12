@@ -9,6 +9,8 @@ Configure local Codex and Claude entrypoints to use this cloned iOSAgentSkills r
   - ~/.codex/AGENTS.md -> <repo>/AGENTS.md
   - ~/.codex/skills -> <repo>/skills (默认)
   - ~/.codex/skills -> ~/.cc-switch/iOSAgentSkills/skills（当启用 --ccswitch 时）
+  - ~/.copilot/skills -> <repo>/skills (默认)
+  - ~/.copilot/skills -> ~/.cc-switch/iOSAgentSkills/skills（当启用 --ccswitch 时）
   - ~/.claude/CLAUDE.md -> @<repo>/AGENTS.md
   - ~/.claude/skills -> <repo>/skills (默认)
   - ~/.claude/skills -> ~/.cc-switch/iOSAgentSkills/skills（当启用 --ccswitch 时）
@@ -21,6 +23,7 @@ When --ccswitch is specified, the script synchronizes skills into:
   ~/.cc-switch/iOSAgentSkills/skills
 and links ~/.codex/skills / ~/.claude/skills to that staging directory, avoiding CC Switch import actions
 from deleting files in the current checked-out repository.
+~/.copilot/skills will follow the same target as ~/.codex/skills.
 
 When conflicting local files or directories already exist, the script backs them up to:
   ~/.agent-skills-backups/iOSAgentSkills/<timestamp>/
@@ -61,8 +64,10 @@ CODEX_SYNC_SCRIPT="$REPO_ROOT/scripts/sync_codex_shared_config.py"
 HOME_DIR="${HOME:?HOME is required}"
 CODEX_DIR="$HOME_DIR/.codex"
 CLAUDE_DIR="$HOME_DIR/.claude"
+COPILOT_DIR="$HOME_DIR/.copilot"
 CODEX_AGENTS="$CODEX_DIR/AGENTS.md"
 CODEX_SKILLS="$CODEX_DIR/skills"
+COPILOT_SKILLS="$COPILOT_DIR/skills"
 CLAUDE_MD="$CLAUDE_DIR/CLAUDE.md"
 CLAUDE_SKILLS="$CLAUDE_DIR/skills"
 CODEX_CONFIG="$CODEX_DIR/config.toml"
@@ -385,6 +390,9 @@ verify_installation() {
   [[ -L "$CLAUDE_SKILLS" ]] || fail "~/.claude/skills is not a symlink"
   [[ "$(resolve_physical_path "$CLAUDE_SKILLS")" == "$(resolve_physical_path "$TARGET_SKILLS")" ]] || fail "~/.claude/skills does not point to expected skills path"
 
+  [[ -L "$COPILOT_SKILLS" ]] || fail "~/.copilot/skills is not a symlink"
+  [[ "$(resolve_physical_path "$COPILOT_SKILLS")" == "$(resolve_physical_path "$TARGET_SKILLS")" ]] || fail "~/.copilot/skills does not point to expected skills path"
+
   if [[ "$CCSWITCH_MODE" == '1' ]]; then
     [[ "$(resolve_physical_path "$TARGET_SKILLS")" != "$(resolve_physical_path "$REPO_SKILLS")" ]] || fail "--ccswitch mode should use staging cache, not repo/skills"
   fi
@@ -402,6 +410,7 @@ verify_installation() {
 ensure_symlink "$CODEX_AGENTS" "$REPO_AGENTS" "~/.codex/AGENTS.md"
 sync_skills_to_ccswitch_cache
 ensure_symlink "$CODEX_SKILLS" "$TARGET_SKILLS" "~/.codex/skills"
+ensure_symlink "$COPILOT_SKILLS" "$TARGET_SKILLS" "~/.copilot/skills"
 ensure_text_file "$CLAUDE_MD" "$CLAUDE_IMPORT_LINE" "~/.claude/CLAUDE.md"
 ensure_symlink "$CLAUDE_SKILLS" "$TARGET_SKILLS" "~/.claude/skills"
 ensure_symlink "$CCSWITCH_PUBLIC_SKILLS" "$REPO_SKILLS" "~/.cc-switch/skills"
