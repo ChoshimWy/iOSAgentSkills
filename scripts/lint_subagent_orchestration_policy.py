@@ -39,8 +39,10 @@ def main() -> int:
     require_contains(
         ROOT / "AGENTS.md",
         [
-            "默认优先使用 `codex-subagent-orchestration`",
+            "默认先使用 `codex-subagent-orchestration`",
             "临时回退为单 Agent",
+            "`lite` / `standard` / `full`",
+            "80~120 行",
             "`test_impact`",
             "`no_test_reason`",
             "`blocking_findings` 只放真实阻塞项",
@@ -54,8 +56,10 @@ def main() -> int:
     require_contains(
         ROOT / "README.md",
         [
-            "`codex-subagent-orchestration/` —— 默认优先的多 Agent 编排入口",
+            "`codex-subagent-orchestration/` —— 默认优先的自适应多 Agent 编排入口",
             "python3 scripts/lint_subagent_orchestration_policy.py",
+            "`lite` / `standard` / `full`",
+            "80~120 行",
         ],
         failures,
     )
@@ -64,6 +68,7 @@ def main() -> int:
         [
             "默认优先切到 `codex-subagent-orchestration`",
             "`appleDeveloperDocs`",
+            "`lite` / `standard` / `full`",
             "`ios-device-automation`、`ios-simulator-automation`、`xcode-build` 或 `verify-ios-build`",
         ],
         failures,
@@ -74,6 +79,7 @@ def main() -> int:
         skill_md,
         [
             "默认优先使用本 skill",
+            "`lite` / `standard` / `full`",
             "临时回退单 Agent",
             "`test_impact` 或 `no_test_reason`",
             "`blocking_findings` 只放真实阻塞项",
@@ -83,6 +89,8 @@ def main() -> int:
             "`multi_tool_use.parallel`",
             "references/coding-standards.md",
             "references/tool-routing.md",
+            "80~120 行",
+            "`/tmp/*.log`",
         ],
         failures,
     )
@@ -93,8 +101,9 @@ def main() -> int:
         require_contains(
             yaml_path,
             [
-                "默认优先的多 Agent 编排",
+                "默认优先的自适应多 Agent 编排",
                 "$codex-subagent-orchestration",
+                "lite / standard / full",
                 "临时回退单 Agent",
             ],
             failures,
@@ -111,6 +120,7 @@ def main() -> int:
                 "`no_test_reason`",
                 "`blocking_findings`",
                 "`non_blocking_findings`",
+                "80~120 行",
                 "`suggested_validation`",
                 "`executed_validation`",
                 "`failure_attribution`",
@@ -131,6 +141,8 @@ def main() -> int:
                 '`sandbox_permissions=\\"require_escalated\\"',
                 "`multi_tool_use.parallel`",
                 "`apply_patch`",
+                "80~120 行",
+                "`/tmp/*.log`",
             ],
             failures,
         )
@@ -139,6 +151,7 @@ def main() -> int:
         SKILL_ROOT / "references" / "role-contracts.md",
         [
             "`test_impact` 或 `no_test_reason`",
+            "`blocking_findings: []`",
             "`suggested_validation`",
             "`executed_validation`",
             "`failure_attribution`",
@@ -151,6 +164,8 @@ def main() -> int:
         SKILL_ROOT / "references" / "prompt-templates.md",
         [
             "test_impact 或 no_test_reason",
+            "lite / standard / full",
+            "80~120 行",
             "`suggested_validation`",
             "`executed_validation`",
             "`failure_attribution`",
@@ -164,6 +179,7 @@ def main() -> int:
             "`wait_agent(...)`",
             "单 Agent fallback",
             "同一类问题最多回写 coder 2 次",
+            "排查 / 实现 / 验证 / 提交",
             '`sandbox_permissions=\\"require_escalated\\"',
         ],
         failures,

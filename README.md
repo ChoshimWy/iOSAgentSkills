@@ -29,7 +29,7 @@
 - `testing/` —— 单元测试、UI 测试、Mock/Stub/Spy 与 async 测试
 - `xcode-build/` —— Xcode 构建配置、签名、Archive/Export 与 CI/CD
 - `verify-ios-build/` —— 收尾代码审查门禁 + 一次性 `xcodebuild` 验收
-- `codex-subagent-orchestration/` —— 默认优先的多 Agent 编排入口，统一协调编码、审查、测试与最终门禁；若当前运行时限制未获授权，则临时回退单 Agent
+- `codex-subagent-orchestration/` —— 默认优先的自适应多 Agent 编排入口，先按 `lite` / `standard` / `full` 选择角色，再协调编码、审查、测试与最终门禁；若当前运行时限制未获授权，则临时回退单 Agent
 
 ### Diagnostics
 - `code-review/` —— 代码审查与 API 设计评审
@@ -183,11 +183,14 @@ python3 scripts/lint_verify_ios_build_policy.py
 
 ## 多 Agent 编排规则校验
 
-- 可用以下脚本检查 `AGENTS.md`、`README.md`、`skills/TAXONOMY.md` 与 `codex-subagent-orchestration` 是否仍保持默认多 Agent + 运行时受限时单 Agent fallback 的一致语义：
+- 可用以下脚本检查 `AGENTS.md`、`README.md`、`skills/TAXONOMY.md` 与 `codex-subagent-orchestration` 是否仍保持自适应多 Agent + 运行时受限时单 Agent fallback 的一致语义：
 
 ```bash
 python3 scripts/lint_subagent_orchestration_policy.py
 ```
+
+- 当前编排默认先选择 `lite` / `standard` / `full` 档位：小任务不启动无必要 tester，大任务或高风险链路才启用完整 coder / reviewer / tester。
+- 输出默认低 Token：reviewer/tester 使用压缩字段，build/test/log 只回传关键错误段、过滤摘要或最后 80~120 行，长日志写入 `/tmp/*.log`。
 
 ## 通用约定
 - 对应项目中新建 `.swift`、`.h`、`.m`、`.mm` 等源码文件且项目要求文件头时，`Created by` 必须使用**本机用户名称**，不能写 `Codex`。

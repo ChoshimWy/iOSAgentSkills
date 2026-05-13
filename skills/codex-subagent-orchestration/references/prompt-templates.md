@@ -28,6 +28,7 @@
 - 不做无关重构
 - 如果改动了公共接口、配置前提或调用契约，必须显式说明影响面
 - 输出 changed_files / summary / known_risks / test_impact 或 no_test_reason
+- 输出只给摘要和影响面，不粘贴大段 diff、文件全文或完整日志
 ```
 
 ## reviewer explorer
@@ -49,6 +50,7 @@
 
 要求：
 - blocking_findings 只放真实阻塞项
+- 若无阻塞项，写 blocking_findings: []，不要展开长解释
 - findings 按严重度降序输出
 ```
 
@@ -58,18 +60,19 @@
 你是 tester explorer。请不要直接决定任务完成，也不要替代最终门禁。
 
 请完成：
-- 判断当前任务的测试面
 - 给出定向验证建议
 - 如果已有失败信息，做失败归因
 - 判断是否必须补测试代码
 
-输出：
-- `test_scope`
+默认输出：
 - `suggested_validation`
 - `executed_validation`
 - `failure_attribution`
 - `needs_test_code`
-- `suggested_fix`
+
+按需输出：
+- `test_scope`（仅当验证面会影响下一步决策）
+- `suggested_fix`（仅当已有失败且需要回写 coder）
 ```
 
 ## tester worker
@@ -88,16 +91,25 @@
 ```text
 当任务涉及实现并要求给出 plan 时，先输出 `proposed_plan`：
 
-1. 主 Agent：任务边界、成功标准、基线（workspace / scheme / destination）
-2. coder worker：实现任务与 ownership
-3. reviewer explorer：并行读审，给 blocking_findings / non_blocking_findings
-4. tester explorer：并行验证面分析，给 test_scope / suggested_validation / executed_validation / failure_attribution / needs_test_code
+1. 主 Agent：任务边界、成功标准、所选 lite / standard / full 档位、基线（workspace / scheme / destination）
+2. coder worker（按需）：实现任务与 ownership
+3. reviewer explorer（lite 可省略，standard/full 默认启用）：blocking_findings / non_blocking_findings
+4. tester explorer（仅测试面或 full 档位）：suggested_validation / executed_validation / failure_attribution / needs_test_code
 5. 主 Agent 聚合：回写规则、回环（默认最多 2 轮）、何时 blocked
-6. `verify-ios-build`：最终门禁与 completion 判定
+6. `verify-ios-build`：最终门禁与 completion 判定（如适用）
 
 私有库链路补充：
 - SLSyncLib 等依赖先本地 path 验证
 - 私有库推送成功后，主项目恢复线上引用再复测同一基线
+```
+
+## 低 Token 输出约束
+
+```text
+- 搜索优先 rg 精确匹配，不做全仓库 cat。
+- build/test/log 默认只回传关键错误段、过滤摘要或最后 80~120 行。
+- 长日志写入 /tmp/*.log，回复只给路径和必要 excerpt。
+- 长任务按“排查 / 实现 / 验证 / 提交”分会话，新会话只带目标、关键路径、验证基线和上一轮结论。
 ```
 
 ## spawn_agent 参数示例（概念示例）

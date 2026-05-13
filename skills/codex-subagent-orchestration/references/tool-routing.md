@@ -16,3 +16,9 @@
 ## 非主链工具
 - Figma 只在明确涉及设计稿、Code Connect、设计系统资产或 Figma 写操作时使用，不默认混入编码主链路。
 - Browser / in-app browser 只用于 localhost / file 页面检查或前端交互验证，不替代 Apple API 查询、构建验证或最终门禁。
+
+## 低 Token 工具策略
+- 搜索优先 `rg` 精确匹配，不做全仓库 `cat` 或无过滤长输出。
+- build/test/log 输出默认只回传关键错误段、过滤摘要或最后 80~120 行。
+- 长日志写入 `/tmp/*.log`，回复只给路径和必要 excerpt。
+- 只有在定位必须依赖完整日志时，才扩大输出范围，并说明原因。

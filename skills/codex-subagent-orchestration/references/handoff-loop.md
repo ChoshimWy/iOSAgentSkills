@@ -1,11 +1,12 @@
 # 失败回环规则
 
 ## 总流程
-1. coder 完成实现
-2. reviewer / tester 并行给出结论
-3. 主 Agent 聚合后决定是否回写 coder
-4. 代码收敛后，主 Agent 执行最终 `verify-ios-build`
-5. gate 失败则再次回写 coder
+1. 主 Agent 先选择 `lite` / `standard` / `full` 档位
+2. coder 完成实现（如适用）
+3. reviewer / tester 按档位给出结论
+4. 主 Agent 聚合后决定是否回写 coder
+5. 代码收敛后，主 Agent 执行最终 `verify-ios-build`（如适用）
+6. gate 失败则再次回写 coder
 
 ## wait 与聚合策略
 - `wait_agent(...)` 只在主 Agent 需要当前结果推进下一步时使用，不要为轮询而频繁等待。
@@ -32,3 +33,8 @@
 - tester explorer 明确判断“缺少必要测试代码”
 - 用户明确要求补 `unit test` / `UI test`
 - 当前问题本质是测试缺口，而不是实现错误
+
+## 会话切分
+- 长任务默认按“排查 / 实现 / 验证 / 提交”切分会话。
+- 新会话只携带目标、关键路径、验证基线和上一轮结论，不复制完整历史。
+- Apple/Xcode 项目改动的最终完成态仍以目标项目环境中的 `verify-ios-build` 成功为准。

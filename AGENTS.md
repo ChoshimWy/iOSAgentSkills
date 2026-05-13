@@ -68,27 +68,29 @@
 - 使用 `code-review` 处理静态代码审查、diff review 与公开 API 设计评审。
 - 使用 `debugging` 处理运行时故障、崩溃、泄漏和生命周期问题。
 - 使用 `ios-performance` 处理 profiling、回归、启动耗时、动画卡顿以及内存 / CPU 分析。
-- 默认优先使用 `codex-subagent-orchestration` 统一编排编码、审查、测试与最终门禁；如果当前运行时或上层策略要求显式授权 `subAgent`，而用户尚未授权，则临时回退为单 Agent，并在适当时机说明可切换到多 Agent 流程。
+- 默认先使用 `codex-subagent-orchestration` 做复杂度评估与自适应编排：按 `lite` / `standard` / `full` 三档选择是否启用 coder / reviewer / tester；如果当前运行时或上层策略要求显式授权 `subAgent`，而用户尚未授权，则临时回退为单 Agent，并在适当时机说明可切换到多 Agent 流程。
 
 ## Codex subAgent 编排
 
-- 仓库默认优先走多 Agent 流程：主 Agent 优先使用 `spawn_agent`、`send_input`、`wait_agent`、`close_agent` 显式编排编码、审查、测试与最终门禁，不要假设存在声明式自动流转流水线。
+- 仓库默认先做复杂度评估，再选择 `lite` / `standard` / `full` 编排档位；不要把所有任务都升级为全量 coder + reviewer + tester。
+- `lite`：极小、单文件、无明确测试面或纯文档/规则小改，优先单 Agent，必要时只补 `reviewer explorer`；涉及 Apple Xcode 项目改动时仍必须由主 Agent 执行最终 `verify-ios-build`。
+- `standard`：普通代码/规则改动，默认 `coder worker + reviewer explorer + 主 Agent gate`；只有出现测试面、失败归因或用户明确要求时才启动 `tester explorer`。
+- `full`：跨模块、高风险、并发/availability/公共契约变更、测试或日志归因复杂、私有库联调，或 Apple/Xcode 项目改动需要完整验证链路时，采用 `coder worker + reviewer explorer + tester explorer + 主 Agent gate`。
+- 主 Agent 必须先本地确定目标文件范围、成功标准、编排档位，以及需要复用的 workspace / scheme / destination 基线（如适用），再启动 subAgent。
 - 当用户要求“coder=强模型 / reviewer=快模型 / tester=强模型（中推理）”之类分工时，主 Agent 需要在 `spawn_agent` 中**按角色自动挑选 `model` / `reasoning_effort`**；若指定模型不可用，按候选列表**自动回退**，最后回退到“不指定 `model`（继承默认模型）”，确保编排不中断（见 `skills/codex-subagent-orchestration/references/model-selection.md`）。
 - 运行时默认只使用内建 `worker` 与 `explorer` 两类 subAgent，不额外发明新的底层 Agent 类型；通过复用现有 skills 区分编码、审查、测试与门禁职责。
-- 默认采用四角色编排：`coder worker` 实现、`reviewer explorer` 并行读审、`tester` 负责测试预检与失败归因、`主 Agent` 负责聚合与最终裁决。
-- 当输出 `proposed_plan` 或需求拆解计划时，必须默认把上述四角色顺序（主 Agent / coder / reviewer / tester / 主 Agent）写入 plan，明确并行关系与阻塞回环条件（包含回写 coder 的触发条件、回写轮次上限和 `blocked` 条件）。
-- 如果当前运行时、上层策略或用户约束要求显式授权 `subAgent`，而用户尚未授权，则临时回退为单 Agent；一旦授权条件满足，应恢复多 Agent 流程，不要长期停留在单 Agent。
+- 当输出 `proposed_plan` 或需求拆解计划时，必须写明所选 `lite` / `standard` / `full` 档位、并行关系、回写条件、最多 2 轮回环和 `blocked` 条件；不需要为小任务展开全量四角色模板。
+- 如果当前运行时、上层策略或用户约束要求显式授权 `subAgent`，而用户尚未授权，则临时回退为单 Agent；一旦授权条件满足，应恢复按档位自适应编排，不要长期停留在单 Agent。
 - `coder worker` 只负责实现或修复代码；prompt 中必须写清 ownership、成功标准、禁止无关改动、不要回滚他人改动，并优先复用 `ios-feature-implementation`、`uikit-feature-implementation`、`swiftui-feature-implementation`、`swift-expert` 等现有实现 skills。
-- `coder worker` 的输出除 `changed_files`、`summary`、`known_risks` 外，还必须补 `test_impact` 或 `no_test_reason`；如果改动了公共接口、配置前提或调用契约，必须显式写出影响面，不要把这类变化藏在摘要里。
-- `reviewer explorer` 只做静态读审，不改代码、不执行最终门禁；默认复用 `code-review`，重点检查并发隔离、API availability、边界遗漏、架构越界与潜在回归风险。
-- `reviewer explorer` 必须按严重度输出 findings；`blocking_findings` 只放真实阻塞项，优化建议、风格建议或可延后事项只能放在 `non_blocking_findings`。
-- `tester` 默认先使用 `explorer` 做测试面分析、定向验证建议、失败归因与日志解释；只有在明确需要补测试代码时才升级为 `worker`，并复用 `testing`、`ios-device-automation`、`ios-simulator-automation`。
-- `tester` 的结论必须明确区分 `suggested_validation`、`executed_validation`、`failure_attribution`、`needs_test_code`；不要把“建议跑什么”和“已经实际验证了什么”混写成同一条结论。
+- `coder worker` 的输出除 `changed_files`、`summary`、`known_risks` 外，还必须补 `test_impact` 或 `no_test_reason`；只给摘要和影响面，不粘贴大段 diff、文件全文或完整日志。
+- `reviewer explorer` 只做静态读审，不改代码、不执行最终门禁；默认复用 `code-review`，只输出 `blocking_findings` / `non_blocking_findings`，且 `blocking_findings` 只放真实阻塞项；若无阻塞项，写 `blocking_findings: []`，不展开长解释。
+- `tester explorer` 只在 `standard` 需要测试归因或 `full` 档位启动；默认只输出 `suggested_validation`、`executed_validation`、`failure_attribution`、`needs_test_code`，`test_scope` / `suggested_fix` 仅在确实影响决策时补充。
 - 最终 completion gate 始终由主 Agent 独占执行 `verify-ios-build`；tester 或其它 subAgent 可以做预检，但不能替代最终门禁，也不能决定任务已完成。
-- 主 Agent 在启动 subAgent 前先本地确定目标文件范围、成功标准，以及需要复用的 workspace / scheme / destination 基线；若 reviewer、tester 或最终门禁发现阻塞问题，主 Agent 必须把首个真实失败点、影响范围和验证基线精确回写给 coder，再进入下一轮修复。
+- 主 Agent 聚合时优先使用首个真实阻塞点驱动下一轮；若 reviewer、tester 或最终门禁发现阻塞问题，必须把首个真实失败点、影响范围和验证基线精确回写给 coder。
+- 工具与日志默认低 Token：搜索优先 `rg` 精确匹配，build/test/log 输出默认只回传关键错误段、过滤摘要或最后 80~120 行；长日志写入 `/tmp/*.log`，回复只给路径和必要 excerpt。
 - 多 Agent 流程中的工具选择默认遵循固定矩阵：Apple API、availability、WWDC 与 framework 指导优先 `appleDeveloperDocs`；构建、测试、simulator、真机、截图与日志优先 `Build iOS Apps` / `xcodebuildmcp` 相关工具；需要在目标项目环境执行最终门禁或越过 sandbox 时，由主 Agent 使用 `functions.exec_command` 并按需申请升级。
 - 只有在多个开发者工具彼此独立、不会共享写集，也不涉及 `apply_patch` 这类写操作时，才允许用 `multi_tool_use.parallel` 并行；否则保持串行，避免 reviewer / tester / gate 之间产生假并行与结果漂移。
-- 若任务极小、单文件、无明确测试面，或用户明确要求简化流程，可降级为 `coder + reviewer + 主 Agent gate`；但涉及 Apple Xcode 项目改动时，最终 `verify-ios-build` 门禁仍不可省略。
+- 长任务默认按“排查 / 实现 / 验证 / 提交”切分会话；新会话只携带目标、关键路径、验证基线和上一轮结论，不复制完整历史。
 
 ## 输出偏好
 
@@ -96,4 +98,4 @@
 - 只要相关，就明确指出准确的 Apple 平台和最低版本要求。
 - 优先给出具体修复、可复现的调试步骤，以及有理有据的技术权衡，而不是泛泛建议。
 - 输出方案、计划、修复思路或架构建议时，默认主动考虑并说明关键边界问题，包括适用范围与非目标范围、职责 / 模块边界、平台 / OS / SDK / 依赖版本边界、线程 / 状态 / 数据边界、兼容性 / 回退路径 / 失败路径，以及关键前提假设；若边界暂不明确且无法从本地事实确认，必须显式标注为假设、风险或待确认点；不要为凑完整度而发散穷举与当前问题无关的边界。
-- 生成计划时，如果任务涉及编码实现，则默认将 `codex-subagent-orchestration` 的执行序列作为主干（必要时附带降级说明）。
+- 生成计划时，如果任务涉及编码实现，则默认将 `codex-subagent-orchestration` 的自适应档位作为主干，写明 `lite` / `standard` / `full` 选择理由（必要时附带单 Agent fallback 说明）。
