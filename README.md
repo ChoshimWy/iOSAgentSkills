@@ -76,10 +76,16 @@
      - 保留本机未托管配置，例如项目 trust、认证、历史、缓存、memory 文件与额外本地自定义项
    - 如果本地已有冲突文件、目录或错误链接，脚本会先备份到：
      - `~/.agent-skills-backups/iOSAgentSkills/<timestamp>/`
+   - 对于 `~/.codex/skills`、`~/.claude/skills`、`~/.copilot/skills`：
+     - 如果原来是目录，目录内容会先备份再改为软连接。
+     - 如果原来是软连接且目标目录里有自定义 skill，也会先对目标目录做快照备份再切换，避免用户自有 skill 丢失。
    - 如需先查看将要发生的变更，可执行：
    ```bash
    bash install-local-agent-config.sh --dry-run
    ```
+   - 脚本每次执行都会检查 `~/.codex/skills/.system`：
+     - 若存在，则先同步到仓库 `skills/.system`，再继续软连接流程。
+     - 该目录用于承接 Codex 自带系统 Skill，避免每次 Codex 升级后都要手工同步更新。
    - 正式执行后，脚本会立即做一轮安装后自检；只有输出 `Verification: OK` 才表示当前设备已经可以直接使用这套配置。
 
 2. **手工方式（备选）**

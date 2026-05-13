@@ -58,6 +58,7 @@ done
 REPO_ROOT="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 REPO_AGENTS="$REPO_ROOT/AGENTS.md"
 REPO_SKILLS="$REPO_ROOT/skills"
+REPO_SYSTEM_SKILLS="$REPO_SKILLS/.system"
 REPO_CODEX_SHARED_CONFIG="$REPO_ROOT/config/codex.shared.toml"
 CODEX_SYNC_SCRIPT="$REPO_ROOT/scripts/sync_codex_shared_config.py"
 
@@ -67,6 +68,7 @@ CLAUDE_DIR="$HOME_DIR/.claude"
 COPILOT_DIR="$HOME_DIR/.copilot"
 CODEX_AGENTS="$CODEX_DIR/AGENTS.md"
 CODEX_SKILLS="$CODEX_DIR/skills"
+CODEX_SYSTEM_SKILLS="$CODEX_SKILLS/.system"
 COPILOT_SKILLS="$COPILOT_DIR/skills"
 CLAUDE_MD="$CLAUDE_DIR/CLAUDE.md"
 CLAUDE_SKILLS="$CLAUDE_DIR/skills"
@@ -135,6 +137,40 @@ backup_existing_path() {
   BACKUP_COUNT=$((BACKUP_COUNT + 1))
 }
 
+backup_symlink_target_dir_if_needed() {
+  local link_path="$1"
+  local label="$2"
+
+  [[ -L "$link_path" ]] || return 0
+
+  local resolved_target
+  resolved_target="$(resolve_physical_path "$link_path")"
+  [[ -d "$resolved_target" ]] || return 0
+
+  ensure_backup_dir
+
+  local relative_path="${link_path#$HOME_DIR/}"
+  if [[ "$relative_path" == "$link_path" ]]; then
+    relative_path="$(basename "$link_path")"
+  fi
+  local backup_target="$BACKUP_DIR/${relative_path}.target_snapshot"
+
+  if [[ "$DRY_RUN" == '1' ]]; then
+    log "dry-run: backup symlink target directory for $label: $resolved_target -> $backup_target"
+    return 0
+  fi
+
+  log "backup: symlink target directory for $label: $resolved_target -> $backup_target"
+  mkdir -p "$(dirname "$backup_target")"
+  if command -v rsync >/dev/null 2>&1; then
+    rsync -a "$resolved_target"/ "$backup_target"/
+  else
+    mkdir -p "$backup_target"
+    cp -R "$resolved_target"/. "$backup_target"/
+  fi
+  BACKUP_COUNT=$((BACKUP_COUNT + 1))
+}
+
 ensure_directory() {
   local dir_path="$1"
 
@@ -190,6 +226,7 @@ ensure_symlink() {
   fi
 
   if [[ -e "$link_path" || -L "$link_path" ]]; then
+    backup_symlink_target_dir_if_needed "$link_path" "$label"
     backup_existing_path "$link_path"
     action='updated'
   fi
@@ -301,6 +338,40 @@ sync_skills_to_ccswitch_cache() {
   TARGET_SKILLS="$CCSWITCH_SKILLS"
 }
 
+sync_system_skills_from_codex() {
+  if [[ ! -d "$CODEX_SYSTEM_SKILLS" ]]; then
+    log "skip: ~/.codex/skills/.system not found"
+    return 0
+  fi
+
+  local source_resolved target_resolved
+  source_resolved="$(resolve_physical_path "$CODEX_SYSTEM_SKILLS")"
+  target_resolved="$(resolve_physical_path "$REPO_SYSTEM_SKILLS")"
+
+  if [[ "$source_resolved" == "$target_resolved" ]]; then
+    log "unchanged: repo skills/.system already points to ~/.codex/skills/.system source"
+    record_change unchanged
+    return 0
+  fi
+
+  if [[ "$DRY_RUN" == '1' ]]; then
+    log "dry-run: sync ~/.codex/skills/.system -> $REPO_SYSTEM_SKILLS"
+    return 0
+  fi
+
+  log "sync: copy ~/.codex/skills/.system -> $REPO_SYSTEM_SKILLS"
+  ensure_directory "$REPO_SYSTEM_SKILLS"
+
+  if command -v rsync >/dev/null 2>&1; then
+    rsync -a --delete "$CODEX_SYSTEM_SKILLS/" "$REPO_SYSTEM_SKILLS/"
+  else
+    rm -rf "$REPO_SYSTEM_SKILLS"/*
+    cp -R "$CODEX_SYSTEM_SKILLS"/. "$REPO_SYSTEM_SKILLS"/
+  fi
+
+  UPDATED_COUNT=$((UPDATED_COUNT + 1))
+}
+
 if [[ ! -f "$REPO_AGENTS" ]]; then
   echo "Error: missing AGENTS.md in repo root: $REPO_AGENTS" >&2
   exit 1
@@ -408,6 +479,7 @@ verify_installation() {
 }
 
 ensure_symlink "$CODEX_AGENTS" "$REPO_AGENTS" "~/.codex/AGENTS.md"
+sync_system_skills_from_codex
 sync_skills_to_ccswitch_cache
 ensure_symlink "$CODEX_SKILLS" "$TARGET_SKILLS" "~/.codex/skills"
 ensure_symlink "$COPILOT_SKILLS" "$TARGET_SKILLS" "~/.copilot/skills"
