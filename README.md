@@ -199,6 +199,7 @@ python3 scripts/lint_subagent_orchestration_policy.py
 ```
 
 - 当前编排默认先选择 `lite` / `standard` / `full` 档位：小任务不启动无必要 tester，大任务或高风险链路才启用完整 coder / reviewer / tester。
+- 如果当前任务未进入 `codex-subagent-orchestration`，或当前轮只能以单 Agent 执行，实现型任务默认也按固定四步收口：`实现 skill -> code-review -> testing -> verify-ios-build`。
 - 输出默认低 Token：reviewer/tester 使用压缩字段，build/test/log 只回传关键错误段、过滤摘要或最后 80~120 行，长日志写入 `/tmp/*.log`。
 
 ## 通用约定

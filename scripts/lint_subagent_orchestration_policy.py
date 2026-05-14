@@ -41,6 +41,8 @@ def main() -> int:
         [
             "默认先使用 `codex-subagent-orchestration`",
             "临时回退为单 Agent",
+            "固定四步收口",
+            "`实现 skill -> code-review -> testing -> verify-ios-build`",
             "`lite` / `standard` / `full`",
             "80~120 行",
             "`test_impact`",
@@ -58,6 +60,8 @@ def main() -> int:
         [
             "`codex-subagent-orchestration/` —— 默认优先的自适应多 Agent 编排入口",
             "python3 scripts/lint_subagent_orchestration_policy.py",
+            "固定四步收口",
+            "`实现 skill -> code-review -> testing -> verify-ios-build`",
             "`lite` / `standard` / `full`",
             "80~120 行",
         ],
@@ -67,6 +71,8 @@ def main() -> int:
         ROOT / "skills" / "TAXONOMY.md",
         [
             "默认优先切到 `codex-subagent-orchestration`",
+            "固定四步收口",
+            "`实现 skill -> code-review -> testing -> verify-ios-build`",
             "`appleDeveloperDocs`",
             "`lite` / `standard` / `full`",
             "`ios-device-automation`、`ios-simulator-automation`、`xcode-build` 或 `verify-ios-build`",

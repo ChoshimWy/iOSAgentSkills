@@ -20,6 +20,7 @@
 - 如果没有用户显式指定 scheme，定向测试与最终门禁默认优先选择绑定了单元测试 `*Tests` target / bundle 的 scheme；若不存在，再回退到其它测试 scheme（例如 `*UITests`、`*_TEST`）。
 - 在 `verify-ios-build` 成功前，任何技能都不能把任务表述为“已完成”。
 - 默认优先切到 `codex-subagent-orchestration` 做自适应编排：先按 `lite` / `standard` / `full` 选择角色，再协调编码、审查、测试与最终门禁；如果当前运行时或上层策略要求显式授权 subAgent，而用户尚未授权，则临时回退到单 Agent。
+- 如果当前任务未进入 `codex-subagent-orchestration`，或当前轮只能以单 Agent 执行，实现型任务默认也按固定四步收口：`实现 skill -> code-review -> testing -> verify-ios-build`；不要因为没有 subAgent 就跳过代码审查或测试阶段。
 - 在多 Agent 流程中，Apple API / availability / WWDC 问题优先切 `apple-docs` 并使用 `appleDeveloperDocs`；构建、测试、simulator、真机、截图与日志优先切 `ios-device-automation`、`ios-simulator-automation`、`xcode-build` 或 `verify-ios-build`，不要用无关工具替代。
 
 先按下面 3 组问题做一次硬判定，再选 skill：

@@ -69,6 +69,7 @@
 - 使用 `debugging` 处理运行时故障、崩溃、泄漏和生命周期问题。
 - 使用 `ios-performance` 处理 profiling、回归、启动耗时、动画卡顿以及内存 / CPU 分析。
 - 默认先使用 `codex-subagent-orchestration` 做复杂度评估与自适应编排：按 `lite` / `standard` / `full` 三档选择是否启用 coder / reviewer / tester；如果当前运行时或上层策略要求显式授权 `subAgent`，而用户尚未授权，则临时回退为单 Agent，并在适当时机说明可切换到多 Agent 流程。
+- 如果当前任务未进入 `codex-subagent-orchestration`，或当前轮只能以单 Agent 执行，实现型任务默认也按固定四步收口：`ios-feature-implementation`（或对应实现 skill） -> `code-review` -> `testing` -> `verify-ios-build`。
 
 ## Codex subAgent 编排
 
@@ -81,6 +82,7 @@
 - 运行时默认只使用内建 `worker` 与 `explorer` 两类 subAgent，不额外发明新的底层 Agent 类型；通过复用现有 skills 区分编码、审查、测试与门禁职责。
 - 当输出 `proposed_plan` 或需求拆解计划时，必须写明所选 `lite` / `standard` / `full` 档位、并行关系、回写条件、最多 2 轮回环和 `blocked` 条件；不需要为小任务展开全量四角色模板。
 - 如果当前运行时、上层策略或用户约束要求显式授权 `subAgent`，而用户尚未授权，则临时回退为单 Agent；一旦授权条件满足，应恢复按档位自适应编排，不要长期停留在单 Agent。
+- 非编排 / 单 Agent 的实现型任务，不因为没有 subAgent 就跳过代码审查或测试阶段；默认仍按 `实现 skill -> code-review -> testing -> verify-ios-build` 顺序执行。
 - `coder worker` 只负责实现或修复代码；prompt 中必须写清 ownership、成功标准、禁止无关改动、不要回滚他人改动，并优先复用 `ios-feature-implementation`、`uikit-feature-implementation`、`swiftui-feature-implementation`、`swift-expert` 等现有实现 skills。
 - `coder worker` 的输出除 `changed_files`、`summary`、`known_risks` 外，还必须补 `test_impact` 或 `no_test_reason`；只给摘要和影响面，不粘贴大段 diff、文件全文或完整日志。
 - `reviewer explorer` 只做静态读审，不改代码、不执行最终门禁；默认复用 `code-review`，只输出 `blocking_findings` / `non_blocking_findings`，且 `blocking_findings` 只放真实阻塞项；若无阻塞项，写 `blocking_findings: []`，不展开长解释。

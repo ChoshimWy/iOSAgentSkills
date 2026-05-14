@@ -1,4 +1,4 @@
 interface:
   display_name: "SwiftUI Feature 实现"
   short_description: "按既定模式落地 SwiftUI 页面、组件与强制收尾门禁"
-  default_prompt: "使用 $swiftui-feature-implementation 在页面模式与状态归属已明确的前提下实现普通 SwiftUI 页面、组件与交互，不重新做模式选型；若任务产出修改了 Apple Xcode 项目相关内容，收尾必须切到 $verify-ios-build，并在目标项目的项目环境完成最终验证：iOS 项目若同时存在 `.xcworkspace` 与 `.xcodeproj` 必须优先 `.xcworkspace`，默认优先已连接真机，找不到连接中的真机时再回退到 simulator。"
+  default_prompt: "使用 $swiftui-feature-implementation 在页面模式与状态归属已明确的前提下实现普通 SwiftUI 页面、组件与交互，不重新做模式选型；如果当前任务未进入多 Agent 编排，或当前轮只能以单 Agent 执行，实现完成后默认也按固定四步收口：$swiftui-feature-implementation -> $code-review -> $testing -> $verify-ios-build；其中 $testing 阶段若不新增测试代码，也要明确给出 no_test_reason 后再进入最终门禁。若任务产出修改了 Apple Xcode 项目相关内容，收尾必须切到 $verify-ios-build，并在目标项目的项目环境完成最终验证：iOS 项目若同时存在 `.xcworkspace` 与 `.xcodeproj` 必须优先 `.xcworkspace`，默认优先已连接真机，找不到连接中的真机时再回退到 simulator。"

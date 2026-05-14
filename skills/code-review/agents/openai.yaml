@@ -1,4 +1,4 @@
 interface:
   display_name: "iOS 代码审查"
   short_description: "审查 Swift / iOS diff、风险与 public API 设计"
-  default_prompt: "使用 $code-review 对当前 iOS / Swift 改动做静态审查，按严重度输出 findings 与风险，不把静态结论包装成已复现的运行时问题。"
+  default_prompt: "使用 $code-review 对当前 iOS / Swift 改动做静态审查，按严重度输出 findings 与风险，不把静态结论包装成已复现的运行时问题；如果当前任务属于非编排 / 单 Agent 的实现链路，本阶段默认承接实现后的第二步，审查结束后继续进入 $testing，而不是直接跳到 $verify-ios-build。"

@@ -14,6 +14,7 @@ description: iOS/Swift 代码审查技能。只在需要 review 代码、审查 
 - 用户明确要求 review 代码、审查 diff、做 PR 评审。
 - 需要对 public API 或 SDK 接口做设计层面的可维护性评估。
 - 需要在合入前发现正确性、安全性、内存、并发和性能风险。
+- 非编排 / 单 Agent 的实现型任务进入固定四步链路时，作为实现后的第二步静态审查阶段。
 
 ## 核心规则
 - 审查优先级固定为：正确性 → 安全性 → 内存 → 并发 → 性能 → 可维护性 → 一致性。
@@ -44,6 +45,7 @@ description: iOS/Swift 代码审查技能。只在需要 review 代码、审查 
 - 审查 public API / SDK 接口时，参考 `references/api-design.md`。
 
 ## 与其他技能的关系
+- 如果当前任务属于非编排 / 单 Agent 的实现链路，本 skill 默认承接实现阶段后的第二步；审查结束后固定进入 `testing`，而不是直接跳过测试进入 `verify-ios-build`。
 - 需要真正修复代码异味时，切换到 `refactoring`、`swiftui-view-refactor` 或对应实现型 skill。
 - 需要复现 crash、异常、卡顿、启动慢、泄漏或做 `xctrace` 取证时，切换到 `debugging` 或 `ios-performance`。
 - 需要设计 SDK 对外接口边界时，可联动 `sdk-architecture`。
