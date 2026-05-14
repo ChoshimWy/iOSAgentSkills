@@ -93,7 +93,7 @@
 
 1. 主 Agent：任务边界、成功标准、所选 lite / standard / full 档位、基线（workspace / scheme / destination）
 2. coder worker（按需）：实现任务与 ownership
-3. reviewer explorer（lite 可省略，standard/full 默认启用）：blocking_findings / non_blocking_findings
+3. reviewer explorer（复用 code-review；lite 可省略，standard/full 默认启用）：blocking_findings / non_blocking_findings
 4. tester explorer（仅测试面或 full 档位）：suggested_validation / executed_validation / failure_attribution / needs_test_code
 5. 主 Agent 聚合：回写规则、回环（默认最多 2 轮）、何时 blocked
 6. `verify-ios-build`：最终门禁与 completion 判定（如适用）

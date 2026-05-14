@@ -28,8 +28,8 @@
 - `ios-device-automation/` —— 连接中的 iOS 真机构建、安装、启动、测试与诊断
 - `testing/` —— 单元测试、UI 测试、Mock/Stub/Spy 与 async 测试
 - `xcode-build/` —— Xcode 构建配置、签名、Archive/Export 与 CI/CD
-- `verify-ios-build/` —— 收尾代码审查门禁 + 一次性 `xcodebuild` 验收
-- `codex-subagent-orchestration/` —— 默认优先的自适应多 Agent 编排入口，先按 `lite` / `standard` / `full` 选择角色，再协调编码、审查、测试与最终门禁；若当前运行时限制未获授权，则临时回退单 Agent
+- `verify-ios-build/` —— 收尾代码审查门禁（复用 `code-review`）+ 一次性 `xcodebuild` 验收
+- `codex-subagent-orchestration/` —— 默认优先的自适应多 Agent 编排入口，先按 `lite` / `standard` / `full` 选择角色，再协调编码、`code-review` 审查、测试与最终门禁；若当前运行时限制未获授权，则临时回退单 Agent
 
 ### Diagnostics
 - `code-review/` —— 代码审查与 API 设计评审
@@ -154,7 +154,9 @@
 
 ## Git 提交门禁
 
-- 本仓库使用 `.githooks/commit-msg` + `scripts/commitlint.py` 校验 commit message。
+- 本仓库使用两层门禁：
+  - `.githooks/commit-msg` + `scripts/commitlint.py`：校验 commit message
+  - `.githooks/pre-commit` + `scripts/pod_private_cache_guard.py`：阻止直接提交 `Pods/` 缓存改动（除非对应 Pod 已在 `Podfile` 中切到本地 `:path`）
 - 规则与 `git-workflow` skill 保持一致：
   - 格式必须为 `<type>(<scope>): <subject>`
   - `subject` 必须包含中文
@@ -171,6 +173,7 @@
   - 后者只负责本地 Codex / Claude 接入
 
 - 安装后，类似 `fix: persist group fixture state for 3D virtual fixture sync` 这类不合规消息会被直接拒绝。
+- 安装后，若直接改了 `Pods/SomePrivatePod/...`，但 `Podfile` 中该 Pod 不是本地 `:path` 依赖，也会被直接拒绝并提示先完成“切本地库 -> 修改 -> 联调 -> 切回版本依赖”流程。
 
 ## 强制 `verify-ios-build` 收尾门禁
 

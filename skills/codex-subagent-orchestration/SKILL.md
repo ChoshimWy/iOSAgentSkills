@@ -17,8 +17,8 @@ description: 默认优先使用的自适应多 Agent 编排入口；它先按任
 
 ## 自适应编排档位
 - `lite`：极小、单文件、无明确测试面或纯文档/规则小改。优先单 Agent，必要时只补 `reviewer explorer`；涉及 Apple Xcode 项目改动时仍必须由主 Agent 执行最终 `verify-ios-build`。
-- `standard`：普通代码/规则改动。默认 `coder worker + reviewer explorer + 主 Agent gate`；只有出现测试面、失败归因或用户明确要求时才启动 `tester explorer`。
-- `full`：跨模块、高风险、并发/availability/公共契约变更、测试或日志归因复杂、私有库联调，或 Apple/Xcode 项目改动需要完整验证链路。采用 `coder worker + reviewer explorer + tester explorer + 主 Agent gate`。
+- `standard`：普通代码/规则改动。默认 `coder worker + reviewer explorer（复用 code-review） + 主 Agent gate`；只有出现测试面、失败归因或用户明确要求时才启动 `tester explorer`。
+- `full`：跨模块、高风险、并发/availability/公共契约变更、测试或日志归因复杂、私有库联调，或 Apple/Xcode 项目改动需要完整验证链路。采用 `coder worker + reviewer explorer（复用 code-review） + tester explorer + 主 Agent gate`。
 
 ## 默认编排
 1. 主 Agent 先本地确定目标文件范围、成功标准、编排档位，以及需要复用的 workspace / scheme / destination 基线（如适用）。
@@ -26,7 +26,7 @@ description: 默认优先使用的自适应多 Agent 编排入口；它先按任
 3. `wait_agent(...)` 只在需要结果推进下一步时使用，不为轮询频繁等待。
 4. 如果 reviewer 或 tester 发现阻塞问题，主 Agent 用 `send_input(..., interrupt=true)` 精确回写给 coder。
 5. 如果 tester 判断必须补测试代码，再单独启动 `tester worker`，且只持有测试文件 ownership。
-6. 当代码、审查与测试预检收敛后，主 Agent 自己执行最终 `verify-ios-build`（如适用）。
+6. 当代码、代码审查与测试预检收敛后，主 Agent 自己执行最终 `verify-ios-build`（如适用）。
 7. 如果最终门禁失败，主 Agent 把首个真实失败点、影响范围和验证基线回写给 coder，再进入下一轮修复。
 
 ## 可选：按角色指定 subAgent 模型（推荐）

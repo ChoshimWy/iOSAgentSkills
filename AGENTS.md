@@ -74,8 +74,8 @@
 
 - 仓库默认先做复杂度评估，再选择 `lite` / `standard` / `full` 编排档位；不要把所有任务都升级为全量 coder + reviewer + tester。
 - `lite`：极小、单文件、无明确测试面或纯文档/规则小改，优先单 Agent，必要时只补 `reviewer explorer`；涉及 Apple Xcode 项目改动时仍必须由主 Agent 执行最终 `verify-ios-build`。
-- `standard`：普通代码/规则改动，默认 `coder worker + reviewer explorer + 主 Agent gate`；只有出现测试面、失败归因或用户明确要求时才启动 `tester explorer`。
-- `full`：跨模块、高风险、并发/availability/公共契约变更、测试或日志归因复杂、私有库联调，或 Apple/Xcode 项目改动需要完整验证链路时，采用 `coder worker + reviewer explorer + tester explorer + 主 Agent gate`。
+- `standard`：普通代码/规则改动，默认 `coder worker + reviewer explorer（复用 code-review） + 主 Agent gate`；只有出现测试面、失败归因或用户明确要求时才启动 `tester explorer`。
+- `full`：跨模块、高风险、并发/availability/公共契约变更、测试或日志归因复杂、私有库联调，或 Apple/Xcode 项目改动需要完整验证链路时，采用 `coder worker + reviewer explorer（复用 code-review） + tester explorer + 主 Agent gate`。
 - 主 Agent 必须先本地确定目标文件范围、成功标准、编排档位，以及需要复用的 workspace / scheme / destination 基线（如适用），再启动 subAgent。
 - 当用户要求“coder=强模型 / reviewer=快模型 / tester=强模型（中推理）”之类分工时，主 Agent 需要在 `spawn_agent` 中**按角色自动挑选 `model` / `reasoning_effort`**；若指定模型不可用，按候选列表**自动回退**，最后回退到“不指定 `model`（继承默认模型）”，确保编排不中断（见 `skills/codex-subagent-orchestration/references/model-selection.md`）。
 - 运行时默认只使用内建 `worker` 与 `explorer` 两类 subAgent，不额外发明新的底层 Agent 类型；通过复用现有 skills 区分编码、审查、测试与门禁职责。

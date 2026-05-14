@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+set -eu
+
+./scripts/pod_private_cache_guard.py
