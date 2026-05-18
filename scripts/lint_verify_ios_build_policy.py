@@ -35,6 +35,13 @@ def require_contains(path: Path, snippets: list[str], failures: list[str]) -> No
         failures.append(f"{path.relative_to(ROOT)} missing: {', '.join(missing)}")
 
 
+def require_not_contains(path: Path, snippets: list[str], failures: list[str]) -> None:
+    text = path.read_text()
+    present = [snippet for snippet in snippets if snippet in text]
+    if present:
+        failures.append(f"{path.relative_to(ROOT)} should not contain: {', '.join(present)}")
+
+
 def main() -> int:
     failures: list[str] = []
 
@@ -43,6 +50,8 @@ def main() -> int:
         [
             "强制 `verify-ios-build` 门禁",
             "目标项目环境",
+            "本地所有 `xcodebuild` 命令",
+            "XCODE_DERIVED_DATA",
             "如果同时存在 `.xcworkspace` 和 `.xcodeproj`，验证必须使用 `.xcworkspace`。",
             "最终门禁默认复用同一套 workspace / scheme / destination 基线",
             "绑定了单元测试 `*Tests` target / bundle 的 scheme",
@@ -57,6 +66,8 @@ def main() -> int:
         [
             "强制 `verify-ios-build` 收尾门禁",
             "目标项目根目录的项目环境",
+            "本地所有 `xcodebuild` 命令",
+            "XCODE_DERIVED_DATA",
             "优先 `.xcworkspace`",
             "绑定了单元测试 `*Tests` target / bundle 的 scheme",
             "已连接真机",
@@ -144,9 +155,20 @@ def main() -> int:
             [
                 "workspace / scheme / destination 基线",
                 "绑定了单元测试 `*Tests` target / bundle 的 scheme",
+                'sandbox_permissions=\\"require_escalated\\"',
+                "Xcode 系统 DerivedData",
             ],
             failures,
         )
+
+    require_contains(
+        ROOT / "skills" / "xcode-build" / "SKILL.md",
+        [
+            'sandbox_permissions=\\"require_escalated\\"',
+            "Xcode 系统 DerivedData",
+        ],
+        failures,
+    )
 
     require_contains(
         ROOT / "skills" / "verify-ios-build" / "SKILL.md",
@@ -154,6 +176,8 @@ def main() -> int:
             "强制收尾验证技能",
             "项目环境",
             "sandbox_permissions=\\\"require_escalated\\\"",
+            "本地 `xcodebuild` 命令（含 `-list` / `-showdestinations` / build/test）统一按非沙盒项目环境执行",
+            "本地 `verify-ios-build` 不支持 `XCODE_DERIVED_DATA` 覆盖",
             "默认复用同一套 workspace / scheme / destination 基线",
             "绑定了单元测试 `*Tests` target / bundle 的 scheme",
             ".xcworkspace",
@@ -170,6 +194,8 @@ def main() -> int:
         ROOT / "skills" / "verify-ios-build" / "references" / "override-config.md",
         [
             "项目环境",
+            "本地 `verify-ios-build` 不支持 `XCODE_DERIVED_DATA` 覆盖",
+            "本地执行 `xcodebuild`（含 `-list` / `-showdestinations` / build/test）默认都要走非沙盒项目环境",
             "绑定了单元测试 `*Tests` target / bundle 的 scheme",
             "复用同一套 workspace / scheme / destination 基线",
             "已连接真机",
@@ -195,9 +221,19 @@ def main() -> int:
             "is_unit_test_preferred_scheme",
             "scheme_has_unit_test_binding",
             "BuildableName",
+            "XCODE_DERIVED_DATA is not supported in local verify-ios-build",
+            "Library/Developer/Xcode/DerivedData",
             'validation_platform=os.environ.get("XCODE_VALIDATION_PLATFORM")',
             'if config.validation_platform == "macos":',
             'default host build (no explicit destination)',
+        ],
+        failures,
+    )
+    require_not_contains(
+        ROOT / "skills" / "verify-ios-build" / "scripts" / "build_check.py",
+        [
+            "-derivedDataPath",
+            ".codex-derived-data",
         ],
         failures,
     )

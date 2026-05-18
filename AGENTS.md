@@ -32,6 +32,7 @@
 
 - 以本地仓库事实为先。在做判断前，先阅读代码、项目配置、manifest 和构建脚本。
 - 如果主项目引用的私有库需要修改，先把主项目依赖切到本地私有库引用；随后在对应私有库项目中完成修改，并回到主项目完成联调与验证；只有在主项目验证通过后，才能上传/发布私有库，并把主项目切回版本化私有库引用后再更新交付。
+- 严禁直接把 `Pods/<PrivatePod>/...` 里的副本当作主修改面；即使当前主项目已切本地 `:path`，代码修改也必须在私有库源码仓库完成，再回主项目联调。
 - 在补充修复或新增功能时，默认优先采用影响最小、范围最小且可验证的改动方式；不要主动扩大改动面，不顺手做无关重构、目录搬迁、命名清洗或跨模块改写；只有当局部修改无法正确解决问题，或用户明确要求更大范围调整时，才扩大变更范围。
 - 当涉及 Apple API 细节、平台可用性或 WWDC 指导时，优先使用 Apple 官方文档，并明确区分“文档事实”和“你的推断”。
 - 当你需要 Apple Developer Documentation、Swift / Objective-C API 参考、WWDC session、framework 可用性或当前 Apple 平台指导时，优先使用 `appleDeveloperDocs` MCP server。
@@ -51,6 +52,8 @@
 - “Apple Xcode 项目相关内容”包括代码、测试、资源、`.xcodeproj` / `.xcworkspace`、`.pbxproj`、`xcconfig`、scheme 文件、`Info.plist`、entitlements、构建脚本，以及仓库本地构建环境文件，例如 `.codex/xcodebuild.env`。
 - 即使用户没有单独要求“build verification”，这个门禁也必须执行。
 - 最终验证必须在目标项目环境中、从目标仓库根目录执行，不能把仅在 sandbox 中得到的构建结果当作最终结论。
+- 本地所有 `xcodebuild` 命令（含 `-list` / `-showdestinations` / build/test）默认都必须在非沙盒项目环境执行；通过 `functions.exec_command` 时显式设置 `sandbox_permissions=\"require_escalated\"`。
+- 本地构建缓存默认统一使用 Xcode 系统 DerivedData（`~/Library/Developer/Xcode/DerivedData`）；不要为 `verify-ios-build` 单独指定临时 `-derivedDataPath`，也不要使用 `XCODE_DERIVED_DATA` 覆盖。
 - 如果同时存在 `.xcworkspace` 和 `.xcodeproj`，验证必须使用 `.xcworkspace`。
 - 如果同一任务里已经先跑过定向测试，最终门禁默认复用同一套 workspace / scheme / destination 基线；不要无说明切换 scheme。
 - 如果没有用户显式指定 scheme，定向测试与最终门禁默认优先选择绑定了单元测试 `*Tests` target / bundle 的 scheme；若不存在，再回退到其它测试 scheme（例如 `*UITests`、`*_TEST`）。
@@ -80,13 +83,13 @@
 ## Codex subAgent 编排
 
 - 仓库默认先做复杂度评估，再选择 `lite` / `standard` / `full` 编排档位；不要把所有任务都升级为全量 coder + reviewer + tester。
-- `lite`：极小、单文件、无明确测试面或纯文档/规则小改，优先单 Agent，必要时只补 `reviewer explorer`；涉及 Apple Xcode 项目改动时仍必须由主 Agent 执行最终 `verify-ios-build`。
+- `lite`：极小、单文件、无明确测试面或纯文档/规则小改，优先单 Agent；实现型任务仍必须保留 `code-review` 审查阶段（可由主 Agent 轻量审查，或按需补 `reviewer explorer`）；涉及 Apple Xcode 项目改动时仍必须由主 Agent 执行最终 `verify-ios-build`。
 - `standard`：普通代码/规则改动，默认 `coder worker + reviewer explorer（复用 code-review） + 主 Agent gate`；只有出现测试面、失败归因或用户明确要求时才启动 `tester explorer`。
 - `full`：跨模块、高风险、并发/availability/公共契约变更、测试或日志归因复杂、私有库联调，或 Apple/Xcode 项目改动需要完整验证链路时，采用 `coder worker + reviewer explorer（复用 code-review） + tester explorer + 主 Agent gate`。
 - 主 Agent 必须先本地确定目标文件范围、成功标准、编排档位，以及需要复用的 workspace / scheme / destination 基线（如适用），再启动 subAgent。
 - 当用户要求“coder=强模型 / reviewer=快模型 / tester=强模型（中推理）”之类分工时，主 Agent 需要在 `spawn_agent` 中按角色自动挑选 `model` / `reasoning_effort`；若指定模型不可用，按候选列表自动回退，最后回退到不指定 `model`（继承默认模型）。
 - 运行时默认只使用内建 `worker` 与 `explorer` 两类 subAgent，不额外发明新的底层 Agent 类型；通过复用现有 skills 区分编码、审查、测试与门禁职责。
-- 当输出 `proposed_plan` 或需求拆解计划时，必须写明所选 `lite` / `standard` / `full` 档位、并行关系、回写条件、最多 2 轮回环和 `blocked` 条件。
+- 当输出 `proposed_plan` 或需求拆解计划时，必须写明所选 `lite` / `standard` / `full` 档位、并行关系、回写条件、最多 2 轮回环和 `blocked` 条件；只要涉及实现链路，计划中必须显式包含 `code-review` 审查步骤（可由主 Agent 或 reviewer 承担），不能省略。
 - 如果当前运行时、上层策略或用户约束要求显式授权 `subAgent`，而用户尚未授权，则临时回退为单 Agent；一旦授权条件满足，应恢复按档位自适应编排，不要长期停留在单 Agent。
 - 非编排 / 单 Agent 的实现型任务，不因为没有 subAgent 就跳过代码审查或测试阶段；默认仍按 `实现 skill -> code-review -> testing -> verify-ios-build` 顺序执行。
 - `coder worker` 只负责实现或修复代码；prompt 中必须写清 ownership、成功标准、禁止无关改动、不要回滚他人改动，并优先复用 `ios-feature-implementation`、`uikit-feature-implementation`、`swiftui-feature-implementation`、`swift-expert` 等现有实现 skills。
@@ -97,7 +100,8 @@
 - 主 Agent 聚合时优先使用首个真实阻塞点驱动下一轮；若 reviewer、tester 或最终门禁发现阻塞问题，必须把首个真实失败点、影响范围和验证基线精确回写给 coder。
 - 工具与日志默认低 Token：搜索优先 `rg`；build/test/log 输出默认只回传关键错误段、过滤摘要或最后 80~120 行；长日志写入 `/tmp/*.log`。
 - 多 Agent 流程中的工具选择默认遵循固定矩阵：Apple API、availability、WWDC 与 framework 指导优先 `appleDeveloperDocs`；构建、测试、simulator、真机、截图与日志优先 `Build iOS Apps` / `xcodebuildmcp` 相关工具；需要在目标项目环境执行最终门禁或越过 sandbox 时，由主 Agent 使用 `functions.exec_command` 并按需申请升级。
-- 只有在多个开发者工具彼此独立、不会共享写集，也不涉及 `apply_patch` 这类写操作时，才允许并行；否则保持串行，避免 reviewer / tester / gate 之间产生假并行和结果漂移。
+- 多 Agent 流程里凡是 `xcodebuild` 命令（含 `-list` / `-showdestinations` / `build` / `test` / `archive` / `export`）默认都走非沙盒项目环境；由主 Agent 通过 `functions.exec_command` 显式设置 `sandbox_permissions=\"require_escalated\"` 执行。
+- 只有在多个开发者工具彼此独立、不会共享写集，也不涉及 `apply_patch` 这类写操作时，才允许使用 `multi_tool_use.parallel` 并行；否则保持串行，避免 reviewer / tester / gate 之间产生假并行和结果漂移。
 - 长任务默认按“排查 / 实现 / 验证 / 提交”切分会话；新会话只携带目标、关键路径、验证基线和上一轮结论，不复制完整历史。
 
 ## 输出偏好

@@ -16,7 +16,7 @@ description: 默认优先使用的自适应多 Agent 编排入口；它先按任
 - 如果当前运行时、上层策略或用户约束要求显式授权 `subAgent`，而用户尚未授权，则本 skill 只能退化为单 Agent 编排说明；一旦授权条件满足，应恢复按档位自适应编排。
 
 ## 自适应编排档位
-- `lite`：极小、单文件、无明确测试面或纯文档/规则小改。优先单 Agent，必要时只补 `reviewer explorer`；涉及 Apple Xcode 项目改动时仍必须由主 Agent 执行最终 `verify-ios-build`。
+- `lite`：极小、单文件、无明确测试面或纯文档/规则小改。优先单 Agent；实现型任务仍必须保留 `code-review` 审查阶段（可由主 Agent 轻量审查，或按需补 `reviewer explorer`）；涉及 Apple Xcode 项目改动时仍必须由主 Agent 执行最终 `verify-ios-build`。
 - `standard`：普通代码/规则改动。默认 `coder worker + reviewer explorer（复用 code-review） + 主 Agent gate`；只有出现测试面、失败归因或用户明确要求时才启动 `tester explorer`。
 - `full`：跨模块、高风险、并发/availability/公共契约变更、测试或日志归因复杂、私有库联调，或 Apple/Xcode 项目改动需要完整验证链路。采用 `coder worker + reviewer explorer（复用 code-review） + tester explorer + 主 Agent gate`。
 
@@ -51,7 +51,7 @@ description: 默认优先使用的自适应多 Agent 编排入口；它先按任
   - 目标、边界、成功标准、所选 `lite` / `standard` / `full` 档位、workspace/scheme/destination 基线、回退条件
 - **Step 2 coder worker（按需）**
   - 代码变更任务（含 ownership 与禁止项）
-- **Step 3 reviewer explorer（lite 可省略，standard/full 默认启用）**
+- **Step 3 code-review 审查（实现链路必选；可由 reviewer explorer 或主 Agent 承担）**
   - 只输出 `blocking_findings` / `non_blocking_findings`
 - **Step 4 tester explorer（仅测试面或 full 档位）**
   - 默认只输出 `suggested_validation`、`executed_validation`、`failure_attribution`、`needs_test_code`

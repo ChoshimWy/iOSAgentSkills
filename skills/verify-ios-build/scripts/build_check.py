@@ -85,7 +85,6 @@ class BuildConfig:
     configuration: str
     action: str
     destination: str | None
-    derived_data: str
     device_fallback_enabled: bool
     explicit_device_id: str | None
     explicit_device_name: str | None
@@ -111,11 +110,6 @@ class BuildConfig:
 
         if destination:
             command += ["-destination", destination]
-
-        command += [
-            "-derivedDataPath",
-            self.derived_data,
-        ]
 
         if is_simulator_destination(destination):
             command += ["CODE_SIGNING_ALLOWED=NO", "CODE_SIGNING_REQUIRED=NO"]
@@ -304,7 +298,6 @@ def resolve_build_config(root: Path) -> BuildConfig:
         configuration=env.get("XCODE_CONFIGURATION", "Debug"),
         action=env.get("XCODE_ACTION", "build"),
         destination=env.get("XCODE_DESTINATION"),
-        derived_data=env.get("XCODE_DERIVED_DATA", str(root / ".codex-derived-data")),
         device_fallback_enabled=truthy(env.get("XCODE_DEVICE_FALLBACK"), default=True),
         explicit_device_id=env.get("XCODE_DEVICE_ID"),
         explicit_device_name=env.get("XCODE_DEVICE_NAME"),
@@ -651,6 +644,7 @@ def print_attempt_header(
     destination: str | None,
     command: list[str],
 ) -> None:
+    derived_data_home = str(Path.home() / "Library/Developer/Xcode/DerivedData")
     print(f"=== {label} ===")
     print(f"Root: {config.root}")
     if config.workspace:
@@ -660,6 +654,7 @@ def print_attempt_header(
     print(f"Scheme: {config.scheme}")
     print(f"Configuration: {config.configuration}")
     print(f"Action: {config.action}")
+    print(f"DerivedData: Xcode default ({derived_data_home})")
     print(f"Destination: {destination or 'default host build (no explicit destination)'}")
     print(f"Command: {' '.join(shlex.quote(part) for part in command)}")
 
@@ -835,6 +830,15 @@ def main() -> int:
         config = resolve_build_config(root)
     except Exception as exc:
         print(f"Error: {exc}", file=sys.stderr)
+        return 1
+
+    if load_env(root).get("XCODE_DERIVED_DATA"):
+        derived_data_home = str(Path.home() / "Library/Developer/Xcode/DerivedData")
+        print(
+            "Error: XCODE_DERIVED_DATA is not supported in local verify-ios-build. "
+            f"Use Xcode default DerivedData: {derived_data_home}",
+            file=sys.stderr,
+        )
         return 1
 
     try:

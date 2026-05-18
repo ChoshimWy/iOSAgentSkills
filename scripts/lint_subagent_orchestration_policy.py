@@ -51,7 +51,10 @@ def main() -> int:
             "`suggested_validation`、`executed_validation`、`failure_attribution`、`needs_test_code`",
             "`appleDeveloperDocs`",
             "`functions.exec_command`",
+            "凡是 `xcodebuild` 命令",
             "`multi_tool_use.parallel`",
+            "实现型任务仍必须保留 `code-review` 审查阶段",
+            "计划中必须显式包含 `code-review` 审查步骤",
         ],
         failures,
     )
@@ -64,6 +67,7 @@ def main() -> int:
             "`实现 skill -> code-review -> testing -> verify-ios-build`",
             "`lite` / `standard` / `full`",
             "80~120 行",
+            "计划模式（`proposed_plan`）输出，只要是实现链路也必须显式包含 `code-review` 审查步骤",
         ],
         failures,
     )
@@ -97,6 +101,7 @@ def main() -> int:
             "references/tool-routing.md",
             "80~120 行",
             "`/tmp/*.log`",
+            "实现型任务仍必须保留 `code-review` 审查阶段",
         ],
         failures,
     )
@@ -143,11 +148,12 @@ def main() -> int:
             [
                 "`appleDeveloperDocs`",
                 "`Build iOS Apps` / `xcodebuildmcp`",
-                "`functions.exec_command`",
-                '`sandbox_permissions=\\"require_escalated\\"',
-                "`multi_tool_use.parallel`",
-                "`apply_patch`",
-                "80~120 行",
+            "`functions.exec_command`",
+            '`sandbox_permissions=\\"require_escalated\\"',
+            "凡是执行 `xcodebuild`",
+            "`multi_tool_use.parallel`",
+            "`apply_patch`",
+            "80~120 行",
                 "`/tmp/*.log`",
             ],
             failures,
@@ -176,6 +182,7 @@ def main() -> int:
             "`executed_validation`",
             "`failure_attribution`",
             "`needs_test_code`",
+            "code-review 审查（实现链路必选",
         ],
         failures,
     )

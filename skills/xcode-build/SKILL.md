@@ -34,6 +34,8 @@ description: Xcode 构建与配置技能。只用于 Xcode 项目配置、Build 
 ## 强制收尾验证
 - 即使本 skill 处理的是 Build Settings、签名或 CI/CD，只要当前任务产出修改了 Apple Xcode 项目相关内容，最终仍必须切到 `verify-ios-build` 做收尾门禁。
 - 最终门禁必须在目标项目根目录的项目环境执行；沙箱内的构建结果不能作为最终验收结论。
+- 本地执行 `xcodebuild`（含 `-list` / `-showdestinations` / build/test/archive/export）默认都在非沙盒项目环境执行；通过 `functions.exec_command` 时显式设置 `sandbox_permissions=\"require_escalated\"`。
+- 本地缓存统一复用 Xcode 系统 DerivedData（`~/Library/Developer/Xcode/DerivedData`），不要改用临时 `-derivedDataPath`。
 - 对 iOS 项目，`verify-ios-build` 必须优先 `.xcworkspace`（当 `.xcworkspace` 与 `.xcodeproj` 同时存在时），并默认优先已连接真机；找不到连接中的真机时再回退到 simulator。
 - 在 `verify-ios-build` 成功前，不得把任务表述为“已完成”；只能明确说明“实现已完成，但验证未完成/失败，任务未完成”。
 

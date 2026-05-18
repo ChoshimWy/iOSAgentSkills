@@ -156,7 +156,7 @@
 
 - 本仓库使用两层门禁：
   - `.githooks/commit-msg` + `scripts/commitlint.py`：校验 commit message
-  - `.githooks/pre-commit` + `scripts/pod_private_cache_guard.py`：阻止直接提交 `Pods/` 缓存改动（除非对应 Pod 已在 `Podfile` 中切到本地 `:path`）
+  - `.githooks/pre-commit` + `scripts/pod_private_cache_guard.py`：严格阻止直接修改并提交 `Pods/<PrivatePod>/...` 副本代码，必须改为“先切本地 `:path`，再到私有库源码仓库修改”
 - 规则与 `git-workflow` skill 保持一致：
   - 格式必须为 `<type>(<scope>): <subject>`
   - `subject` 必须包含中文
@@ -173,13 +173,15 @@
   - 后者只负责本地 Codex / Claude 接入
 
 - 安装后，类似 `fix: persist group fixture state for 3D virtual fixture sync` 这类不合规消息会被直接拒绝。
-- 安装后，若直接改了 `Pods/SomePrivatePod/...`，但 `Podfile` 中该 Pod 不是本地 `:path` 依赖，也会被直接拒绝并提示先完成“切本地库 -> 修改 -> 联调 -> 切回版本依赖”流程。
+- 安装后，只要直接改了 `Pods/SomePrivatePod/...` 库副本代码，就会被直接拒绝并提示先完成“切本地库 -> 在私有库源码仓库修改 -> 联调 -> 切回版本依赖”流程。
 
 ## 强制 `verify-ios-build` 收尾门禁
 
 - 只要任务产出修改了 Apple Xcode 项目相关内容，最终必须切到 `verify-ios-build` 做收尾验证。
 - “Apple Xcode 项目相关内容”包括：代码、测试、资源、`.xcodeproj` / `.xcworkspace` / `.pbxproj`、`xcconfig`、scheme、`Info.plist`、entitlements、构建脚本，以及项目内 `.codex/xcodebuild.env` 一类环境配置。
 - 最终门禁必须在**目标项目根目录的项目环境**执行，不能把沙箱内构建结果当成最终验收。
+- 本地所有 `xcodebuild` 命令（含 `-list` / `-showdestinations` / build/test）默认都在非沙盒项目环境执行；通过 `functions.exec_command` 时显式设置 `sandbox_permissions=\"require_escalated\"`。
+- 本地构建缓存统一走 Xcode 系统 DerivedData（`~/Library/Developer/Xcode/DerivedData`）；不为 `verify-ios-build` 单独设置临时 `-derivedDataPath`，也不使用 `XCODE_DERIVED_DATA` 覆盖。
 - 如果同时存在 `.xcworkspace` 与 `.xcodeproj`，验证必须优先 `.xcworkspace`。
 - 如果没有用户显式指定 scheme，定向测试与最终门禁默认优先选择绑定了单元测试 `*Tests` target / bundle 的 scheme；若不存在，再回退到其它测试 scheme（例如 `*UITests`、`*_TEST`）。
 - 对 iOS 项目，验证默认优先已连接真机；找不到连接中的真机时，自动回退到 simulator。
@@ -200,6 +202,7 @@ python3 scripts/lint_subagent_orchestration_policy.py
 
 - 当前编排默认先选择 `lite` / `standard` / `full` 档位：小任务不启动无必要 tester，大任务或高风险链路才启用完整 coder / reviewer / tester。
 - 如果当前任务未进入 `codex-subagent-orchestration`，或当前轮只能以单 Agent 执行，实现型任务默认也按固定四步收口：`实现 skill -> code-review -> testing -> verify-ios-build`。
+- 即使是 `lite` 或计划模式（`proposed_plan`）输出，只要是实现链路也必须显式包含 `code-review` 审查步骤；可由 `reviewer explorer` 或主 Agent 承担，但不能省略。
 - 输出默认低 Token：reviewer/tester 使用压缩字段，build/test/log 只回传关键错误段、过滤摘要或最后 80~120 行，长日志写入 `/tmp/*.log`。
 
 ## 通用约定

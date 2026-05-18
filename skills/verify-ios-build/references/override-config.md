@@ -14,7 +14,6 @@ XCODE_CONFIGURATION="Debug"
 # 或者直接指定真机 destination id：
 # XCODE_DESTINATION="id=00008110-001234567890001E"
 XCODE_ACTION="build"
-XCODE_DERIVED_DATA="$PWD/.codex-derived-data"
 XCODE_DEVICE_FALLBACK="1"
 # XCODE_DEVICE_ID 是 xcodebuild destination id，不是 devicectl device identifier
 XCODE_DEVICE_ID="00008110-001234567890001E"
@@ -32,8 +31,10 @@ XCODE_UI_SMOKE_SPEC=".codex/ui-smoke.yml"
 - `XCODE_SCHEME` 建议显式配置，避免多 scheme 仓库误判
 - 如果未显式设置 `XCODE_SCHEME`，脚本默认优先选择绑定了单元测试 `*Tests` target / bundle 的 scheme；若不存在，再回退到其它测试 scheme（例如 `*UITests`、`*_TEST`）
 - 如果当前任务里已经先跑过定向测试，最终门禁应优先复用同一套 workspace / scheme / destination 基线；必要时用 `XCODE_SCHEME` / `XCODE_DESTINATION` 显式固定
+- 本地 `verify-ios-build` 不支持 `XCODE_DERIVED_DATA` 覆盖；统一使用 Xcode 默认 DerivedData（`~/Library/Developer/Xcode/DerivedData`）
 - 默认不做 `clean build`
 - 最终门禁仍必须在目标项目根目录的项目环境执行；`.codex/xcodebuild.env` 只负责补充参数，不会把最终验证降级成沙箱构建
+- 本地执行 `xcodebuild`（含 `-list` / `-showdestinations` / build/test）默认都要走非沙盒项目环境，调用 `functions.exec_command` 时显式设置 `sandbox_permissions=\"require_escalated\"`
 - iOS 工程默认优先真机校验；如果未设置 `XCODE_DESTINATION`，脚本会先尝试“已连接真机”，找不到连接中的真机时自动回退到 `generic/platform=iOS Simulator`
 - macOS Xcode 工程在未显式指定 destination 时走宿主机 `xcodebuild build`
 - `XCODE_DEVICE_ID`、`XCODE_DEVICE_NAME`、`XCODE_PREFER_MODEL` 只影响“已连接真机”的自动选择与 simulator → 真机回退阶段
