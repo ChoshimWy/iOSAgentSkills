@@ -1,6 +1,6 @@
 ---
 name: "gh-pr-flow"
-description: "仅当用户明确要求使用 GitHub CLI（`gh`）一条龙完成暂存、提交、推送并创建 Pull Request 时使用；通用 Git 规范、commit 约定和 PR 模板仍由 `git-workflow` 负责。"
+description: "仅当用户明确要求使用 GitHub CLI（`gh`）一条龙完成暂存、提交、推送并创建 Pull Request 时使用；通用 Git 规范、commit 约定和 PR 模板仍由 `git-workflow` 负责。默认使用中文 PR 标题与正文。"
 ---
 
 # GitHub PR 一条龙流程
@@ -19,11 +19,14 @@ description: "仅当用户明确要求使用 GitHub CLI（`gh`）一条龙完成
 2. 如在默认分支，创建 `codex/{description}` 分支。
 3. 执行 `git status -sb`、`git add -A`、`git commit -m "{description}"`。
 4. 运行必要检查，再执行 `git push -u origin $(git branch --show-current)`。
-5. 用 `GH_PROMPT_DISABLED=1 GIT_TERMINAL_PROMPT=0 gh pr create --draft --fill --head $(git branch --show-current)` 创建草稿 PR。
+5. 准备中文 PR 标题与正文，其中正文写入 `/tmp/pr-body.md`，并使用真实换行 Markdown。
+6. 用 `GH_PROMPT_DISABLED=1 GIT_TERMINAL_PROMPT=0 gh pr create --draft --title "<中文 PR 标题>" --body-file /tmp/pr-body.md --head $(git branch --show-current)` 创建草稿 PR。
 
 ## 输出要求
-- PR 正文必须覆盖：问题、用户影响、根因、修复方式、测试或校验。
+- PR 标题默认使用中文，简洁描述“做了什么 + 影响范围”。
+- PR 正文默认使用中文，至少覆盖：概述、问题与根因、改动详情、用户影响、测试或校验、风险与回滚、关联 Issue。
 - PR 正文使用真实换行的 Markdown，不用 `\n` 字面量拼接。
+- 若目标仓库强制英文模板，按仓库规范切换并在回复中说明原因。
 
 ## 与其他技能的关系
 - 通用 Git 规范、branch / commit / PR 文案模板优先使用 `git-workflow`。
