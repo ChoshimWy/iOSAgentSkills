@@ -175,6 +175,15 @@
 - 安装后，类似 `fix: persist group fixture state for 3D virtual fixture sync` 这类不合规消息会被直接拒绝。
 - 安装后，只要直接改了 `Pods/SomePrivatePod/...` 库副本代码，就会被直接拒绝并提示先完成“切本地库 -> 在私有库源码仓库修改 -> 联调 -> 切回版本依赖”流程。
 
+## 代码规范与注释（实现链路）
+
+- 默认遵循项目既有风格与 Swift API Design Guidelines，优先保证可读性与一致性。
+- 对 `public` / `open` API、跨模块复用接口与可复用协议要求，默认必须补 `///` 文档注释（Objective-C 使用等价文档注释格式）。
+- 涉及并发边界（`@MainActor` / actor / 回调线程）、副作用（状态/DB/缓存/磁盘/网络）或失败路径（throws/错误语义/回退条件）的实现，注释必须说明约束。
+- 复杂分支要补 `why` 注释（解释原因/约束/兼容背景），不要复述代码字面意思。
+- 只补文件头注释不算完成；关键函数和关键分支必须有可执行语义注释。
+- `code-review` 会把以下情况作为可阻塞项：`public/open` API 缺文档注释、并发/副作用/失败语义缺失、注释与实现冲突。
+
 ## 强制 `verify-ios-build` 收尾门禁
 
 - 只要任务产出修改了 Apple Xcode 项目相关内容，最终必须切到 `verify-ios-build` 做收尾验证。
