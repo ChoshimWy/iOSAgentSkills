@@ -1,4 +1,4 @@
 interface:
   display_name: "HTML 文档规范"
   short_description: "统一生成、整理与发布 HTML 方案文档、任务单与评审稿"
-  default_prompt: "使用 $html-docs 生成、整理或统一 HTML 文档；按文档类型选择对应模板，优先采用正式、克制、可分享阅读的 Notion 风格，并确保顶部元信息分行展示、任务清单带 √ / □ 状态标识。"
+  default_prompt: "使用 $html-docs 生成、整理或统一 HTML 文档；按文档类型选择对应模板，优先采用正式、克制、可分享阅读的 Notion 风格，并确保顶部元信息分行展示（包含创建日期和更新日期）、任务清单带 √ / □ 状态标识，文件名默认不追加日期。"
