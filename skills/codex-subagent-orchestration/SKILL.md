@@ -20,6 +20,28 @@ description: 默认优先使用的自适应多 Agent 编排入口；它先按任
 - `standard`：普通代码/规则改动。默认 `coder worker + reviewer explorer（复用 code-review） + 主 Agent gate`；只有出现测试面、失败归因或用户明确要求时才启动 `tester explorer`。
 - `full`：跨模块、高风险、并发/availability/公共契约变更、测试或日志归因复杂、私有库联调，或 Apple/Xcode 项目改动需要完整验证链路。采用 `coder worker + reviewer explorer（复用 code-review） + tester explorer + 主 Agent gate`。
 
+## 任务分型器（新增默认规则）
+- 在选择 `lite` / `standard` / `full` 前，先将任务归类到以下五种类型：
+  - `doc-only`：纯文档改写或信息整理，无实现变更；
+  - `rule-only`：规则、流程、模板或 lint 策略小改；
+  - `code-small`：小范围代码变更（通常单模块/少文件）；
+  - `code-medium`：常规代码变更（跨文件但边界清晰）；
+  - `code-risky`：高风险变更（跨模块、并发/availability/公共契约或复杂验证链路）。
+- 默认映射：
+  - `doc-only` -> `lite`
+  - `rule-only` -> `lite`
+  - `code-small` -> `standard`
+  - `code-medium` -> `standard`
+  - `code-risky` -> `full`
+
+## 角色激活矩阵（新增默认规则）
+- 默认最小集合为：`explorer + builder + reporter`。
+- 仅在命中以下条件时激活附加角色：
+  - 激活 `pm`：需求边界不清、验收标准缺失、或存在多目标冲突；
+  - 激活 `tester explorer`：出现测试面、失败归因需求、或任务类型为 `code-risky`；
+  - 激活 `reviewer explorer`：所有实现型变更默认激活；`doc-only` / `rule-only` 可由主 Agent 轻量审查替代。
+- 任务涉及 Apple Xcode 项目改动时，最终仍由主 Agent 执行 `verify-ios-build`。
+
 ## 默认编排
 1. 主 Agent 先本地确定目标文件范围、成功标准、编排档位，以及需要复用的 workspace / scheme / destination 基线（如适用）。
 2. 按 `lite` / `standard` / `full` 选择是否启动 `coder worker`、`reviewer explorer`、`tester explorer`，不要为低风险任务启动无必要角色。
@@ -28,6 +50,19 @@ description: 默认优先使用的自适应多 Agent 编排入口；它先按任
 5. 如果 tester 判断必须补测试代码，再单独启动 `tester worker`，且只持有测试文件 ownership。
 6. 当代码、代码审查与测试预检收敛后，主 Agent 自己执行最终 `verify-ios-build`（如适用）。
 7. 如果最终门禁失败，主 Agent 把首个真实失败点、影响范围和验证基线回写给 coder，再进入下一轮修复。
+
+## Checkpoint 合同（新增默认规则）
+- 默认启用四个 checkpoint：`CP0 Intent Lock`、`CP1 Anchor Slice`、`CP2 Validation Baseline Freeze`、`CP3 Final Gate`。
+- `CP1` 未通过前，不启动无必要并行扩散；先完成首个关键切片并由主 Agent 验收。
+- 所有阶段以主 Agent 维护的 `checkpoint_status` 为单一事实源，避免阶段命名漂移。
+- 具体定义见 `references/checkpoint-contract.md`。
+
+## Fail-Fix-Report 纪律（新增默认规则）
+- `fail`：出现阻塞项时，先定位首个真实失败点和影响范围。
+- `fix`：可修复则优先修复，并在同一验证基线重跑必要验证。
+- `report`：仅在“已修复并重跑”或“明确 blocked”两种状态下汇报。
+- 禁止带着已知阻塞项直接宣告完成。
+- 同一类问题默认最多回环 2 次；超过上限仍未收敛时，`next_action` 只能是 `blocked`。
 
 ## 可选：按角色指定 subAgent 模型（推荐）
 当你需要“coder=强模型 / reviewer=快模型 / tester=强模型（中推理）”这类分工时：
@@ -75,9 +110,11 @@ description: 默认优先使用的自适应多 Agent 编排入口；它先按任
   - 默认复用 `code-review`，重点检查并发隔离、API availability、边界遗漏、架构越界与潜在回归风险。
 - `tester`
   - 默认先用 `explorer` 做测试面分析、定向验证建议、失败归因与日志解释。
-  - 默认只输出 `suggested_validation`、`executed_validation`、`failure_attribution`、`needs_test_code`；`test_scope` / `suggested_fix` 仅在确实影响决策时补充。
+  - 默认只输出 `suggested_validation`、`executed_validation`、`failure_attribution`、`failure_attribution_type`、`needs_test_code`；`test_scope` / `suggested_fix` 仅在确实影响决策时补充。
   - 只有在明确需要补测试代码时才升级为 `worker`。
   - 默认复用：`testing`、`ios-device-automation`、`ios-simulator-automation`。
+- `reporter`
+  - 汇总交付时输出 `acceptance_matrix`（需求项 / 证据 / 状态）与残余风险，禁止带阻塞项宣告完成。
 - `main agent`
   - 负责聚合、回写、轮次控制、最终 `verify-ios-build`，以及任务完成态裁决。
 
@@ -92,6 +129,7 @@ description: 默认优先使用的自适应多 Agent 编排入口；它先按任
 
 ## 按需阅读的参考文件
 - `references/coding-standards.md`：coder / reviewer / tester / main 的编码与输出规范。
+- `references/checkpoint-contract.md`：`CP0` / `CP1` / `CP2` / `CP3` 与 `fail-fix-report` 合同。
 - `references/tool-routing.md`：角色到 MCP / 工具 / 升级策略的固定矩阵。
 - `references/model-selection.md`：按角色自动挑选 subAgent 模型与回退策略（强/快/中推理）。
 - `references/role-contracts.md`：四个角色的输入输出契约。

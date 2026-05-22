@@ -28,6 +28,7 @@
 - 不做无关重构
 - 如果改动了公共接口、配置前提或调用契约，必须显式说明影响面
 - 输出 changed_files / summary / known_risks / test_impact 或 no_test_reason
+- 输出 change_intent / rollback_hint / checkpoint_status / first_failure / next_action
 - 输出只给摘要和影响面，不粘贴大段 diff、文件全文或完整日志
 ```
 
@@ -47,11 +48,16 @@
 输出：
 - blocking_findings
 - non_blocking_findings
+- checkpoint_status
+- first_failure
+- next_action
 
 要求：
 - blocking_findings 只放真实阻塞项
-- 若无阻塞项，写 blocking_findings: []，不要展开长解释
+- 若无阻塞项，写 blocking_findings: []，first_failure: none
 - findings 按严重度降序输出
+- 若存在阻塞项，next_action 不能是 complete
+- 兼容旧合同锚点：first_failure（仅当存在阻塞项时填写）
 ```
 
 ## tester explorer
@@ -68,7 +74,11 @@
 - `suggested_validation`
 - `executed_validation`
 - `failure_attribution`
+- `failure_attribution_type`（`code_bug` | `test_bug` | `env_issue` | `unknown`）
 - `needs_test_code`
+- `checkpoint_status`
+- `first_failure`
+- `next_action`
 
 按需输出：
 - `test_scope`（仅当验证面会影响下一步决策）
@@ -86,21 +96,60 @@
 - 输出 changed_test_files / new_test_coverage
 ```
 
+## reporter
+
+```text
+你是 reporter。请汇总交付信息，不改代码。
+
+默认输出：
+- acceptance_matrix（需求项 / 证据 / 状态 pass|fail|blocked）
+- delivery_summary
+- validation_evidence
+- residual_risks
+- checkpoint_status
+- first_failure
+- next_action
+
+要求：
+- 有阻塞项时，next_action 不能是 complete
+- 无阻塞项时，first_failure 写 none
+```
+
 ## 主 Agent Plan 模板（计划输出）
 
 ```text
 当任务涉及实现并要求给出 plan 时，先输出 `proposed_plan`：
 
 1. 主 Agent：任务边界、成功标准、所选 lite / standard / full 档位、基线（workspace / scheme / destination）
+   同时先给任务分型：`doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`
 2. coder worker（按需）：实现任务与 ownership
 3. code-review 审查（实现链路必选；可由 reviewer explorer 或主 Agent 承担）：blocking_findings / non_blocking_findings
 4. tester explorer（仅测试面或 full 档位）：suggested_validation / executed_validation / failure_attribution / needs_test_code
-5. 主 Agent 聚合：回写规则、回环（默认最多 2 轮）、何时 blocked
-6. `verify-ios-build`：最终门禁与 completion 判定（如适用）
+5. reporter（按需）：acceptance_matrix（需求项/证据/状态）
+6. 主 Agent 聚合：回写规则、回环（默认最多 2 轮）、何时 blocked
+7. `verify-ios-build`：最终门禁与 completion 判定（如适用）
+8. `checkpoint_status`：显式汇报 `CP0` / `CP1` / `CP2` / `CP3` 的 pass|fail|blocked
 
 私有库链路补充：
 - SLSyncLib 等依赖先本地 path 验证
 - 私有库推送成功后，主项目恢复线上引用再复测同一基线
+```
+
+## Fail-Fix-Report 汇报模板
+
+```text
+checkpoint_status:
+- CP0: pass|fail|blocked
+- CP1: pass|fail|blocked
+- CP2: pass|fail|blocked
+- CP3: pass|fail|blocked
+
+first_failure: <none|首个真实失败点>
+next_action: <fix-and-rerun|blocked|complete>
+
+规则：
+- 若存在 blocking finding，next_action 不能是 complete。
+- 可修复问题优先 fix-and-rerun，不跳过重跑直接汇报完成。
 ```
 
 ## 低 Token 输出约束

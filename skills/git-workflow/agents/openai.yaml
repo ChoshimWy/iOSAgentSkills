@@ -1,0 +1,4 @@
+interface:
+  display_name: "Git 工作流"
+  short_description: "分支命名、提交规范与 PR 文案模板"
+  default_prompt: "使用 $git-workflow 规范当前仓库的 Git 工作流：给出符合 Conventional Commits 的中文提交文案、分支命名建议与 PR 描述模板；默认不使用 gh 一条龙提审流程，若用户明确要求使用 gh 再切到 $gh-pr-flow。"

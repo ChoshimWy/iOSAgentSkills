@@ -7,6 +7,14 @@ model_reasoning_effort = "xhigh"
 plan_mode_reasoning_effort = "xhigh"
 service_tier = "fast"
 
+[profiles.harness-engineering]
+model = "gpt-5.4"
+model_reasoning_effort = "xhigh"
+plan_mode_reasoning_effort = "xhigh"
+service_tier = "fast"
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+
 memories.use_memories = true
 memories.generate_memories = true
 

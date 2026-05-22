@@ -9,6 +9,11 @@
   - `summary`
   - `known_risks`
   - `test_impact` 或 `no_test_reason`
+  - `change_intent`
+  - `rollback_hint`
+  - `checkpoint_status`
+  - `first_failure`
+  - `next_action`
 
 ## reviewer explorer
 - 只基于当前代码与 diff 做静态读审，不把“可能有问题”包装成已复现事实。
@@ -16,6 +21,7 @@
 - 风格、命名、可读性或可延后优化统一归入 `non_blocking_findings`。
 - findings 默认按严重度降序输出，优先指出首个真实阻塞点。
 - 若无阻塞项，写 `blocking_findings: []`，不要展开长解释。
+- 输出同时补齐 `checkpoint_status` / `first_failure` / `next_action`；若存在阻塞项，`next_action` 不能是 `complete`。
 
 ## tester
 - 默认先判断测试面、回归面和必要验证路径，再决定是否需要补测试代码。
@@ -24,14 +30,22 @@
   - `suggested_validation`：建议补跑或补看的验证动作
   - `executed_validation`：已经实际执行过的验证
   - `failure_attribution`：对现有失败、日志或报错的归因
+  - `failure_attribution_type`：`code_bug` / `test_bug` / `env_issue` / `unknown`
   - `needs_test_code`：是否必须补测试代码
   - `suggested_fix`：若有失败，建议修复方向
+- tester 输出同时补齐 `checkpoint_status` / `first_failure` / `next_action`。
 - 只有在主 Agent 明确要求，或 tester 已判断“缺少必要测试代码”时，才升级为 `tester worker`。
 
 ## main agent
 - 默认先选择 `lite` / `standard` / `full` 自适应编排档位；如果本轮因为运行时或上层策略只能退回单 Agent，必须显式说明是 fallback，而不是静默降级。
+- 默认维护 `checkpoint_status`（`CP0` / `CP1` / `CP2` / `CP3`）作为单一事实源；`CP1` 未通过前不启动无必要并行扩散。
 - 聚合 reviewer / tester / gate 结果时，优先用首个真实阻塞点驱动下一轮，不要把多个层级问题混成模糊总结。
+- 遵守 `fail-fix-report`：先 fail 定位，再 fix 重跑，最后 report；不可带着已知阻塞项宣告完成。
 - 最终完成态只能基于 `verify-ios-build` 结果裁决；在最终门禁成功前，不得宣告任务完成。
+
+## reporter
+- 输出必须包含 `acceptance_matrix`，并覆盖“需求项 -> 证据 -> 状态(pass|fail|blocked)”。
+- 输出同时补齐 `checkpoint_status` / `first_failure` / `next_action`；有阻塞项时禁止 `next_action=complete`。
 
 ## 低 Token 输出约束
 - 搜索优先 `rg` 精确匹配，不做全仓库 `cat`。

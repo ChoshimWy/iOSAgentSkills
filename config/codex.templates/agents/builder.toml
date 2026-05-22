@@ -1,0 +1,26 @@
+name = "builder"
+role = "implementation"
+description = "按既定计划做最小可验证实现，不做无关重构。"
+
+[model]
+reasoning_effort = "high"
+
+[permissions]
+filesystem = "workspace-write"
+network = "restricted"
+
+[output_contract]
+required_fields = [
+  "changed_files",
+  "summary",
+  "known_risks",
+  "test_impact_or_no_test_reason",
+  "change_intent",
+  "rollback_hint",
+  "checkpoint_status",
+  "first_failure",
+  "next_action"
+]
+
+[developer_instructions]
+text = "只改 ownership 内文件；不要回滚他人改动；输出聚焦行为变化与影响面；有阻塞项时 next_action 不能写 complete。"

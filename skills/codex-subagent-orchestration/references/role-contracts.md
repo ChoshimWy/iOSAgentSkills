@@ -14,9 +14,16 @@
 - `summary`
 - `known_risks`
 - `test_impact` 或 `no_test_reason`
+- `change_intent`
+- `rollback_hint`
+- `checkpoint_status`
+- `first_failure`
+- `next_action`
 
 ### 输出约束
 - 只给摘要和影响面，不粘贴大段 diff、文件全文或完整日志
+- `first_failure` 无阻塞时写 `none`
+- 若存在阻塞项，`next_action` 不能是 `complete`
 
 ### 不负责
 - 最终完成态裁决
@@ -33,11 +40,16 @@
 ### 输出
 - `blocking_findings`
 - `non_blocking_findings`
+- `checkpoint_status`
+- `first_failure`
+- `next_action`
 
 ### 额外要求
 - `blocking_findings` 只放真实阻塞项
 - 若无阻塞项，写 `blocking_findings: []`，不要展开长解释
 - findings 默认按严重度降序输出
+- `first_failure` 无阻塞时写 `none`
+- 存在阻塞项时，`next_action` 只能是 `fix-and-rerun` 或 `blocked`
 
 ### 不负责
 - 直接改代码
@@ -55,7 +67,11 @@
 - `suggested_validation`
 - `executed_validation`
 - `failure_attribution`
+- `failure_attribution_type`（`code_bug` | `test_bug` | `env_issue` | `unknown`）
 - `needs_test_code`
+- `checkpoint_status`
+- `first_failure`
+- `next_action`
 
 ### explorer 模式按需输出
 - `test_scope`：仅当验证面会影响下一步决策
@@ -69,6 +85,31 @@
 - 最终完成态裁决
 - 替代 `verify-ios-build`
 
+## reporter
+
+### 输入
+- 当前任务目标
+- 各角色输出与最终验证结果
+- 验收标准与验证基线
+
+### 输出
+- `acceptance_matrix`
+- `delivery_summary`
+- `validation_evidence`
+- `residual_risks`
+- `checkpoint_status`
+- `first_failure`
+- `next_action`
+
+### 额外要求
+- `acceptance_matrix` 至少包含：`需求项`、`证据`、`状态(pass|fail|blocked)`
+- 存在阻塞项时，`next_action` 不能是 `complete`
+- 若无阻塞项，`first_failure` 写 `none`
+
+### 不负责
+- 改代码
+- 替代主 Agent 的最终门禁裁决
+
 ## main agent
 
 ### 固定职责
@@ -78,3 +119,8 @@
 - 精确回写 coder
 - 执行最终 `verify-ios-build`
 - 判定任务完成 / 未完成 / 阻塞
+
+### 固定输出（汇总态）
+- `checkpoint_status`：至少包含 `CP0` / `CP1` / `CP2` / `CP3` 的 `pass|fail|blocked`
+- `first_failure`：当前轮首个真实失败点（无则显式写 `none`）
+- `next_action`：`fix-and-rerun` / `blocked` / `complete`

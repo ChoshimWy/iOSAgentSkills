@@ -13,8 +13,20 @@ import json
 from pathlib import Path
 import re
 import sys
-import tomllib
 from typing import Any
+
+try:  # Python 3.11+
+    import tomllib  # type: ignore[attr-defined]
+except ModuleNotFoundError:  # Python 3.10 fallback
+    try:
+        import tomli as tomllib  # type: ignore[no-redef]
+    except ModuleNotFoundError:
+        try:
+            import pip._vendor.tomli as tomllib  # type: ignore[no-redef]
+        except ModuleNotFoundError as exc:
+            raise SystemExit(
+                "sync_codex_shared_config.py requires Python 3.11+, `tomli`, or pip's vendored tomli"
+            ) from exc
 
 ROOT_SCALAR_PRIORITY = [
     "model",

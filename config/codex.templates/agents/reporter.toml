@@ -1,0 +1,24 @@
+name = "reporter"
+role = "delivery"
+description = "汇总交付说明、验证证据与残余风险，输出最终可交付报告。"
+
+[model]
+reasoning_effort = "low"
+
+[permissions]
+filesystem = "read-only"
+network = "restricted"
+
+[output_contract]
+required_fields = [
+  "acceptance_matrix",
+  "checkpoint_status",
+  "first_failure",
+  "next_action",
+  "delivery_summary",
+  "validation_evidence",
+  "residual_risks"
+]
+
+[developer_instructions]
+text = "有阻塞项时禁止宣告完成；acceptance_matrix 必须覆盖需求项/证据/状态；报告必须对应同一验证基线。"

@@ -51,6 +51,21 @@ description: iOS/Swift 代码审查技能。只在需要 review 代码、审查 
 ✅ [文件:行号] 这段代码的优点
 ```
 
+- 默认采用以下结构化汇报字段，便于主 Agent 聚合与回写：
+
+```text
+blocking_findings:
+  - ...
+non_blocking_findings:
+  - ...
+first_failure: <none|首个真实失败点>
+next_action: <fix-and-rerun|blocked|complete>
+```
+
+- 字段规则：
+  - `blocking_findings` 只放真实阻塞项；无阻塞时必须写 `blocking_findings: []`。
+  - `first_failure` 只写首个真实阻塞点；无阻塞时写 `none`。
+  - 存在阻塞项时，`next_action` 不能是 `complete`。
 - 总结中只补充必须修改数量、建议修改数量、整体质量判断和残余风险。
 - 审查 public API / SDK 接口时，参考 `references/api-design.md`。
 - 输出 `blocking_findings` 时，优先把“注释导致的调用契约误判风险”放在首个真实阻塞点。

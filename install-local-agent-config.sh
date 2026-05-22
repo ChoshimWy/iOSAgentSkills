@@ -9,6 +9,8 @@ Configure local Codex and Claude entrypoints to use this cloned iOSAgentSkills r
   - ~/.codex/AGENTS.md -> <repo>/AGENTS.md
   - ~/.codex/skills -> <repo>/skills (默认)
   - ~/.codex/skills -> ~/.cc-switch/iOSAgentSkills/skills（当启用 --ccswitch 时）
+  - ~/.codex/agents/*.toml -> <repo>/config/codex.templates/agents/*.toml
+  - ~/.codex/templates/ui-smoke.example.yml -> <repo>/config/codex.templates/ui-smoke.example.yml
   - ~/.copilot/skills -> <repo>/skills (默认)
   - ~/.copilot/skills -> ~/.cc-switch/iOSAgentSkills/skills（当启用 --ccswitch 时）
   - ~/.claude/CLAUDE.md -> @<repo>/AGENTS.md
@@ -60,6 +62,9 @@ REPO_AGENTS="$REPO_ROOT/AGENTS.md"
 REPO_SKILLS="$REPO_ROOT/skills"
 REPO_SYSTEM_SKILLS="$REPO_SKILLS/.system"
 REPO_CODEX_SHARED_CONFIG="$REPO_ROOT/config/codex.shared.toml"
+REPO_CODEX_TEMPLATES="$REPO_ROOT/config/codex.templates"
+REPO_CODEX_AGENT_TEMPLATES="$REPO_CODEX_TEMPLATES/agents"
+REPO_CODEX_UI_SMOKE_TEMPLATE="$REPO_CODEX_TEMPLATES/ui-smoke.example.yml"
 CODEX_SYNC_SCRIPT="$REPO_ROOT/scripts/sync_codex_shared_config.py"
 
 HOME_DIR="${HOME:?HOME is required}"
@@ -73,6 +78,9 @@ COPILOT_SKILLS="$COPILOT_DIR/skills"
 CLAUDE_MD="$CLAUDE_DIR/CLAUDE.md"
 CLAUDE_SKILLS="$CLAUDE_DIR/skills"
 CODEX_CONFIG="$CODEX_DIR/config.toml"
+CODEX_AGENTS_DIR="$CODEX_DIR/agents"
+CODEX_TEMPLATES_DIR="$CODEX_DIR/templates"
+CODEX_UI_SMOKE_TEMPLATE="$CODEX_TEMPLATES_DIR/ui-smoke.example.yml"
 CCSWITCH_PUBLIC_SKILLS="$HOME_DIR/.cc-switch/skills"
 CCSWITCH_CACHE_ROOT="$HOME_DIR/.cc-switch/iOSAgentSkills"
 CCSWITCH_SKILLS="$CCSWITCH_CACHE_ROOT/skills"
@@ -266,6 +274,34 @@ ensure_text_file() {
   record_change "$action"
 }
 
+ensure_file_copied() {
+  local target_path="$1"
+  local source_path="$2"
+  local label="$3"
+  local action='created'
+
+  ensure_directory "$(dirname "$target_path")"
+
+  if [[ -f "$target_path" && ! -L "$target_path" ]]; then
+    if cmp -s "$source_path" "$target_path"; then
+      log "unchanged: $label"
+      record_change unchanged
+      return 0
+    fi
+    backup_existing_path "$target_path"
+    action='updated'
+  elif [[ -e "$target_path" || -L "$target_path" ]]; then
+    backup_existing_path "$target_path"
+    action='updated'
+  fi
+
+  log "$action: $label"
+  if [[ "$DRY_RUN" == '0' ]]; then
+    cp "$source_path" "$target_path"
+  fi
+  record_change "$action"
+}
+
 build_config_candidate() {
   local config_path="$1"
   local target_agents_path="$2"
@@ -372,6 +408,24 @@ sync_system_skills_from_codex() {
   UPDATED_COUNT=$((UPDATED_COUNT + 1))
 }
 
+sync_codex_agent_templates() {
+  ensure_directory "$CODEX_AGENTS_DIR"
+
+  local source target base_name
+  for source in "$REPO_CODEX_AGENT_TEMPLATES"/*.toml "$REPO_CODEX_AGENT_TEMPLATES"/README.md; do
+    [[ -f "$source" ]] || continue
+    base_name="$(basename "$source")"
+    target="$CODEX_AGENTS_DIR/$base_name"
+    ensure_file_copied "$target" "$source" "~/.codex/agents/$base_name"
+  done
+}
+
+sync_codex_ui_smoke_template() {
+  [[ -f "$REPO_CODEX_UI_SMOKE_TEMPLATE" ]] || return 0
+  ensure_directory "$CODEX_TEMPLATES_DIR"
+  ensure_file_copied "$CODEX_UI_SMOKE_TEMPLATE" "$REPO_CODEX_UI_SMOKE_TEMPLATE" "~/.codex/templates/ui-smoke.example.yml"
+}
+
 if [[ ! -f "$REPO_AGENTS" ]]; then
   echo "Error: missing AGENTS.md in repo root: $REPO_AGENTS" >&2
   exit 1
@@ -384,6 +438,11 @@ fi
 
 if [[ ! -f "$REPO_CODEX_SHARED_CONFIG" ]]; then
   echo "Error: missing shared Codex config: $REPO_CODEX_SHARED_CONFIG" >&2
+  exit 1
+fi
+
+if [[ ! -d "$REPO_CODEX_AGENT_TEMPLATES" ]]; then
+  echo "Error: missing Codex agent templates directory: $REPO_CODEX_AGENT_TEMPLATES" >&2
   exit 1
 fi
 
@@ -401,7 +460,13 @@ verify_codex_config() {
   python3 - "$CODEX_CONFIG" "$REPO_CODEX_SHARED_CONFIG" "$CODEX_AGENTS" <<'PY'
 from pathlib import Path
 import sys
-import tomllib
+try:
+    import tomllib  # Python 3.11+
+except ModuleNotFoundError:
+    try:
+        import tomli as tomllib  # Python 3.10 + tomli
+    except ModuleNotFoundError:
+        import pip._vendor.tomli as tomllib  # Python 3.10 fallback
 
 config_path = Path(sys.argv[1])
 shared_path = Path(sys.argv[2])
@@ -451,6 +516,22 @@ if errors:
 PY
 }
 
+verify_codex_agent_templates() {
+  local source target base_name
+  for source in "$REPO_CODEX_AGENT_TEMPLATES"/*.toml "$REPO_CODEX_AGENT_TEMPLATES"/README.md; do
+    [[ -f "$source" ]] || continue
+    base_name="$(basename "$source")"
+    target="$CODEX_AGENTS_DIR/$base_name"
+    [[ -f "$target" && ! -L "$target" ]] || fail "~/.codex/agents/$base_name is missing or not a regular file"
+    cmp -s "$source" "$target" || fail "~/.codex/agents/$base_name does not match repo template"
+  done
+
+  if [[ -f "$REPO_CODEX_UI_SMOKE_TEMPLATE" ]]; then
+    [[ -f "$CODEX_UI_SMOKE_TEMPLATE" && ! -L "$CODEX_UI_SMOKE_TEMPLATE" ]] || fail "~/.codex/templates/ui-smoke.example.yml is missing or not a regular file"
+    cmp -s "$REPO_CODEX_UI_SMOKE_TEMPLATE" "$CODEX_UI_SMOKE_TEMPLATE" || fail "~/.codex/templates/ui-smoke.example.yml does not match repo template"
+  fi
+}
+
 verify_installation() {
   [[ -L "$CODEX_AGENTS" ]] || fail "~/.codex/AGENTS.md is not a symlink"
   [[ "$(resolve_physical_path "$CODEX_AGENTS")" == "$(resolve_physical_path "$REPO_AGENTS")" ]] || fail "~/.codex/AGENTS.md does not point to this cloned repo"
@@ -476,6 +557,7 @@ verify_installation() {
 
   [[ -f "$CODEX_CONFIG" && ! -L "$CODEX_CONFIG" ]] || fail "~/.codex/config.toml is missing or not a regular file"
   verify_codex_config || fail "~/.codex/config.toml does not match repo-managed Codex shared config"
+  verify_codex_agent_templates
 }
 
 ensure_symlink "$CODEX_AGENTS" "$REPO_AGENTS" "~/.codex/AGENTS.md"
@@ -487,6 +569,8 @@ ensure_text_file "$CLAUDE_MD" "$CLAUDE_IMPORT_LINE" "~/.claude/CLAUDE.md"
 ensure_symlink "$CLAUDE_SKILLS" "$TARGET_SKILLS" "~/.claude/skills"
 ensure_symlink "$CCSWITCH_PUBLIC_SKILLS" "$REPO_SKILLS" "~/.cc-switch/skills"
 ensure_codex_config
+sync_codex_agent_templates
+sync_codex_ui_smoke_template
 
 printf '\nSummary:\n'
 printf '  created: %d\n' "$CREATED_COUNT"

@@ -1,0 +1,4 @@
+interface:
+  display_name: "App Store 机会研究"
+  short_description: "竞品缺口分析、Top-3 排序与 MVP PRD"
+  default_prompt: "使用 $app-store-opportunity-research 在指定赛道执行机会研究：输出可追溯证据支撑的 Top-3 机会、推荐项与关键风险，并在确认方向后产出 MVP PRD；所有估算需显式标注假设与不确定性，禁止伪精确。"
