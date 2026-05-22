@@ -11,7 +11,8 @@
 `explorer -> builder -> reporter`，按需激活 `pm` 与 `tester`
 
 说明：
-- 这些 `.toml` 是团队工作流角色卡模板（约束输出与职责边界）。
+- 这些 `.toml` 是 Codex custom agent 文件，使用当前支持的扁平 schema：`name` / `description` / `developer_instructions`，以及可选 `model_reasoning_effort` / `sandbox_mode`。
+- 工作流合同字段不再放单独 TOML table，而是内嵌在 `developer_instructions` 中约束输出与职责边界。
 - 安装脚本会把它们同步到 `~/.codex/agents/`。
 - 全局硬约束仍以仓库根 `AGENTS.md` 与 `skills/codex-subagent-orchestration/` 合同为准。
 - Apple Xcode 项目改动的最终完成态，必须由主 Agent 执行 `verify-ios-build` 决定。

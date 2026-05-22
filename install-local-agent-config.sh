@@ -66,6 +66,7 @@ REPO_CODEX_TEMPLATES="$REPO_ROOT/config/codex.templates"
 REPO_CODEX_AGENT_TEMPLATES="$REPO_CODEX_TEMPLATES/agents"
 REPO_CODEX_UI_SMOKE_TEMPLATE="$REPO_CODEX_TEMPLATES/ui-smoke.example.yml"
 CODEX_SYNC_SCRIPT="$REPO_ROOT/scripts/sync_codex_shared_config.py"
+CODEX_AGENT_VALIDATE_SCRIPT="$REPO_ROOT/scripts/validate_codex_agent_templates.py"
 
 HOME_DIR="${HOME:?HOME is required}"
 CODEX_DIR="$HOME_DIR/.codex"
@@ -451,6 +452,11 @@ if [[ ! -f "$CODEX_SYNC_SCRIPT" ]]; then
   exit 1
 fi
 
+if [[ ! -f "$CODEX_AGENT_VALIDATE_SCRIPT" ]]; then
+  echo "Error: missing Codex agent validation script: $CODEX_AGENT_VALIDATE_SCRIPT" >&2
+  exit 1
+fi
+
 CLAUDE_IMPORT_LINE="@${REPO_AGENTS}"
 if [[ "$CCSWITCH_MODE" == '1' ]]; then
   TARGET_SKILLS="$CCSWITCH_SKILLS"
@@ -517,6 +523,8 @@ PY
 }
 
 verify_codex_agent_templates() {
+  python3 "$CODEX_AGENT_VALIDATE_SCRIPT" "$REPO_CODEX_AGENT_TEMPLATES" >/dev/null || fail "repo Codex agent templates do not match the supported flat Codex custom-agent schema"
+
   local source target base_name
   for source in "$REPO_CODEX_AGENT_TEMPLATES"/*.toml "$REPO_CODEX_AGENT_TEMPLATES"/README.md; do
     [[ -f "$source" ]] || continue
@@ -525,6 +533,8 @@ verify_codex_agent_templates() {
     [[ -f "$target" && ! -L "$target" ]] || fail "~/.codex/agents/$base_name is missing or not a regular file"
     cmp -s "$source" "$target" || fail "~/.codex/agents/$base_name does not match repo template"
   done
+
+  python3 "$CODEX_AGENT_VALIDATE_SCRIPT" "$CODEX_AGENTS_DIR" >/dev/null || fail "~/.codex/agents contains malformed Codex custom agent files"
 
   if [[ -f "$REPO_CODEX_UI_SMOKE_TEMPLATE" ]]; then
     [[ -f "$CODEX_UI_SMOKE_TEMPLATE" && ! -L "$CODEX_UI_SMOKE_TEMPLATE" ]] || fail "~/.codex/templates/ui-smoke.example.yml is missing or not a regular file"

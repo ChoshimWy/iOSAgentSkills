@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SKILL_ROOT = ROOT / "skills" / "codex-subagent-orchestration"
 EXEMPT_OPENAI_SKILLS = {"open-design", "_shared-sentinel"}
 CODEX_TEMPLATE_AGENTS = ROOT / "config" / "codex.templates" / "agents"
+CODEX_AGENT_VALIDATE_SCRIPT = ROOT / "scripts" / "validate_codex_agent_templates.py"
 
 
 def require_contains(path: Path, snippets: list[str], failures: list[str]) -> None:
@@ -33,6 +34,17 @@ def require_yaml_parse(path: Path, failures: list[str]) -> None:
     if result.returncode != 0:
         stderr = result.stderr.strip() or result.stdout.strip() or "unknown yaml parse error"
         failures.append(f"{path.relative_to(ROOT)} invalid yaml: {stderr}")
+
+
+def require_codex_agent_templates_parse(failures: list[str]) -> None:
+    result = subprocess.run(
+        ["python3", str(CODEX_AGENT_VALIDATE_SCRIPT), str(CODEX_TEMPLATE_AGENTS)],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        stderr = result.stderr.strip() or result.stdout.strip() or "unknown codex agent schema error"
+        failures.append(f"{CODEX_TEMPLATE_AGENTS.relative_to(ROOT)} invalid codex agent schema: {stderr}")
 
 
 def require_non_system_skill_openai_yaml(failures: list[str]) -> None:
@@ -85,6 +97,7 @@ def main() -> int:
             "`fail-fix-report`",
             "python3 scripts/lint_harness_workflow_policy.py",
             "python3 scripts/lint_workflow_contract_policy.py",
+            "python3 scripts/validate_codex_agent_templates.py",
             "config/codex.templates/agents/",
             "~/.codex/agents/",
             "路径示例默认以 skill 相对路径为准",
@@ -221,6 +234,10 @@ def main() -> int:
         ],
         failures,
     )
+
+    require_exists(CODEX_AGENT_VALIDATE_SCRIPT, failures)
+    if CODEX_AGENT_VALIDATE_SCRIPT.exists():
+        require_codex_agent_templates_parse(failures)
 
     for agent_file in (
         CODEX_TEMPLATE_AGENTS / "pm.toml",

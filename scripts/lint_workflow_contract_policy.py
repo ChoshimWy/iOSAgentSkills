@@ -8,6 +8,7 @@ import sys
 ROOT = Path(__file__).resolve().parent.parent
 SKILL_ROOT = ROOT / "skills" / "codex-subagent-orchestration"
 CODEX_TEMPLATE_AGENTS = ROOT / "config" / "codex.templates" / "agents"
+CODEX_AGENT_VALIDATE_SCRIPT = ROOT / "scripts" / "validate_codex_agent_templates.py"
 
 
 def require_contains(path: Path, snippets: list[str], failures: list[str]) -> None:
@@ -46,6 +47,7 @@ def main() -> int:
             "任务分型：`doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`",
             "`explorer + builder + reporter`",
             "python3 scripts/lint_workflow_contract_policy.py",
+            "python3 scripts/validate_codex_agent_templates.py",
             "config/codex.templates/agents/",
             "~/.codex/agents/",
         ],
@@ -59,6 +61,7 @@ def main() -> int:
             "config/codex.templates/agents/*.toml",
             "sync_codex_agent_templates",
             "verify_codex_agent_templates",
+            "validate_codex_agent_templates.py",
         ],
         failures,
     )
@@ -190,6 +193,8 @@ def main() -> int:
         ],
         failures,
     )
+
+    require_exists(CODEX_AGENT_VALIDATE_SCRIPT, failures)
 
     require_not_exists(ROOT / ".codex", failures)
 

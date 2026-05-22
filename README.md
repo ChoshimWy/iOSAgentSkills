@@ -85,6 +85,7 @@ ln -s iOSAgentSkills/skills .claude/skills
   - `builder.toml`（最小实现 / 变更说明）
   - `tester.toml`（验证建议 / 执行结果 / 失败归因）
   - `reporter.toml`（交付汇总 / 风险收口）
+- 这些模板使用 Codex 当前支持的扁平 custom agent schema：`name` / `description` / `developer_instructions` + 可选 `model_reasoning_effort` / `sandbox_mode`。
 - 安装脚本会同步到：`~/.codex/agents/`。
 - 角色模板说明见：`config/codex.templates/agents/README.md`。
 - 推荐执行顺序：先 `explorer -> builder -> reporter`，再按需激活 `pm` / `tester`。
@@ -103,6 +104,12 @@ ln -s iOSAgentSkills/skills .claude/skills
 上下文：<目录/文件/报错>
 约束：最小改动；先探索再实施；失败先修复再汇报。
 完成标准：列出 changed_files、验证结果、残余风险；若有阻塞项禁止宣告完成。
+```
+
+模板结构自检：
+
+```bash
+python3 scripts/validate_codex_agent_templates.py config/codex.templates/agents
 ```
 
 ## 规则与合同入口
