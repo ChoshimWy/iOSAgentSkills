@@ -13,15 +13,6 @@
 - `ios-feature-implementation/`
 - `swiftui-feature-implementation/`
 - `uikit-feature-implementation/`
-- `git-workflow/`
-
-### Specialized Implementation
-- `swift-expert/`
-- `swiftui-ui-patterns/`
-- `swiftui-view-refactor/`
-- `swiftui-liquid-glass/`
-- `sdk-architecture/`
-- `refactoring/`
 
 ### Automation / Build / Validation
 - `ios-simulator-automation/`
@@ -36,16 +27,12 @@
 - `debugging/`
 - `ios-performance/`
 
-### Research / Design / Release
-- `apple-docs/`
-- `ui-ux-design-system/`
-- `app-store-changelog/`
-- `app-store-opportunity-research/`
-- `gh-pr-flow/`
-
-### Document / Productivity
-- `office-docx/`
-- `office-pptx/`
+### Core Profile
+- 默认只加载 `skills/` 下的 core skills，减少 Codex 启动时进入上下文的 skill 数量。
+- 默认用户入口只有一个：`codex-subagent-orchestration`。
+- 其它 iOS skills 保留在 core 中，主要作为主 Skill 的内部执行模块 / 高级手动入口。
+- 低频技能包统一放在 `optional-skills/`，按需启用时再加载，不参与默认发现路径。
+- optional packs 说明见：`optional-skills/README.md`
 
 ## 使用方法
 
@@ -92,13 +79,15 @@ ln -s iOSAgentSkills/skills .claude/skills
 - 默认先做任务分型：`doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`，再映射到 `lite` / `standard` / `full`。
 - 配置映射：
   - 图示 `AGENTS.md` 对应仓库根 `AGENTS.md`
-  - 图示 `skills/*/SKILL.md` 对应本仓库 `skills/`
+  - 图示 `skills/*/SKILL.md` 对应本仓库默认 core skills
+  - 图示低频技能包对应本仓库 `optional-skills/*/SKILL.md`
   - 图示 `config.toml` 对应本仓库 `config/codex.shared.toml`
 
 快速发任务模板：
 
 ```text
-请按 ~/.codex/agents 角色分工执行：默认 explorer -> builder -> reporter；
+请使用 codex-subagent-orchestration 处理这个 iOS 任务。
+按 ~/.codex/agents 角色分工执行：默认 explorer -> builder -> reporter；
 若边界不清激活 pm，若需要测试面或失败归因激活 tester。
 目标：<需求>
 上下文：<目录/文件/报错>
@@ -119,6 +108,7 @@ python3 scripts/validate_codex_agent_templates.py config/codex.templates/agents
 - 多 Agent 执行合同：`skills/codex-subagent-orchestration/SKILL.md`
 - Checkpoint / Fail-Fix-Report 细则：`skills/codex-subagent-orchestration/references/checkpoint-contract.md`
 - 仓库根不保存 `.codex/` 工作目录；仅维护 `config/codex.templates/` 作为模板源，由安装脚本同步到 `~/.codex`。
+- 低频技能包见 `optional-skills/README.md`；默认不进入 Codex 常驻发现路径。
 - 路径示例默认以 skill 相对路径为准；若指向目标项目脚本（例如 `.codex/*` 或 `run-menubar.sh`），需由目标项目侧提供。
 
 ## 强制 `verify-ios-build` 收尾门禁
@@ -135,6 +125,7 @@ python3 scripts/validate_codex_agent_templates.py config/codex.templates/agents
 
 ## 多 Agent 编排锚点
 
+- `codex-subagent-orchestration` 是默认的 iOS 主 Skill 入口；实现、调试、性能、测试、Apple 文档与最终门禁都应先经过它，再内部路由到对应模块。
 - 编排默认按 `lite` / `standard` / `full` 三档选择角色。
 - 默认先按任务分型器分类，再决定角色激活矩阵（最小集合：`explorer + builder + reporter`）。
 - 当前运行时要求显式授权 subAgent 且用户未授权时，临时回退单 Agent。

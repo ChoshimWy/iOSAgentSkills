@@ -19,6 +19,7 @@
 - 本仓库根目录 `AGENTS.md` 是本项目共享规则单一来源。
 - `CLAUDE.md` 只做薄包装导入，保持与 `AGENTS.md` 同源。
 - `config/codex.shared.toml` 只放可共享的 Codex 默认配置，不放本机状态。
+- `skills/` 只保留默认常驻的 core skills；低频技能包统一放在 `optional-skills/`，按需启用时再加载。
 - 仓库内不保存根 `.codex/` 工作目录；可复用模板统一放在 `config/codex.templates/`，由安装脚本同步到 `~/.codex`。
 - `install-local-agent-config.sh` 负责把本仓库规则接到 `~/.codex`、`~/.claude`、`~/.copilot`。
 - 详细路由与执行合同统一下沉到 `skills/TAXONOMY.md` 与 `skills/codex-subagent-orchestration/references/`。
@@ -51,7 +52,7 @@
 
 ## Skill 路由总则
 
-- 默认先使用 `codex-subagent-orchestration` 做复杂度评估与自适应编排。
+- 默认先使用 `codex-subagent-orchestration` 作为 iOS 主 Skill 入口，先做复杂度评估与自适应编排，再在内部路由到实现 / 调试 / 性能 / 测试 / 构建门禁模块。
 - 如果当前任务未进入 `codex-subagent-orchestration`，或当前轮只能以单 Agent 执行，实现型任务默认固定四步收口：`实现 skill -> code-review -> testing -> verify-ios-build`。
 - 常见路由锚点：
   - 实现：`ios-feature-implementation` / `swiftui-feature-implementation` / `uikit-feature-implementation`

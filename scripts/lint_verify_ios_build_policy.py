@@ -6,6 +6,7 @@ import sys
 
 
 ROOT = Path(__file__).resolve().parent.parent
+OPTIONAL_SKILLS_ROOT = ROOT / "optional-skills"
 
 MANDATORY_VERIFY_SKILLS = [
     "ios-feature-implementation",
@@ -24,7 +25,6 @@ MANDATORY_VERIFY_SKILLS = [
     "xcode-build",
     "ios-device-automation",
     "ios-simulator-automation",
-    "macos-menubar-tuist-app",
 ]
 
 
@@ -86,6 +86,15 @@ def main() -> int:
             "已连接真机",
             "`实现 skill -> code-review -> testing -> verify-ios-build`",
             "不能把任务表述为“已完成”",
+        ],
+        failures,
+    )
+
+    require_contains(
+        OPTIONAL_SKILLS_ROOT / "README.md",
+        [
+            "macos/",
+            "macos-menubar-tuist-app",
         ],
         failures,
     )
@@ -255,6 +264,25 @@ def main() -> int:
             "scheme_has_unit_test_binding",
             "BuildableName",
             "TestableReference",
+        ],
+        failures,
+    )
+
+    require_contains(
+        OPTIONAL_SKILLS_ROOT / "macos" / "macos-menubar-tuist-app" / "SKILL.md",
+        [
+            "## 强制收尾验证",
+            "`verify-ios-build`",
+            "项目环境",
+            "任务未完成",
+        ],
+        failures,
+    )
+    require_contains(
+        OPTIONAL_SKILLS_ROOT / "macos" / "macos-menubar-tuist-app" / "agents" / "openai.yaml",
+        [
+            "$verify-ios-build",
+            "项目环境",
         ],
         failures,
     )

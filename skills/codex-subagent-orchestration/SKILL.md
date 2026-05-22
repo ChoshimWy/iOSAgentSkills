@@ -1,17 +1,17 @@
 ---
 name: codex-subagent-orchestration
-description: 默认优先使用的自适应多 Agent 编排入口；它先按任务复杂度选择 lite / standard / full 档位，再协调 coder / reviewer / tester / main agent 分工；若当前运行时或上层策略要求显式授权 subAgent，而用户尚未授权，则临时回退单 Agent。
+description: 默认优先使用的 iOS 主 Skill 入口；它先按任务复杂度选择 lite / standard / full 档位，再协调 coder / reviewer / tester / main agent 分工，并在内部路由到实现、调试、性能、测试与最终门禁模块；若当前运行时或上层策略要求显式授权 subAgent，而用户尚未授权，则临时回退单 Agent。
 ---
 
 # Codex 多 Agent 编排
 
 ## 角色定位
 - 编排型 skill。
-- 负责在 Codex 原生能力范围内，先按任务复杂度选择 `lite` / `standard` / `full` 档位，再把编码、审查、测试与最终门禁拆成合适的角色协同。
+- 负责在 Codex 原生能力范围内，先按任务复杂度选择 `lite` / `standard` / `full` 档位，再把实现、调试、性能、审查、测试与最终门禁拆成合适的角色协同。
 - 不替代具体实现 skill，也不替代 `verify-ios-build` 的最终裁决。
 
 ## 触发判定（硬边界）
-- 默认优先使用本 skill 作为编码任务的编排入口，但必须先评估复杂度，不要把所有任务都升级为全量多 Agent。
+- 默认优先使用本 skill 作为 iOS 任务的主入口，但必须先评估复杂度，不要把所有任务都升级为全量多 Agent。
 - 如果任务只是单一职责工作，例如纯代码审查、纯测试补写、纯一次性最终门禁，优先直接切到对应 skill，不要先切本 skill。
 - 如果当前运行时、上层策略或用户约束要求显式授权 `subAgent`，而用户尚未授权，则本 skill 只能退化为单 Agent 编排说明；一旦授权条件满足，应恢复按档位自适应编排。
 
@@ -138,11 +138,10 @@ description: 默认优先使用的自适应多 Agent 编排入口；它先按任
 - `references/apple-gate-rules.md`：Apple/Xcode 项目的最终门禁特殊约束。
 
 ## 与其他技能的关系
-- 本 skill 只负责编排入口，不替代现有技能。
-- 需要实际编码时，切回对应实现型 skill。
-- 需要单纯写测试时，直接切 `testing`。
-- 需要单纯读审时，直接切 `code-review`。
-- 需要最终收尾门禁时，最终仍由主 Agent 切 `verify-ios-build`。
+- 本 skill 是默认的 iOS 主 Skill 入口，不替代现有技能，但统一负责决定何时调用它们。
+- 普通实现内部路由到 `ios-feature-implementation` / `swiftui-feature-implementation` / `uikit-feature-implementation`。
+- 调试内部路由到 `debugging`，性能内部路由到 `ios-performance`，Apple 文档内部路由到 `apple-docs`。
+- 测试内部路由到 `testing`，最终收尾门禁仍由主 Agent 切 `verify-ios-build`。
 
 ## ✅ Sentinel（Skill 使用自检）
 当且仅当你确定本 Skill 已被加载并用于当前任务时，在回复末尾追加：

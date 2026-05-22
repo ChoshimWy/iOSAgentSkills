@@ -8,7 +8,8 @@ import sys
 
 ROOT = Path(__file__).resolve().parent.parent
 SKILL_ROOT = ROOT / "skills" / "codex-subagent-orchestration"
-EXEMPT_OPENAI_SKILLS = {"open-design", "_shared-sentinel"}
+EXEMPT_OPENAI_SKILLS = {"_shared-sentinel"}
+OPTIONAL_SKILLS_ROOT = ROOT / "optional-skills"
 CODEX_TEMPLATE_AGENTS = ROOT / "config" / "codex.templates" / "agents"
 CODEX_AGENT_VALIDATE_SCRIPT = ROOT / "scripts" / "validate_codex_agent_templates.py"
 
@@ -100,6 +101,8 @@ def main() -> int:
             "python3 scripts/validate_codex_agent_templates.py",
             "config/codex.templates/agents/",
             "~/.codex/agents/",
+            "optional-skills/README.md",
+            "`codex-subagent-orchestration`",
             "路径示例默认以 skill 相对路径为准",
         ],
         failures,
@@ -108,10 +111,12 @@ def main() -> int:
     require_contains(
         ROOT / "skills" / "TAXONOMY.md",
         [
-            "checkpoint 合同",
+            "single-entry iOS core",
+            "optional-skills/README.md",
             "`CP0` / `CP1` / `CP2` / `CP3`",
             "`fail-fix-report`",
-            "遵守 `CP0` / `CP1` / `CP2` / `CP3` 与 `fail-fix-report`",
+            "默认 iOS 主 Skill 入口",
+            "内部路由到 `apple-docs`",
         ],
         failures,
     )
@@ -182,50 +187,42 @@ def main() -> int:
         failures,
     )
 
+    require_exists(OPTIONAL_SKILLS_ROOT / "README.md", failures)
     require_contains(
-        ROOT / "skills" / "html-docs" / "SKILL.md",
+        OPTIONAL_SKILLS_ROOT / "README.md",
         [
-            "## ✅ Sentinel（Skill 使用自检）",
-            "// skill-used: html-docs",
+            "research/",
+            "docs/",
+            "workflow/",
+            "macos/",
+            "`codex-subagent-orchestration`",
         ],
         failures,
     )
 
-    require_contains(
-        ROOT / "skills" / "office-docx" / "SKILL.md",
-        [
-            "scripts/office/pack.py",
-            "scripts/office/validate.py",
-        ],
-        failures,
-    )
+    for optional_skill in (
+        OPTIONAL_SKILLS_ROOT / "docs" / "html-docs" / "SKILL.md",
+        OPTIONAL_SKILLS_ROOT / "docs" / "office-docx" / "SKILL.md",
+        OPTIONAL_SKILLS_ROOT / "docs" / "office-pptx" / "SKILL.md",
+        OPTIONAL_SKILLS_ROOT / "macos" / "macos-menubar-tuist-app" / "SKILL.md",
+        OPTIONAL_SKILLS_ROOT / "macos" / "macos-spm-app-packaging" / "SKILL.md",
+        OPTIONAL_SKILLS_ROOT / "research" / "ui-ux-design-system" / "SKILL.md",
+        OPTIONAL_SKILLS_ROOT / "research" / "app-store-changelog" / "SKILL.md",
+        OPTIONAL_SKILLS_ROOT / "research" / "app-store-opportunity-research" / "SKILL.md",
+        OPTIONAL_SKILLS_ROOT / "research" / "open-design" / "SKILL.md",
+    ):
+        require_exists(optional_skill, failures)
 
-    require_contains(
-        ROOT / "skills" / "office-pptx" / "SKILL.md",
-        [
-            "scripts/office/pack.py",
-            "scripts/office/validate.py",
-        ],
-        failures,
-    )
-
-    require_contains(
-        ROOT / "skills" / "ios-simulator-automation" / "SKILL.md",
-        [
-            "scripts/build_and_test.py",
-            "scripts/ui_smoke_runner.py",
-            "scripts/simctl_boot.py",
-        ],
-        failures,
-    )
-
-    require_contains(
-        ROOT / "skills" / "macos-menubar-tuist-app" / "SKILL.md",
-        [
-            "不是本 skill 包内内置文件",
-        ],
-        failures,
-    )
+    for internal_skill in (
+        ROOT / "skills" / "apple-docs" / "SKILL.md",
+        ROOT / "skills" / "swiftui-ui-patterns" / "SKILL.md",
+        ROOT / "skills" / "swiftui-view-refactor" / "SKILL.md",
+        ROOT / "skills" / "swiftui-liquid-glass" / "SKILL.md",
+        ROOT / "skills" / "refactoring" / "SKILL.md",
+        ROOT / "skills" / "sdk-architecture" / "SKILL.md",
+        ROOT / "skills" / "swiftui-performance-audit" / "SKILL.md",
+    ):
+        require_exists(internal_skill, failures)
 
     require_contains(
         ROOT / "skills" / "verify-ios-build" / "SKILL.md",
