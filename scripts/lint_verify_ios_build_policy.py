@@ -6,8 +6,6 @@ import sys
 
 
 ROOT = Path(__file__).resolve().parent.parent
-OPTIONAL_SKILLS_ROOT = ROOT / "optional-skills"
-
 MANDATORY_VERIFY_SKILLS = [
     "ios-feature-implementation",
     "swiftui-feature-implementation",
@@ -86,15 +84,6 @@ def main() -> int:
             "已连接真机",
             "`实现 skill -> code-review -> testing -> verify-ios-build`",
             "不能把任务表述为“已完成”",
-        ],
-        failures,
-    )
-
-    require_contains(
-        OPTIONAL_SKILLS_ROOT / "README.md",
-        [
-            "macos/",
-            "macos-menubar-tuist-app",
         ],
         failures,
     )
@@ -269,7 +258,7 @@ def main() -> int:
     )
 
     require_contains(
-        OPTIONAL_SKILLS_ROOT / "macos" / "macos-menubar-tuist-app" / "SKILL.md",
+        ROOT / "skills" / "macos-menubar-tuist-app" / "SKILL.md",
         [
             "## 强制收尾验证",
             "`verify-ios-build`",
@@ -279,7 +268,7 @@ def main() -> int:
         failures,
     )
     require_contains(
-        OPTIONAL_SKILLS_ROOT / "macos" / "macos-menubar-tuist-app" / "agents" / "openai.yaml",
+        ROOT / "skills" / "macos-menubar-tuist-app" / "agents" / "openai.yaml",
         [
             "$verify-ios-build",
             "项目环境",

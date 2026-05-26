@@ -1,13 +1,13 @@
 # 业务 Skill 分类索引（single-entry iOS core）
 
-本文覆盖默认常驻的 iOS core skills。用户默认入口只有 `codex-subagent-orchestration`；低频技能包见 `optional-skills/README.md`。
+本文覆盖本仓库 `skills/` 下的全部 skills。用户默认入口只有 `codex-subagent-orchestration`；低频技能与高频技能统一保存在同一根目录下。
 
 ## 分类原则
 - `Core Implementation`：默认优先触发的通用实现技能。
 - `Automation / Build / Validation`：自动化执行、构建配置与收尾验收技能。
 - `Diagnostics`：发现问题、分析风险、定位根因的技能。
 - `Internal Modules`：由主 Skill 内部路由使用的 iOS 专项模块。
-- `Optional Packs`：按需加载的低频技能包，不进入默认常驻集合。
+- `Additional Skills`：按需触发的低频技能；与 core skills 共用同一目录，只通过路由策略区分。
 
 ## 严格路由总则
 - 只要任务产出修改了 Apple Xcode 项目相关内容，最终都必须切到 `verify-ios-build` 做收尾门禁。
@@ -62,10 +62,10 @@
 - `sdk-architecture`
 - `swiftui-performance-audit`
 
-## Optional Packs
+## Additional Skills
 
-低频技能包统一放在 `optional-skills/`，不会进入默认常驻集合：
-- `optional-skills/research/`：`ui-ux-design-system`、`app-store-changelog`、`app-store-opportunity-research`、`open-design`
-- `optional-skills/docs/`：`html-docs`、`office-docx`、`office-pptx`
-- `optional-skills/workflow/`：`git-workflow`、`gh-pr-flow`
-- `optional-skills/macos/`：`macos-menubar-tuist-app`、`macos-spm-app-packaging`
+这些技能同样位于 `skills/` 下，但默认按需触发，不作为 iOS 主链路的第一入口：
+- `research`：`ui-ux-design-system`、`app-store-changelog`、`app-store-opportunity-research`、`open-design`
+- `docs`：`html-docs`、`office-docx`、`office-pptx`
+- `workflow`：`git-workflow`、`gh-pr-flow`
+- `macos`：`macos-menubar-tuist-app`、`macos-spm-app-packaging`

@@ -19,7 +19,7 @@
 - 本仓库根目录 `AGENTS.md` 是本项目共享规则单一来源。
 - `CLAUDE.md` 只做薄包装导入，保持与 `AGENTS.md` 同源。
 - `config/codex.shared.toml` 只放可共享的 Codex 默认配置，不放本机状态。
-- `skills/` 只保留默认常驻的 core skills；低频技能包统一放在 `optional-skills/`，按需启用时再加载。
+- `skills/` 是本仓库唯一的 Skill 根目录；高频与低频技能统一放在这里，由路由规则决定默认入口与按需触发方式。
 - 仓库内不保存根 `.codex/` 工作目录；可复用模板统一放在 `config/codex.templates/`，由安装脚本同步到 `~/.codex`。
 - `install-local-agent-config.sh` 负责把本仓库规则接到 `~/.codex`、`~/.claude`、`~/.copilot`。
 - 详细路由与执行合同统一下沉到 `skills/TAXONOMY.md` 与 `skills/codex-subagent-orchestration/references/`。
@@ -84,8 +84,8 @@
 
 ## HTML 文档任务工作流（新增）
 
-- 当用户要求生成或更新 `Docs` 下的方案、任务清单、审查报告等 HTML 交付时，默认先路由 `optional-skills/docs/html-docs`。
+- 当用户要求生成或更新 `Docs` 下的方案、任务清单、审查报告等 HTML 交付时，默认先路由 `skills/html-docs`。
 - 任务清单默认采用 Notion-light + SidusLinkPro checklist 风格：Hero 元信息独立行、chips、状态图例、指标卡、固定布局表格与 callout。
 - Checklist / 阶段 / 任务状态必须使用 `√`（已完成）与 `□`（未完成 / 待办），并通过独立状态样式（如 `.check-mark` / `.done` / `.todo`）呈现，不把符号当普通正文文本。
 - 文档顶部必须显式给出创建日期与更新日期（绝对日期），并在实现推进后回写状态，保持文档作为 source of truth。
-- 任务清单交付优先复用：`optional-skills/docs/html-docs/references/tasklist-template.md`。
+- 任务清单交付优先复用：`skills/html-docs/references/tasklist-template.md`。

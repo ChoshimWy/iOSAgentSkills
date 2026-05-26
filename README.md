@@ -27,12 +27,11 @@
 - `debugging/`
 - `ios-performance/`
 
-### Core Profile
-- 默认只加载 `skills/` 下的 core skills，减少 Codex 启动时进入上下文的 skill 数量。
+### Skill Profile
+- `skills/` 是本仓库唯一的 Skill 根目录；安装脚本与本机软链统一只暴露这一套目录。
 - 默认用户入口只有一个：`codex-subagent-orchestration`。
-- 其它 iOS skills 保留在 core 中，主要作为主 Skill 的内部执行模块 / 高级手动入口。
-- 低频技能包统一放在 `optional-skills/`，按需启用时再加载，不参与默认发现路径。
-- optional packs 说明见：`optional-skills/README.md`
+- 其它 iOS skills 主要作为主 Skill 的内部执行模块 / 高级手动入口。
+- 低频技能也直接保存在 `skills/` 下，由路由规则决定何时按需触发，而不是再走额外目录。
 
 ## 使用方法
 
@@ -79,8 +78,7 @@ ln -s iOSAgentSkills/skills .claude/skills
 - 默认先做任务分型：`doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`，再映射到 `lite` / `standard` / `full`。
 - 配置映射：
   - 图示 `AGENTS.md` 对应仓库根 `AGENTS.md`
-  - 图示 `skills/*/SKILL.md` 对应本仓库默认 core skills
-  - 图示低频技能包对应本仓库 `optional-skills/*/SKILL.md`
+  - 图示 `skills/*/SKILL.md` 对应本仓库全部 skills（含按需触发的低频技能）
   - 图示 `config.toml` 对应本仓库 `config/codex.shared.toml`
 
 快速发任务模板：
@@ -108,14 +106,14 @@ python3 scripts/validate_codex_agent_templates.py config/codex.templates/agents
 - 多 Agent 执行合同：`skills/codex-subagent-orchestration/SKILL.md`
 - Checkpoint / Fail-Fix-Report 细则：`skills/codex-subagent-orchestration/references/checkpoint-contract.md`
 - 仓库根不保存 `.codex/` 工作目录；仅维护 `config/codex.templates/` 作为模板源，由安装脚本同步到 `~/.codex`。
-- 低频技能包见 `optional-skills/README.md`；默认不进入 Codex 常驻发现路径。
+- 所有技能统一放在 `skills/`；低频/高频只作为文档分组，不再区分发现路径。
 - 路径示例默认以 skill 相对路径为准；若指向目标项目脚本（例如 `.codex/*` 或 `run-menubar.sh`），需由目标项目侧提供。
 
 
 ## HTML 文档工作流（新增）
 
 - 适用范围：`Docs` 下的方案、任务清单、评审报告、整改报告等 HTML 文档交付。
-- 默认路由：`optional-skills/docs/html-docs`，并按 `references/tasklist-template.md` 执行任务清单样式。
+- 默认路由：`skills/html-docs`，并按 `references/tasklist-template.md` 执行任务清单样式。
 - 状态标识统一：`√` 表示已完成，`□` 表示未完成 / 待办；建议用 `.check-mark.done` / `.check-mark.todo` 样式呈现。
 - 样式基线：Notion-light + SidusLinkPro checklist（Hero 元信息独立行、chips、状态图例、指标卡、固定表格与 callout）。
 - 文档治理：顶部使用绝对日期（创建/更新），实施后必须回写进度，保持文档与代码状态一致。

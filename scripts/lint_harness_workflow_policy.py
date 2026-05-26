@@ -9,7 +9,6 @@ import sys
 ROOT = Path(__file__).resolve().parent.parent
 SKILL_ROOT = ROOT / "skills" / "codex-subagent-orchestration"
 EXEMPT_OPENAI_SKILLS = {"_shared-sentinel"}
-OPTIONAL_SKILLS_ROOT = ROOT / "optional-skills"
 CODEX_TEMPLATE_AGENTS = ROOT / "config" / "codex.templates" / "agents"
 CODEX_AGENT_VALIDATE_SCRIPT = ROOT / "scripts" / "validate_codex_agent_templates.py"
 
@@ -101,7 +100,7 @@ def main() -> int:
             "python3 scripts/validate_codex_agent_templates.py",
             "config/codex.templates/agents/",
             "~/.codex/agents/",
-            "optional-skills/README.md",
+            "所有技能统一放在 `skills/`",
             "`codex-subagent-orchestration`",
             "路径示例默认以 skill 相对路径为准",
         ],
@@ -112,7 +111,7 @@ def main() -> int:
         ROOT / "skills" / "TAXONOMY.md",
         [
             "single-entry iOS core",
-            "optional-skills/README.md",
+            "本文覆盖本仓库 `skills/` 下的全部 skills",
             "`CP0` / `CP1` / `CP2` / `CP3`",
             "`fail-fix-report`",
             "默认 iOS 主 Skill 入口",
@@ -187,31 +186,20 @@ def main() -> int:
         failures,
     )
 
-    require_exists(OPTIONAL_SKILLS_ROOT / "README.md", failures)
-    require_contains(
-        OPTIONAL_SKILLS_ROOT / "README.md",
-        [
-            "research/",
-            "docs/",
-            "workflow/",
-            "macos/",
-            "`codex-subagent-orchestration`",
-        ],
-        failures,
-    )
-
-    for optional_skill in (
-        OPTIONAL_SKILLS_ROOT / "docs" / "html-docs" / "SKILL.md",
-        OPTIONAL_SKILLS_ROOT / "docs" / "office-docx" / "SKILL.md",
-        OPTIONAL_SKILLS_ROOT / "docs" / "office-pptx" / "SKILL.md",
-        OPTIONAL_SKILLS_ROOT / "macos" / "macos-menubar-tuist-app" / "SKILL.md",
-        OPTIONAL_SKILLS_ROOT / "macos" / "macos-spm-app-packaging" / "SKILL.md",
-        OPTIONAL_SKILLS_ROOT / "research" / "ui-ux-design-system" / "SKILL.md",
-        OPTIONAL_SKILLS_ROOT / "research" / "app-store-changelog" / "SKILL.md",
-        OPTIONAL_SKILLS_ROOT / "research" / "app-store-opportunity-research" / "SKILL.md",
-        OPTIONAL_SKILLS_ROOT / "research" / "open-design" / "SKILL.md",
+    for additional_skill in (
+        ROOT / "skills" / "html-docs" / "SKILL.md",
+        ROOT / "skills" / "office-docx" / "SKILL.md",
+        ROOT / "skills" / "office-pptx" / "SKILL.md",
+        ROOT / "skills" / "macos-menubar-tuist-app" / "SKILL.md",
+        ROOT / "skills" / "macos-spm-app-packaging" / "SKILL.md",
+        ROOT / "skills" / "ui-ux-design-system" / "SKILL.md",
+        ROOT / "skills" / "app-store-changelog" / "SKILL.md",
+        ROOT / "skills" / "app-store-opportunity-research" / "SKILL.md",
+        ROOT / "skills" / "open-design" / "SKILL.md",
+        ROOT / "skills" / "gh-pr-flow" / "SKILL.md",
+        ROOT / "skills" / "git-workflow" / "SKILL.md",
     ):
-        require_exists(optional_skill, failures)
+        require_exists(additional_skill, failures)
 
     for internal_skill in (
         ROOT / "skills" / "apple-docs" / "SKILL.md",
