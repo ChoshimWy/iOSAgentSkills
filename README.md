@@ -111,6 +111,15 @@ python3 scripts/validate_codex_agent_templates.py config/codex.templates/agents
 - 低频技能包见 `optional-skills/README.md`；默认不进入 Codex 常驻发现路径。
 - 路径示例默认以 skill 相对路径为准；若指向目标项目脚本（例如 `.codex/*` 或 `run-menubar.sh`），需由目标项目侧提供。
 
+
+## HTML 文档工作流（新增）
+
+- 适用范围：`Docs` 下的方案、任务清单、评审报告、整改报告等 HTML 文档交付。
+- 默认路由：`optional-skills/docs/html-docs`，并按 `references/tasklist-template.md` 执行任务清单样式。
+- 状态标识统一：`√` 表示已完成，`□` 表示未完成 / 待办；建议用 `.check-mark.done` / `.check-mark.todo` 样式呈现。
+- 样式基线：Notion-light + SidusLinkPro checklist（Hero 元信息独立行、chips、状态图例、指标卡、固定表格与 callout）。
+- 文档治理：顶部使用绝对日期（创建/更新），实施后必须回写进度，保持文档与代码状态一致。
+
 ## 强制 `verify-ios-build` 收尾门禁
 
 - 只要任务产出修改了 Apple Xcode 项目相关内容，最终都必须进入 `verify-ios-build`。

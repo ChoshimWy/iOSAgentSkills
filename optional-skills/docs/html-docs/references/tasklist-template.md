@@ -40,3 +40,13 @@
 ## 文件名规范
 - 任务清单 HTML 文件名默认不带日期。
 - 若同一任务清单存在多个版本，版本差异通过顶部创建日期 / 更新日期区分。
+
+
+## SidusLinkPro Checklist 风格锚点（新增）
+- Hero 推荐包含：标题、创建日期、更新日期、来源、chips、状态图例、指标卡。
+- 状态图例使用胶囊样式，且必须同时给出 `√ 已完成` / `□ 未完成 / 待办`。
+- 阶段与任务 ID 推荐用结构化标记：
+  - 已完成：`<span class="check-mark done">√</span>T01`
+  - 未完成：`<span class="check-mark todo">□</span>T13`
+- 表格推荐固定布局（`table-layout: fixed`）并开启长文本换行，避免列宽抖动。
+- callout 推荐区分 info / warn / success，避免仅靠正文堆叠表达风险与结论。

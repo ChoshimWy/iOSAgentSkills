@@ -81,3 +81,11 @@
 - 只要相关，就明确指出准确的 Apple 平台和最低版本要求。
 - 输出方案、计划、修复思路或架构建议时，默认主动说明关键边界（适用范围、职责边界、版本边界、并发边界、失败路径与回退条件）。
 - 生成计划时，如果任务涉及编码实现，默认以 `codex-subagent-orchestration` 的自适应档位作为主干，并写明 `lite` / `standard` / `full` 的选择理由。
+
+## HTML 文档任务工作流（新增）
+
+- 当用户要求生成或更新 `Docs` 下的方案、任务清单、审查报告等 HTML 交付时，默认先路由 `optional-skills/docs/html-docs`。
+- 任务清单默认采用 Notion-light + SidusLinkPro checklist 风格：Hero 元信息独立行、chips、状态图例、指标卡、固定布局表格与 callout。
+- Checklist / 阶段 / 任务状态必须使用 `√`（已完成）与 `□`（未完成 / 待办），并通过独立状态样式（如 `.check-mark` / `.done` / `.todo`）呈现，不把符号当普通正文文本。
+- 文档顶部必须显式给出创建日期与更新日期（绝对日期），并在实现推进后回写状态，保持文档作为 source of truth。
+- 任务清单交付优先复用：`optional-skills/docs/html-docs/references/tasklist-template.md`。
