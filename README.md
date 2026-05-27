@@ -127,7 +127,7 @@ python3 scripts/validate_codex_agent_templates.py config/codex.templates/agents
 - 如果同时存在 `.xcworkspace` 与 `.xcodeproj`，最终验证优先 `.xcworkspace`。
 - 如果没有用户显式指定 scheme，默认优先选择绑定了单元测试 `*Tests` target / bundle 的 scheme。
 - iOS 项目默认优先已连接真机，找不到已连接真机时回退 simulator。
-- 实现链路固定四步收口：`实现 skill -> code-review -> testing -> verify-ios-build`。
+- 实现链路固定四步收口：`实现 skill -> testing -> code-review -> verify-ios-build`。
 - 在 `verify-ios-build` 成功前，任务不能宣告“已完成”。
 
 ## 多 Agent 编排锚点

@@ -3,7 +3,7 @@
 ## 总流程
 1. 主 Agent 先用任务分型器判定 `doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`，再选择 `lite` / `standard` / `full` 档位并完成 `CP0 Intent Lock`
 2. coder 先完成首个关键切片，通过 `CP1 Anchor Slice` 后再按需扩展
-3. reviewer / tester 在冻结基线下工作，推进 `CP2 Validation Baseline Freeze`
+3. tester / reviewer 在冻结基线下工作，推进 `CP2 Validation Baseline Freeze`
 4. 主 Agent 聚合后决定是否回写 coder
 5. 代码收敛后，主 Agent 执行最终 `verify-ios-build`（如适用）并推进 `CP3 Final Gate`
 6. gate 失败则再次回写 coder

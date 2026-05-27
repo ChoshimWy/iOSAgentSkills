@@ -54,7 +54,7 @@ def main() -> int:
             "最终门禁默认复用同一套 workspace / scheme / destination 基线",
             "绑定了单元测试 `*Tests` target / bundle 的 scheme",
             "已连接真机",
-            "`实现 skill -> code-review -> testing -> verify-ios-build`",
+            "`实现 skill -> testing -> code-review -> verify-ios-build`",
             "在 `verify-ios-build` 成功之前，任务都不算完成",
         ],
         failures,
@@ -69,7 +69,7 @@ def main() -> int:
             "优先 `.xcworkspace`",
             "绑定了单元测试 `*Tests` target / bundle 的 scheme",
             "已连接真机",
-            "`实现 skill -> code-review -> testing -> verify-ios-build`",
+            "`实现 skill -> testing -> code-review -> verify-ios-build`",
             "python3 scripts/lint_verify_ios_build_policy.py",
         ],
         failures,
@@ -82,7 +82,7 @@ def main() -> int:
             "优先 `.xcworkspace`",
             "绑定了单元测试 `*Tests` target / bundle 的 scheme",
             "已连接真机",
-            "`实现 skill -> code-review -> testing -> verify-ios-build`",
+            "`实现 skill -> testing -> code-review -> verify-ios-build`",
             "不能把任务表述为“已完成”",
         ],
         failures,
@@ -126,8 +126,8 @@ def main() -> int:
             ROOT / "skills" / direct_flow_skill / "SKILL.md",
             [
                 "固定四步",
-                "code-review",
                 "testing",
+                "code-review",
                 "verify-ios-build",
             ],
             failures,
@@ -135,8 +135,8 @@ def main() -> int:
         require_contains(
             ROOT / "skills" / direct_flow_skill / "agents" / "openai.yaml",
             [
-                "$code-review",
                 "$testing",
+                "$code-review",
                 "$verify-ios-build",
                 "no_test_reason",
             ],
@@ -184,7 +184,7 @@ def main() -> int:
             "macOS Xcode 工程",
             "XCODE_UI_SMOKE_MODE",
             "text-first",
-            "`code-review` 与 `testing` 之后的第四步最终门禁",
+            "`testing` 与 `code-review` 之后的第四步最终门禁",
         ],
         failures,
     )
@@ -322,15 +322,14 @@ def main() -> int:
     require_contains(
         ROOT / "skills" / "code-review" / "SKILL.md",
         [
-            "第二步静态审查阶段",
-            "固定进入 `testing`",
+            "第三步静态审查阶段",
+            "默认审查当前 unstaged + untracked 工作区改动",
         ],
         failures,
     )
     require_contains(
         ROOT / "skills" / "code-review" / "agents" / "openai.yaml",
         [
-            "$testing",
             "$verify-ios-build",
         ],
         failures,
@@ -338,7 +337,7 @@ def main() -> int:
     require_contains(
         ROOT / "skills" / "testing" / "SKILL.md",
         [
-            "第三步测试阶段",
+            "第二步测试阶段",
             "`no_test_reason`",
         ],
         failures,
@@ -346,8 +345,8 @@ def main() -> int:
     require_contains(
         ROOT / "skills" / "testing" / "agents" / "openai.yaml",
         [
-            "$code-review",
             "no_test_reason",
+            "$code-review",
             "$verify-ios-build",
         ],
         failures,

@@ -123,8 +123,8 @@
 1. 主 Agent：任务边界、成功标准、所选 lite / standard / full 档位、基线（workspace / scheme / destination）
    同时先给任务分型：`doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`
 2. coder worker（按需）：实现任务与 ownership
-3. code-review 审查（实现链路必选；可由 reviewer explorer 或主 Agent 承担）：blocking_findings / non_blocking_findings
-4. tester explorer（仅测试面或 full 档位）：suggested_validation / executed_validation / failure_attribution / needs_test_code
+3. testing（实现链路必选；可由 tester explorer 或主 Agent 承担）：suggested_validation / executed_validation / failure_attribution / needs_test_code
+4. code-review 审查（实现链路必选；可由 reviewer explorer 或主 Agent 承担）：blocking_findings / non_blocking_findings
 5. reporter（按需）：acceptance_matrix（需求项/证据/状态）
 6. 主 Agent 聚合：回写规则、回环（默认最多 2 轮）、何时 blocked
 7. `verify-ios-build`：最终门禁与 completion 判定（如适用）

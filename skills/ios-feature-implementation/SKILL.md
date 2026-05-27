@@ -56,7 +56,7 @@ no_test_reason: <仅当本轮不涉及新增测试时填写>
   - `test_impact` 与 `no_test_reason` 二选一必须填写。
 
 ## 强制收尾验证
-- 如果当前任务没有进入 `codex-subagent-orchestration`，或当前轮只能以单 Agent 执行，本 skill 完成实现后也不要直接跳到最终门禁；默认后续链路按固定四步执行：`ios-feature-implementation -> code-review -> testing -> verify-ios-build`。
+- 如果当前任务没有进入 `codex-subagent-orchestration`，或当前轮只能以单 Agent 执行，本 skill 完成实现后也不要直接跳到最终门禁；默认后续链路按固定四步执行：`ios-feature-implementation -> testing -> code-review -> verify-ios-build`。
 - 只要当前任务产出修改了 Apple Xcode 项目相关内容（代码、测试、资源、工程文件、构建脚本、plist / entitlements / xcconfig / scheme 或项目内环境配置），最终必须切到 `verify-ios-build`。
 - 最终门禁必须在目标项目根目录的项目环境执行；沙箱内的构建结果不能作为最终验收结论。
 - 对 iOS 项目，`verify-ios-build` 必须优先 `.xcworkspace`（当 `.xcworkspace` 与 `.xcodeproj` 同时存在时），并默认优先已连接真机；找不到连接中的真机时再回退到 simulator。
@@ -64,7 +64,7 @@ no_test_reason: <仅当本轮不涉及新增测试时填写>
 
 ## 与其他技能的关系
 - 通用 iOS feature 业务开发默认优先使用本技能。
-- 如果当前任务属于非编排 / 单 Agent 的实现链路，本 skill 完成代码修改后，固定先切到 `code-review`，再切到 `testing`，最后切到 `verify-ios-build`。
+- 如果当前任务属于非编排 / 单 Agent 的实现链路，本 skill 完成代码修改后，固定先切到 `testing`，再切到 `code-review`，最后切到 `verify-ios-build`。
 - 如果任务核心已经进入普通 SwiftUI 页面落地，本 skill 只作为业务层辅助，主 skill 切换到 `swiftui-feature-implementation`。
 - 如果任务核心已经进入普通 UIKit 页面落地，本 skill 只作为业务层辅助，主 skill 切换到 `uikit-feature-implementation`。
 - 如果任务进入复杂并发、类型擦除、协议族或跨平台可用性策略，切换到 `swift-expert`。

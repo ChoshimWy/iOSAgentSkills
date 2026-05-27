@@ -360,7 +360,7 @@ def main() -> int:
             "`first_failure`",
             "`next_action`",
             "`blocking_findings: []`",
-            "$testing",
+            "unstaged + untracked",
             "$verify-ios-build",
         ],
         failures,

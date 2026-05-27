@@ -46,7 +46,7 @@ XCODE_UI_SMOKE_SPEC=".codex/ui-smoke.yml"
 - `XCODE_UI_SMOKE_MODE` 控制 UI smoke：`off`（关闭）、`auto`（命中 UI 改动且 spec 存在时执行）、`required`（命中 UI 改动时强制执行并阻塞失败）
 - `XCODE_UI_SMOKE_SPEC` 指定 smoke spec 路径，默认 `.codex/ui-smoke.yml`
 - UI smoke 默认采用 text-first 断言（accessibility tree），截图用于失败证据
-- 这些覆盖配置只影响 `xcodebuild` 参数，不会跳过 `verify-ios-build` 的前置代码审查，也不会改变“`.xcworkspace` 优先于 `.xcodeproj`”的默认规则
+- 这些覆盖配置只影响 `xcodebuild` 参数，不会跳过固定链路里的前置 `testing` / `code-review`，也不会改变“`.xcworkspace` 优先于 `.xcodeproj`”的默认规则
 
 ## 示例
 

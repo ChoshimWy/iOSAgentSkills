@@ -20,7 +20,7 @@
 - 默认优先切到 `codex-subagent-orchestration` 做自适应编排：先按 `lite` / `standard` / `full` 选择角色，再协调编码、调试、性能、审查、测试与最终门禁；构建、测试、simulator、真机、截图与日志优先切 `ios-device-automation`、`ios-simulator-automation`、`xcode-build` 或 `verify-ios-build`。
 - 多 Agent 编排默认遵守 checkpoint 合同：`CP0` / `CP1` / `CP2` / `CP3`。
 - 多 Agent 编排默认遵守 `fail-fix-report`：先定位失败、修复并重跑，再汇报。
-- 如果当前任务未进入 `codex-subagent-orchestration`，或当前轮只能以单 Agent 执行，实现型任务默认也按固定四步收口：`实现 skill -> code-review -> testing -> verify-ios-build`。
+- 如果当前任务未进入 `codex-subagent-orchestration`，或当前轮只能以单 Agent 执行，实现型任务默认也按固定四步收口：`实现 skill -> testing -> code-review -> verify-ios-build`。
 - Apple API / availability / WWDC 问题优先在主 Skill 内部路由到 `apple-docs` 并使用 `appleDeveloperDocs`。
 
 ## Core Implementation
@@ -39,7 +39,7 @@
 | `ios-simulator-automation` | Simulator 自动化 | boot/shutdown/create/delete、语义导航、无障碍检查、模拟器验证 | 真机运行、Build Settings/签名策略、普通业务实现 | `ios-device-automation`、`xcode-build`、`ios-feature-implementation` |
 | `ios-device-automation` | 真机自动化 | 连接中的真机构建、安装、启动、测试、设备诊断 | 纯 Simulator 自动化、Build Settings/签名策略设计、普通业务实现 | `ios-simulator-automation`、`xcode-build`、`ios-feature-implementation` |
 | `xcode-build` | 构建配置与交付链路 | Build Settings、签名、Archive、导出 IPA、CI/CD | 任务末尾只跑一次编译验收 | `verify-ios-build` |
-| `verify-ios-build` | 收尾审查门禁 + 构建验收 | 任何 Apple Xcode 项目相关改动的强制最终门禁 | 构建签名、Archive、导出、CI 设计 | `xcode-build` |
+| `verify-ios-build` | 收尾构建门禁 + 构建验收 | 任何 Apple Xcode 项目相关改动的强制最终门禁 | 构建签名、Archive、导出、CI 设计 | `xcode-build` |
 | `testing` | 测试编写专项 | 单元测试、UI 测试、Mock/Stub/Spy、异步测试 | 性能 benchmark、`measure(metrics:)`、`xctrace`、一次性 `xcodebuild` 校验 | `ios-performance`、`verify-ios-build`、`code-review`、`debugging` |
 
 ## Diagnostics
