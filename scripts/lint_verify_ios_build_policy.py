@@ -6,7 +6,7 @@ import sys
 
 
 ROOT = Path(__file__).resolve().parent.parent
-MANDATORY_VERIFY_SKILLS = [
+FINAL_EVIDENCE_SKILLS = [
     "ios-feature-implementation",
     "swiftui-feature-implementation",
     "uikit-feature-implementation",
@@ -46,30 +46,30 @@ def main() -> int:
     require_contains(
         ROOT / "AGENTS.md",
         [
-            "强制 `verify-ios-build` 门禁",
+            "条件化最终证据门禁（final-evidence-gate）",
             "目标项目环境",
             "本地所有 `xcodebuild` 命令",
             "XCODE_DERIVED_DATA",
-            "如果同时存在 `.xcworkspace` 和 `.xcodeproj`，验证必须使用 `.xcworkspace`。",
-            "最终门禁默认复用同一套 workspace / scheme / destination 基线",
+            "如果同时存在 `.xcworkspace` 和 `.xcodeproj`，验证优先使用 `.xcworkspace`",
+            "final-evidence-gate",
             "绑定了单元测试 `*Tests` target / bundle 的 scheme",
             "已连接真机",
-            "`实现 skill -> testing -> code-review -> verify-ios-build`",
-            "在 `verify-ios-build` 成功之前，任务都不算完成",
+            "`实现 skill -> testing -> code-review -> final-evidence-gate`",
+            "在 `final-evidence-gate` 接受现有证据或 `verify-ios-build` 成功之前，任务都不算完成",
         ],
         failures,
     )
     require_contains(
         ROOT / "README.md",
         [
-            "强制 `verify-ios-build` 收尾门禁",
+            "条件化最终证据门禁",
             "目标项目根目录的项目环境",
             "本地所有 `xcodebuild` 命令",
             "XCODE_DERIVED_DATA",
             "优先 `.xcworkspace`",
             "绑定了单元测试 `*Tests` target / bundle 的 scheme",
             "已连接真机",
-            "`实现 skill -> testing -> code-review -> verify-ios-build`",
+            "`实现 skill -> testing -> code-review -> final-evidence-gate`",
             "python3 scripts/lint_verify_ios_build_policy.py",
         ],
         failures,
@@ -77,23 +77,23 @@ def main() -> int:
     require_contains(
         ROOT / "skills" / "TAXONOMY.md",
         [
-            "最终都必须切到 `verify-ios-build` 做收尾门禁",
+            "最终都必须进入 `final-evidence-gate` 做完成态裁决",
             "目标项目根目录的项目环境",
             "优先 `.xcworkspace`",
             "绑定了单元测试 `*Tests` target / bundle 的 scheme",
             "已连接真机",
-            "`实现 skill -> testing -> code-review -> verify-ios-build`",
+            "`实现 skill -> testing -> code-review -> final-evidence-gate`",
             "不能把任务表述为“已完成”",
         ],
         failures,
     )
 
-    for skill in MANDATORY_VERIFY_SKILLS:
+    for skill in FINAL_EVIDENCE_SKILLS:
         skill_md = ROOT / "skills" / skill / "SKILL.md"
         require_contains(
             skill_md,
             [
-                "## 强制收尾验证",
+                "final-evidence-gate",
                 "`verify-ios-build`",
                 "项目环境",
                 ".xcworkspace",
@@ -110,6 +110,7 @@ def main() -> int:
             require_contains(
                 openai_yaml,
                 [
+                    "$final-evidence-gate",
                     "$verify-ios-build",
                     "项目环境",
                     ".xcworkspace",
@@ -171,9 +172,9 @@ def main() -> int:
     require_contains(
         ROOT / "skills" / "verify-ios-build" / "SKILL.md",
         [
-            "强制收尾验证技能",
+            "项目环境构建验证执行器",
             "项目环境",
-            "sandbox_permissions=\\\"require_escalated\\\"",
+            "sandbox_permissions=\"require_escalated\"",
             "本地 `xcodebuild` 命令（含 `-list` / `-showdestinations` / build/test）统一按非沙盒项目环境执行",
             "本地 `verify-ios-build` 不支持 `XCODE_DERIVED_DATA` 覆盖",
             "默认复用同一套 workspace / scheme / destination 基线",
@@ -184,7 +185,7 @@ def main() -> int:
             "macOS Xcode 工程",
             "XCODE_UI_SMOKE_MODE",
             "text-first",
-            "`testing` 与 `code-review` 之后的第四步最终门禁",
+            "final-evidence-gate",
         ],
         failures,
     )
@@ -260,7 +261,7 @@ def main() -> int:
     require_contains(
         ROOT / "skills" / "macos-menubar-tuist-app" / "SKILL.md",
         [
-            "## 强制收尾验证",
+            "final-evidence-gate",
             "`verify-ios-build`",
             "项目环境",
             "任务未完成",
@@ -353,12 +354,12 @@ def main() -> int:
     )
 
     if failures:
-        print("verify-ios-build policy lint failed:", file=sys.stderr)
+        print("final-evidence-gate policy lint failed:", file=sys.stderr)
         for failure in failures:
             print(f"- {failure}", file=sys.stderr)
         return 1
 
-    print("verify-ios-build policy lint passed")
+    print("final-evidence-gate policy lint passed")
     return 0
 
 

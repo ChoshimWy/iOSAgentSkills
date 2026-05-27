@@ -1,6 +1,6 @@
 ---
 name: ios-device-automation
-description: iOS 真机自动化技能。只在连接或已配对的 physical device 上发现与选择目标设备、执行 build/test、安装 app、启动/终止进程、查询设备信息并做常见真机诊断；如果目标是 Simulator、Build Settings / 签名策略设计或普通业务代码实现，不要使用本 skill 作为主 skill；若任务产出修改了 Apple Xcode 项目相关内容，收尾必须切到 `verify-ios-build` 并在项目环境完成最终验证。
+description: iOS 真机自动化技能。只在连接或已配对的 physical device 上发现与选择目标设备、执行 build/test、安装 app、启动/终止进程、查询设备信息并做常见真机诊断；如果目标是 Simulator、Build Settings / 签名策略设计或普通业务代码实现，不要使用本 skill 作为主 skill；若任务产出修改了 Apple Xcode 项目相关内容，收尾必须进入 `final-evidence-gate`；证据不足、高风险或命中工程/依赖/签名/资源打包类改动时，再切到 `verify-ios-build` 在项目环境完成最终验证。
 ---
 
 # iOS 真机自动化
@@ -40,7 +40,7 @@ description: iOS 真机自动化技能。只在连接或已配对的 physical de
 1. 如果用户或 `.codex/xcodebuild.env` 显式指定了 scheme，直接复用
 2. 如果未显式指定，默认优先选择绑定了单元测试 `*Tests` target / bundle 的 scheme
 3. 如果不存在这类 scheme，再回退到其它测试 scheme（例如 `*UITests`、`*_TEST`）；若仍不存在，再回退到其他共享 scheme
-4. 如果同一任务后续还要执行 `verify-ios-build`，最终门禁默认复用这次 build / test 的 workspace / scheme / destination 基线；不要无说明切换
+4. 如果同一任务后续还要进入 `final-evidence-gate`，最终证据门禁默认复用这次 build / test 的 workspace / scheme / destination 基线；不要无说明切换
 
 ## 执行约定
 - 真机构建默认用 `xcodebuild -destination 'id=<destination-id>'`，不替代签名配置；签名问题交给 `xcode-build`。
@@ -55,13 +55,13 @@ description: iOS 真机自动化技能。只在连接或已配对的 physical de
 - `references/devicectl-quick.md`
 - `references/troubleshooting.md`
 
-## 强制收尾验证
-- 只要当前任务产出修改了 Apple Xcode 项目相关内容（代码、测试、资源、工程文件、构建脚本、plist / entitlements / xcconfig / scheme 或项目内环境配置），最终必须切到 `verify-ios-build`。
-- 最终门禁必须在目标项目根目录的项目环境执行；沙箱内的构建结果不能作为最终验收结论。
-- 如果同一任务里已经先跑过定向测试或真机构建，`verify-ios-build` 默认复用同一套 workspace / scheme / destination 基线；不要无说明切到另一个 scheme。
-- 如果用户没有显式指定 scheme，定向测试与最终门禁默认优先选择绑定了单元测试 `*Tests` target / bundle 的 scheme；若不存在，再回退到其它测试 scheme（例如 `*UITests`、`*_TEST`）。
-- 对 iOS 项目，`verify-ios-build` 必须优先 `.xcworkspace`（当 `.xcworkspace` 与 `.xcodeproj` 同时存在时），并默认优先已连接真机；找不到连接中的真机时再回退到 simulator。
-- 在 `verify-ios-build` 成功前，不得把任务表述为“已完成”；只能明确说明“实现已完成，但验证未完成/失败，任务未完成”。
+## 最终证据门禁
+- 只要当前任务产出修改了 Apple Xcode 项目相关内容（代码、测试、资源、工程文件、构建脚本、plist / entitlements / xcconfig / scheme 或项目内环境配置），最终必须进入 `final-evidence-gate`；证据不足、高风险或命中工程/依赖/签名/资源打包类改动时，再切到 `verify-ios-build`。
+- 最终验证证据必须来自目标项目根目录的项目环境；沙箱内的构建结果不能作为最终验收结论。
+- 如果同一任务里已经先跑过定向测试或真机构建，`final-evidence-gate` / `verify-ios-build` 默认复用同一套 workspace / scheme / destination 基线；不要无说明切到另一个 scheme。
+- 如果用户没有显式指定 scheme，定向测试与最终证据默认优先选择绑定了单元测试 `*Tests` target / bundle 的 scheme；若不存在，再回退到其它测试 scheme（例如 `*UITests`、`*_TEST`）。
+- 对 iOS 项目，若升级到 `verify-ios-build`，必须优先 `.xcworkspace`（当 `.xcworkspace` 与 `.xcodeproj` 同时存在时），并默认优先已连接真机；找不到连接中的真机时再回退到 simulator。
+- 在 `final-evidence-gate` 接受现有证据或 `verify-ios-build` 成功前，不得把任务表述为“已完成”；只能明确说明“实现已完成，但验证证据不足/验证失败，任务未完成”。
 
 ## 与其他技能的关系
 - 需要 Simulator 自动化、语义导航或模拟器生命周期管理时，切换到 `ios-simulator-automation`。

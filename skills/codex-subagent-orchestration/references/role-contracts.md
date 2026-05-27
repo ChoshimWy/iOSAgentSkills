@@ -27,7 +27,7 @@
 
 ### 不负责
 - 最终完成态裁决
-- 最终 `verify-ios-build`
+- 最终 `final-evidence-gate`，必要时升级 `verify-ios-build`
 - 静态代码审查结论
 
 ## reviewer explorer
@@ -83,7 +83,7 @@
 
 ### 不负责
 - 最终完成态裁决
-- 替代 `verify-ios-build`
+- 替代 `final-evidence-gate` / `verify-ios-build`
 
 ## reporter
 
@@ -117,7 +117,7 @@
 - 启动与回收 subAgent
 - 聚合 coder / reviewer / tester 输出
 - 精确回写 coder
-- 执行最终 `verify-ios-build`
+- 执行最终 `final-evidence-gate`，必要时升级 `verify-ios-build`
 - 判定任务完成 / 未完成 / 阻塞
 
 ### 固定输出（汇总态）

@@ -29,7 +29,7 @@
 ### CP3：Final Gate（最终门禁）
 - 责任人：main agent
 - 进入条件：CP2 通过，修复轮次收敛
-- 通过标准：最终门禁（如 `verify-ios-build`）通过
+- 通过标准：最终证据门禁（`final-evidence-gate`）接受现有证据，或升级后的 `verify-ios-build` 通过
 - 失败处理：按首个真实失败点回写 coder，进入下一轮；若环境阻塞则标记 blocked
 
 ## Fail-Fix-Report 纪律

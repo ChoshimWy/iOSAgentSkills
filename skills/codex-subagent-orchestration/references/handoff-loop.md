@@ -5,7 +5,7 @@
 2. coder 先完成首个关键切片，通过 `CP1 Anchor Slice` 后再按需扩展
 3. tester / reviewer 在冻结基线下工作，推进 `CP2 Validation Baseline Freeze`
 4. 主 Agent 聚合后决定是否回写 coder
-5. 代码收敛后，主 Agent 执行最终 `verify-ios-build`（如适用）并推进 `CP3 Final Gate`
+5. 代码收敛后，主 Agent 执行 `final-evidence-gate`；证据不足或高风险时升级 `verify-ios-build`，再推进 `CP3 Final Gate`
 6. gate 失败则再次回写 coder
 
 ## wait 与聚合策略
@@ -37,7 +37,7 @@
 
 ## 权限与升级
 - 普通仓库读取、静态审查与文档比对默认留在 sandbox 内完成。
-- 一旦最终门禁或目标项目环境验证需要越过 sandbox，主 Agent 使用 `functions.exec_command` 并按需设置 `sandbox_permissions=\"require_escalated\"`，不要通过其它绕路方式规避升级。
+- 一旦最终证据门禁或目标项目环境验证需要越过 sandbox，主 Agent 使用 `functions.exec_command` 并按需设置 `sandbox_permissions=\"require_escalated\"`，不要通过其它绕路方式规避升级。
 
 ## 何时升级 tester 为 worker
 - tester explorer 明确判断“缺少必要测试代码”
@@ -47,4 +47,4 @@
 ## 会话切分
 - 长任务默认按“排查 / 实现 / 验证 / 提交”切分会话。
 - 新会话只携带目标、关键路径、验证基线和上一轮结论，不复制完整历史。
-- Apple/Xcode 项目改动的最终完成态仍以目标项目环境中的 `verify-ios-build` 成功为准。
+- Apple/Xcode 项目改动的最终完成态以 `final-evidence-gate` 接受目标项目环境证据为准；证据不足或高风险时以 `verify-ios-build` 成功为准。

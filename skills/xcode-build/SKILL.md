@@ -1,6 +1,6 @@
 ---
 name: xcode-build
-description: Xcode 构建与配置技能。只用于 Xcode 项目配置、Build Settings、构建脚本、Archive/Export、CI/CD、代码签名和分发链路；如果任务只是收尾阶段跑一次 `xcodebuild` 验收、选择 Simulator / 真机执行路径或编写测试，不要使用本 skill 作为主 skill；若任务产出修改了 Apple Xcode 项目相关内容，收尾仍必须切到 `verify-ios-build` 并在项目环境完成最终验证。
+description: Xcode 构建与配置技能。只用于 Xcode 项目配置、Build Settings、构建脚本、Archive/Export、CI/CD、代码签名和分发链路；如果任务只是收尾阶段跑一次 `xcodebuild` 验收、选择 Simulator / 真机执行路径或编写测试，不要使用本 skill 作为主 skill；若任务产出修改了 Apple Xcode 项目相关内容，收尾仍必须进入 `final-evidence-gate`；证据不足、高风险或命中工程/依赖/签名/资源打包类改动时，再切到 `verify-ios-build` 在项目环境完成最终验证。
 ---
 
 # Xcode 构建与配置
@@ -31,13 +31,13 @@ description: Xcode 构建与配置技能。只用于 Xcode 项目配置、Build 
 - `references/build-settings.md`
 - `references/ci-templates.md`
 
-## 强制收尾验证
-- 即使本 skill 处理的是 Build Settings、签名或 CI/CD，只要当前任务产出修改了 Apple Xcode 项目相关内容，最终仍必须切到 `verify-ios-build` 做收尾门禁。
-- 最终门禁必须在目标项目根目录的项目环境执行；沙箱内的构建结果不能作为最终验收结论。
+## 最终证据门禁
+- 即使本 skill 处理的是 Build Settings、签名或 CI/CD，只要当前任务产出修改了 Apple Xcode 项目相关内容，最终仍必须进入 `final-evidence-gate`；证据不足、高风险或命中工程/依赖/签名/资源打包类改动时，再切到 `verify-ios-build`。
+- 最终验证证据必须来自目标项目根目录的项目环境；沙箱内的构建结果不能作为最终验收结论。
 - 本地执行 `xcodebuild`（含 `-list` / `-showdestinations` / build/test/archive/export）默认都在非沙盒项目环境执行；通过 `functions.exec_command` 时显式设置 `sandbox_permissions=\"require_escalated\"`。
 - 本地缓存统一复用 Xcode 系统 DerivedData（`~/Library/Developer/Xcode/DerivedData`），不要改用临时 `-derivedDataPath`。
-- 对 iOS 项目，`verify-ios-build` 必须优先 `.xcworkspace`（当 `.xcworkspace` 与 `.xcodeproj` 同时存在时），并默认优先已连接真机；找不到连接中的真机时再回退到 simulator。
-- 在 `verify-ios-build` 成功前，不得把任务表述为“已完成”；只能明确说明“实现已完成，但验证未完成/失败，任务未完成”。
+- 对 iOS 项目，若升级到 `verify-ios-build`，必须优先 `.xcworkspace`（当 `.xcworkspace` 与 `.xcodeproj` 同时存在时），并默认优先已连接真机；找不到连接中的真机时再回退到 simulator。
+- 在 `final-evidence-gate` 接受现有证据或 `verify-ios-build` 成功前，不得把任务表述为“已完成”；只能明确说明“实现已完成，但验证证据不足/验证失败，任务未完成”。
 
 ## 与其他技能的关系
 - 当任务是配置 Build Settings、签名、Archive/Export、CI/CD 或构建脚本时，优先使用本技能。

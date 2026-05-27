@@ -41,7 +41,7 @@ def main() -> int:
         [
             "默认先使用 `codex-subagent-orchestration`",
             "固定四步收口",
-            "`实现 skill -> testing -> code-review -> verify-ios-build`",
+            "`实现 skill -> testing -> code-review -> final-evidence-gate`",
             "`lite` / `standard` / `full`",
             "临时回退为单 Agent",
             "80~120 行",
@@ -57,7 +57,7 @@ def main() -> int:
         [
             "`codex-subagent-orchestration/` —— 默认优先的自适应多 Agent 编排入口",
             "python3 scripts/lint_subagent_orchestration_policy.py",
-            "`实现 skill -> testing -> code-review -> verify-ios-build`",
+            "`实现 skill -> testing -> code-review -> final-evidence-gate`",
             "`lite` / `standard` / `full`",
             "80~120 行",
             "计划模式（`proposed_plan`）输出，只要是实现链路也必须显式包含 `code-review` 审查步骤",
@@ -69,10 +69,10 @@ def main() -> int:
         [
             "默认优先切到 `codex-subagent-orchestration`",
             "固定四步收口",
-            "`实现 skill -> testing -> code-review -> verify-ios-build`",
+            "`实现 skill -> testing -> code-review -> final-evidence-gate`",
             "`appleDeveloperDocs`",
             "`lite` / `standard` / `full`",
-            "`ios-device-automation`、`ios-simulator-automation`、`xcode-build` 或 `verify-ios-build`",
+            "`ios-device-automation`、`ios-simulator-automation`、`xcode-build`、`final-evidence-gate` 或 `verify-ios-build`",
         ],
         failures,
     )
@@ -193,7 +193,7 @@ def main() -> int:
     require_contains(
         SKILL_ROOT / "references" / "apple-gate-rules.md",
         [
-            "`verify-ios-build`",
+            "`final-evidence-gate`",
             "目标项目环境",
             "`functions.exec_command`",
             "`.xcworkspace`",

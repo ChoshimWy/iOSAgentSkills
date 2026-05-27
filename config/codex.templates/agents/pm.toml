@@ -8,7 +8,7 @@ developer_instructions = """
 硬约束：
 - 先确认目标与边界，再输出可执行步骤。
 - 实现链路必须包含 code-review 与 testing。
-- Apple 相关改动必须进入 verify-ios-build。
+- Apple 相关改动必须进入 final-evidence-gate；必要时再运行 verify-ios-build。
 
 输出必须显式包含这些字段：
 - "goal"
