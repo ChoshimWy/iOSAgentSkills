@@ -30,7 +30,7 @@ description: Apple Xcode 工程的项目环境构建验证执行器。由 `final
 2. 运行当前 skill 自带的 `scripts/build-check.sh <目标仓库根目录>`。
    - `scripts/build-check.sh` 指的是 **本 skill 目录下** 的脚本路径，不是目标仓库根目录里的同名脚本。
    - 不要因为目标仓库没有 `scripts/build-check.sh` 就误判 skill 不可执行。
-   - 项目环境验证必须通过 `functions.exec_command` 在**目标项目根目录**执行，并显式使用 `sandbox_permissions="require_escalated"`（文档转义写法：`sandbox_permissions=\"require_escalated\"`）获取项目环境；不要把沙箱内构建结果当作最终验收。
+   - 项目环境验证必须在**目标项目根目录**执行（CC 使用 `Bash` 工具；Codex 使用 `functions.exec_command` + `require_escalated`）；不要把沙箱内构建结果当作最终验收。
    - 本地 `xcodebuild` 命令（含 `-list` / `-showdestinations` / build/test）统一按非沙盒项目环境执行，不做沙盒内降级。
 3. `build-check.sh` 的首次校验选择顺序固定为：
    - `.codex/xcodebuild.env` 显式设置了 `XCODE_DESTINATION`：按显式 destination 执行；

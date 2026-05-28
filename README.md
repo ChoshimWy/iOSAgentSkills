@@ -6,7 +6,7 @@
 
 ### Shared Config
 - `AGENTS.md` —— 团队共享规则单一来源（宪法层锚点）
-- `config/codex.shared.toml` —— 可版本化、可跨设备复用的 Codex 共享默认配置
+- `config/codex/codex.shared.toml` —— 可版本化、可跨设备复用的 Codex 共享默认配置
 - `CLAUDE.md` —— Claude 入口薄包装，导入 `AGENTS.md`
 
 ### Core Implementation
@@ -66,7 +66,7 @@ ln -s iOSAgentSkills/skills .claude/skills
 
 ## 多角色配置（按图示结构补齐）
 
-- 仓库内模板源：`config/codex.templates/agents/`（5 角色模板）
+- 仓库内模板源：`config/codex/templates/agents/`（5 角色模板）
   - `pm.toml`（拆解需求 / 验收标准 / checkpoint）
   - `explorer.toml`（上下文收集 / 依赖梳理）
   - `builder.toml`（最小实现 / 变更说明）
@@ -74,13 +74,13 @@ ln -s iOSAgentSkills/skills .claude/skills
   - `reporter.toml`（交付汇总 / 风险收口）
 - 这些模板使用 Codex 当前支持的扁平 custom agent schema：`name` / `description` / `developer_instructions` + 可选 `model_reasoning_effort` / `sandbox_mode`。
 - 安装脚本会同步到：`~/.codex/agents/`。
-- 角色模板说明见：`config/codex.templates/agents/README.md`。
+- 角色模板说明见：`config/codex/templates/agents/README.md`。
 - 推荐执行顺序：先 `explorer -> builder -> reporter`，再按需激活 `pm` / `tester`。
 - 默认先做任务分型：`doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`，再映射到 `lite` / `standard` / `full`。
 - 配置映射：
   - 图示 `AGENTS.md` 对应仓库根 `AGENTS.md`
   - 图示 `skills/*/SKILL.md` 对应本仓库全部 skills（含按需触发的低频技能）
-  - 图示 `config.toml` 对应本仓库 `config/codex.shared.toml`
+  - 图示 `config.toml` 对应本仓库 `config/codex/codex.shared.toml`
 
 快速发任务模板：
 
@@ -97,7 +97,7 @@ ln -s iOSAgentSkills/skills .claude/skills
 模板结构自检：
 
 ```bash
-python3 scripts/validate_codex_agent_templates.py config/codex.templates/agents
+python3 scripts/validate_codex_agent_templates.py config/codex/templates/agents
 ```
 
 ## 规则与合同入口
@@ -106,7 +106,7 @@ python3 scripts/validate_codex_agent_templates.py config/codex.templates/agents
 - Skill 路由矩阵：`skills/TAXONOMY.md`
 - 多 Agent 执行合同：`skills/codex-subagent-orchestration/SKILL.md`
 - Checkpoint / Fail-Fix-Report 细则：`skills/codex-subagent-orchestration/references/checkpoint-contract.md`
-- 仓库根不保存 `.codex/` 工作目录；仅维护 `config/codex.templates/` 作为模板源，由安装脚本同步到 `~/.codex`。
+- 仓库根不保存 `.codex/` 工作目录；仅维护 `config/codex/templates/` 作为模板源，由安装脚本同步到 `~/.codex`。
 - 所有技能统一放在 `skills/`；低频/高频只作为文档分组，不再区分发现路径。
 - 路径示例默认以 skill 相对路径为准；若指向目标项目脚本（例如 `.codex/*` 或 `run-menubar.sh`），需由目标项目侧提供。
 

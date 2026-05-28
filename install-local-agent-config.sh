@@ -3,21 +3,23 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: bash install-local-agent-config.sh [--dry-run] [--ccswitch]
+Usage: bash install-local-agent-config.sh [--dry-run] [--ccswitch] [--claude-only] [--init-memory <path>]
 
 Configure local Codex and Claude entrypoints to use this cloned iOSAgentSkills repo:
   - ~/.codex/AGENTS.md -> <repo>/AGENTS.md
   - ~/.codex/skills -> <repo>/skills (默认)
   - ~/.codex/skills -> ~/.cc-switch/iOSAgentSkills/skills（当启用 --ccswitch 时）
-  - ~/.codex/agents/*.toml -> <repo>/config/codex.templates/agents/*.toml
-  - ~/.codex/templates/ui-smoke.example.yml -> <repo>/config/codex.templates/ui-smoke.example.yml
+  - ~/.codex/agents/*.toml -> <repo>/config/codex/templates/agents/*.toml
+  - ~/.codex/templates/ui-smoke.example.yml -> <repo>/config/codex/templates/ui-smoke.example.yml
   - ~/.copilot/skills -> <repo>/skills (默认)
   - ~/.copilot/skills -> ~/.cc-switch/iOSAgentSkills/skills（当启用 --ccswitch 时）
-  - ~/.claude/CLAUDE.md -> @<repo>/AGENTS.md
+  - ~/.claude/CLAUDE.md -> @<repo>/AGENTS.md + CC 运行时编排指令
   - ~/.claude/skills -> <repo>/skills (默认)
   - ~/.claude/skills -> ~/.cc-switch/iOSAgentSkills/skills（当启用 --ccswitch 时）
+  - ~/.claude/settings.json -> merge config/claude-code/settings.json into existing
+  - ~/.claude/agents/*.md -> <repo>/config/claude-code/agents/*.md
   - ~/.cc-switch/skills -> <repo>/skills（固定不随 --ccswitch 切换）
-  - ~/.codex/config.toml -> merge repo config/codex.shared.toml into local shared defaults
+  - ~/.codex/config.toml -> merge repo config/codex/codex.shared.toml into local shared defaults
   - ~/.codex/config.toml -> ensure model_instructions_file points to ~/.codex/AGENTS.md
   - ~/.codex/config.toml -> keep Codex memories enabled without overwriting local-only state
 
@@ -27,6 +29,12 @@ and links ~/.codex/skills / ~/.claude/skills to that staging directory, avoiding
 from deleting files in the current checked-out repository.
 ~/.copilot/skills will follow the same target as ~/.codex/skills.
 
+When --claude-only is specified, all Codex-specific steps (~/.codex/*, ~/.copilot/*) are skipped.
+Only Claude Code setup remains.
+
+When --init-memory <path> is specified, the script prints a memory-seeding prompt to use as
+the first message when starting Claude Code in the given project directory.
+
 When conflicting local files or directories already exist, the script backs them up to:
   ~/.agent-skills-backups/iOSAgentSkills/<timestamp>/
 EOF
@@ -34,6 +42,8 @@ EOF
 
 DRY_RUN='0'
 CCSWITCH_MODE='0'
+CLAUDE_ONLY='0'
+INIT_MEMORY_PATH=''
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -44,6 +54,14 @@ while [[ $# -gt 0 ]]; do
     --ccswitch)
       CCSWITCH_MODE='1'
       shift
+      ;;
+    --claude-only)
+      CLAUDE_ONLY='1'
+      shift
+      ;;
+    --init-memory)
+      INIT_MEMORY_PATH="$2"
+      shift 2
       ;;
     --help|-h)
       usage
@@ -61,12 +79,17 @@ REPO_ROOT="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 REPO_AGENTS="$REPO_ROOT/AGENTS.md"
 REPO_SKILLS="$REPO_ROOT/skills"
 REPO_SYSTEM_SKILLS="$REPO_SKILLS/.system"
-REPO_CODEX_SHARED_CONFIG="$REPO_ROOT/config/codex.shared.toml"
-REPO_CODEX_TEMPLATES="$REPO_ROOT/config/codex.templates"
+REPO_CODEX_SHARED_CONFIG="$REPO_ROOT/config/codex/codex.shared.toml"
+REPO_CODEX_TEMPLATES="$REPO_ROOT/config/codex/templates"
 REPO_CODEX_AGENT_TEMPLATES="$REPO_CODEX_TEMPLATES/agents"
 REPO_CODEX_UI_SMOKE_TEMPLATE="$REPO_CODEX_TEMPLATES/ui-smoke.example.yml"
 CODEX_SYNC_SCRIPT="$REPO_ROOT/scripts/sync_codex_shared_config.py"
 CODEX_AGENT_VALIDATE_SCRIPT="$REPO_ROOT/scripts/validate_codex_agent_templates.py"
+REPO_CLAUDE_CONFIG="$REPO_ROOT/config/claude-code"
+REPO_CLAUDE_SETTINGS="$REPO_CLAUDE_CONFIG/settings.json"
+REPO_CLAUDE_AGENTS="$REPO_CLAUDE_CONFIG/agents"
+REPO_CLAUDE_MEMORY_SEED="$REPO_CLAUDE_CONFIG/memory-seed.md"
+CLAUDE_SYNC_SCRIPT="$REPO_ROOT/scripts/sync_claude_settings.py"
 
 HOME_DIR="${HOME:?HOME is required}"
 CODEX_DIR="$HOME_DIR/.codex"
@@ -78,6 +101,8 @@ CODEX_SYSTEM_SKILLS="$CODEX_SKILLS/.system"
 COPILOT_SKILLS="$COPILOT_DIR/skills"
 CLAUDE_MD="$CLAUDE_DIR/CLAUDE.md"
 CLAUDE_SKILLS="$CLAUDE_DIR/skills"
+CLAUDE_SETTINGS="$CLAUDE_DIR/settings.json"
+CLAUDE_AGENTS_DIR="$CLAUDE_DIR/agents"
 CODEX_CONFIG="$CODEX_DIR/config.toml"
 CODEX_AGENTS_DIR="$CODEX_DIR/agents"
 CODEX_TEMPLATES_DIR="$CODEX_DIR/templates"
@@ -275,6 +300,76 @@ ensure_text_file() {
   record_change "$action"
 }
 
+build_claude_md_content() {
+  local import_line="@${REPO_AGENTS}"
+  local repo_claude_md="$REPO_ROOT/CLAUDE.md"
+  local orchestration_section
+
+  if [[ -f "$repo_claude_md" ]]; then
+    orchestration_section="$(tail -n +2 "$repo_claude_md")"
+  else
+    orchestration_section=''
+  fi
+
+  if [[ -n "$orchestration_section" ]]; then
+    printf '%s\n%s\n' "$import_line" "$orchestration_section"
+  else
+    printf '%s\n' "$import_line"
+  fi
+}
+
+ensure_claude_settings() {
+  local template="$REPO_CLAUDE_SETTINGS"
+  local action='created'
+
+  if [[ ! -f "$template" ]]; then
+    log "skip: config/claude-code/settings.json template not found"
+    return 0
+  fi
+
+  ensure_directory "$CLAUDE_DIR"
+
+  if [[ -f "$CLAUDE_SETTINGS" && ! -L "$CLAUDE_SETTINGS" ]]; then
+    action='updated'
+  fi
+
+  log "$action: ~/.claude/settings.json (merged from config/claude-code/settings.json)"
+  if [[ "$DRY_RUN" == '0' ]]; then
+    python3 "$CLAUDE_SYNC_SCRIPT" --template "$template" --target "$CLAUDE_SETTINGS"
+  fi
+  record_change "$action"
+}
+
+ensure_claude_agents() {
+  ensure_directory "$CLAUDE_AGENTS_DIR"
+
+  local source target base_name
+  for source in "$REPO_CLAUDE_AGENTS"/*.md; do
+    [[ -f "$source" ]] || continue
+    base_name="$(basename "$source")"
+    target="$CLAUDE_AGENTS_DIR/$base_name"
+    ensure_file_copied "$target" "$source" "~/.claude/agents/$base_name"
+  done
+}
+
+seed_claude_memory() {
+  local project_path="$1"
+
+  if [[ ! -f "$REPO_CLAUDE_MEMORY_SEED" ]]; then
+    log "skip: config/claude-code/memory-seed.md not found"
+    return 0
+  fi
+
+  echo ''
+  log "=== Claude Code Memory Seed ==="
+  log "To prime project memory, start Claude Code in: $project_path"
+  log "and use the following as your first prompt:"
+  log "---"
+  cat "$REPO_CLAUDE_MEMORY_SEED"
+  log "---"
+  log "After this session, Claude Code will remember the project context automatically."
+}
+
 ensure_file_copied() {
   local target_path="$1"
   local source_path="$2"
@@ -437,27 +532,29 @@ if [[ ! -d "$REPO_SKILLS" ]]; then
   exit 1
 fi
 
-if [[ ! -f "$REPO_CODEX_SHARED_CONFIG" ]]; then
-  echo "Error: missing shared Codex config: $REPO_CODEX_SHARED_CONFIG" >&2
-  exit 1
+if [[ "$CLAUDE_ONLY" == '0' ]]; then
+  if [[ ! -f "$REPO_CODEX_SHARED_CONFIG" ]]; then
+    echo "Error: missing shared Codex config: $REPO_CODEX_SHARED_CONFIG" >&2
+    exit 1
+  fi
+
+  if [[ ! -d "$REPO_CODEX_AGENT_TEMPLATES" ]]; then
+    echo "Error: missing Codex agent templates directory: $REPO_CODEX_AGENT_TEMPLATES" >&2
+    exit 1
+  fi
+
+  if [[ ! -f "$CODEX_SYNC_SCRIPT" ]]; then
+    echo "Error: missing Codex config sync script: $CODEX_SYNC_SCRIPT" >&2
+    exit 1
+  fi
+
+  if [[ ! -f "$CODEX_AGENT_VALIDATE_SCRIPT" ]]; then
+    echo "Error: missing Codex agent validation script: $CODEX_AGENT_VALIDATE_SCRIPT" >&2
+    exit 1
+  fi
 fi
 
-if [[ ! -d "$REPO_CODEX_AGENT_TEMPLATES" ]]; then
-  echo "Error: missing Codex agent templates directory: $REPO_CODEX_AGENT_TEMPLATES" >&2
-  exit 1
-fi
-
-if [[ ! -f "$CODEX_SYNC_SCRIPT" ]]; then
-  echo "Error: missing Codex config sync script: $CODEX_SYNC_SCRIPT" >&2
-  exit 1
-fi
-
-if [[ ! -f "$CODEX_AGENT_VALIDATE_SCRIPT" ]]; then
-  echo "Error: missing Codex agent validation script: $CODEX_AGENT_VALIDATE_SCRIPT" >&2
-  exit 1
-fi
-
-CLAUDE_IMPORT_LINE="@${REPO_AGENTS}"
+CLAUDE_MD_CONTENT="$(build_claude_md_content)"
 if [[ "$CCSWITCH_MODE" == '1' ]]; then
   TARGET_SKILLS="$CCSWITCH_SKILLS"
 fi
@@ -543,44 +640,59 @@ verify_codex_agent_templates() {
 }
 
 verify_installation() {
-  [[ -L "$CODEX_AGENTS" ]] || fail "~/.codex/AGENTS.md is not a symlink"
-  [[ "$(resolve_physical_path "$CODEX_AGENTS")" == "$(resolve_physical_path "$REPO_AGENTS")" ]] || fail "~/.codex/AGENTS.md does not point to this cloned repo"
+  if [[ "$CLAUDE_ONLY" == '0' ]]; then
+    [[ -L "$CODEX_AGENTS" ]] || fail "~/.codex/AGENTS.md is not a symlink"
+    [[ "$(resolve_physical_path "$CODEX_AGENTS")" == "$(resolve_physical_path "$REPO_AGENTS")" ]] || fail "~/.codex/AGENTS.md does not point to this cloned repo"
 
-  [[ -L "$CODEX_SKILLS" ]] || fail "~/.codex/skills is not a symlink"
-  [[ "$(resolve_physical_path "$CODEX_SKILLS")" == "$(resolve_physical_path "$TARGET_SKILLS")" ]] || fail "~/.codex/skills does not point to expected skills path"
+    [[ -L "$CODEX_SKILLS" ]] || fail "~/.codex/skills is not a symlink"
+    [[ "$(resolve_physical_path "$CODEX_SKILLS")" == "$(resolve_physical_path "$TARGET_SKILLS")" ]] || fail "~/.codex/skills does not point to expected skills path"
+
+    [[ -L "$COPILOT_SKILLS" ]] || fail "~/.copilot/skills is not a symlink"
+    [[ "$(resolve_physical_path "$COPILOT_SKILLS")" == "$(resolve_physical_path "$TARGET_SKILLS")" ]] || fail "~/.copilot/skills does not point to expected skills path"
+
+    [[ -f "$CODEX_CONFIG" && ! -L "$CODEX_CONFIG" ]] || fail "~/.codex/config.toml is missing or not a regular file"
+    verify_codex_config || fail "~/.codex/config.toml does not match repo-managed Codex shared config"
+    verify_codex_agent_templates
+  fi
 
   [[ -L "$CLAUDE_SKILLS" ]] || fail "~/.claude/skills is not a symlink"
   [[ "$(resolve_physical_path "$CLAUDE_SKILLS")" == "$(resolve_physical_path "$TARGET_SKILLS")" ]] || fail "~/.claude/skills does not point to expected skills path"
-
-  [[ -L "$COPILOT_SKILLS" ]] || fail "~/.copilot/skills is not a symlink"
-  [[ "$(resolve_physical_path "$COPILOT_SKILLS")" == "$(resolve_physical_path "$TARGET_SKILLS")" ]] || fail "~/.copilot/skills does not point to expected skills path"
 
   if [[ "$CCSWITCH_MODE" == '1' ]]; then
     [[ "$(resolve_physical_path "$TARGET_SKILLS")" != "$(resolve_physical_path "$REPO_SKILLS")" ]] || fail "--ccswitch mode should use staging cache, not repo/skills"
   fi
 
   [[ -f "$CLAUDE_MD" && ! -L "$CLAUDE_MD" ]] || fail "~/.claude/CLAUDE.md is missing or not a regular file"
-  [[ "$(cat "$CLAUDE_MD")" == "$CLAUDE_IMPORT_LINE" ]] || fail "~/.claude/CLAUDE.md does not import this cloned repo"
+  [[ "$(cat "$CLAUDE_MD")" == "$CLAUDE_MD_CONTENT" ]] || fail "~/.claude/CLAUDE.md does not match expected content"
 
   [[ -L "$CCSWITCH_PUBLIC_SKILLS" ]] || fail "~/.cc-switch/skills is not a symlink"
   [[ "$(resolve_physical_path "$CCSWITCH_PUBLIC_SKILLS")" == "$(resolve_physical_path "$REPO_SKILLS")" ]] || fail "~/.cc-switch/skills does not point to repo skills"
 
-  [[ -f "$CODEX_CONFIG" && ! -L "$CODEX_CONFIG" ]] || fail "~/.codex/config.toml is missing or not a regular file"
-  verify_codex_config || fail "~/.codex/config.toml does not match repo-managed Codex shared config"
-  verify_codex_agent_templates
+  [[ -f "$CLAUDE_SETTINGS" && ! -L "$CLAUDE_SETTINGS" ]] || fail "~/.claude/settings.json is missing or not a regular file"
 }
 
-ensure_symlink "$CODEX_AGENTS" "$REPO_AGENTS" "~/.codex/AGENTS.md"
+if [[ "$CLAUDE_ONLY" == '0' ]]; then
+  ensure_symlink "$CODEX_AGENTS" "$REPO_AGENTS" "~/.codex/AGENTS.md"
+  ensure_symlink "$CODEX_SKILLS" "$TARGET_SKILLS" "~/.codex/skills"
+  ensure_symlink "$COPILOT_SKILLS" "$TARGET_SKILLS" "~/.copilot/skills"
+  ensure_codex_config
+  sync_codex_agent_templates
+  sync_codex_ui_smoke_template
+else
+  log "skip: Codex setup (--claude-only)"
+fi
+
 sync_system_skills_from_codex
 sync_skills_to_ccswitch_cache
-ensure_symlink "$CODEX_SKILLS" "$TARGET_SKILLS" "~/.codex/skills"
-ensure_symlink "$COPILOT_SKILLS" "$TARGET_SKILLS" "~/.copilot/skills"
-ensure_text_file "$CLAUDE_MD" "$CLAUDE_IMPORT_LINE" "~/.claude/CLAUDE.md"
+ensure_text_file "$CLAUDE_MD" "$CLAUDE_MD_CONTENT" "~/.claude/CLAUDE.md"
 ensure_symlink "$CLAUDE_SKILLS" "$TARGET_SKILLS" "~/.claude/skills"
 ensure_symlink "$CCSWITCH_PUBLIC_SKILLS" "$REPO_SKILLS" "~/.cc-switch/skills"
-ensure_codex_config
-sync_codex_agent_templates
-sync_codex_ui_smoke_template
+ensure_claude_settings
+ensure_claude_agents
+
+if [[ -n "$INIT_MEMORY_PATH" ]]; then
+  seed_claude_memory "$INIT_MEMORY_PATH"
+fi
 
 printf '\nSummary:\n'
 printf '  created: %d\n' "$CREATED_COUNT"

@@ -12,15 +12,15 @@
 - 在未明确要求发散讨论时，回答保持直接、可执行、偏实现导向。
 - 当用户使用“今天 / 昨天 / 明天 / 最新 / 最近 / 当前”等相对时间表达，或话题存在明显时效性时，优先核实，并在回答中写出具体绝对日期。
 - 对 OpenAI / Codex / ChatGPT / API 使用方式类问题，优先基于本机现有配置、已安装能力与官方文档回答，不臆测不存在的功能。
-- 涉及 `git` / `gh` 提交与创建 PR 时，默认使用中文 commit subject、PR 标题与 PR 正文；仅当目标仓库有明确英文规范时再切换。
+- 涉及 `git` / `gh` 提交与创建 PR 时，默认使用中文 commit subject、PR 标题与 PR 正文；仅当目标仓库有明确英文规范时再切换。commit 强制单行，不允许多行正文或脚注。
 
 ## 规则源与本机入口
 
 - 本仓库根目录 `AGENTS.md` 是本项目共享规则单一来源。
-- `CLAUDE.md` 只做薄包装导入，保持与 `AGENTS.md` 同源。
-- `config/codex.shared.toml` 只放可共享的 Codex 默认配置，不放本机状态。
+- `CLAUDE.md` 做薄包装导入，保持与 `AGENTS.md` 同源，并附加 Claude Code 运行时编排指令；Codex 用户不受其影响。
+- `config/codex/codex.shared.toml` 只放可共享的 Codex 默认配置，不放本机状态。
 - `skills/` 是本仓库唯一的 Skill 根目录；高频与低频技能统一放在这里，由路由规则决定默认入口与按需触发方式。
-- 仓库内不保存根 `.codex/` 工作目录；可复用模板统一放在 `config/codex.templates/`，由安装脚本同步到 `~/.codex`。
+- 仓库内不保存根 `.codex/` 工作目录；可复用模板统一放在 `config/codex/templates/`，由安装脚本同步到 `~/.codex`。
 - `install-local-agent-config.sh` 负责把本仓库规则接到 `~/.codex`、`~/.claude`、`~/.copilot`。
 - 详细路由与执行合同统一下沉到 `skills/TAXONOMY.md` 与 `skills/codex-subagent-orchestration/references/`。
 
@@ -44,7 +44,7 @@
 - 不默认重复运行 `verify-ios-build`：若最后一次 repo-tracked 代码变更之后，已在目标项目环境中用同等或更强 workspace / scheme / destination 成功执行 `xcodebuild test` 或 `xcodebuild build`，且 `testing` 与 `code-review` 均放行，可接受该证据作为最终完成依据。
 - 证据不足、高风险或命中工程/依赖/签名/资源打包类改动时，必须升级到 `verify-ios-build`；最终验证必须在目标项目环境、从目标仓库根目录执行，不能把仅在 sandbox 中得到的构建结果当作最终结论。
 - 必须升级的典型场景：`.xcodeproj` / `.xcworkspace` / scheme / xctestplan / xcconfig / Build Settings / 构建脚本、签名/entitlements/plist/capability、`Podfile` / `Podfile.lock` / 私有 Pod 版本或 `:path` 回切线上、资源/Storyboard/XIB/Assets/target membership、consumer app 集成证据缺失。
-- 本地所有 `xcodebuild` 命令（含 `-list` / `-showdestinations` / build/test）默认都必须在非沙盒项目环境执行；通过 `functions.exec_command` 时显式设置 `sandbox_permissions=\"require_escalated\"`。
+- 本地所有 `xcodebuild` 命令（含 `-list` / `-showdestinations` / build/test）默认在项目环境直接执行（CC 使用 `Bash` 工具；Codex 使用 `functions.exec_command` + `require_escalated`）。
 - 本地构建缓存默认统一使用 Xcode 系统 DerivedData（`~/Library/Developer/Xcode/DerivedData`）；不要为最终门禁指定临时 `-derivedDataPath`，也不要使用 `XCODE_DERIVED_DATA` 覆盖。
 - 如果同时存在 `.xcworkspace` 和 `.xcodeproj`，验证优先使用 `.xcworkspace`；如果没有用户显式指定 scheme，定向测试与最终证据默认优先选择绑定了单元测试 `*Tests` target / bundle 的 scheme，若不存在再回退到其它测试 scheme。
 - 对 iOS 项目，最终验证证据默认优先已连接真机；如果既有成功证据来自 simulator，只有在风险不依赖签名、真实设备能力或打包链路时才可接受。

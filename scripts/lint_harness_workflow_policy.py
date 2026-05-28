@@ -9,7 +9,7 @@ import sys
 ROOT = Path(__file__).resolve().parent.parent
 SKILL_ROOT = ROOT / "skills" / "codex-subagent-orchestration"
 EXEMPT_OPENAI_SKILLS = {"_shared-sentinel"}
-CODEX_TEMPLATE_AGENTS = ROOT / "config" / "codex.templates" / "agents"
+CODEX_TEMPLATE_AGENTS = ROOT / "config" / "codex" / "templates" / "agents"
 CODEX_AGENT_VALIDATE_SCRIPT = ROOT / "scripts" / "validate_codex_agent_templates.py"
 
 
@@ -98,7 +98,7 @@ def main() -> int:
             "python3 scripts/lint_harness_workflow_policy.py",
             "python3 scripts/lint_workflow_contract_policy.py",
             "python3 scripts/validate_codex_agent_templates.py",
-            "config/codex.templates/agents/",
+            "config/codex/templates/agents/",
             "~/.codex/agents/",
             "所有技能统一放在 `skills/`",
             "`codex-subagent-orchestration`",

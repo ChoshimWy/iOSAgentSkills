@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xcodebuild:*)",
+      "Bash(xcrun:*)",
+      "Bash(swift:*)",
+      "Bash(pod:*)",
+      "Bash(tuist:*)",
+      "Bash(mint:*)",
+      "Bash(open:*)",
+      "Bash(xcpretty:*)"
+    ]
+  }
+}
