@@ -55,6 +55,10 @@ Claude Code 的 `Agent` 工具支持以下 `subagent_type`：
 - 并行启动：`Agent:Explore`（审查）∥ `Agent:general-purpose`（测试）
 - 主 Agent 聚合 → `final-evidence-gate` → 必要时 `verify-ios-build`
 
+## Skill 使用声明
+
+使用任何 Skill 前，必须先输出 `>>> Skill: <skill-name>` 声明即将使用的 skill，让用户明确知道当前路由到了哪个 skill。
+
 ## 四步收口工作流（默认）
 
 所有实现型任务必须按以下四步收口，不可跳过任何一步：

@@ -34,17 +34,8 @@ metadata: {"clawdbot":{"emoji":"🍎","requires":{"bins":["node"]}}}
 - Apple Developer：`https://developer.apple.com/`
 
 ## 与其他技能的关系
-- 需要写或改 iOS/macOS 业务代码时，主技能应是 `ios-feature-implementation`、`swiftui-feature-implementation`、`uikit-feature-implementation`、`swift-expert`、`swiftui-ui-patterns`、`swiftui-liquid-glass` 或对应专项 skill，`apple-docs` 只作为辅助查询。
+- 需要写或改 iOS/macOS 业务代码时，主技能应是 `ios-feature-implementation`、`swiftui-feature-implementation`、`uikit-feature-implementation`、`swift-expert`、`swiftui-feature-implementation`、`swiftui-liquid-glass` 或对应专项 skill，`apple-docs` 只作为辅助查询。
 - 需要运行时排障时，切换到 `debugging`。
 - 需要构建配置、签名、Archive 或 CI 时，切换到 `xcode-build`。
 - 需要官方 API 依据来支撑其它技能的结论时，再附带使用本 skill。
 
-## ✅ Sentinel（Skill 使用自检）
-当且仅当你确定本 Skill 已被加载并用于当前任务时，在回复末尾追加：
-`// skill-used: apple-docs`
-
-规则：
-- 只能输出一次
-- 如果不确定是否加载，禁止输出 sentinel
-- 输出 sentinel 代表你已遵守本 Skill 的硬性规则与交付格式
-- 只有当任务与本 skill 的 description 明显匹配时才允许输出 sentinel

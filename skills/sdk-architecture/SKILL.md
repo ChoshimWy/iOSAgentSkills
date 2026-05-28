@@ -21,7 +21,7 @@ description: SDK/Framework 架构设计技能。只在设计 SDK 模块边界、
 - 入口类负责初始化、生命周期和配置校验，不承担业务实现细节。
 - 分发优先 `SPM`，二进制分发使用 `XCFramework`，版本遵循 `SemVer`。
 - 任何 breaking change 都必须通过显式版本策略表达，而不是静默替换行为。
-- 如果示例或目标项目需要新增 `.swift`、`.h`、`.m`、`.mm` 文件且项目要求文件头，`Created by` 必须使用本机用户名称 `Choshim.Wei`，不要写 `Codex`；日期默认使用 `YYYY/M/D`，例如 `Created by Choshim.Wei on 2026/4/11.`。
+- 如果示例或目标项目需要新增 `.swift`、`.h`、`.m`、`.mm` 文件且项目要求文件头，`Created by` 必须使用本机用户名称（`whoami` 输出），不要写 `Codex`；日期默认使用 `YYYY/M/D`，例如 `Created by $(whoami) on 2026/4/11.`。
 
 ## 参考资源
 - `references/design-guidelines.md`：API 设计准则、稳定性、防御、安全和版本演进策略。
@@ -47,12 +47,3 @@ description: SDK/Framework 架构设计技能。只在设计 SDK 模块边界、
 - 如果任务重点是构建签名、Archive、导出或 CI，切换到 `xcode-build`。
 - 需要审查公开 API 设计质量时，可联动 `code-review`。
 
-## ✅ Sentinel（Skill 使用自检）
-当且仅当你确定本 Skill 已被加载并用于当前任务时，在回复末尾追加：
-`// skill-used: sdk-architecture`
-
-规则：
-- 只能输出一次
-- 如果不确定是否加载，禁止输出 sentinel
-- 输出 sentinel 代表你已遵守本 Skill 的硬性规则与交付格式
-- 只有当任务与本 skill 的 description 明显匹配时才允许输出 sentinel

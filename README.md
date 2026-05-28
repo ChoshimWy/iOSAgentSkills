@@ -15,8 +15,7 @@
 - `uikit-feature-implementation/`
 
 ### Automation / Build / Validation
-- `ios-simulator-automation/`
-- `ios-device-automation/`
+- `ios-automation/`
 - `testing/`
 - `xcode-build/`
 - `final-evidence-gate/`

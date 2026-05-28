@@ -24,7 +24,7 @@ description: Swift 进阶开发技能。仅用于复杂并发隔离、PAT/类型
 - 复杂分支补 `why` 注释，解释业务原因/兼容背景/失败保护；不要只复述代码字面含义。
 - 只补文件头注释不算完成；关键函数与关键分支必须有可执行语义的内联注释。
 - 不为普通业务代码引入不必要的高阶抽象。
-- 如果产出中新增 `.swift`、`.h`、`.m`、`.mm` 文件且项目要求文件头，`Created by` 必须使用本机用户名称 `Choshim.Wei`，不要写 `Codex`；日期默认使用 `YYYY/M/D`，例如 `Created by Choshim.Wei on 2026/4/11.`。
+- 如果产出中新增 `.swift`、`.h`、`.m`、`.mm` 文件且项目要求文件头，`Created by` 必须使用本机用户名称（`whoami` 输出），不要写 `Codex`；日期默认使用 `YYYY/M/D`，例如 `Created by $(whoami) on 2026/4/11.`。
 
 ## 参考资源
 - `references/async-concurrency.md`
@@ -43,16 +43,7 @@ description: Swift 进阶开发技能。仅用于复杂并发隔离、PAT/类型
 - 普通 SwiftUI 页面落地优先使用 `swiftui-feature-implementation`。
 - 普通 UIKit 页面落地优先使用 `uikit-feature-implementation`。
 - 性能 baseline、`measure(metrics:)`、`xctrace`、Instruments 优先使用 `ios-performance`。
-- 新建 SwiftUI 页面模式设计优先使用 `swiftui-ui-patterns`。
-- 已有 SwiftUI 视图文件整理优先使用 `swiftui-view-refactor`。
+- 新建 SwiftUI 页面模式设计优先使用 `swiftui-feature-implementation`。
+- 已有 SwiftUI 视图文件整理优先使用 `swiftui-feature-implementation`。
 - 只有在出现复杂抽象、并发隔离或跨平台策略时，才切换到本技能。
 
-## ✅ Sentinel（Skill 使用自检）
-当且仅当你确定本 Skill 已被加载并用于当前任务时，在回复末尾追加：
-`// skill-used: swift-expert`
-
-规则：
-- 只能输出一次
-- 如果不确定是否加载，禁止输出 sentinel
-- 输出 sentinel 代表你已遵守本 Skill 的硬性规则与交付格式
-- 只有当任务与本 skill 的 description 明显匹配时才允许输出 sentinel

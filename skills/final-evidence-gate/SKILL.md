@@ -46,6 +46,3 @@ description: Apple Xcode 项目改动的条件化最终证据门禁。用于在 
 - `verify-ios-build` 是本门禁的升级执行器，只在证据不足、高风险或命中强制场景时运行。
 - `xcode-build` 仍负责构建配置、签名、Archive/Export、CI/CD 设计。
 
-## ✅ Sentinel（Skill 使用自检）
-当且仅当你确定当前任务已加载并使用本 Skill 时，在回复末尾追加：
-`// skill-used: final-evidence-gate`

@@ -66,14 +66,5 @@ description: iOS 调试与问题排查技能。只在存在 crash、异常、运
 - 只是静态代码质量审查时，切换到 `code-review`。
 - 掉帧、启动慢、CPU / 内存异常、`measure(metrics:)`、`xctrace` 或 Instruments 模板选择等性能问题，优先切换到 `ios-performance`。
 - 需要构建签名、Archive、导出或 CI 配置时，切换到 `xcode-build`。
-- 需要直接整理实现代码而非定位运行时根因时，切换到 `refactoring`、`swiftui-view-refactor` 或其它实现型 skill。
+- 需要直接整理实现代码而非定位运行时根因时，切换到 `refactoring`、`swiftui-feature-implementation` 或其它实现型 skill。
 
-## ✅ Sentinel（Skill 使用自检）
-当且仅当你确定本 Skill 已被加载并用于当前任务时，在回复末尾追加：
-`// skill-used: debugging`
-
-规则：
-- 只能输出一次
-- 如果不确定是否加载，禁止输出 sentinel
-- 输出 sentinel 代表你已遵守本 Skill 的硬性规则与交付格式
-- 只有当任务与本 skill 的 description 明显匹配时才允许输出 sentinel

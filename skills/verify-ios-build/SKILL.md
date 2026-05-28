@@ -17,7 +17,7 @@ description: Apple Xcode 工程的项目环境构建验证执行器。由 `final
 - 必须升级的典型场景：`.xcodeproj` / `.xcworkspace` / scheme / xctestplan / xcconfig / Build Settings / 构建脚本、签名/entitlements/plist/capability、`Podfile` / `Podfile.lock` / 私有 Pod 版本或 `:path` 回切线上、资源/Storyboard/XIB/Assets/target membership、consumer app 集成证据缺失。
 - 如果最后一次代码变更之后，已经有同等或更强的目标项目环境 `xcodebuild test/build` 成功证据，且 `testing` 与 `code-review` 均放行，应先交给 `final-evidence-gate` 判断是否接受，不要无条件重复执行本 skill。
 - 如果任务核心是签名、证书、Archive、导出、CI、xcconfig、build script 或 destination 策略设计，不要用本 skill 作为主 skill，切换到 `xcode-build`。
-- 如果任务核心是写测试代码或选择真机 / 模拟器自动化执行路径，分别切换到 `testing`、`ios-device-automation` 或 `ios-simulator-automation`。
+- 如果任务核心是写测试代码或选择真机 / 模拟器自动化执行路径，分别切换到 `testing`、`ios-automation`。
 
 ## 适用场景
 - 当前仓库需要补一条完整项目环境构建证据。
@@ -59,7 +59,7 @@ description: Apple Xcode 工程的项目环境构建验证执行器。由 `final
 - 如果当前 turn 已经先执行过定向测试，验证应优先复用同一套 workspace / scheme / destination 基线；若先前执行路径与默认策略不一致，必须在回复里明确说明为什么切换。
 - 如果仓库不是 Xcode 工程，直接说明本 skill 不适用，而不是伪造构建结论。
 - 真机是 iOS 最终 `build` 校验的默认首选路径；找不到连接中的真机时才切 simulator。若是 macOS Xcode 工程，则直接走宿主机 build。
-- 如果任务已经变成 test / install / launch / 签名策略设计，不要继续扩展本 skill，切换到 `ios-device-automation` 或 `xcode-build`。
+- 如果任务已经变成 test / install / launch / 签名策略设计，不要继续扩展本 skill，切换到 `ios-automation` 或 `xcode-build`。
 - UI smoke 控制变量：
   - `XCODE_UI_SMOKE_MODE=off|auto|required`（默认 `auto`）
   - `XCODE_UI_SMOKE_SPEC=<relative-path>`（默认 `.codex/ui-smoke.yml`）
@@ -85,12 +85,3 @@ description: Apple Xcode 工程的项目环境构建验证执行器。由 `final
 - 本技能不替代测试编写；需要补单元测试或 UI 测试时切换到 `testing`。
 - 本技能只负责“项目环境构建验证”，不替代 `final-evidence-gate` 的完成态裁决，也不替代通用 code review 流程。
 
-## ✅ Sentinel（Skill 使用自检）
-当且仅当你确定"当前任务已经加载并正在使用本 Skill"时：
-
-- 在回复末尾追加一行：`// skill-used: verify-ios-build`
-
-规则：
-- 只能追加一次
-- 如果不确定是否加载，禁止输出 sentinel
-- 输出 sentinel 代表你已遵守本 Skill 的配置规范与构建流程

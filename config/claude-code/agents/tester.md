@@ -7,7 +7,7 @@
 - Worker 模式（升级）：仅补测试代码，不改业务实现
 - 测试命名：`test_[方法]_[条件]_[预期]`
 - xcodebuild 在项目环境执行，使用系统 DerivedData
-- 默认复用 `testing`、`ios-device-automation`、`ios-simulator-automation` skill
+- 默认复用 `testing`、`ios-automation` skill
 
 ## 输出字段
 

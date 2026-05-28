@@ -11,18 +11,14 @@ FINAL_EVIDENCE_SKILLS = [
     "swiftui-feature-implementation",
     "uikit-feature-implementation",
     "swift-expert",
-    "swiftui-ui-patterns",
-    "swiftui-view-refactor",
     "swiftui-liquid-glass",
     "refactoring",
     "sdk-architecture",
     "debugging",
     "testing",
     "ios-performance",
-    "swiftui-performance-audit",
     "xcode-build",
-    "ios-device-automation",
-    "ios-simulator-automation",
+    "ios-automation",
 ]
 
 
@@ -146,8 +142,7 @@ def main() -> int:
 
     for targeted_skill in (
         "testing",
-        "ios-device-automation",
-        "ios-simulator-automation",
+        "ios-automation",
     ):
         require_contains(
             ROOT / "skills" / targeted_skill / "SKILL.md",
@@ -237,7 +232,7 @@ def main() -> int:
         failures,
     )
     require_contains(
-        ROOT / "skills" / "ios-device-automation" / "scripts" / "device_helpers.sh",
+        ROOT / "skills" / "ios-automation" / "scripts" / "device_helpers.sh",
         [
             "BuildableName",
             "TestableReference",
@@ -248,7 +243,7 @@ def main() -> int:
         failures,
     )
     require_contains(
-        ROOT / "skills" / "ios-simulator-automation" / "scripts" / "xcode" / "builder.py",
+        ROOT / "skills" / "ios-automation" / "scripts" / "xcode" / "builder.py",
         [
             "is_unit_test_preferred_scheme",
             "scheme_has_unit_test_binding",
@@ -278,7 +273,7 @@ def main() -> int:
     )
 
     require_contains(
-        ROOT / "skills" / "ios-simulator-automation" / "SKILL.md",
+        ROOT / "skills" / "ios-automation" / "SKILL.md",
         [
             "text-before-pixels",
             "ui_smoke_runner.py",
@@ -286,7 +281,7 @@ def main() -> int:
         failures,
     )
 
-    ui_smoke_runner = ROOT / "skills" / "ios-simulator-automation" / "scripts" / "ui_smoke_runner.py"
+    ui_smoke_runner = ROOT / "skills" / "ios-automation" / "scripts" / "ui_smoke_runner.py"
     if not ui_smoke_runner.exists():
         failures.append(f"{ui_smoke_runner.relative_to(ROOT)} missing")
 
@@ -307,8 +302,8 @@ def main() -> int:
 
     for targeted_openai in (
         ROOT / "skills" / "testing" / "agents" / "openai.yaml",
-        ROOT / "skills" / "ios-device-automation" / "agents" / "openai.yaml",
-        ROOT / "skills" / "ios-simulator-automation" / "agents" / "openai.yaml",
+        ROOT / "skills" / "ios-automation" / "agents" / "openai.yaml",
+        ROOT / "skills" / "ios-automation" / "agents" / "openai.yaml",
     ):
         require_contains(
             targeted_openai,

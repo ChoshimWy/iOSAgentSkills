@@ -72,7 +72,7 @@ def main() -> int:
             "`实现 skill -> testing -> code-review -> final-evidence-gate`",
             "`appleDeveloperDocs`",
             "`lite` / `standard` / `full`",
-            "`ios-device-automation`、`ios-simulator-automation`、`xcode-build`、`final-evidence-gate` 或 `verify-ios-build`",
+            "`ios-automation`、`xcode-build`、`final-evidence-gate` 或 `verify-ios-build`",
         ],
         failures,
     )

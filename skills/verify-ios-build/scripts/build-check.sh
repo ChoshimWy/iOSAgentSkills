@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DEVICE_HELPERS="$SCRIPT_DIR/../../ios-device-automation/scripts/device_helpers.sh"
+DEVICE_HELPERS="$SCRIPT_DIR/../../ios-automation/scripts/device/device_helpers.sh"
 # shellcheck source=/dev/null
 source "$DEVICE_HELPERS"
 

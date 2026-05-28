@@ -7,7 +7,7 @@
 - 存在阻塞项时 next_action 不能是 complete
 - 默认 Swift + 结构化并发；UI 更新 `@MainActor`
 - `public` / `open` API 需要 `///` 文档注释；并发边界、副作用、失败路径语义必须写清
-- 作者标注 `Created by Choshim.Wei`，日期格式 `YYYY/M/D`
+- 作者标注 `Created by $(whoami)`，日期格式 `YYYY/M/D`
 
 ## 输出字段
 

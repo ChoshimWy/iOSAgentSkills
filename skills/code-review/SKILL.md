@@ -76,17 +76,8 @@ next_action: <fix-and-rerun|blocked|complete>
 
 ## 与其他技能的关系
 - 如果当前任务属于非编排 / 单 Agent 的实现链路，本 skill 默认承接 `testing` 之后的第三步；默认审查当前 unstaged + untracked 工作区改动，存在 blocking findings 时禁止进入 `final-evidence-gate`；无阻塞时仍需给出验证故事结论。
-- 需要真正修复代码异味时，切换到 `refactoring`、`swiftui-view-refactor` 或对应实现型 skill。
+- 需要真正修复代码异味时，切换到 `refactoring`、`swiftui-feature-implementation` 或对应实现型 skill。
 - 需要复现 crash、异常、卡顿、启动慢、泄漏或做 `xctrace` 取证时，切换到 `debugging` 或 `ios-performance`。
 - 需要设计 SDK 对外接口边界时，可联动 `sdk-architecture`。
 - 本 skill 只负责审查与结论，不作为默认实现 skill。
 
-## ✅ Sentinel（Skill 使用自检）
-当且仅当你确定本 Skill 已被加载并用于当前任务时，在回复末尾追加：
-`// skill-used: code-review`
-
-规则：
-- 只能输出一次
-- 如果不确定是否加载，禁止输出 sentinel
-- 输出 sentinel 代表你已遵守本 Skill 的硬性规则与交付格式
-- 只有当任务与本 skill 的 description 明显匹配时才允许输出 sentinel

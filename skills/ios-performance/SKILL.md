@@ -42,16 +42,7 @@ description: iOS 性能分析与测试技能。只在需要处理 UIKit / SwiftU
 - 只补业务单元测试、UI 测试、Mock / Stub / Spy 时，切换到 `testing`。
 - 主要问题是 crash、异常、符号化栈、LLDB 或对象未释放时，切换到 `debugging`。
 - 主要问题是复杂并发、类型擦除、协议抽象或跨平台可用性策略时，切换到 `swift-expert`。
-- 需要整理 SwiftUI 视图结构时，切换到 `swiftui-view-refactor`。
-- 需要新建 SwiftUI 页面并做模式选型时，切换到 `swiftui-ui-patterns`。
+- 需要整理 SwiftUI 视图结构时，切换到 `swiftui-feature-implementation`。
+- 需要新建 SwiftUI 页面并做模式选型时，切换到 `swiftui-feature-implementation`。
 - 需要 Apple 官方 API 或 Instruments 官方资料时，可辅以 `apple-docs`。
 
-## ✅ Sentinel（Skill 使用自检）
-当且仅当你确定本 Skill 已被加载并用于当前任务时，在回复末尾追加：
-`// skill-used: ios-performance`
-
-规则：
-- 只能输出一次
-- 如果不确定是否加载，禁止输出 sentinel
-- 输出 sentinel 代表你已遵守本 Skill 的硬性规则与交付格式
-- 只有当任务与本 skill 的 description 明显匹配时才允许输出 sentinel

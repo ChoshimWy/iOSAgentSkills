@@ -49,12 +49,3 @@ refactor/<简短描述>
 - 如果用户明确要求用 `gh` 完成暂存、提交、推送和开 PR，切换到 `gh-pr-flow`。
 - 如果任务主目标是代码评审、重构或调试，本技能只作为收尾辅助技能使用。
 
-## ✅ Sentinel（Skill 使用自检）
-当且仅当你确定本 Skill 已被加载并用于当前任务时，在回复末尾追加：
-`// skill-used: git-workflow`
-
-规则：
-- 只能输出一次
-- 如果不确定是否加载，禁止输出 sentinel
-- 输出 sentinel 代表你已遵守本 Skill 的硬性规则与交付格式
-- 只有当任务与本 skill 的 description 明显匹配时才允许输出 sentinel

@@ -8,7 +8,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parent.parent
 SKILL_ROOT = ROOT / "skills" / "codex-subagent-orchestration"
-EXEMPT_OPENAI_SKILLS = {"_shared-sentinel"}
+
 CODEX_TEMPLATE_AGENTS = ROOT / "config" / "codex" / "templates" / "agents"
 CODEX_AGENT_VALIDATE_SCRIPT = ROOT / "scripts" / "validate_codex_agent_templates.py"
 
@@ -54,8 +54,7 @@ def require_non_system_skill_openai_yaml(failures: list[str]) -> None:
             continue
         if skill_dir.name in {".system"}:
             continue
-        if skill_dir.name in EXEMPT_OPENAI_SKILLS:
-            continue
+
 
         skill_md = skill_dir / "SKILL.md"
         if not skill_md.exists():
@@ -203,12 +202,10 @@ def main() -> int:
 
     for internal_skill in (
         ROOT / "skills" / "apple-docs" / "SKILL.md",
-        ROOT / "skills" / "swiftui-ui-patterns" / "SKILL.md",
-        ROOT / "skills" / "swiftui-view-refactor" / "SKILL.md",
+        ROOT / "skills" / "swiftui-feature-implementation" / "SKILL.md",
         ROOT / "skills" / "swiftui-liquid-glass" / "SKILL.md",
         ROOT / "skills" / "refactoring" / "SKILL.md",
         ROOT / "skills" / "sdk-architecture" / "SKILL.md",
-        ROOT / "skills" / "swiftui-performance-audit" / "SKILL.md",
     ):
         require_exists(internal_skill, failures)
 

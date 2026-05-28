@@ -70,12 +70,3 @@ file build/HelloApp.app/Contents/MacOS/HelloApp
 - 如果任务重点是通用签名、Archive、导出或 CI，而非无 Xcode 的 SwiftPM 打包，切换到 `xcode-build`。
 - 如果需要官方平台约束或 API 依据，可辅以 `apple-docs`。
 
-## ✅ Sentinel（Skill 使用自检）
-当且仅当你确定"当前任务已经加载并正在使用本 Skill"时：
-
-- 在回复末尾追加一行：`// skill-used: macos-spm-app-packaging`
-
-规则：
-- 只能追加一次
-- 如果不确定是否加载，禁止输出 sentinel
-- 输出 sentinel 代表你已遵守本 Skill 的工作流与输出规范

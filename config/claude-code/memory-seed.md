@@ -15,7 +15,7 @@
 - Workspace 优先：同时存在 `.xcworkspace` 和 `.xcodeproj` 时使用前者
 - Scheme 优先：默认选包含 `*Tests` target 的 scheme
 - 设备优先：已连接真机 > simulator（低风险改动可用 simulator）
-- 作者标注：`Created by Choshim.Wei`，日期格式 `YYYY/M/D`
+- 作者标注：`Created by $(whoami)`，日期格式 `YYYY/M/D`
 
 ## 实现链路（硬约束）
 
@@ -39,7 +39,7 @@
 | Apple 文档 | `apple-docs` |
 | 调试 | `debugging` |
 | 性能 | `ios-performance` |
-| 自动化 | `ios-simulator-automation` / `ios-device-automation` |
+| 自动化 | `ios-automation` |
 | 构建配置 | `xcode-build` |
 
 ## 编排档位

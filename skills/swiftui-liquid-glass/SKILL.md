@@ -12,7 +12,7 @@ description: 使用 iOS 26+ 的 Liquid Glass API 构建、审查或改进 SwiftU
 
 ## 触发判定（硬边界）
 - 用户明确在问 `glassEffect`、`GlassEffectContainer`、`.buttonStyle(.glass)`、玻璃层级或 iOS 26+ 兼容性回退时，使用本 skill。
-- 如果问题只是普通 SwiftUI 页面结构、导航模式或组件组织，不要用本 skill 作为主 skill，切换到 `swiftui-ui-patterns` 或 `swiftui-feature-implementation`。
+- 如果问题只是普通 SwiftUI 页面结构、导航模式或组件组织，不要用本 skill 作为主 skill，切换到 `swiftui-feature-implementation`。
 - 如果问题核心是品牌气质、色板、排版和设计系统方向，而不是 Liquid Glass API 本身，切换到 `ui-ux-design-system`。
 
 ## 适用场景
@@ -24,7 +24,7 @@ description: 使用 iOS 26+ 的 Liquid Glass API 构建、审查或改进 SwiftU
 1. 先确认 Liquid Glass 是否真的需要。
 2. 设计玻璃层级，优先使用 `glassEffect`、`GlassEffectContainer`、`.buttonStyle(.glass)`、`.buttonStyle(.glassProminent)`。
 3. 做兼容性和一致性校验，并在需要时查询 Apple 官方文档。
-4. 如果实现中新增 `.swift` 文件且项目要求文件头，`Created by` 必须使用本机用户名称 `Choshim.Wei`，不要写 `Codex`；日期默认使用 `YYYY/M/D`，例如 `Created by Choshim.Wei on 2026/4/11.`。
+4. 如果实现中新增 `.swift` 文件且项目要求文件头，`Created by` 必须使用本机用户名称（`whoami` 输出），不要写 `Codex`；日期默认使用 `YYYY/M/D`，例如 `Created by $(whoami) on 2026/4/11.`。
 
 ## 参考资源
 - `references/liquid-glass.md`：Liquid Glass 的基础用法、形状、过渡和最佳实践。
@@ -44,18 +44,9 @@ description: 使用 iOS 26+ 的 Liquid Glass API 构建、审查或改进 SwiftU
 - 在 `final-evidence-gate` 接受现有证据或 `verify-ios-build` 成功前，不得把任务表述为“已完成”；只能明确说明“实现已完成，但验证证据不足/验证失败，任务未完成”。
 
 ## 与其他技能的关系
-- 新建普通 SwiftUI 页面、`TabView` 架构或布局模式，切换到 `swiftui-ui-patterns`。
+- 新建普通 SwiftUI 页面、`TabView` 架构或布局模式，切换到 `swiftui-feature-implementation`。
 - 页面模式已经明确、只需要普通 SwiftUI 落地时，切换到 `swiftui-feature-implementation`。
 - 需要先做跨技术栈视觉方向、配色、排版和设计系统方案时，切换到 `ui-ux-design-system`。
 - 需要运行时性能诊断或 `xctrace` 取证时，切换到 `ios-performance`。
 - 需要官方 API 事实依据时，可辅以 `apple-docs`。
 
-## ✅ Sentinel（Skill 使用自检）
-当且仅当你确定当前任务已经加载并正在使用本 Skill 时：
-
-- 在回复末尾追加一行：`// skill-used: swiftui-liquid-glass`
-
-规则：
-- 只能追加一次
-- 如果不确定是否加载，禁止输出 sentinel
-- 输出 sentinel 代表你已遵守本 Skill 的工作流与输出规范

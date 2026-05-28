@@ -1,0 +1,5 @@
+interface:
+  display_name: "iOS 设备自动化"
+  short_description: "iOS Simulator 与真机构建、测试、安装、启动、诊断与自动化执行"
+  default_prompt: >-
+    使用 $ios-automation 按目标设备类型自动路由到 Simulator 或真机子模式。Simulator 场景覆盖构建测试、语义导航、无障碍检查、视觉比对与模拟器生命周期管理；真机场景覆盖设备发现、build/test、安装、启动、进程查询与常见真机诊断。若任务产出修改了 Apple Xcode 项目相关内容，收尾必须进入 $final-evidence-gate；证据不足、高风险或命中工程/依赖/签名/资源打包类改动时，再切到 $verify-ios-build 在项目环境完成最终验证。

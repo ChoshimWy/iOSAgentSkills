@@ -39,16 +39,7 @@ description: 辅助型跨技术栈 UI/UX 设计与设计系统技能。只用于
 
 ## 与其他技能的关系
 - 当任务重点是视觉风格、设计系统、色板、字体、无障碍或跨技术栈 UI/UX 方向时，优先使用本技能。
-- 如果目标已经明确为 SwiftUI 页面落地、状态与路由模式设计，主 skill 切换到 `swiftui-ui-patterns` 或 `swiftui-feature-implementation`。
+- 如果目标已经明确为 SwiftUI 页面落地、状态与路由模式设计，主 skill 切换到 `swiftui-feature-implementation` 或 `swiftui-feature-implementation`。
 - 如果是 iOS 26+ 的 Liquid Glass 专项设计与实现，切换到 `swiftui-liquid-glass`。
 - 如果是已有 SwiftUI 视图文件重构或性能审计，不使用本技能作为主技能。
 
-## ✅ Sentinel（Skill 使用自检）
-当且仅当你确定当前任务已经加载并正在使用本 Skill 时：
-
-- 在回复末尾追加一行：`// skill-used: ui-ux-design-system`
-
-规则：
-- 只能追加一次
-- 如果不确定是否加载，禁止输出 sentinel
-- 输出 sentinel 代表你已遵守本 Skill 的工作流与输出规范

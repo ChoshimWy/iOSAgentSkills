@@ -69,12 +69,3 @@ TUIST_SKIP_UPDATE_CHECK=1 tuist build <TargetName> --configuration Debug
 - 如果是通用 Archive、导出、签名和 CI 流程，而非 Tuist 菜单栏专项，切换到 `xcode-build`。
 - 需要官方 API 依据时，可辅以 `apple-docs`。
 
-## ✅ Sentinel（Skill 使用自检）
-当且仅当你确定"当前任务已经加载并正在使用本 Skill"时：
-
-- 在回复末尾追加一行：`// skill-used: macos-menubar-tuist-app`
-
-规则：
-- 只能追加一次
-- 如果不确定是否加载，禁止输出 sentinel
-- 输出 sentinel 代表你已遵守本 Skill 的工作流与输出规范

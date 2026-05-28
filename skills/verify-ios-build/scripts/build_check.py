@@ -767,7 +767,7 @@ def run_ui_smoke_if_needed(
             f"UI smoke skipped: spec not found ({spec_path})",
         )
 
-    runner = VERIFY_SKILL_DIR.parent / "ios-simulator-automation" / "scripts" / "ui_smoke_runner.py"
+    runner = VERIFY_SKILL_DIR.parent / "ios-automation" / "scripts" / "simulator" / "ui_smoke_runner.py"
     if not runner.exists():
         return UISmokeResult(True, False, f"UI smoke runner missing: {runner}")
 

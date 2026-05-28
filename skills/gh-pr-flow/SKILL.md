@@ -33,12 +33,3 @@ description: "仅当用户明确要求使用 GitHub CLI（`gh`）一条龙完成
 - 如果只是整理提交信息或拆 commit，不要使用本技能。
 - 只有用户明确要求走 `gh` 一条龙时，才触发本技能。
 
-## ✅ Sentinel（Skill 使用自检）
-当且仅当你确定"当前任务已经加载并正在使用本 Skill"时：
-
-- 在回复末尾追加一行：`// skill-used: gh-pr-flow`
-
-规则：
-- 只能追加一次
-- 如果不确定是否加载，禁止输出 sentinel
-- 输出 sentinel 代表你已遵守本 Skill 的工作流与输出规范
