@@ -20,7 +20,8 @@ ALLOWED_TYPES = {
 }
 SPECIAL_PREFIXES = ("Merge ", "Revert ", "fixup! ", "squash! ")
 HEADER_PATTERN = re.compile(r"^(?P<type>[a-z]+)\((?P<scope>[^()\s:]+)\): (?P<subject>.+)$")
-CHINESE_CHARACTER_PATTERN = re.compile(r"[\u3400-\u4DBF\u4E00-\u9FFF\uf900-\ufaff]")
+CHINESE_CHARACTER_PATTERN = re.compile(r"[㐀-䶿一-鿿豈-﫿]")
+CO_AUTHORED_PATTERN = re.compile(r"Co-Authored-By:", re.IGNORECASE)
 
 
 def validate_header(header: str) -> list[str]:
@@ -76,6 +77,8 @@ def main() -> int:
         non_empty_after_first = [ln for ln in lines[1:] if ln.strip()]
         if non_empty_after_first:
             errors.append("commit 只能单行，不允许正文或脚注")
+            if any(CO_AUTHORED_PATTERN.search(ln) for ln in non_empty_after_first):
+                errors.append("禁止添加 Co-Authored-By 尾注")
     if not errors:
         return 0
 

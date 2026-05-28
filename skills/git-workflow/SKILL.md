@@ -33,9 +33,9 @@ refactor/<简短描述>
 <type>(<scope>): <subject>
 ```
 
-- `subject` 中文、不加句号、单行长度不超过 72 字符。commit 强制单行，不允许正文（body）或脚注（footer）。
+- `subject` 中文、不加句号、单行长度不超过 72 字符。commit 强制单行，不允许正文（body）、脚注（footer）或 `Co-Authored-By` 尾注。
 - PR 标题与正文默认使用中文；仅当目标仓库明确要求英文时再切换。
-- commit 只能单行，不允许正文（body）或脚注（footer）；不要使用多个 `-m` 参数或在单个字符串里写 `\n`。
+- commit 只能单行，不允许正文（body）、脚注（footer）或 `Co-Authored-By` 尾注；不要使用多个 `-m` 参数。
 - 提交前检查 diff，避免调试代码、临时文件和敏感信息。
 
 ## 输出要求
