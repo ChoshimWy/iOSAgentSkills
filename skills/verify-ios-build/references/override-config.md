@@ -1,6 +1,6 @@
 # `.codex/xcodebuild.env` 覆盖配置
 
-当自动发现的 workspace、project、scheme 或 destination 不正确时，在仓库根目录创建 `.codex/xcodebuild.env`。
+当自动发现的 workspace、project、scheme 或 destination 不正确时，在仓库根目录创建配置文件（Codex 使用 `.codex/xcodebuild.env`；CC 用户可直接在项目根目录设置环境变量）。
 
 ## 支持的变量
 
@@ -34,7 +34,7 @@ XCODE_UI_SMOKE_SPEC=".codex/ui-smoke.yml"
 - 本地 `verify-ios-build` 不支持 `XCODE_DERIVED_DATA` 覆盖；统一使用 Xcode 默认 DerivedData（`~/Library/Developer/Xcode/DerivedData`）
 - 默认不做 `clean build`
 - 最终门禁仍必须在目标项目根目录的项目环境执行；`.codex/xcodebuild.env` 只负责补充参数，不会把最终验证降级成沙箱构建
-- 本地执行 `xcodebuild`（含 `-list` / `-showdestinations` / build/test）默认都要走非沙盒项目环境，调用 `functions.exec_command` 时显式设置 `sandbox_permissions=\"require_escalated\"`
+- 本地执行 `xcodebuild`（含 `-list` / `-showdestinations` / build/test）默认在项目环境直接执行（CC 使用 `Bash` 工具；Codex 使用 `functions.exec_command` + `require_escalated`）
 - iOS 工程默认优先真机校验；如果未设置 `XCODE_DESTINATION`，脚本会先尝试“已连接真机”，找不到连接中的真机时自动回退到 `generic/platform=iOS Simulator`
 - macOS Xcode 工程在未显式指定 destination 时走宿主机 `xcodebuild build`
 - `XCODE_DEVICE_ID`、`XCODE_DEVICE_NAME`、`XCODE_PREFER_MODEL` 只影响“已连接真机”的自动选择与 simulator → 真机回退阶段

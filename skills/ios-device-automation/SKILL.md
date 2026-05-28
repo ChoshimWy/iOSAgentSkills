@@ -44,7 +44,7 @@ description: iOS 真机自动化技能。只在连接或已配对的 physical de
 
 ## 执行约定
 - 真机构建默认用 `xcodebuild -destination 'id=<destination-id>'`，不替代签名配置；签名问题交给 `xcode-build`。
-- 本地执行 `xcodebuild`（含 `-showdestinations` / build/test）默认都在非沙盒项目环境执行；通过 `functions.exec_command` 时显式设置 `sandbox_permissions=\"require_escalated\"`。
+- 本地执行 `xcodebuild`（含 `-showdestinations` / build/test）默认在项目环境直接执行（CC 使用 `Bash` 工具；Codex 使用 `functions.exec_command` + `require_escalated`）。
 - 本地缓存统一复用 Xcode 系统 DerivedData（`~/Library/Developer/Xcode/DerivedData`），不要改用临时 `-derivedDataPath`。
 - 安装、启动、进程查询与诊断使用 `devicectl` 的 device identifier；不要把 `xcodebuild` destination id 与 `devicectl` device identifier 混用。
 - 如果自动设备发现暂时不可用，优先回退到用户显式提供的 `--device-id` / 设备名称，而不是伪造设备选择结果。

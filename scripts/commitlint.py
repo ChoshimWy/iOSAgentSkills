@@ -71,6 +71,11 @@ def main() -> int:
     header = lines[0].strip() if lines else ""
 
     errors = validate_header(header)
+
+    if header and not header.startswith(SPECIAL_PREFIXES):
+        non_empty_after_first = [ln for ln in lines[1:] if ln.strip()]
+        if non_empty_after_first:
+            errors.append("commit 只能单行，不允许正文或脚注")
     if not errors:
         return 0
 

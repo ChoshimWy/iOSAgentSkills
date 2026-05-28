@@ -56,7 +56,7 @@ no_test_reason: <仅当本轮不涉及新增测试时填写>
   - `test_impact` 与 `no_test_reason` 二选一必须填写。
 
 ## 最终证据门禁
-- 如果当前任务没有进入 `codex-subagent-orchestration`，或当前轮只能以单 Agent 执行，本 skill 完成实现后也不要直接跳到最终门禁；默认后续链路按固定四步执行：`ios-feature-implementation -> testing -> code-review -> final-evidence-gate`。
+- 如果当前任务没有进入 `codex-subagent-orchestration`（CC 用户参考 CLAUDE.md 四步收口工作流），或当前轮只能以单 Agent 执行，本 skill 完成实现后也不要直接跳到最终门禁；默认后续链路按固定四步执行：`ios-feature-implementation -> testing -> code-review -> final-evidence-gate`。
 - 只要当前任务产出修改了 Apple Xcode 项目相关内容（代码、测试、资源、工程文件、构建脚本、plist / entitlements / xcconfig / scheme 或项目内环境配置），最终必须进入 `final-evidence-gate`；证据不足、高风险或命中工程/依赖/签名/资源打包类改动时，再切到 `verify-ios-build`。
 - 最终验证证据必须来自目标项目根目录的项目环境；沙箱内的构建结果不能作为最终验收结论。
 - 对 iOS 项目，若升级到 `verify-ios-build`，必须优先 `.xcworkspace`（当 `.xcworkspace` 与 `.xcodeproj` 同时存在时），并默认优先已连接真机；找不到连接中的真机时再回退到 simulator。
