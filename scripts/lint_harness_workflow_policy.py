@@ -81,6 +81,7 @@ def main() -> int:
             "`CP3 Final Gate`",
             "`checkpoint_status`",
             "`fail-fix-report`",
+            "本地 `:path` Pod",
         ],
         failures,
     )
@@ -181,6 +182,7 @@ def main() -> int:
             "first_failure: <none|首个真实失败点>",
             "next_action: <fix-and-rerun|blocked|complete>",
             "`checkpoint_status`：显式汇报 `CP0` / `CP1` / `CP2` / `CP3` 的 pass|fail|blocked",
+            "禁止把 `Pods/<LibraryName>` 作为 ownership",
         ],
         failures,
     )

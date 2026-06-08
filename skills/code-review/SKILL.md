@@ -23,6 +23,7 @@ description: iOS/Swift 代码审查技能。只在需要 review 代码、审查 
 - 只根据代码和已知上下文下结论；缺少运行时证据时，不要伪装成已复现问题。
 - 注释审查默认纳入阻塞判定：重点检查 `public/open` API 文档注释、并发边界语义、副作用语义、失败路径语义和“注释-实现一致性”。
 - 在固定四步链路里，默认审查对象是当前工作区的 **unstaged + untracked** 代码变更；如果发现已有 staged 改动，应明确指出这不符合默认审查输入假设。
+- 如果发现变更直接落在 `Pods/<LibraryName>`，且上下文显示目标工程使用私有 Pod / 本地 `:path` Pod 联调，默认作为 `blocking_findings`：这通常意味着改错了源码位置。
 - 如果用户问题本质上是“为什么会 crash / 卡顿 / 泄漏”，不要把本 skill 当作主 skill，切换到 `debugging` 或 `ios-performance`。
 - 固定链路中必须审查验证故事：`testing` 的 `executed_validation` 是否发生在最后一次代码变更之后，是否覆盖最终交付 target / consumer app scheme，以及是否需要升级 `verify-ios-build`。
 
@@ -80,4 +81,3 @@ next_action: <fix-and-rerun|blocked|complete>
 - 需要复现 crash、异常、卡顿、启动慢、泄漏或做 `xctrace` 取证时，切换到 `debugging` 或 `ios-performance`。
 - 需要设计 SDK 对外接口边界时，可联动 `sdk-architecture`。
 - 本 skill 只负责审查与结论，不作为默认实现 skill。
-

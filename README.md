@@ -7,6 +7,7 @@
 ### Shared Config
 - `AGENTS.md` —— 团队共享规则单一来源（宪法层锚点）
 - `config/codex/codex.shared.toml` —— 可版本化、可跨设备复用的 Codex 共享默认配置
+- `config/codex/templates/codex_verify.example.sh` —— 串行验证模板；既可复制到目标 Xcode 项目根目录作为 `codex_verify.sh`，也会被安装脚本同步为本机 `~/.codex/bin/codex_verify`
 - `CLAUDE.md` —— Claude 入口薄包装，导入 `AGENTS.md`
 
 ### Core Implementation
@@ -64,6 +65,7 @@ ln -s iOSAgentSkills/skills .claude/skills
 - 这些模板使用 Codex 当前支持的扁平 custom agent schema：`name` / `description` / `developer_instructions` + 可选 `model_reasoning_effort` / `sandbox_mode`。
 - 安装脚本会同步到：`~/.codex/agents/`。
 - 角色模板说明见：`config/codex/templates/agents/README.md`。
+- 串行验证模板：`config/codex/templates/codex_verify.example.sh`；安装脚本会同步到本机 `~/.codex/bin/codex_verify` 作为全局 fallback。若目标项目接入了 repo-tracked `codex_verify.sh`，则项目脚本优先；否则自动回退到全局 wrapper。
 - 推荐执行顺序：先 `explorer -> builder -> reporter`，再按需激活 `pm` / `tester`。
 - 默认先做任务分型：`doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`，再映射到 `lite` / `standard` / `full`。
 - 配置映射：
@@ -99,6 +101,18 @@ python3 scripts/validate_codex_agent_templates.py config/codex/templates/agents
 - 所有技能统一放在 `skills/`；低频/高频只作为文档分组，不再区分发现路径。
 - 路径示例默认以 skill 相对路径为准；若指向目标项目脚本（例如 `.codex/*` 或 `run-menubar.sh`），需由目标项目侧提供。
 
+## 私有 Pod / 本地 `:path` 组件规则
+
+- 涉及 CocoaPods 私有库或组件联调时，先查目标工程 `Podfile` / `Podfile.lock` / `Pods/Manifest.lock` 判断真实源码位置。
+- 若命中本地 `:path` Pod，默认修改组件源码仓，不修改 `Pods/<LibraryName>` 下的副本快照。
+- `Pods/` 默认视为 vendored cache / generated snapshot，不作为实现 ownership。
+- 仓库自带 `scripts/pod_private_cache_guard.py`，并由 `.githooks/pre-commit` 默认阻断把私有 Pod 副本 staged 进提交。
+- 推荐在本仓库执行：
+
+```bash
+./scripts/install-git-hooks.sh
+```
+
 
 ## HTML 文档工作流（新增）
 
@@ -114,6 +128,7 @@ python3 scripts/validate_codex_agent_templates.py config/codex/templates/agents
 - 若最后一次代码变更之后，已在目标项目环境中成功执行同等或更强的 `xcodebuild test` / `xcodebuild build`，且 `testing` 与 `code-review` 均放行，可接受该已有证据，不重复运行 `verify-ios-build`。
 - 证据不足、高风险或命中工程/依赖/签名/资源打包类改动时，必须升级到 `verify-ios-build`；最终验证必须在目标项目根目录的项目环境执行，不能把沙箱结果当作最终结论。
 - 本地所有 `xcodebuild` 命令（含 `-list` / `-showdestinations` / build/test）默认都在非沙盒项目环境执行。
+- 同机同仓若存在多个 Codex / Claude CLI 并发处理同一 Xcode 项目，项目环境 `xcodebuild` 验证必须统一经串行包装入口排队执行：优先目标项目根目录的 `codex_verify.sh`，若项目未接入则回退到本机 `~/.codex/bin/codex_verify`，以避免 `build.db` / `SWBBuildService` 锁冲突。
 - 构建缓存统一走 Xcode 系统 DerivedData，不使用 `XCODE_DERIVED_DATA` 覆盖。
 - 如果同时存在 `.xcworkspace` 与 `.xcodeproj`，验证优先 `.xcworkspace`。
 - 如果没有用户显式指定 scheme，默认优先选择绑定了单元测试 `*Tests` target / bundle 的 scheme。

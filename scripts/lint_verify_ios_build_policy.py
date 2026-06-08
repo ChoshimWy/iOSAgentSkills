@@ -51,6 +51,8 @@ def main() -> int:
             "条件化最终证据门禁（final-evidence-gate）",
             "目标项目环境",
             "本地所有 `xcodebuild` 命令",
+            "codex_verify.sh",
+            "~/.codex/bin/codex_verify",
             "XCODE_DERIVED_DATA",
             "如果同时存在 `.xcworkspace` 和 `.xcodeproj`，验证优先使用 `.xcworkspace`",
             "final-evidence-gate",
@@ -67,6 +69,8 @@ def main() -> int:
             "条件化最终证据门禁",
             "目标项目根目录的项目环境",
             "本地所有 `xcodebuild` 命令",
+            "codex_verify.sh",
+            "~/.codex/bin/codex_verify",
             "XCODE_DERIVED_DATA",
             "优先 `.xcworkspace`",
             "绑定了单元测试 `*Tests` target / bundle 的 scheme",
@@ -81,6 +85,8 @@ def main() -> int:
         [
             "最终都必须进入 `final-evidence-gate` 做完成态裁决",
             "目标项目根目录的项目环境",
+            "codex_verify.sh",
+            "~/.codex/bin/codex_verify",
             "优先 `.xcworkspace`",
             "绑定了单元测试 `*Tests` target / bundle 的 scheme",
             "已连接真机",
@@ -189,6 +195,8 @@ def main() -> int:
             "项目环境构建验证执行器",
             "项目环境",
             "require_escalated",
+            "codex_verify.sh",
+            "~/.codex/bin/codex_verify",
             "本地 `xcodebuild` 命令（含 `-list` / `-showdestinations` / build/test）统一按非沙盒项目环境执行",
             "本地 `verify-ios-build` 不支持 `XCODE_DERIVED_DATA` 覆盖",
             "默认复用同一套 workspace / scheme / destination 基线",
@@ -204,10 +212,21 @@ def main() -> int:
         failures,
     )
     require_contains(
+        ROOT / "skills" / "final-evidence-gate" / "SKILL.md",
+        [
+            "codex_verify.sh",
+            "~/.codex/bin/codex_verify",
+            "串行化",
+        ],
+        failures,
+    )
+    require_contains(
         ROOT / "skills" / "verify-ios-build" / "references" / "override-config.md",
         [
             "项目环境",
             "本地 `verify-ios-build` 不支持 `XCODE_DERIVED_DATA` 覆盖",
+            "codex_verify.sh",
+            "~/.codex/bin/codex_verify",
             "本地执行 `xcodebuild`（含 `-list` / `-showdestinations` / build/test）默认在项目环境直接执行",
             "绑定了单元测试 `*Tests` target / bundle 的 scheme",
             "复用同一套 workspace / scheme / destination 基线",
@@ -221,10 +240,54 @@ def main() -> int:
     require_contains(
         ROOT / "skills" / "verify-ios-build" / "scripts" / "build-check.sh",
         [
+            "CODEX_VERIFY_BYPASS_WRAPPER",
+            "TARGET_VERIFY_SCRIPT",
+            "GLOBAL_VERIFY_SCRIPT",
+            "--build-check",
             "generic/platform=iOS Simulator",
             "connected-only",
             "XCODE_VALIDATION_PLATFORM='macos'",
             "no connected physical iOS destination available; using simulator",
+        ],
+        failures,
+    )
+    verify_template = ROOT / "config" / "codex" / "templates" / "codex_verify.example.sh"
+    if not verify_template.exists():
+        failures.append(f"{verify_template.relative_to(ROOT)} missing")
+    else:
+        require_contains(
+            verify_template,
+            [
+                "--repo-root",
+                "--build-check",
+                "xcodebuild",
+                "/usr/bin/lockf",
+                "/usr/bin/shlock",
+                "CODEX_VERIFY_BYPASS_WRAPPER",
+                "owner.txt",
+            ],
+            failures,
+        )
+    require_contains(
+        ROOT / "install-local-agent-config.sh",
+        [
+            "codex_verify.example.sh",
+            "sync_codex_verify_template",
+            "sync_codex_verify_wrapper",
+            "CODEX_VERIFY_WRAPPER",
+            "CODEX_BIN_DIR",
+            "CODEX_VERIFY_TEMPLATE",
+            "REPO_CODEX_VERIFY_TEMPLATE",
+        ],
+        failures,
+    )
+    require_contains(
+        ROOT / "config" / "codex" / "templates" / "agents" / "README.md",
+        [
+            "codex_verify.example.sh",
+            "codex_verify.sh",
+            "~/.codex/bin/codex_verify",
+            "~/.codex/templates/codex_verify.example.sh",
         ],
         failures,
     )
@@ -353,6 +416,7 @@ def main() -> int:
         [
             "第二步测试阶段",
             "`no_test_reason`",
+            "codex_verify.sh",
         ],
         failures,
     )

@@ -9,6 +9,7 @@ description: Apple Xcode 项目改动的条件化最终证据门禁。用于在 
 - 作为 Apple Xcode 项目改动的最终完成态裁决层。
 - 不默认重复运行 `verify-ios-build`；优先复用最后一次代码变更之后已经成功的 `xcodebuild test` / `xcodebuild build` 证据。
 - 当现有证据不足、风险较高或变更类型要求完整项目环境验证时，升级到 `verify-ios-build`。
+- 如果需要补跑项目环境验证，应统一复用串行包装入口：优先目标项目已接入的 repo-tracked `codex_verify.sh`，若项目未接入则回退到本机 `~/.codex/bin/codex_verify`，让同机同仓多个 CLI 的验证请求排队串行执行，而不是并发裸跑 `xcodebuild`。
 
 ## 进入条件
 - 当前任务修改了 Apple Xcode 项目相关内容，且 `testing` 与 `code-review` 已完成。
@@ -45,4 +46,4 @@ description: Apple Xcode 项目改动的条件化最终证据门禁。用于在 
 - `code-review` 负责静态审查和验证故事审查。
 - `verify-ios-build` 是本门禁的升级执行器，只在证据不足、高风险或命中强制场景时运行。
 - `xcode-build` 仍负责构建配置、签名、Archive/Export、CI/CD 设计。
-
+- `codex_verify.sh` / `~/.codex/bin/codex_verify` 是验证入口层的并发控制机制；它们不替代本门禁的证据裁决，只负责把真正需要执行的项目环境验证串行化。

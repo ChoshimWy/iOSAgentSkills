@@ -6,11 +6,24 @@ DEVICE_HELPERS="$SCRIPT_DIR/../../ios-automation/scripts/device/device_helpers.s
 # shellcheck source=/dev/null
 source "$DEVICE_HELPERS"
 
+ORIGINAL_ARGS=("$@")
 ROOT="$PWD"
+FORWARDED_ARGS=("${ORIGINAL_ARGS[@]}")
 if [[ $# -gt 0 && "$1" != -* ]]; then
   ROOT="$1"
+  FORWARDED_ARGS=("${ORIGINAL_ARGS[@]:1}")
 fi
 ROOT="$(cd "$ROOT" && pwd)"
+
+if [[ -z "${CODEX_VERIFY_BYPASS_WRAPPER:-}" ]]; then
+  TARGET_VERIFY_SCRIPT="$ROOT/codex_verify.sh"
+  GLOBAL_VERIFY_SCRIPT="${CODEX_GLOBAL_VERIFY_WRAPPER:-$HOME/.codex/bin/codex_verify}"
+  if [[ -f "$TARGET_VERIFY_SCRIPT" ]]; then
+    exec bash "$TARGET_VERIFY_SCRIPT" --build-check "$SCRIPT_DIR/build-check.sh" "$ROOT" "${FORWARDED_ARGS[@]}"
+  elif [[ -x "$GLOBAL_VERIFY_SCRIPT" ]]; then
+    exec "$GLOBAL_VERIFY_SCRIPT" --build-check "$SCRIPT_DIR/build-check.sh" "$ROOT" "${FORWARDED_ARGS[@]}"
+  fi
+fi
 
 env_or_file_value() {
   local key="$1"

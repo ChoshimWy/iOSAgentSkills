@@ -10,6 +10,8 @@ Configure local Codex and Claude entrypoints to use this cloned iOSAgentSkills r
   - ~/.codex/skills -> <repo>/skills (默认)
   - ~/.codex/skills -> ~/.cc-switch/iOSAgentSkills/skills（当启用 --ccswitch 时）
   - ~/.codex/agents/*.toml -> <repo>/config/codex/templates/agents/*.toml
+  - ~/.codex/bin/codex_verify -> <repo>/config/codex/templates/codex_verify.example.sh
+  - ~/.codex/templates/codex_verify.example.sh -> <repo>/config/codex/templates/codex_verify.example.sh
   - ~/.codex/templates/ui-smoke.example.yml -> <repo>/config/codex/templates/ui-smoke.example.yml
   - ~/.copilot/skills -> <repo>/skills (默认)
   - ~/.copilot/skills -> ~/.cc-switch/iOSAgentSkills/skills（当启用 --ccswitch 时）
@@ -82,6 +84,7 @@ REPO_SYSTEM_SKILLS="$REPO_SKILLS/.system"
 REPO_CODEX_SHARED_CONFIG="$REPO_ROOT/config/codex/codex.shared.toml"
 REPO_CODEX_TEMPLATES="$REPO_ROOT/config/codex/templates"
 REPO_CODEX_AGENT_TEMPLATES="$REPO_CODEX_TEMPLATES/agents"
+REPO_CODEX_VERIFY_TEMPLATE="$REPO_CODEX_TEMPLATES/codex_verify.example.sh"
 REPO_CODEX_UI_SMOKE_TEMPLATE="$REPO_CODEX_TEMPLATES/ui-smoke.example.yml"
 CODEX_SYNC_SCRIPT="$REPO_ROOT/scripts/sync_codex_shared_config.py"
 CODEX_AGENT_VALIDATE_SCRIPT="$REPO_ROOT/scripts/validate_codex_agent_templates.py"
@@ -105,7 +108,10 @@ CLAUDE_SETTINGS="$CLAUDE_DIR/settings.json"
 CLAUDE_AGENTS_DIR="$CLAUDE_DIR/agents"
 CODEX_CONFIG="$CODEX_DIR/config.toml"
 CODEX_AGENTS_DIR="$CODEX_DIR/agents"
+CODEX_BIN_DIR="$CODEX_DIR/bin"
+CODEX_VERIFY_WRAPPER="$CODEX_BIN_DIR/codex_verify"
 CODEX_TEMPLATES_DIR="$CODEX_DIR/templates"
+CODEX_VERIFY_TEMPLATE="$CODEX_TEMPLATES_DIR/codex_verify.example.sh"
 CODEX_UI_SMOKE_TEMPLATE="$CODEX_TEMPLATES_DIR/ui-smoke.example.yml"
 CCSWITCH_PUBLIC_SKILLS="$HOME_DIR/.cc-switch/skills"
 CCSWITCH_CACHE_ROOT="$HOME_DIR/.cc-switch/iOSAgentSkills"
@@ -522,6 +528,24 @@ sync_codex_ui_smoke_template() {
   ensure_file_copied "$CODEX_UI_SMOKE_TEMPLATE" "$REPO_CODEX_UI_SMOKE_TEMPLATE" "~/.codex/templates/ui-smoke.example.yml"
 }
 
+sync_codex_verify_template() {
+  [[ -f "$REPO_CODEX_VERIFY_TEMPLATE" ]] || return 0
+  ensure_directory "$CODEX_TEMPLATES_DIR"
+  ensure_file_copied "$CODEX_VERIFY_TEMPLATE" "$REPO_CODEX_VERIFY_TEMPLATE" "~/.codex/templates/codex_verify.example.sh"
+  if [[ "$DRY_RUN" == '0' ]]; then
+    chmod +x "$CODEX_VERIFY_TEMPLATE"
+  fi
+}
+
+sync_codex_verify_wrapper() {
+  [[ -f "$REPO_CODEX_VERIFY_TEMPLATE" ]] || return 0
+  ensure_directory "$CODEX_BIN_DIR"
+  ensure_file_copied "$CODEX_VERIFY_WRAPPER" "$REPO_CODEX_VERIFY_TEMPLATE" "~/.codex/bin/codex_verify"
+  if [[ "$DRY_RUN" == '0' ]]; then
+    chmod +x "$CODEX_VERIFY_WRAPPER"
+  fi
+}
+
 if [[ ! -f "$REPO_AGENTS" ]]; then
   echo "Error: missing AGENTS.md in repo root: $REPO_AGENTS" >&2
   exit 1
@@ -633,6 +657,15 @@ verify_codex_agent_templates() {
 
   python3 "$CODEX_AGENT_VALIDATE_SCRIPT" "$CODEX_AGENTS_DIR" >/dev/null || fail "~/.codex/agents contains malformed Codex custom agent files"
 
+  if [[ -f "$REPO_CODEX_VERIFY_TEMPLATE" ]]; then
+    [[ -f "$CODEX_VERIFY_TEMPLATE" && ! -L "$CODEX_VERIFY_TEMPLATE" ]] || fail "~/.codex/templates/codex_verify.example.sh is missing or not a regular file"
+    cmp -s "$REPO_CODEX_VERIFY_TEMPLATE" "$CODEX_VERIFY_TEMPLATE" || fail "~/.codex/templates/codex_verify.example.sh does not match repo template"
+    [[ -x "$CODEX_VERIFY_TEMPLATE" ]] || fail "~/.codex/templates/codex_verify.example.sh is not executable"
+    [[ -f "$CODEX_VERIFY_WRAPPER" && ! -L "$CODEX_VERIFY_WRAPPER" ]] || fail "~/.codex/bin/codex_verify is missing or not a regular file"
+    cmp -s "$REPO_CODEX_VERIFY_TEMPLATE" "$CODEX_VERIFY_WRAPPER" || fail "~/.codex/bin/codex_verify does not match repo template"
+    [[ -x "$CODEX_VERIFY_WRAPPER" ]] || fail "~/.codex/bin/codex_verify is not executable"
+  fi
+
   if [[ -f "$REPO_CODEX_UI_SMOKE_TEMPLATE" ]]; then
     [[ -f "$CODEX_UI_SMOKE_TEMPLATE" && ! -L "$CODEX_UI_SMOKE_TEMPLATE" ]] || fail "~/.codex/templates/ui-smoke.example.yml is missing or not a regular file"
     cmp -s "$REPO_CODEX_UI_SMOKE_TEMPLATE" "$CODEX_UI_SMOKE_TEMPLATE" || fail "~/.codex/templates/ui-smoke.example.yml does not match repo template"
@@ -677,6 +710,8 @@ if [[ "$CLAUDE_ONLY" == '0' ]]; then
   ensure_symlink "$COPILOT_SKILLS" "$TARGET_SKILLS" "~/.copilot/skills"
   ensure_codex_config
   sync_codex_agent_templates
+  sync_codex_verify_wrapper
+  sync_codex_verify_template
   sync_codex_ui_smoke_template
 else
   log "skip: Codex setup (--claude-only)"

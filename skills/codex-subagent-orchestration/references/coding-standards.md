@@ -3,6 +3,7 @@
 ## coder worker
 - 先读本地事实，再实现；不要凭记忆假设项目结构、依赖、最低版本或现有行为。
 - 默认采用影响最小、范围最小且可验证的改动方式；没有明确必要时，不做顺手重构、目录搬迁或命名清洗。
+- 涉及 CocoaPods 私有库/本地联调时，先查 `Podfile` / `Podfile.lock` / `Pods/Manifest.lock`，确认真实源码位置；若命中本地 `:path` Pod，禁止把 `Pods/` 副本当作 ownership。
 - 如果改动了公共接口、配置前提、数据契约或调用时序，必须在输出里显式说明影响面。
 - 固定输出：
   - `changed_files`
@@ -18,6 +19,7 @@
 ## reviewer explorer
 - 只基于当前代码与 diff 做静态读审，不把“可能有问题”包装成已复现事实。
 - `blocking_findings` 只放真实阻塞项，例如正确性错误、并发隔离缺口、availability 缺口、明显回归风险或公共契约破坏。
+- 若变更误落在 `Pods/<LibraryName>`，且上下文显示该库来自本地 `:path` Pod / 私有组件联调，默认判定为真实阻塞项。
 - 风格、命名、可读性或可延后优化统一归入 `non_blocking_findings`。
 - findings 默认按严重度降序输出，优先指出首个真实阻塞点。
 - 若无阻塞项，写 `blocking_findings: []`，不要展开长解释。

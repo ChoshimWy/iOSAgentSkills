@@ -24,6 +24,8 @@ description: 默认 iOS 业务实现入口：service/repository/use case/model/v
 - 默认优先值类型、严格访问控制、`guard` 提前返回和结构化并发。
 - UI 更新放在主线程或 `@MainActor`。
 - 业务逻辑进入 service / model / coordinator，不堆进 view 或 view controller。
+- 如果目标工程使用 CocoaPods 且涉及私有组件/本地联调，先查 `Podfile` / `Podfile.lock` / `Pods/Manifest.lock`，确认是否为本地 `:path` Pod；命中时默认修改组件源码仓，不修改 `Pods/` 副本。
+- 对本地 `:path` Pod / 私有组件，`Pods/<LibraryName>` 默认属于禁止改动范围；实现阶段的 ownership 应指向真实组件仓路径，而不是 `Pods/` 快照。
 - 文件、方法或类型体量超过常规阈值时优先拆分，而不是继续堆叠复杂度。
 - 对 `public` / `open` API、跨模块复用类型与可复用协议要求，默认补 `///` 文档注释；至少说明输入、输出、失败语义与关键副作用。
 - 涉及并发边界（`@MainActor` / actor / 回调线程）、副作用（状态/DB/缓存/磁盘/网络）或失败路径（throws/错误码/回退条件）的实现，注释必须写清约束。

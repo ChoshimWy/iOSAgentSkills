@@ -10,6 +10,7 @@ description: Apple Xcode 项目环境最终构建验证执行器。由 final-evi
 - 在前置 `testing` 与 `code-review` 都已放行、且现有验证证据不足或风险要求完整验证时，执行一次性 `xcodebuild` 项目环境验证。
 - 不负责判断低风险场景是否可接受已有证据；该裁决由 `final-evidence-gate` 完成。
 - 不负责构建系统设计、签名配置或 Archive/Export 流程。
+- 本 skill 应统一复用串行包装入口来执行真正的项目环境 `xcodebuild`：优先目标项目已提供的 repo-tracked `codex_verify.sh`，若项目未接入则回退到本机 `~/.codex/bin/codex_verify`，避免同机同仓多个 CLI 并发验证导致 `build.db` / `SWBBuildService` 锁冲突。
 
 ## 触发判定（硬边界）
 - 用户明确要求“编译验证 / 跑一下 xcodebuild / 最后确认还能编译”时，使用本 skill。
@@ -30,6 +31,7 @@ description: Apple Xcode 项目环境最终构建验证执行器。由 final-evi
 2. 运行当前 skill 自带的 `scripts/build-check.sh <目标仓库根目录>`。
    - `scripts/build-check.sh` 指的是 **本 skill 目录下** 的脚本路径，不是目标仓库根目录里的同名脚本。
    - 不要因为目标仓库没有 `scripts/build-check.sh` 就误判 skill 不可执行。
+   - 如果目标仓库根目录存在 repo-tracked `codex_verify.sh`，`build-check.sh` 应先委托给该包装入口获取项目级串行锁；若项目未接入，则自动回退到本机 `~/.codex/bin/codex_verify`；随后再由包装入口回调本 skill 的 `build-check.sh`。不要绕过包装入口并发裸跑 `xcodebuild`。
    - 项目环境验证必须在**目标项目根目录**执行（CC 使用 `Bash` 工具；Codex 使用 `functions.exec_command` + `require_escalated`）；不要把沙箱内构建结果当作最终验收。
    - 本地 `xcodebuild` 命令（含 `-list` / `-showdestinations` / build/test）统一按非沙盒项目环境执行，不做沙盒内降级。
 3. `build-check.sh` 的首次校验选择顺序固定为：
@@ -54,6 +56,7 @@ description: Apple Xcode 项目环境最终构建验证执行器。由 final-evi
 ## 特殊情况
 - 不要求本 skill 再自行审查 staged / unstaged / untracked；这些属于前置 `code-review` 职责。
 - 不要让 `.codex/xcodebuild.env` 覆盖配置绕过前置 `testing` / `code-review`；它只用于指定 workspace/project/scheme/configuration/destination。
+- `codex_verify.sh` / `~/.codex/bin/codex_verify` 只负责串行化项目环境验证，不改变本 skill 的 workspace / scheme / destination 选择策略，也不能绕过前置 `testing` / `code-review`。
 - 本地 `verify-ios-build` 不支持 `XCODE_DERIVED_DATA` 覆盖；统一使用 Xcode 默认 DerivedData（`~/Library/Developer/Xcode/DerivedData`）。
 - `.codex/xcodebuild.env` 可以额外控制默认真机 destination 选择，或显式切到 simulator 首次校验并控制回退行为，但不能绕过固定链路里的 `testing` / `code-review` 放行，也不能把项目环境验证降级回沙箱。
 - 如果当前 turn 已经先执行过定向测试，验证应优先复用同一套 workspace / scheme / destination 基线；若先前执行路径与默认策略不一致，必须在回复里明确说明为什么切换。

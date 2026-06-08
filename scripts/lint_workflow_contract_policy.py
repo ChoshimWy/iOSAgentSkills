@@ -46,6 +46,7 @@ def main() -> int:
         [
             "任务分型：`doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`",
             "`explorer + builder + reporter`",
+            "pod_private_cache_guard.py",
             "python3 scripts/lint_workflow_contract_policy.py",
             "python3 scripts/validate_codex_agent_templates.py",
             "config/codex/templates/agents/",
@@ -62,6 +63,13 @@ def main() -> int:
             "sync_codex_agent_templates",
             "verify_codex_agent_templates",
             "validate_codex_agent_templates.py",
+        ],
+        failures,
+    )
+    require_contains(
+        ROOT / ".githooks" / "pre-commit",
+        [
+            "pod_private_cache_guard.py",
         ],
         failures,
     )

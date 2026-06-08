@@ -23,6 +23,7 @@ description: iOS/macOS 测试编写入口：单元测试、UI 测试、Mock/Stub
 - 优先通过公开接口间接覆盖行为，不直接测试私有方法。
 - 需要实际执行定向测试时，如果用户未显式指定 scheme，默认优先选择绑定了单元测试 `*Tests` target / bundle 的 scheme；若不存在，再回退到其它测试 scheme（例如 `*UITests`、`*_TEST`）。
 - 本地执行 `xcodebuild`（含 `-list` / `-showdestinations` / build/test）默认在项目环境直接执行（CC 使用 `Bash` 工具；Codex 使用 `functions.exec_command` + `require_escalated`）。
+- 同机同仓如果有多个 Codex / Claude CLI 并发处理同一 Xcode 项目，测试阶段的项目环境 `xcodebuild` 也应统一复用串行包装入口排队执行：优先目标项目根目录的 `codex_verify.sh`，若项目未接入则回退到本机 `~/.codex/bin/codex_verify`，避免并发锁冲突。
 - 本地缓存统一复用 Xcode 系统 DerivedData（`~/Library/Developer/Xcode/DerivedData`），不要改用临时 `-derivedDataPath`。
 - 如果同一任务后续还要进入 `final-evidence-gate`，最终证据门禁默认复用这次定向测试的 workspace / scheme / destination 基线；不要无说明切换到另一个 scheme。
 - 如果当前改动不适合新增测试代码，也必须在本阶段明确给出 `no_test_reason` 与已覆盖的验证依据，然后再进入 `code-review` 与 `final-evidence-gate`。

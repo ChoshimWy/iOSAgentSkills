@@ -33,6 +33,8 @@
 
 - 以本地仓库事实为先：先读代码、配置、manifest、构建脚本，再下结论。
 - 默认优先最小可验证改动，不做无关重构、目录搬迁或跨模块改写。
+- 涉及 CocoaPods / 私有组件联调时，先查目标工程 `Podfile` / `Podfile.lock` / `Pods/Manifest.lock` 判断是否为本地 `:path` Pod；若是，默认修改组件源码仓，不修改 `Pods/` 下的副本快照。
+- 对本地 `:path` Pod / 私有组件，`Pods/<LibraryName>` 默认属于**禁止改动范围**；除非用户明确要求修改 vendored snapshot 并说明原因，否则不得把 `Pods/` 副本当作真实源码位置。
 - 涉及 Apple API 细节、availability、WWDC 指导时，优先使用官方文档，并区分“文档事实”和“推断”。
 - 将 OS/SDK/Xcode/真机或模拟器/Swift 语言模式视为一等约束；结论依赖这些条件时必须显式说明。
 - 新实现默认优先 Swift 与结构化并发；UI 更新保持主线程或 `@MainActor` 隔离。
@@ -45,6 +47,7 @@
 - 证据不足、高风险或命中工程/依赖/签名/资源打包类改动时，必须升级到 `verify-ios-build`；最终验证必须在目标项目环境、从目标仓库根目录执行，不能把仅在 sandbox 中得到的构建结果当作最终结论。
 - 必须升级的典型场景：`.xcodeproj` / `.xcworkspace` / scheme / xctestplan / xcconfig / Build Settings / 构建脚本、签名/entitlements/plist/capability、`Podfile` / `Podfile.lock` / 私有 Pod 版本或 `:path` 回切线上、资源/Storyboard/XIB/Assets/target membership、consumer app 集成证据缺失。
 - 本地所有 `xcodebuild` 命令（含 `-list` / `-showdestinations` / build/test）默认在项目环境直接执行（CC 使用 `Bash` 工具；Codex 使用 `functions.exec_command` + `require_escalated`）。
+- 同机同仓存在多个 Codex / Claude CLI 并发处理同一 Xcode 项目时，项目环境 `xcodebuild` 验证必须统一经串行包装入口执行：优先目标项目根目录的 `codex_verify.sh`，若项目未接入则回退到本机 `~/.codex/bin/codex_verify`；禁止多个 CLI 直接并发裸跑 `xcodebuild`。
 - 本地构建缓存默认统一使用 Xcode 系统 DerivedData（`~/Library/Developer/Xcode/DerivedData`）；不要为最终门禁指定临时 `-derivedDataPath`，也不要使用 `XCODE_DERIVED_DATA` 覆盖。
 - 如果同时存在 `.xcworkspace` 和 `.xcodeproj`，验证优先使用 `.xcworkspace`；如果没有用户显式指定 scheme，定向测试与最终证据默认优先选择绑定了单元测试 `*Tests` target / bundle 的 scheme，若不存在再回退到其它测试 scheme。
 - 对 iOS 项目，最终验证证据默认优先已连接真机；如果既有成功证据来自 simulator，只有在风险不依赖签名、真实设备能力或打包链路时才可接受。

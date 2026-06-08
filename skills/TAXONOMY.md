@@ -14,6 +14,7 @@
 - `final-evidence-gate` 优先复用最后一次代码变更之后已成功的目标项目环境 `xcodebuild test` / `xcodebuild build` 证据；证据不足、高风险或命中工程/依赖/签名/资源打包类改动时，再切到 `verify-ios-build`。
 - 最终验证证据必须来自目标项目根目录的项目环境，而不是把沙箱内构建结果当作最终结论。
 - 本地执行 `xcodebuild`（含 `-list` / `-showdestinations` / build/test）默认都走非沙盒项目环境。
+- 同机同仓如果有多个 Codex / Claude CLI 并发处理同一 Xcode 项目，项目环境 `xcodebuild` 验证必须统一经串行包装入口排队执行：优先目标项目根目录的 `codex_verify.sh`，若项目未接入则回退到本机 `~/.codex/bin/codex_verify`；不要多个 CLI 并发裸跑 `xcodebuild`。
 - 本地构建缓存统一复用 Xcode 系统 DerivedData，不要用临时 `-derivedDataPath` 或 `XCODE_DERIVED_DATA` 覆盖。
 - iOS 项目如果同时存在 `.xcworkspace` 与 `.xcodeproj`，验证优先 `.xcworkspace`；默认优先已连接真机，只有低风险且不依赖签名/真实设备能力/打包链路时才接受 simulator 作为最终证据。
 - 如果没有用户显式指定 scheme，定向测试与最终证据默认优先选择绑定了单元测试 `*Tests` target / bundle 的 scheme；若不存在，再回退到其它测试 scheme。
