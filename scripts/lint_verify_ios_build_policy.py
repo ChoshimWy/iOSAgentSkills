@@ -404,7 +404,11 @@ def main() -> int:
         ROOT / "skills" / "code-review" / "SKILL.md",
         [
             "第三步静态审查阶段",
-            "默认审查当前 unstaged + untracked 工作区改动",
+            "本次任务全量差异",
+            "直接影响面",
+            "`review_scope`",
+            "`impact_scope`",
+            "`unreviewed_changes`",
         ],
         failures,
     )

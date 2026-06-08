@@ -34,10 +34,15 @@
 
 ### 输入
 - 当前任务目标
-- 需要审查的 diff / 文件范围
+- `review_base_ref` 或明确的 fallback 基线
+- 本次任务全量差异（staged、unstaged、untracked 与基线之后相关提交）
+- 本次修改带来的直接影响面
 - 风险关注点（如并发、availability、边界）
 
 ### 输出
+- `review_scope`
+- `impact_scope`
+- `unreviewed_changes`
 - `blocking_findings`
 - `non_blocking_findings`
 - `checkpoint_status`
@@ -47,6 +52,9 @@
 ### 额外要求
 - `blocking_findings` 只放真实阻塞项
 - 若无阻塞项，写 `blocking_findings: []`，不要展开长解释
+- `review_scope` 必须说明基线与纳入审查的 staged / unstaged / untracked / 提交范围
+- `impact_scope` 必须说明已审查的直接调用方、契约边界与副作用边界
+- `unreviewed_changes` 无遗漏时写 `none`，否则列出未审查差异或影响面
 - findings 默认按严重度降序输出
 - `first_failure` 无阻塞时写 `none`
 - 存在阻塞项时，`next_action` 只能是 `fix-and-rerun` 或 `blocked`

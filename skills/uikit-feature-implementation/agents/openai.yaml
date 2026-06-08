@@ -1,4 +1,4 @@
 interface:
   display_name: "UIKit Feature 实现"
   short_description: "按既定架构落地 UIKit 页面实现并保留按需验证"
-  default_prompt: "使用 $uikit-feature-implementation 在页面职责与架构边界已明确的前提下实现 UIKit 页面、布局与交互逻辑；如果当前任务未进入多 Agent 编排，或当前轮只能以单 Agent 执行，实现完成后默认按三步收口：$uikit-feature-implementation -> $testing/定向验证 -> $code-review；其中 $testing 阶段若不新增测试代码，也要明确给出 no_test_reason 与验证依据；随后由 $code-review 审查当前未暂存代码，没有 blocking findings 即可按默认标准收口。若任务产出修改了 Apple Xcode 项目相关内容，默认以定向测试/必要验证与 $code-review 放行为收口；$final-evidence-gate / $verify-ios-build 仅在用户显式要求或需要补强完整项目环境证据时按需使用。"
+  default_prompt: "使用 $uikit-feature-implementation 在页面职责与架构边界已明确的前提下实现 UIKit 页面、布局与交互逻辑；如果当前任务未进入多 Agent 编排，或当前轮只能以单 Agent 执行，实现完成后默认按三步收口：$uikit-feature-implementation -> $testing/定向验证 -> $code-review；其中 $testing 阶段若不新增测试代码，也要明确给出 no_test_reason 与验证依据；随后由 $code-review 审查本次任务全量差异与直接影响面，没有 blocking findings 即可按默认标准收口。若任务产出修改了 Apple Xcode 项目相关内容，默认以定向测试/必要验证与 $code-review 放行为收口；$final-evidence-gate / $verify-ios-build 仅在用户显式要求或需要补强完整项目环境证据时按需使用。"

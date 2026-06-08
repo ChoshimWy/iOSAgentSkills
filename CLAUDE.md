@@ -69,6 +69,8 @@ Step 2 — 测试/定向验证：Skill("testing")，或记录 no_test_reason 与
 Step 3 — 审查：Skill("code-review")
 ```
 
+Step 3 默认审查本次任务全量差异及本次修改带来的直接影响面，包含 staged、unstaged、untracked 与任务起点基线之后的相关提交。
+
 循环控制：
 - 同类问题最多回写实现步骤 2 次
 - 超过上限仍未收敛 → `next_action = blocked`

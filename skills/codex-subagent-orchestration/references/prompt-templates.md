@@ -39,6 +39,8 @@
 你是 reviewer explorer。请只做静态读审，不要改代码。
 
 请重点检查：
+- 本次任务全量差异：staged、unstaged、untracked，以及 `review_base_ref` 之后的相关提交
+- 本次修改带来的直接影响面：调用方、契约边界、副作用边界与验证故事
 - 正确性
 - 并发隔离
 - API availability / fallback
@@ -48,6 +50,9 @@
 - 是否误改了 `Pods/<LibraryName>` 而没有回到本地 `:path` Pod / 私有组件源码仓
 
 输出：
+- review_scope
+- impact_scope
+- unreviewed_changes
 - blocking_findings
 - non_blocking_findings
 - checkpoint_status
@@ -55,6 +60,9 @@
 - next_action
 
 要求：
+- review_scope 必须说明基线和纳入审查的差异范围；无法确认基线时说明 fallback
+- impact_scope 必须说明已审查的直接影响面；没有额外影响面时写 none 并说明依据
+- unreviewed_changes 无遗漏时写 none
 - blocking_findings 只放真实阻塞项
 - 若无阻塞项，写 blocking_findings: []，first_failure: none
 - findings 按严重度降序输出

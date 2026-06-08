@@ -157,6 +157,9 @@ def main() -> int:
         [
             "`test_impact` 或 `no_test_reason`",
             "`blocking_findings: []`",
+            "`review_scope`",
+            "`impact_scope`",
+            "`unreviewed_changes`",
             "`suggested_validation`",
             "`executed_validation`",
             "`failure_attribution`",
@@ -176,6 +179,9 @@ def main() -> int:
             "`failure_attribution`",
             "`needs_test_code`",
             "code-review 审查（实现链路必选",
+            "本次任务全量差异",
+            "直接影响面",
+            "unreviewed_changes",
         ],
         failures,
     )

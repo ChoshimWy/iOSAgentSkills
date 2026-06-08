@@ -22,7 +22,9 @@ description: iOS/Swift 代码审查技能。只在需要 review 代码、审查 
 - 结论要绑定文件与行号；没有定位信息时要明确说明原因。
 - 只根据代码和已知上下文下结论；缺少运行时证据时，不要伪装成已复现问题。
 - 注释审查默认纳入阻塞判定：重点检查 `public/open` API 文档注释、并发边界语义、副作用语义、失败路径语义和“注释-实现一致性”。
-- 在默认三步链路里，默认审查对象是当前工作区的 **unstaged + untracked** 代码变更；如果发现已有 staged 改动，应明确指出这不符合默认审查输入假设。
+- 在默认三步链路里，默认审查对象是 **本次任务全量差异 + 本次修改带来的直接影响面**；差异范围包含 staged、unstaged、untracked，以及任务起点基线之后的所有相关提交。
+- 主 Agent / reviewer 应优先使用任务起点基线（如 `review_base_ref`、开始任务前的 `HEAD`、PR base 或用户指定 ref）审查 `review_base_ref -> 当前工作区`；如果无法确认基线，默认 fallback 为当前 `HEAD`，但必须在 `review_scope` 中说明。
+- 影响面审查必须覆盖本次修改直接触达的 public API、调用方、数据契约、并发边界、持久化 / 网络 / 缓存副作用、以及验证故事；无法确认或未覆盖的部分必须写入 `unreviewed_changes`。
 - 如果发现变更直接落在 `Pods/<LibraryName>`，且上下文显示目标工程使用私有 Pod / 本地 `:path` Pod 联调，默认作为 `blocking_findings`：这通常意味着改错了源码位置。
 - 如果用户问题本质上是“为什么会 crash / 卡顿 / 泄漏”，不要把本 skill 当作主 skill，切换到 `debugging` 或 `ios-performance`。
 - 固定链路中必须审查验证故事：`testing` 的 `executed_validation` 是否发生在最后一次代码变更之后，是否覆盖最终交付 target / consumer app scheme，以及是否需要升级 `verify-ios-build`。
@@ -61,6 +63,9 @@ blocking_findings:
   - ...
 non_blocking_findings:
   - ...
+review_scope: <base/ref/working-tree 与纳入审查的 staged/unstaged/untracked/提交范围>
+impact_scope: <已审查的直接影响面>
+unreviewed_changes: <none|无法纳入审查的差异或影响面>
 first_failure: <none|首个真实失败点>
 verification_story: <accepted|needs-final-evidence-gate|needs-verify-ios-build|insufficient>
 next_action: <fix-and-rerun|blocked|complete>
@@ -68,6 +73,9 @@ next_action: <fix-and-rerun|blocked|complete>
 
 - 字段规则：
   - `blocking_findings` 只放真实阻塞项；无阻塞时必须写 `blocking_findings: []`。
+  - `review_scope` 必须说明本次审查使用的基线、差异范围，以及 staged / unstaged / untracked 是否已纳入；不能只写“看过代码”。
+  - `impact_scope` 必须说明已检查的直接调用方、契约边界和副作用边界；若没有额外影响面，写 `none` 并说明依据。
+  - `unreviewed_changes` 无遗漏时写 `none`；存在未审查文件、未确认基线或未覆盖影响面时必须列出，并影响 `verification_story`。
   - `first_failure` 只写首个真实阻塞点；无阻塞时写 `none`。
   - 存在阻塞项时，`next_action` 不能是 `complete`。
   - `verification_story` 必须说明已有验证是否足够；证据不足或高风险时应标记 `needs-verify-ios-build`。
@@ -76,7 +84,7 @@ next_action: <fix-and-rerun|blocked|complete>
 - 输出 `blocking_findings` 时，优先把“注释导致的调用契约误判风险”放在首个真实阻塞点。
 
 ## 与其他技能的关系
-- 如果当前任务属于非编排 / 单 Agent 的实现链路，本 skill 默认承接 `testing` 之后的第三步；默认审查当前 unstaged + untracked 工作区改动，存在 blocking findings 时不得按默认标准收口；无阻塞时仍需给出验证故事结论。
+- 如果当前任务属于非编排 / 单 Agent 的实现链路，本 skill 默认承接 `testing` 之后的第三步；默认审查本次任务全量差异与直接影响面，存在 blocking findings 时不得按默认标准收口；无阻塞时仍需给出审查范围、影响面与验证故事结论。
 - 需要真正修复代码异味时，切换到 `refactoring`、`swiftui-feature-implementation` 或对应实现型 skill。
 - 需要复现 crash、异常、卡顿、启动慢、泄漏或做 `xctrace` 取证时，切换到 `debugging` 或 `ios-performance`。
 - 需要设计 SDK 对外接口边界时，可联动 `sdk-architecture`。

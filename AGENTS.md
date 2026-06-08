@@ -44,6 +44,7 @@
 
 - 默认完成标准：定向测试或必要验证通过，且 `code-review` 无 blocking findings。
 - 如果当前改动不适合运行测试，`testing` 阶段必须给出 `no_test_reason` 与替代验证依据，然后进入 `code-review`。
+- `code-review` 默认审查本次任务全量差异及本次修改带来的直接影响面；应纳入 staged、unstaged、untracked 与任务起点基线之后的相关提交，并说明未覆盖的影响面。
 - `final-evidence-gate` 与 `verify-ios-build` 不再是所有 Apple Xcode 项目改动的强制收尾，仅作为按需补强验证：用户显式要求、发布前自检、或主 Agent 判断高风险时才使用。
 - 如果执行可选 `xcodebuild` 验证，必须在目标项目环境、从目标仓库根目录执行；Codex 使用 `functions.exec_command` + `require_escalated`，不要把仅在 sandbox 中得到的构建结果当作完整项目环境证据。
 - 本地所有 `xcodebuild` 命令（含 `-list` / `-showdestinations` / build/test）默认在项目环境直接执行；同机同仓存在多个 Codex / Claude CLI 并发处理同一 Xcode 项目时，项目环境验证必须统一经串行包装入口执行：优先目标项目根目录的 `codex_verify.sh`，若项目未接入则回退到本机 `~/.codex/bin/codex_verify`，禁止多个 CLI 直接并发裸跑 `xcodebuild`。
