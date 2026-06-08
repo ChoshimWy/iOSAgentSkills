@@ -43,7 +43,7 @@
 - 默认维护 `checkpoint_status`（`CP0` / `CP1` / `CP2` / `CP3`）作为单一事实源；`CP1` 未通过前不启动无必要并行扩散。
 - 聚合 reviewer / tester / gate 结果时，优先用首个真实阻塞点驱动下一轮，不要把多个层级问题混成模糊总结。
 - 遵守 `fail-fix-report`：先 fail 定位，再 fix 重跑，最后 report；不可带着已知阻塞项宣告完成。
-- 最终完成态只能基于 `final-evidence-gate` 裁决；在其接受现有证据或升级后的 `verify-ios-build` 成功前，不得宣告任务完成。
+- 默认完成态由主 Agent 基于定向测试/必要验证与 `code-review` 结论裁决；`final-evidence-gate` / `verify-ios-build` 仅作为按需补强验证。
 
 ## reporter
 - 输出必须包含 `acceptance_matrix`，并覆盖“需求项 -> 证据 -> 状态(pass|fail|blocked)”。

@@ -1,6 +1,6 @@
 ---
 name: ios-feature-implementation
-description: 默认 iOS 业务实现入口：service/repository/use case/model/view model、依赖注入、导航接线和 async/await glue code。SwiftUI、UIKit、构建、自动化、性能和文档查询走专项；Xcode 改动收尾交给 final-evidence-gate。
+description: 默认 iOS feature 实现技能。只用于与具体 UI 技术栈无关的通用业务实现：service / repository / use case / domain model / view model、依赖注入、导航接线和常规 async/await 落地；如果任务核心已经变成 SwiftUI / UIKit 页面代码、页面模式选型、已有 SwiftUI 大 view 重构、构建配置、模拟器/真机自动化、性能取证或官方文档检索，不要使用本 skill 作为主 skill；若任务产出修改了 Apple Xcode 项目相关内容，默认以定向测试/必要验证与 `code-review` 放行为收口；`final-evidence-gate` / `verify-ios-build` 仅在用户显式要求或需要补强完整项目环境证据时按需使用。
 ---
 
 # iOS Feature 实现
@@ -57,16 +57,16 @@ no_test_reason: <仅当本轮不涉及新增测试时填写>
   - `known_risks` 仅记录尚未消除的真实风险；无则写 `[]`。
   - `test_impact` 与 `no_test_reason` 二选一必须填写。
 
-## 最终证据门禁
-- 如果当前任务没有进入 `codex-subagent-orchestration`（CC 用户参考 CLAUDE.md 四步收口工作流），或当前轮只能以单 Agent 执行，本 skill 完成实现后也不要直接跳到最终门禁；默认后续链路按固定四步执行：`ios-feature-implementation -> testing -> code-review -> final-evidence-gate`。
-- 只要当前任务产出修改了 Apple Xcode 项目相关内容（代码、测试、资源、工程文件、构建脚本、plist / entitlements / xcconfig / scheme 或项目内环境配置），最终必须进入 `final-evidence-gate`；证据不足、高风险或命中工程/依赖/签名/资源打包类改动时，再切到 `verify-ios-build`。
-- 最终验证证据必须来自目标项目根目录的项目环境；沙箱内的构建结果不能作为最终验收结论。
+## 可选证据验证
+- 如果当前任务没有进入 `codex-subagent-orchestration`（CC 用户参考 CLAUDE.md 三步收口工作流），或当前轮只能以单 Agent 执行，本 skill 完成实现后也不要直接跳到可选验证；默认后续链路按三步执行：`ios-feature-implementation -> testing/定向验证 -> code-review`。
+- 只要当前任务产出修改了 Apple Xcode 项目相关内容（代码、测试、资源、工程文件、构建脚本、plist / entitlements / xcconfig / scheme 或项目内环境配置），最终默认以定向测试/必要验证与 `code-review` 放行为收口；`final-evidence-gate` / `verify-ios-build` 仅在用户显式要求或需要补强完整项目环境证据时按需使用。
+- 若执行可选完整验证，证据必须来自目标项目根目录的项目环境；沙箱内的构建结果不能作为完整项目环境证据。
 - 对 iOS 项目，若升级到 `verify-ios-build`，必须优先 `.xcworkspace`（当 `.xcworkspace` 与 `.xcodeproj` 同时存在时），并默认优先已连接真机；找不到连接中的真机时再回退到 simulator。
-- 在 `final-evidence-gate` 接受现有证据或 `verify-ios-build` 成功前，不得把任务表述为“已完成”；只能明确说明“实现已完成，但验证证据不足/验证失败，任务未完成”。
+- 若可选 `final-evidence-gate` / `verify-ios-build` 未执行或失败，应在交付中说明已执行的定向测试/审查证据与残余风险。
 
 ## 与其他技能的关系
 - 通用 iOS feature 业务开发默认优先使用本技能。
-- 如果当前任务属于非编排 / 单 Agent 的实现链路，本 skill 完成代码修改后，固定先切到 `testing`，再切到 `code-review`，最后进入 `final-evidence-gate`。
+- 如果当前任务属于非编排 / 单 Agent 的实现链路，本 skill 完成代码修改后，默认先切到 `testing/定向验证`，再切到 `code-review`；`final-evidence-gate` / `verify-ios-build` 仅按需升级。
 - 如果任务核心已经进入普通 SwiftUI 页面落地，本 skill 只作为业务层辅助，主 skill 切换到 `swiftui-feature-implementation`。
 - 如果任务核心已经进入普通 UIKit 页面落地，本 skill 只作为业务层辅助，主 skill 切换到 `uikit-feature-implementation`。
 - 如果任务进入复杂并发、类型擦除、协议族或跨平台可用性策略，切换到 `swift-expert`。

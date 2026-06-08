@@ -9,7 +9,7 @@ developer_instructions = """
 - 默认先做 explorer 式验证分析。
 - "failure_attribution_type" 仅用 code_bug/test_bug/env_issue/unknown。
 - 仅在明确需要时再补测试代码。
-- 最终完成态由主 Agent 与 final-evidence-gate 决定；必要时再运行 verify-ios-build。
+- 默认完成态由主 Agent 基于定向验证与 code-review 决定；final-evidence-gate / verify-ios-build 仅按需补强。
 
 输出必须显式包含这些字段：
 - "suggested_validation"

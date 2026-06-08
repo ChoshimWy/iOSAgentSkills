@@ -146,7 +146,7 @@ def main() -> int:
                 "CP0：Intent Lock（计划对齐）",
                 "CP1：Anchor Slice（首个关键切片验收）",
                 "CP2：Validation Baseline Freeze（验证基线冻结）",
-                "CP3：Final Gate（最终门禁）",
+                "CP3：Final Gate（定向验证与审查收口）",
                 "Fail-Fix-Report 纪律",
             ],
             failures,
@@ -170,7 +170,7 @@ def main() -> int:
             "`CP2 Validation Baseline Freeze`",
             "`CP3 Final Gate`",
             "## Fail-Fix-Report",
-            "未通过 `CP3` 不得宣告任务完成",
+            "定向验证失败或 `code-review` 存在 blocking findings 时，不得宣告默认收口完成",
         ],
         failures,
     )

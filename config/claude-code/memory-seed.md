@@ -23,7 +23,7 @@
 实现 skill -> testing -> code-review -> final-evidence-gate
 ```
 
-四步缺一不可。CP3 Final Gate 未通过不得宣告完成。
+默认三步收口：实现 -> testing/定向验证 -> code-review；CP3 以定向验证与审查收口为准，final-evidence-gate / verify-ios-build 仅按需补强。
 
 ## Skill 路由速查
 

@@ -1,6 +1,6 @@
 ---
 name: swiftui-feature-implementation
-description: SwiftUI 页面统一入口：模式选型、常规页面/组件实现、已有 View 结构化重构。Liquid Glass、性能取证和官方文档查询另走专项；Xcode 改动收尾交给 final-evidence-gate。
+description: SwiftUI 页面统一入口。覆盖三种子模式：1) 模式选型 — 新页面结构、导航层级、状态归属和组件拆分方案选择；2) 常规实现 — 在既定架构下落地 SwiftUI 页面、组件、列表、表单、状态绑定与界面交互；3) 视图重构 — 已有 SwiftUI 文件的结构化整理，抽离子视图、MV 优先数据流、稳定视图树。如果任务核心是 Liquid Glass 专项、性能取证或官方文档检索，不要使用本 skill 作为主 skill；若任务产出修改了 Apple Xcode 项目相关内容，默认以定向测试/必要验证与 `code-review` 放行为收口；`final-evidence-gate` / `verify-ios-build` 仅在用户显式要求或需要补强完整项目环境证据时按需使用。
 ---
 
 # SwiftUI Feature 实现
@@ -59,13 +59,13 @@ SwiftUI 页面开发统一入口，根据任务阶段自动选择子模式。不
 - `references/previews.md` — 预览
 - `references/mv-patterns.md` — MV 模式（重构专用）
 
-## 最终证据门禁
+## 可选证据验证
 
-- 如果当前任务没有进入 `codex-subagent-orchestration`（CC 用户参考 CLAUDE.md 四步收口工作流），或当前轮只能以单 Agent 执行，本 skill 完成实现后也不要直接跳到最终门禁；默认后续链路按固定四步执行：`swiftui-feature-implementation -> testing -> code-review -> final-evidence-gate`
-- 只要当前任务产出修改了 Apple Xcode 项目相关内容，最终必须进入 `final-evidence-gate`
-- 最终验证证据必须来自目标项目根目录的项目环境
+- 如果当前任务没有进入 `codex-subagent-orchestration`（CC 用户参考 CLAUDE.md 三步收口工作流），或当前轮只能以单 Agent 执行，本 skill 完成实现后也不要直接跳到可选验证；默认后续链路按三步执行：`swiftui-feature-implementation -> testing/定向验证 -> code-review`
+- 只要当前任务产出修改了 Apple Xcode 项目相关内容，默认以定向测试/必要验证与 `code-review` 放行为收口；`final-evidence-gate` / `verify-ios-build` 仅按需使用
+- 若执行可选完整验证，证据必须来自目标项目根目录的项目环境
 - 对 iOS 项目，若升级到 `verify-ios-build`，必须优先 `.xcworkspace`，并默认优先已连接真机
-- 在 `final-evidence-gate` 接受现有证据或 `verify-ios-build` 成功前，不得把任务表述为"已完成"
+- 若可选 `final-evidence-gate` / `verify-ios-build` 未执行或失败，应说明已执行的定向测试/审查证据与残余风险。
 
 ## 与其他技能的关系
 

@@ -32,10 +32,10 @@ XCODE_UI_SMOKE_SPEC=".codex/ui-smoke.yml"
 - 如果两个都配置，脚本优先使用 `XCODE_WORKSPACE`
 - `XCODE_SCHEME` 建议显式配置，避免多 scheme 仓库误判
 - 如果未显式设置 `XCODE_SCHEME`，脚本默认优先选择绑定了单元测试 `*Tests` target / bundle 的 scheme；若不存在，再回退到其它测试 scheme（例如 `*UITests`、`*_TEST`）
-- 如果当前任务里已经先跑过定向测试，最终门禁应优先复用同一套 workspace / scheme / destination 基线；必要时用 `XCODE_SCHEME` / `XCODE_DESTINATION` 显式固定
+- 如果当前任务里已经先跑过定向测试，可选验证应优先复用同一套 workspace / scheme / destination 基线；必要时用 `XCODE_SCHEME` / `XCODE_DESTINATION` 显式固定
 - 本地 `verify-ios-build` 不支持 `XCODE_DERIVED_DATA` 覆盖；统一使用 Xcode 默认 DerivedData（`~/Library/Developer/Xcode/DerivedData`）
 - 默认不做 `clean build`
-- 最终门禁仍必须在目标项目根目录的项目环境执行；`.codex/xcodebuild.env` 只负责补充参数，不会把最终验证降级成沙箱构建
+- 可选验证仍必须在目标项目根目录的项目环境执行；`.codex/xcodebuild.env` 只负责补充参数，不会把最终验证降级成沙箱构建
 - `codex_verify.sh` / `~/.codex/bin/codex_verify` 只负责串行化验证入口，不负责覆盖 `xcodebuild` 参数；workspace / scheme / destination 仍由本文件与脚本默认策略决定
 - 本地执行 `xcodebuild`（含 `-list` / `-showdestinations` / build/test）默认在项目环境直接执行（CC 使用 `Bash` 工具；Codex 使用 `functions.exec_command` + `require_escalated`）
 - iOS 工程默认优先真机校验；如果未设置 `XCODE_DESTINATION`，脚本会先尝试“已连接真机”，找不到连接中的真机时自动回退到 `generic/platform=iOS Simulator`

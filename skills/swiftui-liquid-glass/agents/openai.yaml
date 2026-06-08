@@ -1,4 +1,4 @@
 interface:
   display_name: "SwiftUI Liquid Glass"
-  short_description: "Liquid Glass 专项实现、审查与强制收尾门禁"
-  default_prompt: "使用 $swiftui-liquid-glass 仅在问题核心是 iOS 26+ Liquid Glass API（如 glassEffect / GlassEffectContainer）实现或审查时工作，并提供兼容性回退；若任务产出修改了 Apple Xcode 项目相关内容，收尾必须进入 $final-evidence-gate；证据不足、高风险或命中工程/依赖/签名/资源打包类改动时，再切到 $verify-ios-build 在目标项目的项目环境完成最终验证：iOS 项目若同时存在 `.xcworkspace` 与 `.xcodeproj` 必须优先 `.xcworkspace`，默认优先已连接真机，找不到连接中的真机时再回退到 simulator。"
+  short_description: "Liquid Glass 专项实现、审查与按需验证"
+  default_prompt: "使用 $swiftui-liquid-glass 仅在问题核心是 iOS 26+ Liquid Glass API（如 glassEffect / GlassEffectContainer）实现或审查时工作，并提供兼容性回退；若任务产出修改了 Apple Xcode 项目相关内容，默认以定向测试/必要验证与 $code-review 放行为收口；$final-evidence-gate / $verify-ios-build 仅在用户显式要求或需要补强完整项目环境证据时按需使用。"

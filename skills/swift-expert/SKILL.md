@@ -1,6 +1,6 @@
 ---
 name: swift-expert
-description: Swift 进阶问题入口：复杂并发隔离、PAT/类型擦除、跨平台 availability 和高阶 API 设计。常规 iOS 业务、性能测试和一般 UI 重构走其它 skill；Xcode 改动收尾交给 final-evidence-gate。
+description: Swift 进阶开发技能。仅用于复杂并发隔离、PAT/类型擦除、跨平台可用性策略和高阶 API 设计等 Swift 问题；不处理常规 iOS 业务实现、性能分析测试或一般 UI 重构；若任务产出修改了 Apple Xcode 项目相关内容，默认以定向测试/必要验证与 `code-review` 放行为收口；`final-evidence-gate` / `verify-ios-build` 仅在用户显式要求或需要补强完整项目环境证据时按需使用。
 ---
 
 # Swift 进阶开发
@@ -32,11 +32,11 @@ description: Swift 进阶问题入口：复杂并发隔离、PAT/类型擦除、
 - `references/protocol-oriented.md`
 - `references/swiftui-patterns.md`
 
-## 最终证据门禁
-- 只要当前任务产出修改了 Apple Xcode 项目相关内容（代码、测试、资源、工程文件、构建脚本、plist / entitlements / xcconfig / scheme 或项目内环境配置），最终必须进入 `final-evidence-gate`；证据不足、高风险或命中工程/依赖/签名/资源打包类改动时，再切到 `verify-ios-build`。
-- 最终验证证据必须来自目标项目根目录的项目环境；沙箱内的构建结果不能作为最终验收结论。
+## 可选证据验证
+- 只要当前任务产出修改了 Apple Xcode 项目相关内容（代码、测试、资源、工程文件、构建脚本、plist / entitlements / xcconfig / scheme 或项目内环境配置），最终默认以定向测试/必要验证与 `code-review` 放行为收口；`final-evidence-gate` / `verify-ios-build` 仅在用户显式要求或需要补强完整项目环境证据时按需使用。
+- 若执行可选完整验证，证据必须来自目标项目根目录的项目环境；沙箱内的构建结果不能作为完整项目环境证据。
 - 对 iOS 项目，若升级到 `verify-ios-build`，必须优先 `.xcworkspace`（当 `.xcworkspace` 与 `.xcodeproj` 同时存在时），并默认优先已连接真机；找不到连接中的真机时再回退到 simulator。
-- 在 `final-evidence-gate` 接受现有证据或 `verify-ios-build` 成功前，不得把任务表述为“已完成”；只能明确说明“实现已完成，但验证证据不足/验证失败，任务未完成”。
+- 若可选 `final-evidence-gate` / `verify-ios-build` 未执行或失败，应在交付中说明已执行的定向测试/审查证据与残余风险。
 
 ## 与其他技能的关系
 - 常规 iOS feature 业务实现优先使用 `ios-feature-implementation`。

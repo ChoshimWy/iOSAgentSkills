@@ -1,6 +1,6 @@
 # 主 Agent 编排指令（Claude Code full tier）
 
-你是 iOS 任务的编排主 Agent，负责协调从计划到最终门禁的完整生命周期。
+你是 iOS 任务的编排主 Agent，负责协调从计划到定向验证、审查与按需补强验证的完整生命周期。
 
 ## 编排流程
 
@@ -30,8 +30,8 @@ CP2 Validation Baseline Freeze：锁定验证命令、workspace、scheme、desti
 - 有阻塞 → 精确回写 builder（新 Agent:general-purpose，携带阻塞描述和修复指令），最多 2 轮
 - 超限未收敛 → next_action = blocked
 
-### Phase 6: 门禁（CP3）
-`Skill("final-evidence-gate")` 裁决现有证据是否足够。必要时升级 `Skill("verify-ios-build")`。
+### Phase 6: 默认收口（CP3）
+主 Agent 基于定向测试/必要验证与 `code-review` 结论裁决默认收口；用户显式要求、发布前自检或高风险时，再按需执行 `Skill("final-evidence-gate")` / `Skill("verify-ios-build")`。
 
 ## 约束
 
@@ -49,5 +49,5 @@ CP2 Validation Baseline Freeze：锁定验证命令、workspace、scheme、desti
 
 ## lite / standard 简化
 
-- lite：跳过子 Agent，主 Agent 直接 Skill 链执行，CP3 门禁仍需完成
-- standard：顺序 Skill 链（实现 → 测试 → 审查 → 门禁），审查可并行 Explore
+- lite：跳过子 Agent，主 Agent 直接 Skill 链执行，CP3 默认收口仍需完成
+- standard：顺序 Skill 链（实现 → 测试/定向验证 → 审查），审查可并行 Explore

@@ -14,7 +14,7 @@ description: iOS/Swift 代码审查技能。只在需要 review 代码、审查 
 - 用户明确要求 review 代码、审查 diff、做 PR 评审。
 - 需要对 public API 或 SDK 接口做设计层面的可维护性评估。
 - 需要在合入前发现正确性、安全性、内存、并发和性能风险。
-- 非编排 / 单 Agent 的实现型任务进入固定四步链路时，作为 `testing` 之后、`final-evidence-gate` 之前的第三步静态审查阶段。
+- 非编排 / 单 Agent 的实现型任务进入默认三步链路时，作为 `testing/定向验证` 之后的第三步静态审查阶段。
 
 ## 核心规则
 - 审查优先级固定为：正确性 → 安全性 → 内存 → 并发 → 性能 → 可维护性 → 一致性。
@@ -22,7 +22,7 @@ description: iOS/Swift 代码审查技能。只在需要 review 代码、审查 
 - 结论要绑定文件与行号；没有定位信息时要明确说明原因。
 - 只根据代码和已知上下文下结论；缺少运行时证据时，不要伪装成已复现问题。
 - 注释审查默认纳入阻塞判定：重点检查 `public/open` API 文档注释、并发边界语义、副作用语义、失败路径语义和“注释-实现一致性”。
-- 在固定四步链路里，默认审查对象是当前工作区的 **unstaged + untracked** 代码变更；如果发现已有 staged 改动，应明确指出这不符合默认审查输入假设。
+- 在默认三步链路里，默认审查对象是当前工作区的 **unstaged + untracked** 代码变更；如果发现已有 staged 改动，应明确指出这不符合默认审查输入假设。
 - 如果发现变更直接落在 `Pods/<LibraryName>`，且上下文显示目标工程使用私有 Pod / 本地 `:path` Pod 联调，默认作为 `blocking_findings`：这通常意味着改错了源码位置。
 - 如果用户问题本质上是“为什么会 crash / 卡顿 / 泄漏”，不要把本 skill 当作主 skill，切换到 `debugging` 或 `ios-performance`。
 - 固定链路中必须审查验证故事：`testing` 的 `executed_validation` 是否发生在最后一次代码变更之后，是否覆盖最终交付 target / consumer app scheme，以及是否需要升级 `verify-ios-build`。
@@ -76,7 +76,7 @@ next_action: <fix-and-rerun|blocked|complete>
 - 输出 `blocking_findings` 时，优先把“注释导致的调用契约误判风险”放在首个真实阻塞点。
 
 ## 与其他技能的关系
-- 如果当前任务属于非编排 / 单 Agent 的实现链路，本 skill 默认承接 `testing` 之后的第三步；默认审查当前 unstaged + untracked 工作区改动，存在 blocking findings 时禁止进入 `final-evidence-gate`；无阻塞时仍需给出验证故事结论。
+- 如果当前任务属于非编排 / 单 Agent 的实现链路，本 skill 默认承接 `testing` 之后的第三步；默认审查当前 unstaged + untracked 工作区改动，存在 blocking findings 时不得按默认标准收口；无阻塞时仍需给出验证故事结论。
 - 需要真正修复代码异味时，切换到 `refactoring`、`swiftui-feature-implementation` 或对应实现型 skill。
 - 需要复现 crash、异常、卡顿、启动慢、泄漏或做 `xctrace` 取证时，切换到 `debugging` 或 `ios-performance`。
 - 需要设计 SDK 对外接口边界时，可联动 `sdk-architecture`。

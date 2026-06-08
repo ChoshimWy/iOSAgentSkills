@@ -26,10 +26,10 @@
 - 通过标准：锁定本轮 workspace / scheme / destination / 关键验证命令
 - 失败处理：先校准基线再继续验证，不在漂移基线上比较结果
 
-### CP3：Final Gate（最终门禁）
+### CP3：Final Gate（定向验证与审查收口）
 - 责任人：main agent
 - 进入条件：CP2 通过，修复轮次收敛
-- 通过标准：最终证据门禁（`final-evidence-gate`）接受现有证据，或升级后的 `verify-ios-build` 通过
+- 通过标准：定向测试或必要验证通过，且 `code-review` 无 blocking findings；`final-evidence-gate` / `verify-ios-build` 仅在用户显式要求或高风险时按需补强
 - 失败处理：按首个真实失败点回写 coder，进入下一轮；若环境阻塞则标记 blocked
 
 ## Fail-Fix-Report 纪律
@@ -38,4 +38,3 @@
 - `fix`：可修复则优先修复，并在同一基线重跑必要验证。
 - `report`：仅在“已修复并重跑”或“明确 blocked 原因”两种状态下汇报。
 - 禁止：带着已知阻塞项直接宣告完成，或把未重跑的修复当作已验证结论。
-

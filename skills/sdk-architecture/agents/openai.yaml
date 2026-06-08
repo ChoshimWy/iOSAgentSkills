@@ -1,4 +1,4 @@
 interface:
   display_name: "SDK 架构设计"
   short_description: "设计 SDK 边界、公共 API、配置与可测试架构"
-  default_prompt: "使用 $sdk-architecture 设计 SDK / Framework 的模块边界、公共 API、入口类、Configuration 和分发策略；若任务产出修改了 Apple Xcode 项目相关内容，收尾必须进入 $final-evidence-gate；证据不足、高风险或命中工程/依赖/签名/资源打包类改动时，再切到 $verify-ios-build 在目标项目的项目环境完成最终验证：iOS 项目若同时存在 `.xcworkspace` 与 `.xcodeproj` 必须优先 `.xcworkspace`，默认优先已连接真机，找不到连接中的真机时再回退到 simulator。"
+  default_prompt: "使用 $sdk-architecture 设计 SDK / Framework 的模块边界、公共 API、入口类、Configuration 和分发策略；若任务产出修改了 Apple Xcode 项目相关内容，默认以定向测试/必要验证与 $code-review 放行为收口；$final-evidence-gate / $verify-ios-build 仅在用户显式要求或需要补强完整项目环境证据时按需使用。"

@@ -7,7 +7,7 @@
 ## 构建、测试与设备
 - 构建、测试、simulator、真机、截图、日志、xcresult：优先 `Build iOS Apps` / `xcodebuildmcp` 相关工具。
 - `tester` 做定向验证、失败归因、日志查看时，优先复用 `ios-automation`、`testing` 既有能力。
-- 最终 `final-evidence-gate`，必要时升级 `verify-ios-build` 不下放给 subAgent；需要在目标项目环境执行最终门禁或越过 sandbox 时，由主 Agent 使用 `functions.exec_command` 并按需设置 `sandbox_permissions=\"require_escalated\"`。
+- 默认收口为定向验证 + `code-review`；`final-evidence-gate` / `verify-ios-build` 按需升级，不下放给 subAgent；需要在目标项目环境执行可选验证或越过 sandbox 时，由主 Agent 使用 `functions.exec_command` 并按需设置 `sandbox_permissions=\"require_escalated\"`。
 - 本地凡是执行 `xcodebuild`（含 `-list` / `-showdestinations` / build/test），默认都走非沙盒项目环境：使用 `functions.exec_command` 并显式设置 `sandbox_permissions=\"require_escalated\"`。
 
 ## 并行与写操作
@@ -16,6 +16,7 @@
 
 ## 非主链工具
 - Figma 只在明确涉及设计稿、Code Connect、设计系统资产或 Figma 写操作时使用，不默认混入编码主链路。
+- Browser / in-app browser 只用于 localhost / file 页面检查或前端交互验证，不替代 Apple API 查询、构建验证或可选验证。
 
 ## 低 Token 工具策略
 - 搜索优先 `rg` 精确匹配，不做全仓库 `cat` 或无过滤长输出。

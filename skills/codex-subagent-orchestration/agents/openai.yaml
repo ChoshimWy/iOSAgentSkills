@@ -1,6 +1,6 @@
 interface:
   display_name: "Codex 多 Agent 编排"
-  short_description: "默认优先的 iOS 主 Skill 入口：按 lite/standard/full 协调实现、调试、性能、审查、测试与最终门禁"
+  short_description: "默认优先的 iOS 主 Skill 入口：按 lite/standard/full 协调实现、调试、性能、审查、测试与可选验证"
   default_prompt: "默认优先使用 $codex-subagent-orchestration 作为默认优先的自适应多 Agent 编排与 iOS 主 Skill 入口，先按 lite / standard / full 选择编排档位，再协调实现、调试、性能、审查、测试与最终 final-evidence-gate 证据门禁；若当前运行时或上层策略限制未获授权，则临时回退单 Agent。"
 
 policy:

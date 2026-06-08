@@ -40,8 +40,8 @@ def main() -> int:
         ROOT / "AGENTS.md",
         [
             "默认先使用 `codex-subagent-orchestration`",
-            "固定四步收口",
-            "`实现 skill -> testing -> code-review -> final-evidence-gate`",
+            "默认三步收口",
+            "`实现 skill -> testing/定向验证 -> code-review`",
             "`lite` / `standard` / `full`",
             "临时回退为单 Agent",
             "80~120 行",
@@ -57,7 +57,7 @@ def main() -> int:
         [
             "`codex-subagent-orchestration/` —— 默认优先的自适应多 Agent 编排入口",
             "python3 scripts/lint_subagent_orchestration_policy.py",
-            "`实现 skill -> testing -> code-review -> final-evidence-gate`",
+            "`实现 skill -> testing/定向验证 -> code-review`",
             "`lite` / `standard` / `full`",
             "80~120 行",
             "计划模式（`proposed_plan`）输出，只要是实现链路也必须显式包含 `code-review` 审查步骤",
@@ -68,11 +68,11 @@ def main() -> int:
         ROOT / "skills" / "TAXONOMY.md",
         [
             "默认优先切到 `codex-subagent-orchestration`",
-            "固定四步收口",
-            "`实现 skill -> testing -> code-review -> final-evidence-gate`",
+            "默认三步收口",
+            "`实现 skill -> testing/定向验证 -> code-review`",
             "`appleDeveloperDocs`",
             "`lite` / `standard` / `full`",
-            "`ios-automation`、`xcode-build`、`final-evidence-gate` 或 `verify-ios-build`",
+            "需要补强证据时再切 `final-evidence-gate` 或 `verify-ios-build`",
         ],
         failures,
     )
@@ -94,7 +94,7 @@ def main() -> int:
             "references/tool-routing.md",
             "80~120 行",
             "`/tmp/*.log`",
-            "实现型任务仍必须保留 `code-review` 审查阶段",
+            "实现型任务仍必须保留 `testing/定向验证` 与 `code-review` 审查阶段",
         ],
         failures,
     )

@@ -41,10 +41,10 @@ Claude Code 的 `Agent` 工具支持以下 `subagent_type`：
 ### lite（doc-only / rule-only）
 - 单 Agent 执行
 - 实现链路仍保留 code-review（可由主 Agent 轻量审查）
-- 涉及 Apple Xcode 项目改动时仍必须执行 final-evidence-gate
+- 涉及 Apple Xcode 项目改动时可按需执行 final-evidence-gate
 
 ### standard（code-small / code-medium）
-- 顺序执行：实现 Skill → 测试 Skill → 审查 → 门禁
+- 顺序执行：实现 Skill → 测试 Skill/定向验证 → 审查
 - 可并行：审查时启动 `Agent:Explore` 进行静态分析
 - 主 Agent 聚合结果，必要时回写修正（最多 2 轮）
 
@@ -53,27 +53,26 @@ Claude Code 的 `Agent` 工具支持以下 `subagent_type`：
 - `Agent:Explore` 收集上下文、梳理依赖与风险
 - `Agent:general-purpose` 执行实现
 - 并行启动：`Agent:Explore`（审查）∥ `Agent:general-purpose`（测试）
-- 主 Agent 聚合 → `final-evidence-gate` → 必要时 `verify-ios-build`
+- 主 Agent 聚合测试与审查结论；按需执行 `final-evidence-gate` / `verify-ios-build`
 
 ## Skill 使用声明
 
 使用任何 Skill 前，必须先输出 `>>> Skill: <skill-name>` 声明即将使用的 skill，让用户明确知道当前路由到了哪个 skill。
 
-## 四步收口工作流（默认）
+## 三步收口工作流（默认）
 
-所有实现型任务必须按以下四步收口，不可跳过任何一步：
+所有实现型任务默认按以下三步收口；`final-evidence-gate` / `verify-ios-build` 仅作为按需补强验证：
 
 ```
 Step 1 — 实现：Skill("ios-feature-implementation") 或 SwiftUI/UIKit 变体
-Step 2 — 测试：Skill("testing")
+Step 2 — 测试/定向验证：Skill("testing")，或记录 no_test_reason 与替代验证依据
 Step 3 — 审查：Skill("code-review")
-Step 4 — 门禁：Skill("final-evidence-gate")；必要时升级 Skill("verify-ios-build")
 ```
 
 循环控制：
 - 同类问题最多回写实现步骤 2 次
 - 超过上限仍未收敛 → `next_action = blocked`
-- 未通过 CP3 不得宣告任务完成
+- 定向验证失败或 code-review 存在阻塞项时不得宣告默认收口完成
 
 ## Task 工具用于 Checkpoint 跟踪
 
@@ -84,7 +83,7 @@ Step 4 — 门禁：Skill("final-evidence-gate")；必要时升级 Skill("verify
 | CP0 | Intent Lock | `TaskCreate("CP0 Intent Lock — 目标与边界确认")` |
 | CP1 | Anchor Slice | `TaskCreate("CP1 Anchor Slice — 首个关键切片验收")` |
 | CP2 | Validation Baseline Freeze | `TaskCreate("CP2 Baseline Freeze — 锁定验证基线")` |
-| CP3 | Final Gate | `TaskCreate("CP3 Final Gate — 最终证据门禁")` |
+| CP3 | Final Gate | `TaskCreate("CP3 Final Gate — 定向验证与审查收口")` |
 
 主 Agent 维护 `checkpoint_status` 作为单一事实源。每个 CP 完成后标记 `completed`。
 

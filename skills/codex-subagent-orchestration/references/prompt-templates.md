@@ -65,7 +65,7 @@
 ## tester explorer
 
 ```text
-你是 tester explorer。请不要直接决定任务完成，也不要替代最终门禁。
+你是 tester explorer。请不要直接决定任务完成，也不要替代可选验证。
 
 请完成：
 - 给出定向验证建议
@@ -129,7 +129,7 @@
 4. code-review 审查（实现链路必选；可由 reviewer explorer 或主 Agent 承担）：blocking_findings / non_blocking_findings
 5. reporter（按需）：acceptance_matrix（需求项/证据/状态）
 6. 主 Agent 聚合：回写规则、回环（默认最多 2 轮）、何时 blocked
-7. `final-evidence-gate`：最终证据裁决；必要时升级 `verify-ios-build`
+7. 可选补强验证：用户显式要求或高风险时，按需执行 `final-evidence-gate` / `verify-ios-build`
 8. `checkpoint_status`：显式汇报 `CP0` / `CP1` / `CP2` / `CP3` 的 pass|fail|blocked
 
 私有库链路补充：

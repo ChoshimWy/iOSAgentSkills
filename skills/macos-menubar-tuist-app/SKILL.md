@@ -1,6 +1,6 @@
 ---
 name: macos-menubar-tuist-app
-description: Tuist + SwiftUI macOS 菜单栏应用入口：LSUIElement、manifest、构建/重构/审查。无 Xcode 工程的 SwiftPM 打包走 macos-spm-app-packaging；Xcode 改动收尾交给 final-evidence-gate。
+description: 使用 Tuist 与 SwiftUI 构建、重构或审查 macOS 菜单栏应用。仅适用于 `LSUIElement` 菜单栏工具与 Tuist manifest 驱动的工程；不要用于无 Xcode 工程的 SwiftPM 打包，后者应交给 `macos-spm-app-packaging`；若任务产出修改了 Apple Xcode 项目相关内容，默认以定向测试/必要验证与 `code-review` 放行为收口；`final-evidence-gate` / `verify-ios-build` 仅在用户显式要求或需要补强完整项目环境证据时按需使用。
 ---
 
 # macOS 菜单栏 Tuist 应用
@@ -58,11 +58,11 @@ TUIST_SKIP_UPDATE_CHECK=1 tuist build <TargetName> --configuration Debug
 ./run-menubar.sh
 ```
 
-## 最终证据门禁
-- 只要当前任务产出修改了 Apple Xcode 项目相关内容（代码、测试、资源、工程文件、构建脚本、plist / entitlements / xcconfig / scheme 或项目内环境配置），最终必须进入 `final-evidence-gate`；证据不足、高风险或命中工程/依赖/签名/资源打包类改动时，再切到 `verify-ios-build`。
-- 最终验证证据必须来自目标项目根目录的项目环境；沙箱内的构建结果不能作为最终验收结论。
+## 可选证据验证
+- 只要当前任务产出修改了 Apple Xcode 项目相关内容（代码、测试、资源、工程文件、构建脚本、plist / entitlements / xcconfig / scheme 或项目内环境配置），最终默认以定向测试/必要验证与 `code-review` 放行为收口；`final-evidence-gate` / `verify-ios-build` 仅在用户显式要求或需要补强完整项目环境证据时按需使用。
+- 若执行可选完整验证，证据必须来自目标项目根目录的项目环境；沙箱内的构建结果不能作为完整项目环境证据。
 - 对 iOS 项目，若升级到 `verify-ios-build`，必须优先 `.xcworkspace`（当 `.xcworkspace` 与 `.xcodeproj` 同时存在时），并默认优先已连接真机；找不到连接中的真机时再回退到 simulator。
-- 对 macOS Xcode 工程，`verify-ios-build` 走宿主机 `xcodebuild build` 门禁；在 `final-evidence-gate` 接受证据或验证成功前同样不得宣告任务已完成，必须明确写出“任务未完成”。
+- 对 macOS Xcode 工程，`verify-ios-build` 走宿主机 `xcodebuild build` 验证；若可选验证失败，应说明默认收口证据与完整验证风险。
 
 ## 与其他技能的关系
 - 如果目标是无 `.xcodeproj` 的 SwiftPM 打包、签名、公证和 appcast，切换到 `macos-spm-app-packaging`。

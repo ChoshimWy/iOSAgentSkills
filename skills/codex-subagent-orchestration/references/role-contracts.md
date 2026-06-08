@@ -27,7 +27,7 @@
 
 ### 不负责
 - 最终完成态裁决
-- 最终 `final-evidence-gate`，必要时升级 `verify-ios-build`
+- 默认收口为定向验证 + `code-review`；`final-evidence-gate` / `verify-ios-build` 按需升级
 - 静态代码审查结论
 
 ## reviewer explorer
@@ -53,7 +53,7 @@
 
 ### 不负责
 - 直接改代码
-- 跑最终门禁
+- 跑可选验证
 - 判断任务已完成
 
 ## tester
@@ -83,7 +83,7 @@
 
 ### 不负责
 - 最终完成态裁决
-- 替代 `final-evidence-gate` / `verify-ios-build`
+- 替代主 Agent 的默认收口或按需完整验证
 
 ## reporter
 
@@ -108,7 +108,7 @@
 
 ### 不负责
 - 改代码
-- 替代主 Agent 的最终门禁裁决
+- 替代主 Agent 的可选验证裁决
 
 ## main agent
 
@@ -117,7 +117,7 @@
 - 启动与回收 subAgent
 - 聚合 coder / reviewer / tester 输出
 - 精确回写 coder
-- 执行最终 `final-evidence-gate`，必要时升级 `verify-ios-build`
+- 执行默认收口为定向验证 + `code-review`；`final-evidence-gate` / `verify-ios-build` 按需升级
 - 判定任务完成 / 未完成 / 阻塞
 
 ### 固定输出（汇总态）

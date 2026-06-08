@@ -1,5 +1,5 @@
 interface:
   display_name: "iOS Feature 实现"
-  short_description: "通用 iOS feature 业务实现、导航接线与强制收尾门禁"
+  short_description: "通用 iOS feature 业务实现、导航接线与按需验证"
   default_prompt: >-
-    使用 $ios-feature-implementation 处理与具体 UI 技术栈无关的 iOS 业务层代码：service、repository、use case、view model、依赖注入与导航接线。实现阶段输出必须包含 `changed_files`、`summary`、`known_risks`，并且 `test_impact` 与 `no_test_reason` 二选一必填。如果当前任务未进入多 Agent 编排，或当前轮只能以单 Agent 执行，实现完成后默认也按固定四步收口：$ios-feature-implementation -> $testing -> $code-review -> $final-evidence-gate；其中 $testing 阶段若不新增测试代码，也要明确给出 no_test_reason 与验证依据；随后由 $code-review 审查当前未暂存代码，没有 blocking findings 才进入 $final-evidence-gate。若任务产出修改了 Apple Xcode 项目相关内容，收尾必须进入 $final-evidence-gate；证据不足、高风险或命中工程/依赖/签名/资源打包类改动时，再切到 $verify-ios-build 在目标项目的项目环境完成最终验证：iOS 项目若同时存在 `.xcworkspace` 与 `.xcodeproj` 必须优先 `.xcworkspace`，默认优先已连接真机，找不到连接中的真机时再回退到 simulator。
+    使用 $ios-feature-implementation 处理与具体 UI 技术栈无关的 iOS 业务层代码：service、repository、use case、view model、依赖注入与导航接线。实现阶段输出必须包含 `changed_files`、`summary`、`known_risks`，并且 `test_impact` 与 `no_test_reason` 二选一必填。如果当前任务未进入多 Agent 编排，或当前轮只能以单 Agent 执行，实现完成后默认按三步收口：$ios-feature-implementation -> $testing/定向验证 -> $code-review；其中 $testing 阶段若不新增测试代码，也要明确给出 no_test_reason 与验证依据；随后由 $code-review 审查当前未暂存代码，没有 blocking findings 即可按默认标准收口。若任务产出修改了 Apple Xcode 项目相关内容，默认以定向测试/必要验证与 $code-review 放行为收口；$final-evidence-gate / $verify-ios-build 仅在用户显式要求或需要补强完整项目环境证据时按需使用。

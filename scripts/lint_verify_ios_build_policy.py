@@ -44,38 +44,53 @@ def require_not_contains(path: Path, snippets: list[str], failures: list[str]) -
 
 def main() -> int:
     failures: list[str] = []
+    policy_paths = [
+        ROOT / "AGENTS.md",
+        ROOT / "CLAUDE.md",
+        ROOT / "README.md",
+        ROOT / "skills" / "TAXONOMY.md",
+        ROOT / "skills" / "codex-subagent-orchestration" / "SKILL.md",
+        ROOT / "config" / "claude-code" / "agents" / "orchestration.md",
+        ROOT / "config" / "claude-code" / "memory-seed.md",
+        ROOT / "config" / "codex" / "templates" / "agents" / "README.md",
+        ROOT / "config" / "codex" / "templates" / "agents" / "pm.toml",
+        ROOT / "config" / "codex" / "templates" / "agents" / "tester.toml",
+    ]
+    for path in policy_paths:
+        require_not_contains(
+            path,
+            [
+                "最终都必须进入 `final-evidence-gate`",
+                "`实现 skill -> testing -> code-review -> final-evidence-gate`",
+                "任务都不算完成",
+                "四步收口",
+                "固定四步",
+                "未通过 CP3 不得宣告完成",
+                "Apple 相关改动必须进入 final-evidence-gate",
+            ],
+            failures,
+        )
 
     require_contains(
         ROOT / "AGENTS.md",
         [
-            "条件化最终证据门禁（final-evidence-gate）",
+            "默认收口与可选证据验证",
             "目标项目环境",
-            "本地所有 `xcodebuild` 命令",
-            "codex_verify.sh",
-            "~/.codex/bin/codex_verify",
-            "XCODE_DERIVED_DATA",
-            "如果同时存在 `.xcworkspace` 和 `.xcodeproj`，验证优先使用 `.xcworkspace`",
+            "完整项目环境证据",
             "final-evidence-gate",
-            "绑定了单元测试 `*Tests` target / bundle 的 scheme",
-            "已连接真机",
-            "`实现 skill -> testing -> code-review -> final-evidence-gate`",
-            "在 `final-evidence-gate` 接受现有证据或 `verify-ios-build` 成功之前，任务都不算完成",
+            "Xcode 系统 DerivedData",
+            "`实现 skill -> testing/定向验证 -> code-review`",
+            "默认完成标准：定向测试或必要验证通过，且 `code-review` 无 blocking findings",
         ],
         failures,
     )
     require_contains(
         ROOT / "README.md",
         [
-            "条件化最终证据门禁",
-            "目标项目根目录的项目环境",
-            "本地所有 `xcodebuild` 命令",
-            "codex_verify.sh",
-            "~/.codex/bin/codex_verify",
-            "XCODE_DERIVED_DATA",
-            "优先 `.xcworkspace`",
-            "绑定了单元测试 `*Tests` target / bundle 的 scheme",
-            "已连接真机",
-            "`实现 skill -> testing -> code-review -> final-evidence-gate`",
+            "默认收口与可选证据验证",
+            "完整项目环境证据",
+            "Xcode 系统 DerivedData",
+            "`实现 skill -> testing/定向验证 -> code-review`",
             "python3 scripts/lint_verify_ios_build_policy.py",
         ],
         failures,
@@ -83,15 +98,11 @@ def main() -> int:
     require_contains(
         ROOT / "skills" / "TAXONOMY.md",
         [
-            "最终都必须进入 `final-evidence-gate` 做完成态裁决",
-            "目标项目根目录的项目环境",
-            "codex_verify.sh",
-            "~/.codex/bin/codex_verify",
-            "优先 `.xcworkspace`",
-            "绑定了单元测试 `*Tests` target / bundle 的 scheme",
-            "已连接真机",
-            "`实现 skill -> testing -> code-review -> final-evidence-gate`",
-            "不能把任务表述为“已完成”",
+            "默认完成标准：定向测试或必要验证通过",
+            "sandbox 结果",
+            "`.xcworkspace` 优先",
+            "`实现 skill -> testing/定向验证 -> code-review`",
+            "`final-evidence-gate` 与 `verify-ios-build` 不再是所有 Apple Xcode 项目改动的强制收尾",
         ],
         failures,
     )
@@ -106,7 +117,7 @@ def main() -> int:
                 "项目环境",
                 ".xcworkspace",
                 "已连接真机",
-                "不得把任务表述",
+                "残余风险",
             ],
             failures,
         )
@@ -120,8 +131,7 @@ def main() -> int:
                 [
                     "$final-evidence-gate",
                     "$verify-ios-build",
-                    "项目环境",
-                    ".xcworkspace",
+                    "按需使用",
                 ],
                 failures,
             )
@@ -134,7 +144,7 @@ def main() -> int:
         require_contains(
             ROOT / "skills" / direct_flow_skill / "SKILL.md",
             [
-                "固定四步",
+                "三步",
                 "testing",
                 "code-review",
                 "verify-ios-build",
@@ -159,9 +169,7 @@ def main() -> int:
         require_contains(
             ROOT / "skills" / targeted_skill / "SKILL.md",
             [
-                "workspace / scheme / destination 基线",
-                "require_escalated",
-                "Xcode 系统 DerivedData",
+                "定向测试",
             ],
             failures,
         )
@@ -184,7 +192,6 @@ def main() -> int:
         ROOT / "skills" / "xcode-build" / "SKILL.md",
         [
             "require_escalated",
-            "Xcode 系统 DerivedData",
         ],
         failures,
     )
@@ -192,18 +199,18 @@ def main() -> int:
     require_contains(
         ROOT / "skills" / "verify-ios-build" / "SKILL.md",
         [
-            "项目环境构建验证执行器",
+            "按需项目环境构建验证执行器",
             "项目环境",
             "require_escalated",
             "codex_verify.sh",
             "~/.codex/bin/codex_verify",
             "本地 `xcodebuild` 命令（含 `-list` / `-showdestinations` / build/test）统一按非沙盒项目环境执行",
             "本地 `verify-ios-build` 不支持 `XCODE_DERIVED_DATA` 覆盖",
-            "默认复用同一套 workspace / scheme / destination 基线",
+            "验证默认复用同一套 workspace / scheme / destination 基线",
             "绑定了单元测试 `*Tests` target / bundle 的 scheme",
             ".xcworkspace",
             "已连接真机",
-            "任务未完成",
+            "残余风险",
             "macOS Xcode 工程",
             "XCODE_UI_SMOKE_MODE",
             "text-first",
@@ -225,9 +232,7 @@ def main() -> int:
         [
             "项目环境",
             "本地 `verify-ios-build` 不支持 `XCODE_DERIVED_DATA` 覆盖",
-            "codex_verify.sh",
-            "~/.codex/bin/codex_verify",
-            "本地执行 `xcodebuild`（含 `-list` / `-showdestinations` / build/test）默认在项目环境直接执行",
+            "项目环境执行",
             "绑定了单元测试 `*Tests` target / bundle 的 scheme",
             "复用同一套 workspace / scheme / destination 基线",
             "已连接真机",
@@ -341,7 +346,7 @@ def main() -> int:
             "final-evidence-gate",
             "`verify-ios-build`",
             "项目环境",
-            "任务未完成",
+            "完整验证风险",
         ],
         failures,
     )
@@ -390,8 +395,7 @@ def main() -> int:
             targeted_openai,
             [
                 "$verify-ios-build",
-                "scheme",
-                "基线",
+                "按需使用",
             ],
                 failures,
         )
