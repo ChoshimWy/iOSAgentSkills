@@ -1,6 +1,6 @@
 ---
 name: swiftui-feature-implementation
-description: SwiftUI 页面统一入口。覆盖三种子模式：1) 模式选型 — 新页面结构、导航层级、状态归属和组件拆分方案选择；2) 常规实现 — 在既定架构下落地 SwiftUI 页面、组件、列表、表单、状态绑定与界面交互；3) 视图重构 — 已有 SwiftUI 文件的结构化整理，抽离子视图、MV 优先数据流、稳定视图树。如果任务核心是 Liquid Glass 专项、性能取证或官方文档检索，不要使用本 skill 作为主 skill；若任务产出修改了 Apple Xcode 项目相关内容，收尾必须进入 `final-evidence-gate`；证据不足、高风险或命中工程/依赖/签名/资源打包类改动时，再切到 `verify-ios-build` 在项目环境完成最终验证。
+description: SwiftUI 页面统一入口：模式选型、常规页面/组件实现、已有 View 结构化重构。Liquid Glass、性能取证和官方文档查询另走专项；Xcode 改动收尾交给 final-evidence-gate。
 ---
 
 # SwiftUI Feature 实现
@@ -75,4 +75,3 @@ SwiftUI 页面开发统一入口，根据任务阶段自动选择子模式。不
 - 业务层类型、service、导航 wiring：`ios-feature-implementation`
 - UIKit 页面：`uikit-feature-implementation`
 - 视觉设计系统、色板、无障碍：`ui-ux-design-system`
-

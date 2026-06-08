@@ -1,6 +1,6 @@
 ---
 name: macos-menubar-tuist-app
-description: 使用 Tuist 与 SwiftUI 构建、重构或审查 macOS 菜单栏应用。仅适用于 `LSUIElement` 菜单栏工具与 Tuist manifest 驱动的工程；不要用于无 Xcode 工程的 SwiftPM 打包，后者应交给 `macos-spm-app-packaging`；若任务产出修改了 Apple Xcode 项目相关内容，收尾必须进入 `final-evidence-gate`；证据不足、高风险或命中工程/依赖/签名/资源打包类改动时，再切到 `verify-ios-build` 在项目环境完成最终验证。
+description: Tuist + SwiftUI macOS 菜单栏应用入口：LSUIElement、manifest、构建/重构/审查。无 Xcode 工程的 SwiftPM 打包走 macos-spm-app-packaging；Xcode 改动收尾交给 final-evidence-gate。
 ---
 
 # macOS 菜单栏 Tuist 应用
@@ -68,4 +68,3 @@ TUIST_SKIP_UPDATE_CHECK=1 tuist build <TargetName> --configuration Debug
 - 如果目标是无 `.xcodeproj` 的 SwiftPM 打包、签名、公证和 appcast，切换到 `macos-spm-app-packaging`。
 - 如果是通用 Archive、导出、签名和 CI 流程，而非 Tuist 菜单栏专项，切换到 `xcode-build`。
 - 需要官方 API 依据时，可辅以 `apple-docs`。
-

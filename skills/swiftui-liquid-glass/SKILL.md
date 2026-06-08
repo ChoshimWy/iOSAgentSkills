@@ -1,6 +1,6 @@
 ---
 name: swiftui-liquid-glass
-description: 使用 iOS 26+ 的 Liquid Glass API 构建、审查或改进 SwiftUI 功能。只在问题核心是 `glassEffect`、`GlassEffectContainer`、玻璃按钮样式与兼容性回退时使用；不要把它当作通用 SwiftUI 页面模式、跨技术栈视觉设计、普通页面落地或性能审计技能；若任务产出修改了 Apple Xcode 项目相关内容，收尾必须进入 `final-evidence-gate`；证据不足、高风险或命中工程/依赖/签名/资源打包类改动时，再切到 `verify-ios-build` 在项目环境完成最终验证。
+description: iOS 26+ SwiftUI Liquid Glass 专项：glassEffect、GlassEffectContainer、玻璃按钮样式和兼容回退。通用 SwiftUI、跨技术栈设计和性能审计走其它 skill；Xcode 改动收尾交给 final-evidence-gate。
 ---
 
 # SwiftUI Liquid Glass
@@ -49,4 +49,3 @@ description: 使用 iOS 26+ 的 Liquid Glass API 构建、审查或改进 SwiftU
 - 需要先做跨技术栈视觉方向、配色、排版和设计系统方案时，切换到 `ui-ux-design-system`。
 - 需要运行时性能诊断或 `xctrace` 取证时，切换到 `ios-performance`。
 - 需要官方 API 事实依据时，可辅以 `apple-docs`。
-

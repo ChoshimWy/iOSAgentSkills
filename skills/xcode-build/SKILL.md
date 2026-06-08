@@ -1,6 +1,6 @@
 ---
 name: xcode-build
-description: Xcode 构建与配置技能。只用于 Xcode 项目配置、Build Settings、构建脚本、Archive/Export、CI/CD、代码签名和分发链路；如果任务只是收尾阶段跑一次 `xcodebuild` 验收、选择 Simulator / 真机执行路径或编写测试，不要使用本 skill 作为主 skill；若任务产出修改了 Apple Xcode 项目相关内容，收尾仍必须进入 `final-evidence-gate`；证据不足、高风险或命中工程/依赖/签名/资源打包类改动时，再切到 `verify-ios-build` 在项目环境完成最终验证。
+description: Xcode 构建配置入口：项目配置、Build Settings、构建脚本、Archive/Export、CI/CD、签名和分发。一次性 xcodebuild 验收或测试编写走其它 skill；Xcode 改动收尾交给 final-evidence-gate。
 ---
 
 # Xcode 构建与配置
@@ -43,4 +43,3 @@ description: Xcode 构建与配置技能。只用于 Xcode 项目配置、Build 
 - 当任务是配置 Build Settings、签名、Archive/Export、CI/CD 或构建脚本时，优先使用本技能。
 - 如果只是本次实现完成后跑一次 `xcodebuild` 做收尾验证，切换到 `verify-ios-build`。
 - 如果任务是 SDK 分发策略、模块边界或 XCFramework 设计层面，优先结合 `sdk-architecture` 使用。
-

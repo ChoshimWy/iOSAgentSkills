@@ -1,6 +1,6 @@
 ---
 name: debugging
-description: iOS 调试与问题排查技能。只在存在 crash、异常、运行时错误、对象未释放、内存泄漏、僵死等症状并需要诊断根因时使用；不要把“编译验证 / 构建验证 / 构建检查 / 门禁验收 / 最后验证一下能不能编译 / 跑一下 xcodebuild”这类收尾门禁请求误判到本 skill，这类请求统一交给 `verify-ios-build`；也不要把它当作静态 code review、benchmark / profiling / `xctrace` 或构建配置技能；若任务产出修改了 Apple Xcode 项目相关内容，收尾必须进入 `final-evidence-gate`；证据不足、高风险或命中工程/依赖/签名/资源打包类改动时，再切到 `verify-ios-build` 在项目环境完成最终验证。
+description: iOS 运行时排障入口：crash、异常、错误日志、对象未释放、泄漏和僵死根因诊断。不要用于构建验收、静态 review、profiling 或 Build Settings；Xcode 改动收尾交给 final-evidence-gate。
 ---
 
 # iOS 调试与问题排查
@@ -67,4 +67,3 @@ description: iOS 调试与问题排查技能。只在存在 crash、异常、运
 - 掉帧、启动慢、CPU / 内存异常、`measure(metrics:)`、`xctrace` 或 Instruments 模板选择等性能问题，优先切换到 `ios-performance`。
 - 需要构建签名、Archive、导出或 CI 配置时，切换到 `xcode-build`。
 - 需要直接整理实现代码而非定位运行时根因时，切换到 `refactoring`、`swiftui-feature-implementation` 或其它实现型 skill。
-

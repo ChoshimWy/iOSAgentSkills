@@ -1,6 +1,6 @@
 ---
 name: sdk-architecture
-description: SDK/Framework 架构设计技能。只在设计 SDK 模块边界、对外 API、入口类、Configuration、分发策略或可测试架构时使用；不要用于普通应用页面开发、一般 SwiftUI 实现或一次性构建校验；若任务产出修改了 Apple Xcode 项目相关内容，收尾必须进入 `final-evidence-gate`；证据不足、高风险或命中工程/依赖/签名/资源打包类改动时，再切到 `verify-ios-build` 在项目环境完成最终验证。
+description: SDK/Framework 架构入口：模块边界、public API、入口类、Configuration、分发策略和可测试架构。普通页面、SwiftUI 实现和一次性构建校验走其它 skill；Xcode 改动收尾交给 final-evidence-gate。
 ---
 
 # SDK 架构设计
@@ -46,4 +46,3 @@ description: SDK/Framework 架构设计技能。只在设计 SDK 模块边界、
 - 如果只是补单元测试或 UI 测试，切换到 `testing`。
 - 如果任务重点是构建签名、Archive、导出或 CI，切换到 `xcode-build`。
 - 需要审查公开 API 设计质量时，可联动 `code-review`。
-

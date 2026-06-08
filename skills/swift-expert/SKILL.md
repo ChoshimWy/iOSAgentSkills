@@ -1,6 +1,6 @@
 ---
 name: swift-expert
-description: Swift 进阶开发技能。仅用于复杂并发隔离、PAT/类型擦除、跨平台可用性策略和高阶 API 设计等 Swift 问题；不处理常规 iOS 业务实现、性能分析测试或一般 UI 重构；若任务产出修改了 Apple Xcode 项目相关内容，收尾必须进入 `final-evidence-gate`；证据不足、高风险或命中工程/依赖/签名/资源打包类改动时，再切到 `verify-ios-build` 在项目环境完成最终验证。
+description: Swift 进阶问题入口：复杂并发隔离、PAT/类型擦除、跨平台 availability 和高阶 API 设计。常规 iOS 业务、性能测试和一般 UI 重构走其它 skill；Xcode 改动收尾交给 final-evidence-gate。
 ---
 
 # Swift 进阶开发
@@ -46,4 +46,3 @@ description: Swift 进阶开发技能。仅用于复杂并发隔离、PAT/类型
 - 新建 SwiftUI 页面模式设计优先使用 `swiftui-feature-implementation`。
 - 已有 SwiftUI 视图文件整理优先使用 `swiftui-feature-implementation`。
 - 只有在出现复杂抽象、并发隔离或跨平台策略时，才切换到本技能。
-

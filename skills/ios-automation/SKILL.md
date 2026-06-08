@@ -1,6 +1,6 @@
 ---
 name: ios-automation
-description: iOS 设备自动化技能（模拟器 + 真机统一入口）。按目标设备类型自动路由到 Simulator 或真机子模式；Simulator 场景覆盖构建测试、语义导航、无障碍检查、视觉比对与模拟器生命周期管理；真机场景覆盖设备发现、build/test、安装、启动、进程查询与常见真机诊断；如果问题核心是签名、Build Settings 设计或普通业务代码实现，不要使用本 skill 作为主 skill；若任务产出修改了 Apple Xcode 项目相关内容，收尾必须进入 `final-evidence-gate`；证据不足、高风险或命中工程/依赖/签名/资源打包类改动时，再切到 `verify-ios-build` 在项目环境完成最终验证。
+description: iOS Simulator/真机自动化入口：设备发现、build/test、安装启动、UI/无障碍/视觉检查与常见设备诊断。签名、Build Settings 和业务实现走其它 skill；Xcode 改动收尾交给 final-evidence-gate。
 ---
 
 # iOS 设备自动化
@@ -66,7 +66,7 @@ description: iOS 设备自动化技能（模拟器 + 真机统一入口）。按
 - 本地执行 `xcodebuild` 默认在项目环境直接执行（CC 使用 `Bash` 工具；Codex 使用 `functions.exec_command` + `require_escalated`）
 - 本地缓存统一复用 Xcode 系统 DerivedData（`~/Library/Developer/Xcode/DerivedData`）
 - 如果未显式指定 scheme，默认优先选择绑定了单元测试 `*Tests` target/bundle 的 scheme
-- 如果同一任务后续还要进入 `final-evidence-gate`，最终证据门禁默认复用本次定向测试的 workspace/scheme/destination 基线
+- 如果同一任务后续还要进入 `final-evidence-gate`，最终证据门禁默认复用本次定向测试的 workspace / scheme / destination 基线
 
 ## 参考资源
 
@@ -91,4 +91,3 @@ description: iOS 设备自动化技能（模拟器 + 真机统一入口）。按
 - 收尾一次性构建验收：`verify-ios-build`
 - 补单元测试或 UI 测试代码：`testing`
 - Crash/运行时根因排查：`debugging`
-

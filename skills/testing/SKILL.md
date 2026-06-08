@@ -1,6 +1,6 @@
 ---
 name: testing
-description: iOS 测试编写技能。只在需要为 iOS/macOS 代码编写或补充单元测试、UI 测试、Mock/Stub/Spy 和 async 测试代码时使用；不要把“编译验证 / 构建验证 / 构建检查 / 门禁验收 / 最后验证一下能不能编译 / 跑一下 xcodebuild”误判到本 skill，这类完成态裁决统一交给 `final-evidence-gate`，必要时再由其升级到 `verify-ios-build`；也不要把它当作性能 benchmark / `measure(metrics:)`、代码审查或运行时排障技能；若任务产出修改了 Apple Xcode 项目相关内容，收尾必须进入 `final-evidence-gate`；证据不足、高风险或命中工程/依赖/签名/资源打包类改动时，再切到 `verify-ios-build` 在项目环境完成最终验证。
+description: iOS/macOS 测试编写入口：单元测试、UI 测试、Mock/Stub/Spy 与 async 测试。不要用于构建验收、性能 profiling、代码审查或运行时排障；Xcode 改动收尾交给 final-evidence-gate。
 ---
 
 # iOS 测试编写
@@ -102,4 +102,3 @@ final class UserServiceTests: XCTestCase {
 - 需要定位运行时 crash、泄漏或卡顿时，切换到 `debugging`。
 - 需要做性能基线、`measure(metrics:)`、启动性能回归或 `xctrace` / Instruments 取证时，切换到 `ios-performance`。
 - 需要设计 SDK 级可测试边界时，可联动 `sdk-architecture`。
-

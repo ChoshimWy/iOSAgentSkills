@@ -23,6 +23,9 @@ FINAL_EVIDENCE_SKILLS = [
 
 
 def require_contains(path: Path, snippets: list[str], failures: list[str]) -> None:
+    if not path.exists():
+        failures.append(f"{path.relative_to(ROOT)} missing")
+        return
     text = path.read_text()
     missing = [snippet for snippet in snippets if snippet not in text]
     if missing:
@@ -30,6 +33,9 @@ def require_contains(path: Path, snippets: list[str], failures: list[str]) -> No
 
 
 def require_not_contains(path: Path, snippets: list[str], failures: list[str]) -> None:
+    if not path.exists():
+        failures.append(f"{path.relative_to(ROOT)} missing")
+        return
     text = path.read_text()
     present = [snippet for snippet in snippets if snippet in text]
     if present:
@@ -94,7 +100,7 @@ def main() -> int:
                 "项目环境",
                 ".xcworkspace",
                 "已连接真机",
-                "任务未完成",
+                "不得把任务表述",
             ],
             failures,
         )
@@ -148,17 +154,30 @@ def main() -> int:
             ROOT / "skills" / targeted_skill / "SKILL.md",
             [
                 "workspace / scheme / destination 基线",
-                "绑定了单元测试 `*Tests` target / bundle 的 scheme",
-                'sandbox_permissions=\\"require_escalated\\"',
+                "require_escalated",
                 "Xcode 系统 DerivedData",
             ],
             failures,
         )
+    require_contains(
+        ROOT / "skills" / "testing" / "SKILL.md",
+        [
+            "绑定了单元测试 `*Tests` target / bundle 的 scheme",
+        ],
+        failures,
+    )
+    require_contains(
+        ROOT / "skills" / "ios-automation" / "SKILL.md",
+        [
+            "绑定了单元测试 `*Tests` target/bundle 的 scheme",
+        ],
+        failures,
+    )
 
     require_contains(
         ROOT / "skills" / "xcode-build" / "SKILL.md",
         [
-            'sandbox_permissions=\\"require_escalated\\"',
+            "require_escalated",
             "Xcode 系统 DerivedData",
         ],
         failures,
@@ -169,7 +188,7 @@ def main() -> int:
         [
             "项目环境构建验证执行器",
             "项目环境",
-            "sandbox_permissions=\"require_escalated\"",
+            "require_escalated",
             "本地 `xcodebuild` 命令（含 `-list` / `-showdestinations` / build/test）统一按非沙盒项目环境执行",
             "本地 `verify-ios-build` 不支持 `XCODE_DERIVED_DATA` 覆盖",
             "默认复用同一套 workspace / scheme / destination 基线",
@@ -189,7 +208,7 @@ def main() -> int:
         [
             "项目环境",
             "本地 `verify-ios-build` 不支持 `XCODE_DERIVED_DATA` 覆盖",
-            "本地执行 `xcodebuild`（含 `-list` / `-showdestinations` / build/test）默认都要走非沙盒项目环境",
+            "本地执行 `xcodebuild`（含 `-list` / `-showdestinations` / build/test）默认在项目环境直接执行",
             "绑定了单元测试 `*Tests` target / bundle 的 scheme",
             "复用同一套 workspace / scheme / destination 基线",
             "已连接真机",
@@ -232,7 +251,7 @@ def main() -> int:
         failures,
     )
     require_contains(
-        ROOT / "skills" / "ios-automation" / "scripts" / "device_helpers.sh",
+        ROOT / "skills" / "ios-automation" / "scripts" / "device" / "device_helpers.sh",
         [
             "BuildableName",
             "TestableReference",
@@ -243,7 +262,7 @@ def main() -> int:
         failures,
     )
     require_contains(
-        ROOT / "skills" / "ios-automation" / "scripts" / "xcode" / "builder.py",
+        ROOT / "skills" / "ios-automation" / "scripts" / "simulator" / "xcode" / "builder.py",
         [
             "is_unit_test_preferred_scheme",
             "scheme_has_unit_test_binding",
@@ -281,7 +300,7 @@ def main() -> int:
         failures,
     )
 
-    ui_smoke_runner = ROOT / "skills" / "ios-automation" / "scripts" / "ui_smoke_runner.py"
+    ui_smoke_runner = ROOT / "skills" / "ios-automation" / "scripts" / "simulator" / "ui_smoke_runner.py"
     if not ui_smoke_runner.exists():
         failures.append(f"{ui_smoke_runner.relative_to(ROOT)} missing")
 
@@ -302,7 +321,6 @@ def main() -> int:
 
     for targeted_openai in (
         ROOT / "skills" / "testing" / "agents" / "openai.yaml",
-        ROOT / "skills" / "ios-automation" / "agents" / "openai.yaml",
         ROOT / "skills" / "ios-automation" / "agents" / "openai.yaml",
     ):
         require_contains(

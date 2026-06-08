@@ -45,17 +45,7 @@ bash install-local-agent-config.sh
 bash install-local-agent-config.sh --ccswitch
 ```
 
-3. **推荐：使用 `harness-engineering` profile 启动 Codex**
-```bash
-codex --profile harness-engineering
-```
-
-4. **如需默认 profile，在 `~/.codex/config.toml` 设置**
-```toml
-profile = "harness-engineering"
-```
-
-5. **手工方式（备选）**
+3. **手工方式（备选）**
 - 对于 Claude：复制到 `.claude/skills`
 - 对于 Codex：复制到 `.codex/skills`
 - 或使用软连接：

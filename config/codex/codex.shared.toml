@@ -7,20 +7,16 @@ model_reasoning_effort = "xhigh"
 plan_mode_reasoning_effort = "xhigh"
 service_tier = "fast"
 
-[profiles.harness-engineering]
-model = "gpt-5.4"
-model_reasoning_effort = "xhigh"
-plan_mode_reasoning_effort = "xhigh"
-service_tier = "fast"
-approval_policy = "on-request"
-sandbox_mode = "workspace-write"
-
 memories.use_memories = true
 memories.generate_memories = true
 
 [features]
 multi_agent = true
 memories = true
+
+[mcp_servers.codegraph]
+command = "codegraph"
+args = ["serve", "--mcp"]
 
 [mcp_servers.openaiDeveloperDocs]
 url = "https://developers.openai.com/mcp"
@@ -39,7 +35,7 @@ status_line = ["model-with-reasoning", "used-tokens", "project-root", "context-r
 enabled = true
 
 [plugins."build-macos-apps@openai-curated"]
-enabled = true
+enabled = false
 
 [plugins."figma@openai-curated"]
-enabled = true
+enabled = false

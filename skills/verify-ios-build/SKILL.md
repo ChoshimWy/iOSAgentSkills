@@ -1,6 +1,6 @@
 ---
 name: verify-ios-build
-description: Apple Xcode 工程的项目环境构建验证执行器。由 `final-evidence-gate` 在现有 `xcodebuild test/build` 证据不足、高风险或命中工程/依赖/签名/资源打包类改动时调用；执行一次 `xcodebuild` 最终验证，iOS 默认优先 `.xcworkspace` 与已连接真机，找不到连接真机时回退 simulator。
+description: Apple Xcode 项目环境最终构建验证执行器。由 final-evidence-gate 在证据不足、高风险或工程/依赖/签名/资源打包改动时调用；iOS 优先 workspace + 真机，必要时回退 simulator。
 ---
 
 # Verify iOS Build（项目环境构建验证执行器）
@@ -84,4 +84,3 @@ description: Apple Xcode 工程的项目环境构建验证执行器。由 `final
 - 如果任务本身是在改 Build Settings、签名、Archive/Export、CI 或构建脚本，主技能应是 `xcode-build`。
 - 本技能不替代测试编写；需要补单元测试或 UI 测试时切换到 `testing`。
 - 本技能只负责“项目环境构建验证”，不替代 `final-evidence-gate` 的完成态裁决，也不替代通用 code review 流程。
-

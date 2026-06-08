@@ -1,6 +1,6 @@
 ---
 name: ios-performance
-description: iOS 性能分析与测试技能。只在需要处理 UIKit / SwiftUI 的掉帧、启动慢、CPU / 内存压力、性能回归基线、`measure(metrics:)`、`xctrace` 或 Instruments 取证时使用；如果问题核心是 crash、异常、对象未释放根因、纯静态审查或普通单元/UI 测试补齐，不要把它当作主 skill；若任务产出修改了 Apple Xcode 项目相关内容，收尾必须进入 `final-evidence-gate`；证据不足、高风险或命中工程/依赖/签名/资源打包类改动时，再切到 `verify-ios-build` 在项目环境完成最终验证。
+description: iOS 性能分析入口：掉帧、启动慢、CPU/内存压力、性能基线、measure(metrics:)、xctrace 与 Instruments 取证。crash、静态 review 和普通测试补齐走专项；Xcode 改动收尾交给 final-evidence-gate。
 ---
 
 # iOS 性能分析与测试
@@ -45,4 +45,3 @@ description: iOS 性能分析与测试技能。只在需要处理 UIKit / SwiftU
 - 需要整理 SwiftUI 视图结构时，切换到 `swiftui-feature-implementation`。
 - 需要新建 SwiftUI 页面并做模式选型时，切换到 `swiftui-feature-implementation`。
 - 需要 Apple 官方 API 或 Instruments 官方资料时，可辅以 `apple-docs`。
-

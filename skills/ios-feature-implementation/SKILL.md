@@ -1,6 +1,6 @@
 ---
 name: ios-feature-implementation
-description: 默认 iOS feature 实现技能。只用于与具体 UI 技术栈无关的通用业务实现：service / repository / use case / domain model / view model、依赖注入、导航接线和常规 async/await 落地；如果任务核心已经变成 SwiftUI / UIKit 页面代码、页面模式选型、已有 SwiftUI 大 view 重构、构建配置、模拟器/真机自动化、性能取证或官方文档检索，不要使用本 skill 作为主 skill；若任务产出修改了 Apple Xcode 项目相关内容，收尾必须进入 `final-evidence-gate`；证据不足、高风险或命中工程/依赖/签名/资源打包类改动时，再切到 `verify-ios-build` 在项目环境完成最终验证。
+description: 默认 iOS 业务实现入口：service/repository/use case/model/view model、依赖注入、导航接线和 async/await glue code。SwiftUI、UIKit、构建、自动化、性能和文档查询走专项；Xcode 改动收尾交给 final-evidence-gate。
 ---
 
 # iOS Feature 实现
@@ -71,4 +71,3 @@ no_test_reason: <仅当本轮不涉及新增测试时填写>
 - 如果任务已经变成 benchmark、`measure(metrics:)`、`xctrace`、Instruments 或启动 / 滚动性能分析，切换到 `ios-performance`。
 - 如果任务是构建配置、签名、Archive/Export 或 CI，切换到 `xcode-build`。
 - 如果只是查询 Apple 官方 API、可用性或 WWDC 内容，切换到 `apple-docs`。
-
