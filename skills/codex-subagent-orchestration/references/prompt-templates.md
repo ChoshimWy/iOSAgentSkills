@@ -26,7 +26,7 @@
 - 只改 ownership 内文件
 - 不要回滚他人改动
 - 不做无关重构
-- 若目标工程使用 CocoaPods 且涉及私有组件/本地联调，先查 `Podfile` / `Podfile.lock` / `Pods/Manifest.lock`；命中本地 `:path` Pod 时，禁止把 `Pods/<LibraryName>` 作为 ownership
+- 若目标工程使用 CocoaPods 且涉及私有组件/本地联调，先查 `Podfile` / `Podfile.lock` / `Pods/Manifest.lock`；如需修改私有库，主项目默认切回或保持本地 `:path` 私有库依赖进行开发与验证；命中本地 `:path` Pod 时，禁止把 `Pods/<LibraryName>` 作为 ownership
 - 如果改动了公共接口、配置前提或调用契约，必须显式说明影响面
 - 输出 changed_files / summary / known_risks / test_impact 或 no_test_reason
 - 输出 change_intent / rollback_hint / checkpoint_status / first_failure / next_action
@@ -143,7 +143,7 @@
 私有库链路补充：
 - SLSyncLib 等依赖先本地 path 验证
 - 命中本地 `:path` Pod 时，明确把 `Pods/` 副本列入禁止改动范围
-- 私有库推送成功后，主项目恢复线上引用再复测同一基线
+- 主项目保持本地 `:path` 私有库依赖验证；回线上版本化引用与复测仅在用户明确要求时执行
 ```
 
 ## Fail-Fix-Report 汇报模板

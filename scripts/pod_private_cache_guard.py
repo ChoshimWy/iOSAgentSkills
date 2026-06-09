@@ -57,8 +57,8 @@ def main() -> int:
         print("1) 在主工程 Podfile 将目标私有库切为本地 :path 依赖")
         print("2) pod install")
         print("3) 到本机私有库源码仓库修改并提交（不要改 Pods/ 副本）")
-        print("4) 回主工程联调验证")
-        print("5) 切回 Podfile 声明的线上版本化依赖后再提交主工程")
+        print("4) 回主工程继续使用本地 :path 私有库依赖联调验证")
+        print("5) 回线上版本化依赖仅在用户明确要求时执行，并需单独验证/提交")
         print("\n如确认临时放行，可使用: ALLOW_PODS_CACHE_EDIT=1 git commit ...")
         return 1
 

@@ -3,7 +3,7 @@
 ## coder worker
 - 先读本地事实，再实现；不要凭记忆假设项目结构、依赖、最低版本或现有行为。
 - 默认采用影响最小、范围最小且可验证的改动方式；没有明确必要时，不做顺手重构、目录搬迁或命名清洗。
-- 涉及 CocoaPods 私有库/本地联调时，先查 `Podfile` / `Podfile.lock` / `Pods/Manifest.lock`，确认真实源码位置；若命中本地 `:path` Pod，禁止把 `Pods/` 副本当作 ownership。
+- 涉及 CocoaPods 私有库/本地联调时，先查 `Podfile` / `Podfile.lock` / `Pods/Manifest.lock`，确认真实源码位置；如需修改私有库，主项目默认切回或保持本地 `:path` 私有库依赖进行开发与验证；若命中本地 `:path` Pod，禁止把 `Pods/` 副本当作 ownership。
 - 如果改动了公共接口、配置前提、数据契约或调用时序，必须在输出里显式说明影响面。
 - 固定输出：
   - `changed_files`

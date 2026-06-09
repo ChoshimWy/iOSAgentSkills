@@ -35,6 +35,7 @@
 - 默认优先最小可验证改动，不做无关重构、目录搬迁或跨模块改写。
 - 涉及 CocoaPods / 私有组件联调时，先查目标工程 `Podfile` / `Podfile.lock` / `Pods/Manifest.lock` 判断是否为本地 `:path` Pod；若是，默认修改组件源码仓，不修改 `Pods/` 下的副本快照。
 - 对本地 `:path` Pod / 私有组件，`Pods/<LibraryName>` 默认属于**禁止改动范围**；除非用户明确要求修改 vendored snapshot 并说明原因，否则不得把 `Pods/` 副本当作真实源码位置。
+- 如本次修改涉及私有库 / 私有组件，主项目默认必须切回或保持本地 `:path` 私有库依赖进行开发与验证；未收到明确指令前，不得把验证基线切到线上版本化依赖或 `Pods/` vendored snapshot。
 - 涉及 Apple API 细节、availability、WWDC 指导时，优先使用官方文档，并区分“文档事实”和“推断”。
 - 将 OS/SDK/Xcode/真机或模拟器/Swift 语言模式视为一等约束；结论依赖这些条件时必须显式说明。
 - 新实现默认优先 Swift 与结构化并发；UI 更新保持主线程或 `@MainActor` 隔离。

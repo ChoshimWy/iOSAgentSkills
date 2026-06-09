@@ -105,6 +105,7 @@ python3 scripts/validate_codex_agent_templates.py config/codex/templates/agents
 
 - 涉及 CocoaPods 私有库或组件联调时，先查目标工程 `Podfile` / `Podfile.lock` / `Pods/Manifest.lock` 判断真实源码位置。
 - 若命中本地 `:path` Pod，默认修改组件源码仓，不修改 `Pods/<LibraryName>` 下的副本快照。
+- 如本次修改涉及私有库 / 私有组件，主项目默认必须切回或保持本地 `:path` 私有库依赖进行开发与验证；未收到明确指令前，不得把验证基线切到线上版本化依赖或 `Pods/` vendored snapshot。
 - `Pods/` 默认视为 vendored cache / generated snapshot，不作为实现 ownership。
 - 仓库自带 `scripts/pod_private_cache_guard.py`，并由 `.githooks/pre-commit` 默认阻断把私有 Pod 副本 staged 进提交。
 - 推荐在本仓库执行：

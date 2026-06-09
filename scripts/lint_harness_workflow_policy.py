@@ -82,6 +82,7 @@ def main() -> int:
             "`checkpoint_status`",
             "`fail-fix-report`",
             "本地 `:path` Pod",
+            "主项目默认必须切回或保持本地 `:path` 私有库依赖",
         ],
         failures,
     )
@@ -103,6 +104,7 @@ def main() -> int:
             "所有技能统一放在 `skills/`",
             "`codex-subagent-orchestration`",
             "路径示例默认以 skill 相对路径为准",
+            "主项目默认必须切回或保持本地 `:path` 私有库依赖",
         ],
         failures,
     )
@@ -183,6 +185,7 @@ def main() -> int:
             "next_action: <fix-and-rerun|blocked|complete>",
             "`checkpoint_status`：显式汇报 `CP0` / `CP1` / `CP2` / `CP3` 的 pass|fail|blocked",
             "禁止把 `Pods/<LibraryName>` 作为 ownership",
+            "回线上版本化引用与复测仅在用户明确要求时执行",
         ],
         failures,
     )

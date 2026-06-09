@@ -26,7 +26,8 @@ description: Xcode 构建与配置技能。只用于 Xcode 项目配置、Build 
 2. 再确认配置目标：本地构建、Archive、导出、CI 或签名。
 3. 最后根据目标选择 `build`、`test`、`archive` 或 `-exportArchive` 流程。
 4. 如果构建问题涉及私有 Pod / 本地组件，先查 `Podfile` / `Podfile.lock` / `Pods/Manifest.lock` 判断是否为本地 `:path` Pod；命中时应改组件源码仓，不改 `Pods/` 副本。
-5. 如果需要为目标项目新增 `.swift`、`.h`、`.m`、`.mm` 等源码文件且项目要求文件头，`Created by` 必须使用本机用户名称（`whoami` 输出），不要写 `Codex`；日期默认使用 `YYYY/M/D`，例如 `Created by $(whoami) on 2026/4/11.`。
+5. 如本次构建/配置修改涉及私有库 / 私有组件，主项目默认必须切回或保持本地 `:path` 私有库依赖进行开发与验证；除非用户明确要求回线上依赖验证，否则不要把验证基线切到线上版本化依赖或 `Pods/` 快照。
+6. 如果需要为目标项目新增 `.swift`、`.h`、`.m`、`.mm` 等源码文件且项目要求文件头，`Created by` 必须使用本机用户名称（`whoami` 输出），不要写 `Codex`；日期默认使用 `YYYY/M/D`，例如 `Created by $(whoami) on 2026/4/11.`。
 
 ## 参考资源
 - `references/build-settings.md`

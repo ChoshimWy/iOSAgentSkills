@@ -49,6 +49,7 @@ def main() -> int:
             "checkpoint 合同",
             "`checkpoint_status`",
             "`fail-fix-report`",
+            "主项目默认必须切回或保持本地 `:path` 私有库依赖",
         ],
         failures,
     )
@@ -61,6 +62,7 @@ def main() -> int:
             "`lite` / `standard` / `full`",
             "80~120 行",
             "计划模式（`proposed_plan`）输出，只要是实现链路也必须显式包含 `code-review` 审查步骤",
+            "主项目默认必须切回或保持本地 `:path` 私有库依赖",
         ],
         failures,
     )
@@ -73,6 +75,7 @@ def main() -> int:
             "`appleDeveloperDocs`",
             "`lite` / `standard` / `full`",
             "需要补强证据时再切 `final-evidence-gate` 或 `verify-ios-build`",
+            "主项目切回或保持本地 `:path` 私有库依赖",
         ],
         failures,
     )
@@ -182,6 +185,7 @@ def main() -> int:
             "本次任务全量差异",
             "直接影响面",
             "unreviewed_changes",
+            "回线上版本化引用与复测仅在用户明确要求时执行",
         ],
         failures,
     )

@@ -26,6 +26,7 @@ description: iOS/Swift 代码审查技能。只在需要 review 代码、审查 
 - 主 Agent / reviewer 应优先使用任务起点基线（如 `review_base_ref`、开始任务前的 `HEAD`、PR base 或用户指定 ref）审查 `review_base_ref -> 当前工作区`；如果无法确认基线，默认 fallback 为当前 `HEAD`，但必须在 `review_scope` 中说明。
 - 影响面审查必须覆盖本次修改直接触达的 public API、调用方、数据契约、并发边界、持久化 / 网络 / 缓存副作用、以及验证故事；无法确认或未覆盖的部分必须写入 `unreviewed_changes`。
 - 如果发现变更直接落在 `Pods/<LibraryName>`，且上下文显示目标工程使用私有 Pod / 本地 `:path` Pod 联调，默认作为 `blocking_findings`：这通常意味着改错了源码位置。
+- 如果本次修改涉及私有库 / 私有组件，必须审查验证故事是否在主项目切回或保持本地 `:path` 私有库依赖后完成；未收到明确指令却使用线上版本化依赖或 `Pods/` vendored snapshot 验证，默认视为验证基线不成立。
 - 如果用户问题本质上是“为什么会 crash / 卡顿 / 泄漏”，不要把本 skill 当作主 skill，切换到 `debugging` 或 `ios-performance`。
 - 固定链路中必须审查验证故事：`testing` 的 `executed_validation` 是否发生在最后一次代码变更之后，是否覆盖最终交付 target / consumer app scheme，以及是否需要升级 `verify-ios-build`。
 

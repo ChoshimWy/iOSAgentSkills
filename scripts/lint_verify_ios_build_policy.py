@@ -207,6 +207,7 @@ def main() -> int:
             "本地 `xcodebuild` 命令（含 `-list` / `-showdestinations` / build/test）统一按非沙盒项目环境执行",
             "本地 `verify-ios-build` 不支持 `XCODE_DERIVED_DATA` 覆盖",
             "验证默认复用同一套 workspace / scheme / destination 基线",
+            "主项目本地 `:path` 私有库依赖",
             "绑定了单元测试 `*Tests` target / bundle 的 scheme",
             ".xcworkspace",
             "已连接真机",
@@ -224,6 +225,7 @@ def main() -> int:
             "codex_verify.sh",
             "~/.codex/bin/codex_verify",
             "串行化",
+            "主项目本地 `:path` 私有库依赖基线",
         ],
         failures,
     )
