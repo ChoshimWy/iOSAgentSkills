@@ -29,7 +29,8 @@ command = "npx"
 args = ["-y", "@kimsungwhee/apple-docs-mcp@latest"]
 
 [tui]
-status_line = ["model-with-reasoning", "used-tokens", "project-root", "context-remaining"]
+status_line = ["model-with-reasoning", "used-tokens", "project-name", "context-remaining", "five-hour-limit", "weekly-limit", "total-input-tokens", "total-output-tokens", "task-progress"]
+status_line_use_colors = true
 
 [plugins."build-ios-apps@openai-curated"]
 enabled = true
