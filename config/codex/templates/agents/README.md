@@ -8,7 +8,7 @@
 - `reporter.toml`
 
 以及 1 个项目侧验证模板：
-- `../codex_verify.example.sh` —— 复制到目标 Xcode 项目根目录并重命名为 `codex_verify.sh`，作为多 Codex CLI 本地 `xcodebuild` / `build-check` 的统一验证入口；默认给每个 CLI 分配专属 DerivedData slot，必要时回退串行系统缓存
+- `../codex_verify.example.sh` —— 复制到目标 Xcode 项目根目录并重命名为 `codex_verify.sh`，作为多 Codex CLI 本地 `xcodebuild` / `build-check` 的统一验证入口；wrapper 会自动接入 shared build-queue daemon，把验证型 `xcodebuild` 串行排队执行，并统一使用 Xcode 系统 DerivedData
 
 以及 1 个本机全局验证入口：
 - `~/.codex/bin/codex_verify` —— 由安装脚本自动同步；当目标项目没有 repo-tracked `codex_verify.sh` 时，`verify-ios-build` 会自动回退到这个全局 wrapper
@@ -23,6 +23,7 @@
 - 安装脚本也会同步 `~/.codex/bin/codex_verify` 作为全局验证入口。
 - `codex_verify.example.sh` 会同步到 `~/.codex/templates/codex_verify.example.sh`，供目标项目复制落地。
 - 推荐优先级：`<repo-root>/codex_verify.sh` > `~/.codex/bin/codex_verify`。
+- 可通过 `codex_verify.sh --queue-status` 或 `~/.codex/bin/codex_verify --queue-status` 查看 daemon 当前 active job 与 pending jobs。
 - 全局硬约束仍以仓库根 `AGENTS.md` 与 `skills/codex-subagent-orchestration/` 合同为准。
 - Apple Xcode 项目改动默认以定向验证与 code-review 收口；`final-evidence-gate` / `verify-ios-build` 仅按需补强。
 - `testing` 默认只执行最窄定向单测；真机 / 模拟器验证不属于默认收口执行面。

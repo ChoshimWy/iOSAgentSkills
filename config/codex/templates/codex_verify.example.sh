@@ -7,11 +7,13 @@ Usage:
   ./codex_verify.sh -- <xcodebuild args...>
   ./codex_verify.sh --repo-root <repo-root> -- <xcodebuild args...>
   ./codex_verify.sh --build-check <build-check.sh> <repo-root> [build-check args...]
+  ./codex_verify.sh --queue-status
   ~/.codex/bin/codex_verify --repo-root <repo-root> -- <xcodebuild args...>
 
 Purpose:
-  Route local project-environment validation into a CLI-specific DerivedData slot
-  first, and fall back to serialized system DerivedData only when needed.
+  Route local project-environment validation into a shared build-queue daemon.
+  The daemon executes queued jobs one by one and always uses the system
+  DerivedData root: ~/Library/Developer/Xcode/DerivedData
 
 Recommended:
   - Preferred: keep this script in the target Xcode project root as ./codex_verify.sh
@@ -19,6 +21,11 @@ Recommended:
   - Ask all agents to use one of the two entrypoints instead of裸跑 xcodebuild
   - Let iOSAgentSkills verify-ios-build delegate into the project wrapper first,
     then fall back to the global wrapper automatically
+
+Notes:
+  - Legacy public overrides XCODE_DERIVED_DATA_MODE / XCODE_DERIVED_DATA_SEED_MODE /
+    XCODE_DERIVED_DATA_REFRESH / CODEX_DERIVED_DATA_SLOT are no longer supported.
+  - The build-queue daemon is started automatically on first use.
 EOF
 }
 
@@ -46,15 +53,6 @@ import sys
 
 print(Path(sys.argv[1]).resolve())
 PY
-}
-
-resolve_repo_member_path() {
-  local candidate="$1"
-  if [[ "$candidate" == /* ]]; then
-    resolve_path "$candidate"
-  else
-    resolve_path "$REPO_ROOT/$candidate"
-  fi
 }
 
 read_env_file_value() {
@@ -93,170 +91,77 @@ sanitize_token() {
   value="${value#-}"
   value="${value%-}"
   if [[ -z "$value" ]]; then
-    value='slot'
+    value='unknown'
   fi
   printf '%s' "$value"
 }
 
-hash_text() {
-  printf '%s' "$1" | shasum -a 256 | awk '{print $1}'
+queue_root() {
+  printf '%s' "${CODEX_BUILD_QUEUE_ROOT:-/tmp/codex-build-queue}"
 }
 
-build_owner_body() {
-  cat <<EOF
-pid=$$
-user=${USER:-unknown}
-host=$(hostname -s 2>/dev/null || hostname)
-repo_root=$REPO_ROOT
-lock_basis=$LOCK_BASIS
-mode=$MODE
-workspace=${META_WORKSPACE}
-project=${META_PROJECT}
-scheme=${META_SCHEME}
-configuration=${META_CONFIGURATION}
-destination=${META_DESTINATION}
-action=${META_ACTION}
-derived_data_mode=${EFFECTIVE_DERIVED_DATA_MODE:-unset}
-derived_data_slot=${DERIVED_DATA_SLOT_ID:-unset}
-derived_data_path=${DERIVED_DATA_PATH:-system-default}
-started_at=$(timestamp_now)
-command=$COMMAND_PREVIEW
-log_file=$LOG_FILE
-EOF
+job_state() {
+  local job_dir="$1"
+  if [[ -f "$job_dir/state" ]]; then
+    cat "$job_dir/state"
+  else
+    printf '%s' 'queued'
+  fi
 }
 
-directory_lock_owner_summary() {
-  local lock_dir="$1"
-  local owner_file="$lock_dir/owner.txt"
-  [[ -f "$owner_file" ]] || return 0
-  awk 'NF { print }' "$owner_file" | paste -sd '; ' -
+set_job_state() {
+  local job_dir="$1"
+  local state="$2"
+  printf '%s\n' "$state" >"$job_dir/state"
 }
 
-declare -a ACQUIRED_DIRECTORY_LOCKS=()
-LOCK_BACKEND=''
-LOCK_FILE=''
-OWNER_FILE=''
-
-register_directory_lock() {
-  ACQUIRED_DIRECTORY_LOCKS+=("$1")
-}
-
-unregister_directory_lock() {
+write_text_file() {
   local target="$1"
-  local -a updated=()
-  local item
-  for item in "${ACQUIRED_DIRECTORY_LOCKS[@]}"; do
-    if [[ -n "$item" && "$item" != "$target" ]]; then
-      updated+=("$item")
-    fi
-  done
-  if [[ ${#updated[@]} -gt 0 ]]; then
-    ACQUIRED_DIRECTORY_LOCKS=("${updated[@]}")
-  else
-    ACQUIRED_DIRECTORY_LOCKS=()
-  fi
+  local body="$2"
+  printf '%s\n' "$body" >"$target"
 }
 
-release_directory_lock() {
-  local lock_dir="$1"
-  [[ -n "$lock_dir" ]] || return 0
-  rm -rf "$lock_dir"
-}
-
-acquire_directory_lock() {
-  local lock_dir="$1"
-  local label="$2"
-  local owner_body="$3"
-  local wait_started now waited owner_summary
-
-  mkdir -p "$(dirname "$lock_dir")"
-  wait_started="$(seconds_now)"
-  while ! mkdir "$lock_dir" 2>/dev/null; do
-    now="$(seconds_now)"
-    waited=$(( now - wait_started ))
-    owner_summary="$(directory_lock_owner_summary "$lock_dir")"
-    if [[ -n "$owner_summary" ]]; then
-      echo "[codex_verify] waiting ${waited}s for ${label}: ${owner_summary}" >&2
-    else
-      echo "[codex_verify] waiting ${waited}s for ${label}: lock_dir=$lock_dir" >&2
-    fi
-    sleep "$WAIT_INTERVAL_SECONDS"
-  done
-
-  printf '%s\n' "$owner_body" >"$lock_dir/owner.txt"
-  register_directory_lock "$lock_dir"
-}
-
-cleanup_repo_lock() {
-  [[ -n "$OWNER_FILE" ]] && rm -f "$OWNER_FILE"
-  if [[ "$LOCK_BACKEND" == 'shlock' ]]; then
-    [[ -n "$LOCK_FILE" ]] && rm -f "$LOCK_FILE"
-  fi
-}
-
-cleanup_all() {
-  local index
-  cleanup_repo_lock || true
-  for (( index=${#ACQUIRED_DIRECTORY_LOCKS[@]}-1; index>=0; index-=1 )); do
-    release_directory_lock "${ACQUIRED_DIRECTORY_LOCKS[$index]}" || true
+write_args_file() {
+  local target="$1"
+  shift
+  : >"$target"
+  while [[ $# -gt 0 ]]; do
+    printf '%s\0' "$1" >>"$target"
+    shift
   done
 }
 
-trap cleanup_all EXIT INT TERM HUP
-
-summarize_owner() {
-  [[ -f "$OWNER_FILE" ]] || return 0
-  awk 'NF { print }' "$OWNER_FILE" | paste -sd '; ' -
+READ_ARGS_RESULT=()
+read_args_file() {
+  local target="$1"
+  local value=''
+  READ_ARGS_RESULT=()
+  while IFS= read -r -d '' value; do
+    READ_ARGS_RESULT+=("$value")
+  done <"$target"
 }
 
-wait_for_lockf_lock() {
-  local now wait_started
-  wait_started="$(seconds_now)"
-  exec 9>"$LOCK_FILE"
-  while ! /usr/bin/lockf -s -t 0 9 2>/dev/null; do
-    local waited owner_summary
-    now="$(seconds_now)"
-    waited=$(( now - wait_started ))
-    owner_summary="$(summarize_owner)"
-    if [[ -n "$owner_summary" ]]; then
-      echo "[codex_verify] waiting ${waited}s for project validation lock: ${owner_summary}" >&2
-    else
-      echo "[codex_verify] waiting ${waited}s for project validation lock: lock_file=$LOCK_FILE" >&2
-    fi
-    sleep "$WAIT_INTERVAL_SECONDS"
-  done
+append_log_line() {
+  local target="$1"
+  local line="$2"
+  printf '%s\n' "$line" >>"$target"
 }
 
-wait_for_shlock_lock() {
-  local now wait_started
-  wait_started="$(seconds_now)"
-  while ! /usr/bin/shlock -f "$LOCK_FILE" -p "$$" 2>/dev/null; do
-    local waited owner_summary
-    now="$(seconds_now)"
-    waited=$(( now - wait_started ))
-    owner_summary="$(summarize_owner)"
-    if [[ -n "$owner_summary" ]]; then
-      echo "[codex_verify] waiting ${waited}s for project validation lock: ${owner_summary}" >&2
-    else
-      echo "[codex_verify] waiting ${waited}s for project validation lock: lock_file=$LOCK_FILE" >&2
-    fi
-    sleep "$WAIT_INTERVAL_SECONDS"
-  done
+file_mtime_seconds() {
+  local target="$1"
+  stat -f %m "$target" 2>/dev/null || echo 0
 }
 
-acquire_repo_serial_lock() {
-  LOCK_BACKEND=''
-  if command -v /usr/bin/lockf >/dev/null 2>&1; then
-    LOCK_BACKEND='lockf'
-    wait_for_lockf_lock
-  elif command -v /usr/bin/shlock >/dev/null 2>&1; then
-    LOCK_BACKEND='shlock'
-    wait_for_shlock_lock
-  else
-    die "neither /usr/bin/lockf nor /usr/bin/shlock is available on this host"
-  fi
+daemon_pid() {
+  [[ -f "$DAEMON_PID_FILE" ]] || return 0
+  tr -d '\n' <"$DAEMON_PID_FILE"
+}
 
-  printf '%s\n' "$(build_owner_body)" >"$OWNER_FILE"
+daemon_running() {
+  local pid
+  pid="$(daemon_pid)"
+  [[ -n "$pid" ]] || return 1
+  kill -0 "$pid" 2>/dev/null
 }
 
 load_metadata_from_xcode_args() {
@@ -326,381 +231,414 @@ load_metadata_defaults() {
   META_ACTION="${META_ACTION:-build(auto)}"
 }
 
-normalize_derived_data_mode() {
-  local mode="$1"
-  case "$mode" in
-    ''|isolated-preferred)
-      printf '%s' 'isolated-preferred'
-      ;;
-    isolated-required|system-serial)
-      printf '%s' "$mode"
-      ;;
-    *)
-      die "unsupported XCODE_DERIVED_DATA_MODE: $mode"
-      ;;
-  esac
-}
-
-normalize_seed_mode() {
-  local mode="$1"
-  case "$mode" in
-    ''|once)
-      printf '%s' 'once'
-      ;;
-    always|empty)
-      printf '%s' "$mode"
-      ;;
-    *)
-      die "unsupported XCODE_DERIVED_DATA_SEED_MODE: $mode"
-      ;;
-  esac
-}
-
-current_xcode_version_hash() {
-  local version_output
-  version_output="$(xcodebuild -version 2>/dev/null || true)"
-  if [[ -z "$version_output" ]]; then
-    version_output='unknown-xcode-version'
-  fi
-  hash_text "$version_output"
-}
-
-target_cache_stem() {
-  if [[ "${META_WORKSPACE}" != 'auto' ]]; then
-    basename "${META_WORKSPACE%*.xcworkspace}"
-  elif [[ "${META_PROJECT}" != 'auto' ]]; then
-    basename "${META_PROJECT%*.xcodeproj}"
-  else
-    basename "$REPO_ROOT"
-  fi
-}
-
-discover_slot_id() {
-  local manual_slot
-  manual_slot="$(env_or_file_value CODEX_DERIVED_DATA_SLOT)"
-  if [[ -n "$manual_slot" ]]; then
-    DERIVED_DATA_SLOT_REASON='using explicit CODEX_DERIVED_DATA_SLOT'
-    DERIVED_DATA_SLOT_ID="$(sanitize_token "$manual_slot")"
-    return 0
-  fi
-
-  local current_pid="$PPID"
-  local depth=0
-  local ps_line pid ppid command label
-  while [[ -n "$current_pid" && $depth -lt 12 ]]; do
-    ps_line="$(ps -o pid=,ppid=,command= -p "$current_pid" 2>/dev/null | head -n 1 | sed 's/^[[:space:]]*//' || true)"
-    [[ -n "$ps_line" ]] || break
-    pid="$(printf '%s\n' "$ps_line" | awk '{print $1}')"
-    ppid="$(printf '%s\n' "$ps_line" | awk '{print $2}')"
-    command="$(printf '%s\n' "$ps_line" | cut -d' ' -f3-)"
-    label=''
-    if printf '%s' "$command" | grep -Eqi '(^|/)(codex|codex-cli)([[:space:]]|$)'; then
-      label='codex-cli'
-    elif printf '%s' "$command" | grep -Eqi '(^|/)(claude|claude-code)([[:space:]]|$)'; then
-      label='claude-cli'
+assert_no_legacy_derived_data_settings() {
+  local key value
+  for key in \
+    XCODE_DERIVED_DATA_MODE \
+    XCODE_DERIVED_DATA_SEED_MODE \
+    XCODE_DERIVED_DATA_REFRESH \
+    CODEX_DERIVED_DATA_SLOT
+  do
+    value="$(env_or_file_value "$key")"
+    if [[ -n "$value" ]]; then
+      die "legacy $key is no longer supported; build-queue daemon now always uses $SYSTEM_DERIVED_DATA_HOME. Remove $key from environment or $XCODE_ENV_FILE"
     fi
-    if [[ -n "$label" && -n "$pid" ]]; then
-      DERIVED_DATA_SLOT_REASON="derived from parent process $label pid=$pid"
-      DERIVED_DATA_SLOT_ID="$(sanitize_token "${label}-${pid}")"
-      return 0
-    fi
-    current_pid="$ppid"
-    depth=$(( depth + 1 ))
   done
-
-  local tty_name
-  tty_name="$(tty 2>/dev/null || true)"
-  if [[ -n "$tty_name" && "$tty_name" != 'not a tty' ]]; then
-    DERIVED_DATA_SLOT_REASON="derived from tty $tty_name"
-    DERIVED_DATA_SLOT_ID="$(sanitize_token "tty-${tty_name#/dev/}")"
-    return 0
-  fi
-
-  if [[ -n "${PPID:-}" ]]; then
-    DERIVED_DATA_SLOT_REASON="derived from parent shell pid=$PPID"
-    DERIVED_DATA_SLOT_ID="$(sanitize_token "ppid-${PPID}")"
-    return 0
-  fi
-
-  DERIVED_DATA_SLOT_REASON='fallback to current shell pid'
-  DERIVED_DATA_SLOT_ID="$(sanitize_token "shell-$$")"
 }
 
-select_seed_project_dir() {
-  python3 - "$SYSTEM_DERIVED_DATA_HOME" "$TARGET_CACHE_STEM" <<'PY'
-from pathlib import Path
-import sys
-
-root = Path(sys.argv[1])
-stem = sys.argv[2]
-if not root.exists():
-    raise SystemExit(0)
-
-candidates = sorted(
-    (path for path in root.iterdir() if path.is_dir() and path.name.startswith(f"{stem}-")),
-    key=lambda item: item.stat().st_mtime,
-    reverse=True,
-)
-if candidates:
-    print(candidates[0])
-PY
-}
-
-sync_directory_contents() {
-  local source_dir="$1"
-  local dest_dir="$2"
-  [[ -d "$source_dir" ]] || return 0
-  mkdir -p "$dest_dir"
-  if command -v rsync >/dev/null 2>&1; then
-    rsync -a "$source_dir"/ "$dest_dir"/
-  elif command -v ditto >/dev/null 2>&1; then
-    ditto "$source_dir" "$dest_dir"
-  else
-    cp -R "$source_dir"/. "$dest_dir"/
-  fi
-}
-
-sync_file_if_exists() {
-  local source_file="$1"
-  local dest_file="$2"
-  [[ -f "$source_file" ]] || return 0
-  mkdir -p "$(dirname "$dest_file")"
-  if command -v rsync >/dev/null 2>&1; then
-    rsync -a "$source_file" "$dest_file"
-  elif command -v ditto >/dev/null 2>&1; then
-    ditto "$source_file" "$dest_file"
-  else
-    cp "$source_file" "$dest_file"
-  fi
-}
-
-read_metadata_value() {
-  local file="$1"
-  local key="$2"
-  [[ -f "$file" ]] || return 0
-  awk -F= -v target="$key" '
-    $1 == target {
-      print substr($0, index($0, "=") + 1)
-      exit
-    }
-  ' "$file"
-}
-
-needs_reseed() {
-  if [[ "$DERIVED_DATA_REFRESH" == '1' ]]; then
-    return 0
-  fi
-  if [[ "$DERIVED_DATA_SEED_MODE" == 'always' ]]; then
-    return 0
-  fi
-  if [[ ! -d "$DERIVED_DATA_PATH" ]]; then
-    return 0
-  fi
-  if [[ ! -f "$DERIVED_DATA_METADATA" ]]; then
-    return 0
-  fi
-  local recorded_hash recorded_stem recorded_mode
-  recorded_hash="$(read_metadata_value "$DERIVED_DATA_METADATA" XCODE_VERSION_HASH)"
-  recorded_stem="$(read_metadata_value "$DERIVED_DATA_METADATA" TARGET_CACHE_STEM)"
-  recorded_mode="$(read_metadata_value "$DERIVED_DATA_METADATA" SEED_MODE)"
-  if [[ "$recorded_hash" != "$CURRENT_XCODE_VERSION_HASH" ]]; then
-    return 0
-  fi
-  if [[ "$recorded_stem" != "$TARGET_CACHE_STEM" ]]; then
-    return 0
-  fi
-  if [[ "$recorded_mode" == 'empty' && "$DERIVED_DATA_SEED_MODE" != 'empty' ]]; then
-    return 0
-  fi
-  return 1
-}
-
-write_slot_metadata() {
-  cat >"$DERIVED_DATA_METADATA" <<EOF
-XCODE_VERSION_HASH=$CURRENT_XCODE_VERSION_HASH
-TARGET_CACHE_STEM=$TARGET_CACHE_STEM
-SEED_MODE=$DERIVED_DATA_SEED_MODE
-SEEDED_AT=$(timestamp_now)
-SEEDED_SOURCE=${DERIVED_DATA_SEED_SOURCE:-none}
-LOCK_BASIS_HASH=$LOCK_KEY
+build_owner_body() {
+  cat <<EOF
+pid=$$
+user=${USER:-unknown}
+host=$(hostname -s 2>/dev/null || hostname)
+repo_root=$REPO_ROOT
+mode=$MODE
+workspace=${META_WORKSPACE}
+project=${META_PROJECT}
+scheme=${META_SCHEME}
+configuration=${META_CONFIGURATION}
+destination=${META_DESTINATION}
+action=${META_ACTION}
+derived_data_path=$SYSTEM_DERIVED_DATA_HOME
+submitted_at=$(timestamp_now)
+command=$COMMAND_PREVIEW
+wrapper=$(resolve_path "${BASH_SOURCE[0]}")
 EOF
 }
 
-seed_slot_from_system_cache() {
-  mkdir -p "$DERIVED_DATA_ROOT"
-  rm -rf "$DERIVED_DATA_PATH"
-  mkdir -p "$DERIVED_DATA_PATH"
+queue_start_lock_is_stale() {
+  [[ -d "$START_LOCK_DIR" ]] || return 1
+  local owner_pid owner_file waited now age
+  owner_file="$START_LOCK_DIR/owner.pid"
+  owner_pid=''
+  if [[ -f "$owner_file" ]]; then
+    owner_pid="$(tr -d '\n' <"$owner_file")"
+  fi
+  if [[ -n "$owner_pid" ]] && kill -0 "$owner_pid" 2>/dev/null; then
+    return 1
+  fi
+  now="$(seconds_now)"
+  age=$(( now - $(file_mtime_seconds "$START_LOCK_DIR") ))
+  [[ $age -ge 15 ]]
+}
 
-  DERIVED_DATA_SEED_SOURCE='empty'
-  if [[ "$DERIVED_DATA_SEED_MODE" == 'empty' ]]; then
-    write_slot_metadata
+acquire_start_lock() {
+  mkdir -p "$QUEUE_ROOT"
+  while ! mkdir "$START_LOCK_DIR" 2>/dev/null; do
+    if queue_start_lock_is_stale; then
+      rm -rf "$START_LOCK_DIR"
+      continue
+    fi
+    if daemon_running; then
+      return 1
+    fi
+    sleep 1
+  done
+  printf '%s\n' "$$" >"$START_LOCK_DIR/owner.pid"
+  return 0
+}
+
+release_start_lock() {
+  rm -rf "$START_LOCK_DIR"
+}
+
+ensure_daemon_running() {
+  local daemon_pid_value start_pid started_at
+  mkdir -p "$QUEUE_ROOT" "$JOBS_DIR"
+  if daemon_running; then
     return 0
   fi
 
-  if [[ ! -d "$SYSTEM_DERIVED_DATA_HOME" ]]; then
-    write_slot_metadata
+  if ! acquire_start_lock; then
     return 0
   fi
 
-  sync_directory_contents "$SYSTEM_DERIVED_DATA_HOME/ModuleCache.noindex" "$DERIVED_DATA_PATH/ModuleCache.noindex"
-  sync_directory_contents "$SYSTEM_DERIVED_DATA_HOME/SDKStatCaches.noindex" "$DERIVED_DATA_PATH/SDKStatCaches.noindex"
-
-  local selected_project_dir
-  selected_project_dir="$(select_seed_project_dir)"
-  if [[ -n "$selected_project_dir" && -d "$selected_project_dir" ]]; then
-    DERIVED_DATA_SEED_SOURCE="$selected_project_dir"
-    sync_directory_contents "$selected_project_dir/Build" "$DERIVED_DATA_PATH/Build"
-    sync_directory_contents "$selected_project_dir/SourcePackages" "$DERIVED_DATA_PATH/SourcePackages"
-    sync_directory_contents "$selected_project_dir/Index.noindex" "$DERIVED_DATA_PATH/Index.noindex"
-    sync_directory_contents "$selected_project_dir/Logs/Build" "$DERIVED_DATA_PATH/Logs/Build"
-    sync_file_if_exists "$selected_project_dir/info.plist" "$DERIVED_DATA_PATH/info.plist"
+  if daemon_running; then
+    release_start_lock
+    return 0
   fi
 
-  write_slot_metadata
-}
+  started_at="$(timestamp_now)"
+  nohup bash "$SCRIPT_PATH" --daemon >>"$DAEMON_STDOUT_LOG" 2>&1 &
+  start_pid=$!
 
-prepare_isolated_derived_data() {
-  local seed_owner_body
-  seed_owner_body="$(build_owner_body)"
-  acquire_directory_lock "$SEED_LOCK_DIR" 'derived data seed lock' "$seed_owner_body"
-  if needs_reseed; then
-    seed_slot_from_system_cache
-  else
-    DERIVED_DATA_SEED_SOURCE="$(read_metadata_value "$DERIVED_DATA_METADATA" SEEDED_SOURCE)"
-    DERIVED_DATA_SEED_SOURCE="${DERIVED_DATA_SEED_SOURCE:-reused-existing-slot}"
-  fi
-  release_directory_lock "$SEED_LOCK_DIR"
-  unregister_directory_lock "$SEED_LOCK_DIR"
-}
-
-command_has_derived_data_path() {
-  local args=("$@")
-  local index=0
-  while [[ $index -lt ${#args[@]} ]]; do
-    if [[ "${args[$index]}" == '-derivedDataPath' ]]; then
+  local waited=0
+  while [[ $waited -lt 30 ]]; do
+    daemon_pid_value="$(daemon_pid)"
+    if [[ -n "$daemon_pid_value" ]] && kill -0 "$daemon_pid_value" 2>/dev/null; then
+      release_start_lock
       return 0
     fi
-    index=$(( index + 1 ))
+    if ! kill -0 "$start_pid" 2>/dev/null; then
+      break
+    fi
+    sleep 1
+    waited=$(( waited + 1 ))
+  done
+
+  release_start_lock
+  die "failed to start build-queue daemon at $QUEUE_ROOT (started_at=$started_at)"
+}
+
+generate_job_id() {
+  python3 - "$$" "$RANDOM" <<'PY'
+import sys, time
+
+pid = sys.argv[1]
+rand = sys.argv[2]
+print(f"{time.time_ns()}-{pid}-{rand}")
+PY
+}
+
+write_env_snapshot() {
+  local target="$1"
+  local key value
+  : >"$target"
+  for key in PATH DEVELOPER_DIR LANG LC_ALL; do
+    if [[ ${!key+x} == x ]]; then
+      printf 'export %s=%q\n' "$key" "${!key}" >>"$target"
+    fi
+  done
+  for key in $(compgen -v | LC_ALL=C sort); do
+    case "$key" in
+      XCODE_*)
+        value="${!key}"
+        printf 'export %s=%q\n' "$key" "$value" >>"$target"
+        ;;
+    esac
+  done
+}
+
+queue_job() {
+  local job_id job_dir owner_body
+  job_id="$(generate_job_id)"
+  job_dir="$JOBS_DIR/$job_id"
+  mkdir -p "$job_dir"
+
+  owner_body="$(build_owner_body)"
+  set_job_state "$job_dir" 'queued'
+  write_text_file "$job_dir/mode" "$MODE"
+  write_text_file "$job_dir/repo_root" "$REPO_ROOT"
+  write_text_file "$job_dir/created_at" "$(timestamp_now)"
+  write_text_file "$job_dir/created_at_epoch" "$(seconds_now)"
+  write_text_file "$job_dir/submitter.txt" "$owner_body"
+  write_text_file "$job_dir/workspace" "$META_WORKSPACE"
+  write_text_file "$job_dir/project" "$META_PROJECT"
+  write_text_file "$job_dir/scheme" "$META_SCHEME"
+  write_text_file "$job_dir/configuration" "$META_CONFIGURATION"
+  write_text_file "$job_dir/destination" "$META_DESTINATION"
+  write_text_file "$job_dir/action" "$META_ACTION"
+  write_text_file "$job_dir/command_preview" "$COMMAND_PREVIEW"
+  write_text_file "$job_dir/log_path" "$job_dir/job.log"
+  write_env_snapshot "$job_dir/env.sh"
+  write_args_file "$job_dir/command.args0" "${COMMAND[@]}"
+
+  JOB_ID="$job_id"
+  JOB_DIR="$job_dir"
+  JOB_LOG_FILE="$job_dir/job.log"
+}
+
+job_summary_line() {
+  local job_dir="$1"
+  local job_id repo_root mode workspace scheme destination state
+  job_id="$(basename "$job_dir")"
+  repo_root="$(cat "$job_dir/repo_root" 2>/dev/null || printf '%s' '-')"
+  mode="$(cat "$job_dir/mode" 2>/dev/null || printf '%s' '-')"
+  workspace="$(cat "$job_dir/workspace" 2>/dev/null || printf '%s' '-')"
+  scheme="$(cat "$job_dir/scheme" 2>/dev/null || printf '%s' '-')"
+  destination="$(cat "$job_dir/destination" 2>/dev/null || printf '%s' '-')"
+  state="$(job_state "$job_dir")"
+  printf '%s | %s | mode=%s | workspace=%s | scheme=%s | destination=%s | state=%s\n' \
+    "$job_id" "$repo_root" "$mode" "$workspace" "$scheme" "$destination" "$state"
+}
+
+job_matches_filter() {
+  local job_dir="$1"
+  if [[ -z "$STATUS_FILTER_REPO_ROOT" ]]; then
+    return 0
+  fi
+  [[ -f "$job_dir/repo_root" ]] || return 1
+  [[ "$(cat "$job_dir/repo_root")" == "$STATUS_FILTER_REPO_ROOT" ]]
+}
+
+queue_status() {
+  local active_job active_summary pending_count
+
+  echo "Queue root: $QUEUE_ROOT"
+  if daemon_running; then
+    echo "Daemon: running pid=$(daemon_pid)"
+  else
+    echo "Daemon: not running"
+  fi
+  echo "DerivedData: system default ($SYSTEM_DERIVED_DATA_HOME)"
+
+  active_job=''
+  if [[ -f "$ACTIVE_JOB_FILE" ]]; then
+    active_job="$(cat "$ACTIVE_JOB_FILE" 2>/dev/null || true)"
+  fi
+  if [[ -n "$active_job" && -d "$active_job" ]] && job_matches_filter "$active_job"; then
+    active_summary="$(job_summary_line "$active_job")"
+    echo "Active:"
+    echo "  $active_summary"
+    if [[ -f "$active_job/log_path" ]]; then
+      echo "  log_file=$(cat "$active_job/log_path")"
+    fi
+  else
+    echo "Active: none"
+  fi
+
+  pending_count=0
+  echo "Pending:"
+  local job_dir
+  for job_dir in $(find "$JOBS_DIR" -mindepth 1 -maxdepth 1 -type d -print 2>/dev/null | LC_ALL=C sort); do
+    if [[ "$(job_state "$job_dir")" == 'queued' ]] && job_matches_filter "$job_dir"; then
+      pending_count=$(( pending_count + 1 ))
+      echo "  $pending_count. $(job_summary_line "$job_dir")"
+    fi
+  done
+  if [[ $pending_count -eq 0 ]]; then
+    echo "  none"
+  fi
+}
+
+queue_position() {
+  local target_dir="$1"
+  local position=0
+  local job_dir
+  for job_dir in $(find "$JOBS_DIR" -mindepth 1 -maxdepth 1 -type d -print 2>/dev/null | LC_ALL=C sort); do
+    if [[ "$(job_state "$job_dir")" == 'queued' ]]; then
+      position=$(( position + 1 ))
+      if [[ "$job_dir" == "$target_dir" ]]; then
+        printf '%s' "$position"
+        return 0
+      fi
+    fi
+  done
+  printf '%s' '0'
+}
+
+active_job_summary() {
+  if [[ -f "$ACTIVE_JOB_FILE" ]]; then
+    local active_job
+    active_job="$(cat "$ACTIVE_JOB_FILE" 2>/dev/null || true)"
+    if [[ -n "$active_job" && -d "$active_job" ]]; then
+      job_summary_line "$active_job"
+      return 0
+    fi
+  fi
+  printf '%s' 'none'
+}
+
+wait_for_job() {
+  local last_notice='' state position active_summary exit_code tail_pid=''
+  while true; do
+    state="$(job_state "$JOB_DIR")"
+    case "$state" in
+      queued)
+        position="$(queue_position "$JOB_DIR")"
+        active_summary="$(active_job_summary)"
+        if [[ "$last_notice" != "queued:$position:$active_summary" ]]; then
+          echo "[codex_verify] queued job=$JOB_ID position=$position active=$active_summary log_file=$JOB_LOG_FILE" >&2
+          last_notice="queued:$position:$active_summary"
+        fi
+        sleep 1
+        ;;
+      running)
+        if [[ -z "$tail_pid" ]]; then
+          echo "[codex_verify] running job=$JOB_ID log_file=$JOB_LOG_FILE derived_data_path=$SYSTEM_DERIVED_DATA_HOME" >&2
+          tail -n +1 -F "$JOB_LOG_FILE" 2>/dev/null &
+          tail_pid=$!
+        fi
+        sleep 1
+        ;;
+      succeeded|failed)
+        if [[ -z "$tail_pid" ]]; then
+          [[ -f "$JOB_LOG_FILE" ]] && cat "$JOB_LOG_FILE"
+        else
+          kill "$tail_pid" 2>/dev/null || true
+          wait "$tail_pid" 2>/dev/null || true
+        fi
+        exit_code="$(cat "$JOB_DIR/exit_code" 2>/dev/null || printf '%s' '1')"
+        echo "[codex_verify] finished job=$JOB_ID state=$state status=$exit_code log_file=$JOB_LOG_FILE" >&2
+        return "$exit_code"
+        ;;
+      *)
+        sleep 1
+        ;;
+    esac
+  done
+}
+
+mark_running_jobs_failed_on_recovery() {
+  local job_dir
+  for job_dir in $(find "$JOBS_DIR" -mindepth 1 -maxdepth 1 -type d -print 2>/dev/null | LC_ALL=C sort); do
+    if [[ "$(job_state "$job_dir")" == 'running' ]]; then
+      append_log_line "$job_dir/job.log" "[codex_verify] job interrupted: daemon restarted before completion"
+      write_text_file "$job_dir/exit_code" "1"
+      write_text_file "$job_dir/finished_at" "$(timestamp_now)"
+      set_job_state "$job_dir" 'failed'
+    fi
+  done
+  rm -f "$ACTIVE_JOB_FILE"
+}
+
+next_queued_job() {
+  local job_dir
+  NEXT_QUEUED_JOB=''
+  for job_dir in $(find "$JOBS_DIR" -mindepth 1 -maxdepth 1 -type d -print 2>/dev/null | LC_ALL=C sort); do
+    if [[ "$(job_state "$job_dir")" == 'queued' ]]; then
+      NEXT_QUEUED_JOB="$job_dir"
+      return 0
+    fi
   done
   return 1
 }
 
-build_run_command() {
-  RUN_COMMAND=("${COMMAND[@]}")
-  if [[ "$MODE" == 'xcodebuild' && "$EFFECTIVE_DERIVED_DATA_MODE" != 'system-serial' ]]; then
-    if ! command_has_derived_data_path "${RUN_COMMAND[@]}"; then
-      RUN_COMMAND+=( -derivedDataPath "$DERIVED_DATA_PATH" )
-    fi
-  fi
-}
+run_job() {
+  local job_dir="$1"
+  local repo_root mode started_at status
+  local job_id
+  job_id="$(basename "$job_dir")"
+  repo_root="$(cat "$job_dir/repo_root")"
+  mode="$(cat "$job_dir/mode")"
+  started_at="$(timestamp_now)"
 
-destination_lock_key() {
-  local destination="$1"
-  if [[ -z "$destination" || "$destination" == 'auto(connected-device-preferred)' ]]; then
-    printf '%s' ''
-    return 0
-  fi
-  printf '%s' "$(hash_text "$destination")"
-}
+  set_job_state "$job_dir" 'running'
+  write_text_file "$job_dir/started_at" "$started_at"
+  write_text_file "$job_dir/runner_pid" "$$"
+  write_text_file "$ACTIVE_JOB_FILE" "$job_dir"
 
-is_test_like_action() {
-  case "${META_ACTION}" in
-    test|test-without-building)
-      return 0
-      ;;
-    *)
-      return 1
-      ;;
-  esac
-}
+  read_args_file "$job_dir/command.args0"
+  append_log_line "$job_dir/job.log" "[codex_verify] job_id=$job_id"
+  append_log_line "$job_dir/job.log" "[codex_verify] repo_root=$repo_root"
+  append_log_line "$job_dir/job.log" "[codex_verify] mode=$mode"
+  append_log_line "$job_dir/job.log" "[codex_verify] workspace=$(cat "$job_dir/workspace") project=$(cat "$job_dir/project") scheme=$(cat "$job_dir/scheme") destination=$(cat "$job_dir/destination")"
+  append_log_line "$job_dir/job.log" "[codex_verify] action=$(cat "$job_dir/action") configuration=$(cat "$job_dir/configuration")"
+  append_log_line "$job_dir/job.log" "[codex_verify] derived_data_path=$SYSTEM_DERIVED_DATA_HOME"
+  append_log_line "$job_dir/job.log" "[codex_verify] started_at=$started_at"
+  append_log_line "$job_dir/job.log" "[codex_verify] command=$(cat "$job_dir/command_preview")"
 
-log_effective_header() {
-  echo "[codex_verify] repo_root=$REPO_ROOT" >&2
-  echo "[codex_verify] lock_basis=$LOCK_BASIS" >&2
-  echo "[codex_verify] workspace=${META_WORKSPACE} project=${META_PROJECT} scheme=${META_SCHEME} destination=${META_DESTINATION}" >&2
-  echo "[codex_verify] action=${META_ACTION} configuration=${META_CONFIGURATION}" >&2
-  echo "[codex_verify] derived_data_mode=${EFFECTIVE_DERIVED_DATA_MODE}" >&2
-  if [[ "$EFFECTIVE_DERIVED_DATA_MODE" == 'system-serial' ]]; then
-    echo "[codex_verify] derived_data_path=$SYSTEM_DERIVED_DATA_HOME (system default)" >&2
-  else
-    echo "[codex_verify] derived_data_slot=$DERIVED_DATA_SLOT_ID ($DERIVED_DATA_SLOT_REASON)" >&2
-    echo "[codex_verify] derived_data_path=$DERIVED_DATA_PATH" >&2
-    echo "[codex_verify] seed_mode=$DERIVED_DATA_SEED_MODE refresh=$DERIVED_DATA_REFRESH seed_source=${DERIVED_DATA_SEED_SOURCE:-pending}" >&2
-  fi
-  echo "[codex_verify] log_file=$LOG_FILE" >&2
-}
-
-run_logged_command() {
-  local -a command_to_run=("$@")
   set +e
   (
-    cd "$REPO_ROOT"
-    export CODEX_EFFECTIVE_DERIVED_DATA_MODE="$EFFECTIVE_DERIVED_DATA_MODE"
-    export CODEX_EFFECTIVE_DERIVED_DATA_PATH="${DERIVED_DATA_PATH:-}"
-    export CODEX_EFFECTIVE_DERIVED_DATA_SLOT="${DERIVED_DATA_SLOT_ID:-}"
-    export CODEX_VERIFY_DESTINATION_LOCK_ROOT="$DESTINATION_LOCK_ROOT"
-    export CODEX_VERIFY_LOCK_POLL_SECONDS="$WAIT_INTERVAL_SECONDS"
-    if [[ "$EFFECTIVE_DERIVED_DATA_MODE" != 'system-serial' ]]; then
-      export XCODE_DERIVED_DATA="$DERIVED_DATA_PATH"
-    else
-      unset XCODE_DERIVED_DATA
-      unset CODEX_EFFECTIVE_DERIVED_DATA_PATH
-      unset CODEX_EFFECTIVE_DERIVED_DATA_SLOT
+    cd "$repo_root"
+    if [[ -f "$job_dir/env.sh" ]]; then
+      # shellcheck source=/dev/null
+      source "$job_dir/env.sh"
     fi
-    if [[ "$MODE" == 'build-check' ]]; then
-      export CODEX_VERIFY_BYPASS_WRAPPER=1
-    fi
-    "${command_to_run[@]}"
-  ) 2>&1 | tee "$LOG_FILE"
-  COMMAND_STATUS=${PIPESTATUS[0]}
+    export CODEX_VERIFY_BYPASS_WRAPPER=1
+    export CODEX_VERIFY_QUEUE_ROOT="$QUEUE_ROOT"
+    unset XCODE_DERIVED_DATA
+    "${READ_ARGS_RESULT[@]}"
+  ) 2>&1 | tee -a "$job_dir/job.log"
+  status=${PIPESTATUS[0]}
   set -e
-  return "$COMMAND_STATUS"
+
+  write_text_file "$job_dir/exit_code" "$status"
+  write_text_file "$job_dir/finished_at" "$(timestamp_now)"
+  if [[ $status -eq 0 ]]; then
+    set_job_state "$job_dir" 'succeeded'
+  else
+    set_job_state "$job_dir" 'failed'
+  fi
+  append_log_line "$job_dir/job.log" "[codex_verify] finished_at=$(cat "$job_dir/finished_at")"
+  append_log_line "$job_dir/job.log" "[codex_verify] status=$status"
+  rm -f "$ACTIVE_JOB_FILE"
 }
 
-log_contains_build_db_lock() {
-  [[ -f "$LOG_FILE" ]] || return 1
-  grep -Eqi 'build\.db:.*locked|database is locked|unable to attach DB|SWBBuildService' "$LOG_FILE"
+daemon_cleanup() {
+  local current_pid
+  current_pid="$(daemon_pid)"
+  if [[ "$current_pid" == "$$" ]]; then
+    rm -f "$DAEMON_PID_FILE"
+  fi
 }
 
-execute_isolated_mode() {
-  local slot_owner_body slot_lock_dir destination_hash destination_lock_dir
+daemon_main() {
+  mkdir -p "$QUEUE_ROOT" "$JOBS_DIR"
 
-  slot_owner_body="$(build_owner_body)"
-  acquire_directory_lock "$SLOT_LOCK_DIR" 'derived data slot lock' "$slot_owner_body"
-
-  if [[ "$MODE" == 'xcodebuild' && -n "${META_DESTINATION}" ]] && is_test_like_action; then
-    destination_hash="$(destination_lock_key "$META_DESTINATION")"
-    if [[ -n "$destination_hash" ]]; then
-      destination_lock_dir="$DESTINATION_LOCK_ROOT/destination-$destination_hash.lockdir"
-      acquire_directory_lock "$destination_lock_dir" 'destination validation lock' "$slot_owner_body"
+  if daemon_running; then
+    local existing_pid
+    existing_pid="$(daemon_pid)"
+    if [[ "$existing_pid" != "$$" ]]; then
+      exit 0
     fi
   fi
 
-  build_run_command
-  log_effective_header
-  run_logged_command "${RUN_COMMAND[@]}"
-}
+  printf '%s\n' "$$" >"$DAEMON_PID_FILE"
+  trap daemon_cleanup EXIT INT TERM HUP
 
-execute_system_serial_mode() {
-  build_run_command
-  EFFECTIVE_DERIVED_DATA_MODE='system-serial'
-  LOCK_DIR="/tmp/codex-xcodebuild-locks/$LOCK_KEY"
-  LOCK_FILE="$LOCK_DIR/project.lock"
-  OWNER_FILE="$LOCK_DIR/owner.txt"
-  mkdir -p "$LOCK_DIR" "$LOG_DIR"
-  acquire_repo_serial_lock
-  echo "[codex_verify] acquired validation lock" >&2
-  log_effective_header
-  run_logged_command "${RUN_COMMAND[@]}"
-}
+  mark_running_jobs_failed_on_recovery
 
-if [[ $# -lt 1 ]]; then
-  usage >&2
-  exit 64
-fi
+  while true; do
+    if next_queued_job; then
+      run_job "$NEXT_QUEUED_JOB"
+      continue
+    fi
+    sleep 1
+  done
+}
 
 MODE=''
-WAIT_INTERVAL_SECONDS="${CODEX_VERIFY_LOCK_POLL_SECONDS:-5}"
 SCRIPT_PATH="$(resolve_path "${BASH_SOURCE[0]}")"
 SCRIPT_DIR="$(cd -P "$(dirname "$SCRIPT_PATH")" && pwd -P)"
 USER_REPO_ROOT=''
@@ -712,7 +650,7 @@ while [[ $# -gt 0 ]]; do
       USER_REPO_ROOT="$2"
       shift 2
       ;;
-    --|--build-check|--help|-h)
+    --|--build-check|--queue-status|--daemon|--help|-h)
       break
       ;;
     *)
@@ -730,14 +668,22 @@ else
   REPO_ROOT="$(pwd -P)"
 fi
 XCODE_ENV_FILE="$REPO_ROOT/.codex/xcodebuild.env"
+SYSTEM_DERIVED_DATA_HOME="$HOME/Library/Developer/Xcode/DerivedData"
+QUEUE_ROOT="$(queue_root)"
+JOBS_DIR="$QUEUE_ROOT/jobs"
+DAEMON_PID_FILE="$QUEUE_ROOT/daemon.pid"
+DAEMON_STDOUT_LOG="$QUEUE_ROOT/daemon.log"
+ACTIVE_JOB_FILE="$QUEUE_ROOT/active_job"
+START_LOCK_DIR="$QUEUE_ROOT/start.lockdir"
+STATUS_FILTER_REPO_ROOT=''
 
-case "$1" in
+case "${1:-}" in
   --)
     shift
     [[ $# -gt 0 ]] || die "missing xcodebuild arguments after --"
     MODE='xcodebuild'
     RAW_ARGS=("$@")
-    if [[ "${RAW_ARGS[0]}" == "xcodebuild" ]]; then
+    if [[ "${RAW_ARGS[0]}" == 'xcodebuild' ]]; then
       COMMAND=("xcodebuild" "${RAW_ARGS[@]:1}")
     else
       COMMAND=("xcodebuild" "${RAW_ARGS[@]}")
@@ -753,7 +699,20 @@ case "$1" in
     [[ -f "$BUILD_CHECK_SCRIPT" ]] || die "build-check script not found: $BUILD_CHECK_SCRIPT"
     BUILD_CHECK_SCRIPT="$(resolve_path "$BUILD_CHECK_SCRIPT")"
     BUILD_CHECK_ROOT="$(resolve_path "$BUILD_CHECK_ROOT")"
+    REPO_ROOT="$BUILD_CHECK_ROOT"
+    XCODE_ENV_FILE="$REPO_ROOT/.codex/xcodebuild.env"
     COMMAND=(bash "$BUILD_CHECK_SCRIPT" "$BUILD_CHECK_ROOT" "$@")
+    ;;
+  --queue-status)
+    MODE='queue-status'
+    COMMAND=()
+    if [[ -n "$USER_REPO_ROOT" || "$(basename "$SCRIPT_PATH")" == 'codex_verify.sh' ]]; then
+      STATUS_FILTER_REPO_ROOT="$REPO_ROOT"
+    fi
+    ;;
+  --daemon)
+    MODE='daemon'
+    COMMAND=()
     ;;
   --help|-h)
     usage
@@ -764,11 +723,6 @@ case "$1" in
     exit 64
     ;;
 esac
-
-if [[ "$MODE" == 'build-check' ]]; then
-  REPO_ROOT="$BUILD_CHECK_ROOT"
-  XCODE_ENV_FILE="$REPO_ROOT/.codex/xcodebuild.env"
-fi
 
 META_WORKSPACE=''
 META_PROJECT=''
@@ -782,67 +736,21 @@ if [[ "$MODE" == 'xcodebuild' ]]; then
 fi
 load_metadata_defaults
 
-if [[ "${META_WORKSPACE}" != 'auto' ]]; then
-  LOCK_BASIS="$(resolve_repo_member_path "$META_WORKSPACE")"
-elif [[ "${META_PROJECT}" != 'auto' ]]; then
-  LOCK_BASIS="$(resolve_repo_member_path "$META_PROJECT")"
-else
-  LOCK_BASIS="$REPO_ROOT"
+if [[ "$MODE" == 'daemon' ]]; then
+  daemon_main
+  exit 0
 fi
 
-LOCK_KEY="$(printf '%s' "$LOCK_BASIS" | shasum -a 256 | awk '{print $1}')"
-LOG_DIR="/tmp/codex-verify/$LOCK_KEY"
-RUN_TIMESTAMP="$(date '+%Y%m%d-%H%M%S')"
-LOG_FILE="$LOG_DIR/$RUN_TIMESTAMP.log"
+assert_no_legacy_derived_data_settings
+
+if [[ "$MODE" == 'queue-status' ]]; then
+  queue_status
+  exit 0
+fi
+
 COMMAND_PREVIEW="$(join_quoted_command "${COMMAND[@]}")"
 
-SYSTEM_DERIVED_DATA_HOME="$HOME/Library/Developer/Xcode/DerivedData"
-DERIVED_DATA_MODE="$(normalize_derived_data_mode "$(env_or_file_value XCODE_DERIVED_DATA_MODE)")"
-DERIVED_DATA_SEED_MODE="$(normalize_seed_mode "$(env_or_file_value XCODE_DERIVED_DATA_SEED_MODE)")"
-DERIVED_DATA_REFRESH="$(env_or_file_value XCODE_DERIVED_DATA_REFRESH)"
-DERIVED_DATA_REFRESH="${DERIVED_DATA_REFRESH:-0}"
-DERIVED_DATA_SLOT_ID=''
-DERIVED_DATA_SLOT_REASON=''
-discover_slot_id
-DERIVED_DATA_ROOT="/tmp/codex-derived-data/$LOCK_KEY/$DERIVED_DATA_SLOT_ID"
-DERIVED_DATA_PATH="$DERIVED_DATA_ROOT/DerivedData"
-DERIVED_DATA_METADATA="$DERIVED_DATA_ROOT/metadata.env"
-DERIVED_DATA_LOCK_ROOT="/tmp/codex-derived-data-locks/$LOCK_KEY"
-SEED_LOCK_DIR="$DERIVED_DATA_LOCK_ROOT/$DERIVED_DATA_SLOT_ID.seed.lockdir"
-SLOT_LOCK_DIR="$DERIVED_DATA_LOCK_ROOT/$DERIVED_DATA_SLOT_ID.slot.lockdir"
-DESTINATION_LOCK_ROOT="/tmp/codex-xcodebuild-locks/$LOCK_KEY"
-TARGET_CACHE_STEM="$(target_cache_stem)"
-CURRENT_XCODE_VERSION_HASH="$(current_xcode_version_hash)"
-DERIVED_DATA_SEED_SOURCE='pending'
-EFFECTIVE_DERIVED_DATA_MODE="$DERIVED_DATA_MODE"
-
-mkdir -p "$LOG_DIR" "$DERIVED_DATA_ROOT" "$DERIVED_DATA_LOCK_ROOT" "$DESTINATION_LOCK_ROOT"
-
-if [[ "$DERIVED_DATA_MODE" != 'system-serial' ]]; then
-  if ! prepare_isolated_derived_data; then
-    if [[ "$DERIVED_DATA_MODE" == 'isolated-preferred' ]]; then
-      echo "[codex_verify] isolated DerivedData setup failed; falling back to system-serial" >&2
-      EFFECTIVE_DERIVED_DATA_MODE='system-serial'
-    else
-      die "isolated DerivedData setup failed in isolated-required mode"
-    fi
-  fi
-fi
-
-COMMAND_STATUS=0
-if [[ "$EFFECTIVE_DERIVED_DATA_MODE" == 'system-serial' ]]; then
-  execute_system_serial_mode
-else
-  if ! execute_isolated_mode; then
-    COMMAND_STATUS=$?
-    if [[ "$DERIVED_DATA_MODE" == 'isolated-preferred' ]] && log_contains_build_db_lock; then
-      echo "[codex_verify] isolated validation hit build.db lock signature; retrying once with system-serial mode" >&2
-      EFFECTIVE_DERIVED_DATA_MODE='system-serial'
-      COMMAND_STATUS=0
-      execute_system_serial_mode || COMMAND_STATUS=$?
-    fi
-  fi
-fi
-
-echo "[codex_verify] finished status=$COMMAND_STATUS log_file=$LOG_FILE" >&2
-exit "$COMMAND_STATUS"
+queue_job
+ensure_daemon_running
+wait_for_job
+exit $?

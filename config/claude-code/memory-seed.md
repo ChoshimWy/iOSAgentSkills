@@ -11,7 +11,7 @@
 
 - 回复语言：zh-CN（代码 / 命令 / API 名保留原文）
 - 实现语言：Swift（优先），结构化并发（async/await），UI 线程 `@MainActor`
-- 验证型 `xcodebuild` 默认通过 wrapper 注入 CLI 专属 DerivedData（`XCODE_DERIVED_DATA_MODE=isolated-preferred`）；非验证型构建讨论仍以系统 DerivedData（`~/Library/Developer/Xcode/DerivedData`）为基线
+- 验证型 `xcodebuild` 默认通过 wrapper 接入 shared build-queue daemon，统一串行执行并使用系统 DerivedData（`~/Library/Developer/Xcode/DerivedData`）；非验证型构建讨论仍以系统 DerivedData 为基线
 - Workspace 优先：同时存在 `.xcworkspace` 和 `.xcodeproj` 时使用前者
 - Scheme 优先：默认选包含 `*Tests` target 的 scheme
 - 设备优先：按需完整验证时，已连接真机 > simulator
@@ -59,7 +59,7 @@
 ## xcodebuild 约束
 
 - 在目标项目环境执行（非沙盒），从项目根目录发起
-- 验证链路默认由 wrapper 注入专属 `-derivedDataPath`；需要强制重 seed 时优先 `XCODE_DERIVED_DATA_REFRESH=1`
+- 验证链路默认由 wrapper 提交到 shared build-queue daemon；旧 `XCODE_DERIVED_DATA_*` / `CODEX_DERIVED_DATA_SLOT` 公开配置不再支持
 - iOS 项目按需完整验证优先真机
 - `.xcworkspace` 优先于 `.xcodeproj`
 

@@ -8,7 +8,7 @@
 - 真机 / 模拟器验证不属于默认 testing 执行面；若没有可低成本执行的单测路径，输出 `no_test_reason` 与 `suggested_validation`
 - Worker 模式（升级）：仅补测试代码，不改业务实现
 - 测试命名：`test_[方法]_[条件]_[预期]`
-- xcodebuild 在项目环境执行；验证型命令默认复用 wrapper 分配的 CLI 专属 DerivedData，必要时再回退 `system-serial`
+- xcodebuild 在项目环境执行；验证型命令默认复用 wrapper 接入 shared build-queue daemon，统一串行执行并使用系统 DerivedData
 - 默认复用 `testing`、`ios-automation` skill
 
 ## 输出字段

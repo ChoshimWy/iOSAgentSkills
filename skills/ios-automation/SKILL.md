@@ -64,7 +64,7 @@ description: iOS 设备自动化技能（模拟器 + 真机统一入口）。按
 - 真机默认用 `xcodebuild -destination 'id=<destination-id>'`，不替代签名配置；签名交给 `xcode-build`
 - 真机注意：`xcodebuild` destination id 与 `devicectl` device identifier 是不同的标识符，不能混用
 - 本地执行 `xcodebuild` 默认在项目环境直接执行（CC 使用 `Bash` 工具；Codex 使用 `functions.exec_command` + `require_escalated`）
-- 通过本仓 shell 脚本触发的 build/test 默认复用验证 wrapper：`XCODE_DERIVED_DATA_MODE=isolated-preferred`，为当前 CLI 分配专属 DerivedData slot；只有显式 `system-serial` 或隔离模式命中锁冲突时，才回退到系统 DerivedData 串行路径
+- 通过本仓 shell 脚本触发的 build/test 默认复用验证 wrapper：wrapper 会自动接入 shared build-queue daemon，把验证型 `xcodebuild` 串行排队执行，并统一使用 Xcode 系统 DerivedData
 - 如果未显式指定 scheme，默认优先选择绑定了单元测试 `*Tests` target/bundle 的 scheme
 - 如果同一任务后续按需进入 `final-evidence-gate` / `verify-ios-build`，可选证据验证默认复用本次定向测试的 workspace / scheme / destination 基线
 
