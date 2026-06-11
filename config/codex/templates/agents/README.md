@@ -25,6 +25,7 @@
 - 推荐优先级：`<repo-root>/codex_verify.sh` > `~/.codex/bin/codex_verify`。
 - 全局硬约束仍以仓库根 `AGENTS.md` 与 `skills/codex-subagent-orchestration/` 合同为准。
 - Apple Xcode 项目改动默认以定向验证与 code-review 收口；`final-evidence-gate` / `verify-ios-build` 仅按需补强。
+- `testing` 默认只执行最窄定向单测；真机 / 模拟器验证不属于默认收口执行面。
 - 默认先做任务分型：`doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`。
 - 默认最小角色集合：`explorer + builder + reporter`；命中风险条件再激活 `pm` 与 `tester`。
 - 统一字段：每个角色输出都需包含 `checkpoint_status`、`first_failure`、`next_action`（无阻塞时 `first_failure: none`）。

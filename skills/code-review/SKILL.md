@@ -29,6 +29,7 @@ description: iOS/Swift 代码审查技能。只在需要 review 代码、审查 
 - 如果本次修改涉及私有库 / 私有组件，必须审查验证故事是否在主项目切回或保持本地 `:path` 私有库依赖后完成；未收到明确指令却使用线上版本化依赖或 `Pods/` vendored snapshot 验证，默认视为验证基线不成立。
 - 如果用户问题本质上是“为什么会 crash / 卡顿 / 泄漏”，不要把本 skill 当作主 skill，切换到 `debugging` 或 `ios-performance`。
 - 固定链路中必须审查验证故事：`testing` 的 `executed_validation` 是否发生在最后一次代码变更之后，是否覆盖最终交付 target / consumer app scheme，以及是否需要升级 `verify-ios-build`。
+- 若 `testing` 已执行最窄定向单测且本次改动不命中工程/依赖/签名/资源/设备能力高风险条件，不得仅因未跑真机 / 模拟器验证就把验证故事判为证据不足。
 
 ## 注释相关阻塞判定（审查口径）
 - 以下情况默认进入 `blocking_findings`（🔴）：
@@ -79,7 +80,7 @@ next_action: <fix-and-rerun|blocked|complete>
   - `unreviewed_changes` 无遗漏时写 `none`；存在未审查文件、未确认基线或未覆盖影响面时必须列出，并影响 `verification_story`。
   - `first_failure` 只写首个真实阻塞点；无阻塞时写 `none`。
   - 存在阻塞项时，`next_action` 不能是 `complete`。
-  - `verification_story` 必须说明已有验证是否足够；证据不足或高风险时应标记 `needs-verify-ios-build`。
+  - `verification_story` 必须说明已有验证是否足够；若最窄定向单测 + 当前静态审查已足够支撑交付，可标记 `accepted`；证据不足或高风险时再标记 `needs-final-evidence-gate` / `needs-verify-ios-build`。
 - 总结中只补充必须修改数量、建议修改数量、整体质量判断和残余风险。
 - 审查 public API / SDK 接口时，参考 `references/api-design.md`。
 - 输出 `blocking_findings` 时，优先把“注释导致的调用契约误判风险”放在首个真实阻塞点。

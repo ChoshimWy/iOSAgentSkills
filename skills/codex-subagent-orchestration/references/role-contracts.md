@@ -83,6 +83,7 @@
 
 ### explorer 模式按需输出
 - `test_scope`：仅当验证面会影响下一步决策
+- `no_test_reason`：仅当没有可低成本执行的单测路径
 - `suggested_fix`：仅当已有失败且需要回写 coder
 
 ### worker 模式额外输出
@@ -92,6 +93,7 @@
 ### 不负责
 - 最终完成态裁决
 - 替代主 Agent 的默认收口或按需完整验证
+- 自动升级到真机 / 模拟器验证
 
 ## reporter
 

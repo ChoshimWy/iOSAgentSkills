@@ -62,6 +62,7 @@ SwiftUI 页面开发统一入口，根据任务阶段自动选择子模式。不
 ## 可选证据验证
 
 - 如果当前任务没有进入 `codex-subagent-orchestration`（CC 用户参考 CLAUDE.md 三步收口工作流），或当前轮只能以单 Agent 执行，本 skill 完成实现后也不要直接跳到可选验证；默认后续链路按三步执行：`swiftui-feature-implementation -> testing/定向验证 -> code-review`
+- 后续 `testing` 阶段默认只执行最窄定向单测；若没有可低成本执行的单测路径，则给出 `no_test_reason` 与 `suggested_validation`，不自动升级到真机 / 模拟器验证。
 - 只要当前任务产出修改了 Apple Xcode 项目相关内容，默认以定向测试/必要验证与 `code-review` 放行为收口；`final-evidence-gate` / `verify-ios-build` 仅按需使用
 - 若执行可选完整验证，证据必须来自目标项目根目录的项目环境
 - 对 iOS 项目，若升级到 `verify-ios-build`，必须优先 `.xcworkspace`，并默认优先已连接真机

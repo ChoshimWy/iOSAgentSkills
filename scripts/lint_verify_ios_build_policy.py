@@ -79,6 +79,7 @@ def main() -> int:
             "完整项目环境证据",
             "final-evidence-gate",
             "Xcode 系统 DerivedData",
+            "最窄定向单测",
             "`实现 skill -> testing/定向验证 -> code-review`",
             "默认完成标准：定向测试或必要验证通过，且 `code-review` 无 blocking findings",
         ],
@@ -90,6 +91,7 @@ def main() -> int:
             "默认收口与可选证据验证",
             "完整项目环境证据",
             "Xcode 系统 DerivedData",
+            "最窄定向单测",
             "`实现 skill -> testing/定向验证 -> code-review`",
             "python3 scripts/lint_verify_ios_build_policy.py",
         ],
@@ -99,6 +101,7 @@ def main() -> int:
         ROOT / "skills" / "TAXONOMY.md",
         [
             "默认完成标准：定向测试或必要验证通过",
+            "最窄定向单测",
             "sandbox 结果",
             "`.xcworkspace` 优先",
             "`实现 skill -> testing/定向验证 -> code-review`",
@@ -168,15 +171,17 @@ def main() -> int:
     ):
         require_contains(
             ROOT / "skills" / targeted_skill / "SKILL.md",
-            [
-                "定向测试",
-            ],
+        [
+            "定向测试",
+            "最窄定向单测",
+        ],
             failures,
         )
     require_contains(
         ROOT / "skills" / "testing" / "SKILL.md",
         [
             "绑定了单元测试 `*Tests` target / bundle 的 scheme",
+            "真机 / 模拟器验证不属于默认 testing 执行面",
         ],
         failures,
     )
@@ -226,6 +231,7 @@ def main() -> int:
             "~/.codex/bin/codex_verify",
             "串行化",
             "主项目本地 `:path` 私有库依赖基线",
+            "最窄定向单测",
         ],
         failures,
     )
@@ -411,6 +417,7 @@ def main() -> int:
             "`review_scope`",
             "`impact_scope`",
             "`unreviewed_changes`",
+            "不得仅因未跑真机 / 模拟器验证",
         ],
         failures,
     )
@@ -436,6 +443,7 @@ def main() -> int:
             "no_test_reason",
             "$code-review",
             "$verify-ios-build",
+            "最窄定向单测",
         ],
         failures,
     )

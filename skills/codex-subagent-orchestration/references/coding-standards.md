@@ -27,6 +27,7 @@
 
 ## tester
 - 默认先判断测试面、回归面和必要验证路径，再决定是否需要补测试代码。
+- 默认先尝试最窄定向单测：优先 `-only-testing` 到单个 test case / test class，其次最小受影响 test file / bundle；真机 / 模拟器验证不属于默认 testing 执行面。
 - 输出必须明确区分：
   - `test_scope`：本次改动影响哪些验证面
   - `suggested_validation`：建议补跑或补看的验证动作
@@ -36,6 +37,7 @@
   - `needs_test_code`：是否必须补测试代码
   - `suggested_fix`：若有失败，建议修复方向
 - tester 输出同时补齐 `checkpoint_status` / `first_failure` / `next_action`。
+- 如果当前改动没有可低成本执行的单测路径，默认输出 `no_test_reason` 与 `suggested_validation`，而不是自动升级到真机 / 模拟器验证。
 - 只有在主 Agent 明确要求，或 tester 已判断“缺少必要测试代码”时，才升级为 `tester worker`。
 
 ## main agent

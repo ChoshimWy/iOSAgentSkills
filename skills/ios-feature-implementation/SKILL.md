@@ -60,6 +60,7 @@ no_test_reason: <仅当本轮不涉及新增测试时填写>
 
 ## 可选证据验证
 - 如果当前任务没有进入 `codex-subagent-orchestration`（CC 用户参考 CLAUDE.md 三步收口工作流），或当前轮只能以单 Agent 执行，本 skill 完成实现后也不要直接跳到可选验证；默认后续链路按三步执行：`ios-feature-implementation -> testing/定向验证 -> code-review`。
+- 后续 `testing` 阶段默认只执行最窄定向单测；若没有可低成本执行的单测路径，则给出 `no_test_reason` 与 `suggested_validation`，不自动升级到真机 / 模拟器验证。
 - 只要当前任务产出修改了 Apple Xcode 项目相关内容（代码、测试、资源、工程文件、构建脚本、plist / entitlements / xcconfig / scheme 或项目内环境配置），最终默认以定向测试/必要验证与 `code-review` 放行为收口；`final-evidence-gate` / `verify-ios-build` 仅在用户显式要求或需要补强完整项目环境证据时按需使用。
 - 若执行可选完整验证，证据必须来自目标项目根目录的项目环境；沙箱内的构建结果不能作为完整项目环境证据。
 - 对 iOS 项目，若升级到 `verify-ios-build`，必须优先 `.xcworkspace`（当 `.xcworkspace` 与 `.xcodeproj` 同时存在时），并默认优先已连接真机；找不到连接中的真机时再回退到 simulator。

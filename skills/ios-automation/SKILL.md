@@ -80,6 +80,7 @@ description: iOS 设备自动化技能（模拟器 + 真机统一入口）。按
 ## 可选证据验证
 
 - 只要当前任务产出修改了 Apple Xcode 项目相关内容，默认以定向测试/必要验证与 `code-review` 放行为收口；`final-evidence-gate` / `verify-ios-build` 仅在用户显式要求或需要补强完整项目环境证据时按需使用
+- 默认收口里的 `testing` 只执行最窄定向单测；`ios-automation` 不作为真机 / 模拟器验证的默认收口步骤，只有用户显式要求或主 Agent 判定需要设备级证据时才进入。
 - 若执行可选完整验证，证据必须来自目标项目根目录的项目环境；沙箱内的构建结果不能作为最终验收结论
 - 对 iOS 项目，若升级到 `verify-ios-build`，必须优先 `.xcworkspace`，并默认优先已连接真机
 - 若可选 `final-evidence-gate` / `verify-ios-build` 未执行或失败，应说明已执行的定向测试/审查证据与残余风险。

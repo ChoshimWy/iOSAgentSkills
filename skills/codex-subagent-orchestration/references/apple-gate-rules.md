@@ -2,6 +2,7 @@
 
 ## 固定原则
 - 默认完成标准是定向测试或必要验证通过，且 `code-review` 无 blocking findings。
+- 涉及代码改动时，`testing` 默认只执行最窄定向单测；真机 / 模拟器验证不属于默认 testing 执行面。
 - `final-evidence-gate` / `verify-ios-build` 仅作为按需补强验证，由主 Agent 在用户显式要求、发布前自检或高风险时执行。
 - 如果可选证据验证或升级验证需要越过 sandbox，由主 Agent 使用 `functions.exec_command` 并按需设置 `sandbox_permissions="require_escalated"`。
 - 执行可选完整验证时，证据必须来自目标项目环境，不能把 sandbox 结果当完整项目环境结论。
@@ -9,6 +10,7 @@
 - 可选完整验证继续遵守 `.xcworkspace` 优先、单元测试 scheme 优先、iOS 真机优先与系统 DerivedData 约束。
 
 ## 基线复用
+- 若最后一次代码变更之后已经成功执行最窄定向单测，且未命中工程/依赖/签名/资源/设备能力高风险条件，`final-evidence-gate` 可直接接受该证据，不因缺少真机 / 模拟器验证而默认升级。
 - 如果同一任务已经先跑过定向测试或其它 build/test，`final-evidence-gate` 默认复用同一套 workspace / scheme / destination 基线。
 - 如果没有用户显式指定 scheme，默认优先真正绑定单元测试 `*Tests` target / bundle 的 scheme；`*UITests` 或其它 `*_TEST` 只作回退。
 - 验证必须发生在最后一次 repo-tracked 代码、配置、资源或依赖快照变更之后；否则证据失效。

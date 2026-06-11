@@ -8,6 +8,11 @@
 5. 代码收敛后，主 Agent 基于定向测试/必要验证与 `code-review` 推进 `CP3 Final Gate`
 6. 用户显式要求、发布前自检或高风险时，主 Agent 再按需执行 `final-evidence-gate` / `verify-ios-build` 补强证据
 
+## testing 默认边界
+- 默认 testing 先收敛到最窄定向单测：优先 `-only-testing` 到单个 test case / test class，其次最小受影响 test file / bundle。
+- 若没有可低成本执行的单测路径，tester / 主 Agent 输出 `no_test_reason` 与 `suggested_validation`，不要自动升级到真机 / 模拟器验证。
+- 真机 / 模拟器验证仅在用户显式要求、发布前自检、高风险或 `final-evidence-gate` 判定证据不足时执行。
+
 ## wait 与聚合策略
 - `wait_agent(...)` 只在主 Agent 需要当前结果推进下一步时使用，不要为轮询而频繁等待。
 - reviewer / tester 的结论优先按“首个真实阻塞点 -> 影响范围 -> 下一轮成功标准”聚合，再回写 coder。

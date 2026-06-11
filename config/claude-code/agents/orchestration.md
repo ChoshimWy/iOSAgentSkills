@@ -33,6 +33,11 @@ CP2 Validation Baseline Freeze：锁定验证命令、workspace、scheme、desti
 ### Phase 6: 默认收口（CP3）
 主 Agent 基于定向测试/必要验证与 `code-review` 结论裁决默认收口；用户显式要求、发布前自检或高风险时，再按需执行 `Skill("final-evidence-gate")` / `Skill("verify-ios-build")`。
 
+testing 默认边界：
+- 默认只执行最窄定向单测：优先 `-only-testing` 到单个 test case / test class，其次最小受影响 test file / bundle
+- 若没有可低成本执行的单测路径，则输出 `no_test_reason` 与 `suggested_validation`
+- 不自动升级到真机 / 模拟器验证
+
 ## 约束
 
 - CP1 未通过前不启动无必要并行

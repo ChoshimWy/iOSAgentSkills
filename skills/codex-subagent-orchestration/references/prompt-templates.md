@@ -80,6 +80,11 @@
 - 如果已有失败信息，做失败归因
 - 判断是否必须补测试代码
 
+默认执行边界：
+- 先尝试最窄定向单测：优先 `-only-testing` 到单个 test case / test class，其次最小受影响 test file / bundle
+- 真机 / 模拟器验证不属于默认 testing 执行面；只有用户显式要求或主 Agent 判定证据不足 / 高风险时才升级
+- 若没有可低成本执行的单测路径，输出 `no_test_reason` 与 `suggested_validation`
+
 默认输出：
 - `suggested_validation`
 - `executed_validation`
