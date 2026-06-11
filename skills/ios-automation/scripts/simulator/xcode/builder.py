@@ -5,6 +5,7 @@ Handles xcodebuild command construction and execution with xcresult generation.
 """
 
 import re
+import os
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
@@ -352,6 +353,10 @@ class BuildRunner:
             ]
         )
 
+        derived_data_path = os.environ.get("XCODE_DERIVED_DATA")
+        if derived_data_path:
+            cmd.extend(["-derivedDataPath", derived_data_path])
+
         # Execute build
         try:
             result = subprocess.run(
@@ -435,6 +440,10 @@ class BuildRunner:
                 str(xcresult_path),
             ]
         )
+
+        derived_data_path = os.environ.get("XCODE_DERIVED_DATA")
+        if derived_data_path:
+            cmd.extend(["-derivedDataPath", derived_data_path])
 
         if test_suite:
             cmd.extend(["-only-testing", test_suite])

@@ -8,7 +8,7 @@
 - `reporter.toml`
 
 以及 1 个项目侧验证模板：
-- `../codex_verify.example.sh` —— 复制到目标 Xcode 项目根目录并重命名为 `codex_verify.sh`，作为多 Codex CLI 串行化本地 `xcodebuild` / `build-check` 的唯一入口
+- `../codex_verify.example.sh` —— 复制到目标 Xcode 项目根目录并重命名为 `codex_verify.sh`，作为多 Codex CLI 本地 `xcodebuild` / `build-check` 的统一验证入口；默认给每个 CLI 分配专属 DerivedData slot，必要时回退串行系统缓存
 
 以及 1 个本机全局验证入口：
 - `~/.codex/bin/codex_verify` —— 由安装脚本自动同步；当目标项目没有 repo-tracked `codex_verify.sh` 时，`verify-ios-build` 会自动回退到这个全局 wrapper
@@ -20,7 +20,7 @@
 - 这些 `.toml` 是 Codex custom agent 文件，使用当前支持的扁平 schema：`name` / `description` / `developer_instructions`，以及可选 `model_reasoning_effort` / `sandbox_mode`。
 - 工作流合同字段不再放单独 TOML table，而是内嵌在 `developer_instructions` 中约束输出与职责边界。
 - 安装脚本会把它们同步到 `~/.codex/agents/`。
-- 安装脚本也会同步 `~/.codex/bin/codex_verify` 作为全局串行验证入口。
+- 安装脚本也会同步 `~/.codex/bin/codex_verify` 作为全局验证入口。
 - `codex_verify.example.sh` 会同步到 `~/.codex/templates/codex_verify.example.sh`，供目标项目复制落地。
 - 推荐优先级：`<repo-root>/codex_verify.sh` > `~/.codex/bin/codex_verify`。
 - 全局硬约束仍以仓库根 `AGENTS.md` 与 `skills/codex-subagent-orchestration/` 合同为准。

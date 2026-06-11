@@ -149,5 +149,15 @@ if [[ "$DRY_RUN" == '1' ]]; then
   exit 0
 fi
 
+if [[ -z "${CODEX_VERIFY_BYPASS_WRAPPER:-}" ]]; then
+  TARGET_VERIFY_SCRIPT="$ROOT/codex_verify.sh"
+  GLOBAL_VERIFY_SCRIPT="${CODEX_GLOBAL_VERIFY_WRAPPER:-$HOME/.codex/bin/codex_verify}"
+  if [[ -f "$TARGET_VERIFY_SCRIPT" ]]; then
+    exec bash "$TARGET_VERIFY_SCRIPT" --repo-root "$ROOT" -- "${command[@]}"
+  elif [[ -x "$GLOBAL_VERIFY_SCRIPT" ]]; then
+    exec "$GLOBAL_VERIFY_SCRIPT" --repo-root "$ROOT" -- "${command[@]}"
+  fi
+fi
+
 cd "$ROOT"
 "${command[@]}"

@@ -7,7 +7,7 @@
 ### Shared Config
 - `AGENTS.md` —— 团队共享规则单一来源（宪法层锚点）
 - `config/codex/codex.shared.toml` —— 可版本化、可跨设备复用的 Codex 共享默认配置
-- `config/codex/templates/codex_verify.example.sh` —— 串行验证模板；既可复制到目标 Xcode 项目根目录作为 `codex_verify.sh`，也会被安装脚本同步为本机 `~/.codex/bin/codex_verify`
+- `config/codex/templates/codex_verify.example.sh` —— 验证 wrapper 模板；既可复制到目标 Xcode 项目根目录作为 `codex_verify.sh`，也会被安装脚本同步为本机 `~/.codex/bin/codex_verify`
 - `CLAUDE.md` —— Claude 入口薄包装，导入 `AGENTS.md`
 
 ### Core Implementation
@@ -65,7 +65,7 @@ ln -s iOSAgentSkills/skills .claude/skills
 - 这些模板使用 Codex 当前支持的扁平 custom agent schema：`name` / `description` / `developer_instructions` + 可选 `model_reasoning_effort` / `sandbox_mode`。
 - 安装脚本会同步到：`~/.codex/agents/`。
 - 角色模板说明见：`config/codex/templates/agents/README.md`。
-- 串行验证模板：`config/codex/templates/codex_verify.example.sh`；安装脚本会同步到本机 `~/.codex/bin/codex_verify` 作为全局 fallback。若目标项目接入了 repo-tracked `codex_verify.sh`，则项目脚本优先；否则自动回退到全局 wrapper。
+- 验证 wrapper 模板：`config/codex/templates/codex_verify.example.sh`；安装脚本会同步到本机 `~/.codex/bin/codex_verify` 作为全局 fallback。若目标项目接入了 repo-tracked `codex_verify.sh`，则项目脚本优先；否则自动回退到全局 wrapper。wrapper 默认走 `XCODE_DERIVED_DATA_MODE=isolated-preferred`：为每个 CLI 分配专属 DerivedData 目录、首次从系统缓存 seed 后复用；只有显式切到 `system-serial` 或隔离模式命中锁冲突时才回退串行系统缓存。
 - 推荐执行顺序：先 `explorer -> builder -> reporter`，再按需激活 `pm` / `tester`。
 - 默认先做任务分型：`doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`，再映射到 `lite` / `standard` / `full`。
 - 配置映射：
@@ -132,8 +132,8 @@ python3 scripts/validate_codex_agent_templates.py config/codex/templates/agents
 - `code-review` 默认审查本次任务全量差异及本次修改带来的直接影响面，包含 staged、unstaged、untracked 与任务起点基线之后的相关提交。
 - `final-evidence-gate` 与 `verify-ios-build` 不再是所有 Apple Xcode 项目改动的强制收尾，仅作为按需补强验证。
 - 执行可选 `xcodebuild` 验证时，仍必须在目标项目根目录的项目环境执行，不能把 sandbox 结果当作完整项目环境证据。
-- 本地所有 `xcodebuild` 命令（含 `-list` / `-showdestinations` / build/test）默认都在非沙盒项目环境执行；同机同仓若存在多个 Codex / Claude CLI 并发处理同一 Xcode 项目，必须统一经串行包装入口排队执行：优先目标项目根目录的 `codex_verify.sh`，若项目未接入则回退到本机 `~/.codex/bin/codex_verify`。
-- 可选完整验证继续遵守既有 Xcode 约束：优先 `.xcworkspace`，优先绑定了单元测试 `*Tests` target / bundle 的 scheme，iOS 路径默认优先已连接真机，构建缓存使用 Xcode 系统 DerivedData，且不使用 `XCODE_DERIVED_DATA` 覆盖。
+- 本地所有 `xcodebuild` 命令（含 `-list` / `-showdestinations` / build/test）默认都在非沙盒项目环境执行；同机同仓若存在多个 Codex / Claude CLI 并发处理同一 Xcode 项目，验证型 `xcodebuild` 必须统一经 wrapper 入口执行：优先目标项目根目录的 `codex_verify.sh`，若项目未接入则回退到本机 `~/.codex/bin/codex_verify`。wrapper 默认使用 `XCODE_DERIVED_DATA_MODE=isolated-preferred`，给每个 CLI 分配专属 DerivedData 目录并首次 seed 系统缓存；只有显式切到 `system-serial` 或隔离模式命中锁冲突时才排队串行。
+- 可选完整验证继续遵守既有 Xcode 约束：优先 `.xcworkspace`，优先绑定了单元测试 `*Tests` target / bundle 的 scheme，iOS 路径默认优先已连接真机。验证链路默认由 wrapper 注入 CLI 专属 `-derivedDataPath`，支持 `XCODE_DERIVED_DATA_MODE=isolated-preferred|isolated-required|system-serial`、`XCODE_DERIVED_DATA_SEED_MODE=once|always|empty` 与 `XCODE_DERIVED_DATA_REFRESH=1`；非验证型构建讨论仍以 Xcode 系统 DerivedData 为基线。
 - 实现链路默认三步收口：`实现 skill -> testing/定向验证 -> code-review`。
 - 未执行可选完整验证时，交付应说明已执行的定向测试/必要验证、`code-review` 结论与残余风险。
 

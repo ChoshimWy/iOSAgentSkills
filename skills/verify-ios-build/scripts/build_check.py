@@ -2,11 +2,13 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import os
 import re
 import shlex
 import subprocess
 import sys
+import time
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -36,6 +38,7 @@ UI_SENSITIVE_FILE_PATTERNS = (
 )
 UI_SENSITIVE_PATH_PREFIXES = ("Assets.xcassets/",)
 UI_SMOKE_MODE_VALUES = {"off", "auto", "required"}
+CURRENT_BUILD_CONFIG: "BuildConfig" | None = None
 
 
 @dataclass
@@ -93,6 +96,8 @@ class BuildConfig:
     show_output: bool
     ui_smoke_mode: str
     ui_smoke_spec: str
+    derived_data_path: str | None
+    derived_data_mode: str | None
 
     def command_for_destination(self, destination: str | None) -> list[str]:
         command = ["xcodebuild"]
@@ -110,6 +115,9 @@ class BuildConfig:
 
         if destination:
             command += ["-destination", destination]
+
+        if self.derived_data_path:
+            command += ["-derivedDataPath", self.derived_data_path]
 
         if is_simulator_destination(destination):
             command += ["CODE_SIGNING_ALLOWED=NO", "CODE_SIGNING_REQUIRED=NO"]
@@ -306,6 +314,8 @@ def resolve_build_config(root: Path) -> BuildConfig:
         show_output=truthy(env.get("XCODEBUILD_SHOW_OUTPUT"), default=False),
         ui_smoke_mode=normalize_ui_smoke_mode(env.get("XCODE_UI_SMOKE_MODE")),
         ui_smoke_spec=env.get("XCODE_UI_SMOKE_SPEC", ".codex/ui-smoke.yml"),
+        derived_data_path=env.get("XCODE_DERIVED_DATA"),
+        derived_data_mode=os.environ.get("CODEX_EFFECTIVE_DERIVED_DATA_MODE"),
     )
 
 
@@ -607,15 +617,79 @@ def issue_matches_device_fallback_whitelist(issue: BuildIssue) -> bool:
     return False
 
 
-def run_build(command: list[str], cwd: Path, label: str, destination: str) -> BuildAttempt:
-    completed = subprocess.run(
-        command,
-        cwd=cwd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-        errors="replace",
-    )
+def acquire_directory_lock(lock_dir: Path, label: str) -> None:
+    poll_seconds = max(1, int(os.environ.get("CODEX_VERIFY_LOCK_POLL_SECONDS", "5")))
+    lock_dir.parent.mkdir(parents=True, exist_ok=True)
+    wait_started = time.time()
+
+    while True:
+        try:
+            lock_dir.mkdir()
+            owner_file = lock_dir / "owner.txt"
+            owner_file.write_text(
+                "\n".join(
+                    [
+                        f"pid={os.getpid()}",
+                        f"label={label}",
+                        f"started_at={time.strftime('%Y-%m-%d %H:%M:%S %z')}",
+                    ]
+                )
+                + "\n"
+            )
+            return
+        except FileExistsError:
+            waited = int(time.time() - wait_started)
+            owner_file = lock_dir / "owner.txt"
+            owner_summary = owner_file.read_text().strip().replace("\n", "; ") if owner_file.exists() else ""
+            if owner_summary:
+                print(f"[build_check] waiting {waited}s for {label}: {owner_summary}")
+            else:
+                print(f"[build_check] waiting {waited}s for {label}: lock_dir={lock_dir}")
+            time.sleep(poll_seconds)
+
+
+def release_directory_lock(lock_dir: Path) -> None:
+    owner_file = lock_dir / "owner.txt"
+    if owner_file.exists():
+        owner_file.unlink()
+    try:
+        lock_dir.rmdir()
+    except OSError:
+        pass
+
+
+def destination_lock_path(config: BuildConfig | None, destination: str | None) -> Path | None:
+    if config is None:
+        return None
+    if config.action not in {"test", "test-without-building"}:
+        return None
+
+    lock_root = os.environ.get("CODEX_VERIFY_DESTINATION_LOCK_ROOT")
+    if not lock_root or not destination:
+        return None
+
+    destination_hash = hashlib.sha256(destination.encode("utf-8")).hexdigest()
+    return Path(lock_root) / f"destination-{destination_hash}.lockdir"
+
+
+def run_build(command: list[str], cwd: Path, label: str, destination: str | None) -> BuildAttempt:
+    config = CURRENT_BUILD_CONFIG
+    destination_lock = destination_lock_path(config, destination) if config is not None else None
+    if destination_lock is not None:
+        acquire_directory_lock(destination_lock, "destination validation lock")
+
+    try:
+        completed = subprocess.run(
+            command,
+            cwd=cwd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            errors="replace",
+        )
+    finally:
+        if destination_lock is not None:
+            release_directory_lock(destination_lock)
     return BuildAttempt(
         label=label,
         destination=destination,
@@ -654,7 +728,11 @@ def print_attempt_header(
     print(f"Scheme: {config.scheme}")
     print(f"Configuration: {config.configuration}")
     print(f"Action: {config.action}")
-    print(f"DerivedData: Xcode default ({derived_data_home})")
+    if config.derived_data_path:
+        mode = config.derived_data_mode or "isolated"
+        print(f"DerivedData: {mode} ({config.derived_data_path})")
+    else:
+        print(f"DerivedData: Xcode default ({derived_data_home})")
     print(f"Destination: {destination or 'default host build (no explicit destination)'}")
     print(f"Command: {' '.join(shlex.quote(part) for part in command)}")
 
@@ -812,6 +890,7 @@ def run_ui_smoke_if_needed(
 
 
 def main() -> int:
+    global CURRENT_BUILD_CONFIG
     parser = argparse.ArgumentParser(
         description="Run physical-device-first xcodebuild verification with optional simulator override"
     )
@@ -831,15 +910,7 @@ def main() -> int:
     except Exception as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
-
-    if load_env(root).get("XCODE_DERIVED_DATA"):
-        derived_data_home = str(Path.home() / "Library/Developer/Xcode/DerivedData")
-        print(
-            "Error: XCODE_DERIVED_DATA is not supported in local verify-ios-build. "
-            f"Use Xcode default DerivedData: {derived_data_home}",
-            file=sys.stderr,
-        )
-        return 1
+    CURRENT_BUILD_CONFIG = config
 
     try:
         initial_destination, initial_device, initial_device_reason = resolve_initial_destination(config)
