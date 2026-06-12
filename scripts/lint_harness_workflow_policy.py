@@ -83,6 +83,7 @@ def main() -> int:
             "`fail-fix-report`",
             "本地 `:path` Pod",
             "主项目默认必须切回或保持本地 `:path` 私有库依赖",
+            "git commit` 前也必须恢复到可提交的远端/版本化依赖状态",
         ],
         failures,
     )
@@ -105,6 +106,7 @@ def main() -> int:
             "`codex-subagent-orchestration`",
             "路径示例默认以 skill 相对路径为准",
             "主项目默认必须切回或保持本地 `:path` 私有库依赖",
+            "禁止把包含本地 `:path` 私有库引用的 `Podfile` / `Podfile.lock` / `Pods/Manifest.lock` 提交进仓库",
         ],
         failures,
     )

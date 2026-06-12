@@ -37,6 +37,8 @@ def main() -> int:
             "任务分型器归类",
             "`doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`",
             "`explorer + builder + reporter`",
+            "model = \"gpt-5.5\"",
+            "image_model = \"gpt-image-2\"",
         ],
         failures,
     )
@@ -46,11 +48,35 @@ def main() -> int:
         [
             "任务分型：`doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`",
             "`explorer + builder + reporter`",
+            "model = \"gpt-5.5\"",
+            "image_model = \"gpt-image-2\"",
+            "仓库级显式触发",
             "pod_private_cache_guard.py",
             "python3 scripts/lint_workflow_contract_policy.py",
             "python3 scripts/validate_codex_agent_templates.py",
             "config/codex/templates/agents/",
             "~/.codex/agents/",
+        ],
+        failures,
+    )
+    require_contains(
+        ROOT / "config" / "codex" / "codex.shared.toml",
+        [
+            "model = \"gpt-5.5\"",
+            "image_model = \"gpt-image-2\"",
+            "[features]",
+            "multi_agent = true",
+            "[agents]",
+            "max_threads = 6",
+            "max_depth = 1",
+        ],
+        failures,
+    )
+    require_contains(
+        ROOT / "scripts" / "sync_codex_shared_config.py",
+        [
+            '"image_model"',
+            '"agents"',
         ],
         failures,
     )
@@ -73,6 +99,16 @@ def main() -> int:
         ],
         failures,
     )
+    require_contains(
+        ROOT / "scripts" / "pod_private_cache_guard.py",
+        [
+            "Pods/Manifest.lock",
+            "本地 `:path` 私有库引用",
+            "严格禁止提交",
+            "Podfile / Podfile.lock / Pods/Manifest.lock",
+        ],
+        failures,
+    )
 
     require_contains(
         SKILL_ROOT / "SKILL.md",
@@ -85,6 +121,7 @@ def main() -> int:
             "`code-risky`",
             "## 角色激活矩阵（新增默认规则）",
             "默认最小集合为：`explorer + builder + reporter`",
+            "仓库级显式触发",
             "同一类问题默认最多回环 2 次",
             "`failure_attribution_type`",
             "`acceptance_matrix`",
@@ -113,6 +150,7 @@ def main() -> int:
             "`failure_attribution_type`",
             "## reporter",
             "acceptance_matrix",
+            "仓库级显式触发",
             "next_action 不能是 complete",
         ],
         failures,
@@ -123,6 +161,7 @@ def main() -> int:
         [
             "任务分型器判定",
             "`CP1` 未通过前禁止无必要并行扩散",
+            "仓库级显式触发",
             "next_action` 只能是 `blocked`",
         ],
         failures,
@@ -197,6 +236,7 @@ def main() -> int:
         [
             "任务分型",
             "默认最小角色集合：`explorer + builder + reporter`",
+            "仓库级显式触发",
             "统一字段",
         ],
         failures,

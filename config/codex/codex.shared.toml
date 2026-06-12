@@ -2,7 +2,8 @@
 # Keep machine-local state (auth/history/sessions/cache/memories files/projects trust)
 # in ~/.codex/config.toml only; do not add them here.
 
-model = "gpt-5.4"
+model = "gpt-5.5"
+image_model = "gpt-image-2"
 model_reasoning_effort = "xhigh"
 plan_mode_reasoning_effort = "xhigh"
 service_tier = "fast"
@@ -13,6 +14,10 @@ memories.generate_memories = true
 [features]
 multi_agent = true
 memories = true
+
+[agents]
+max_threads = 6
+max_depth = 1
 
 [mcp_servers.codegraph]
 command = "codegraph"

@@ -62,7 +62,7 @@ ln -s iOSAgentSkills/skills .claude/skills
   - `builder.toml`（最小实现 / 变更说明）
   - `tester.toml`（验证建议 / 执行结果 / 失败归因）
   - `reporter.toml`（交付汇总 / 风险收口）
-- 这些模板使用 Codex 当前支持的扁平 custom agent schema：`name` / `description` / `developer_instructions` + 可选 `model_reasoning_effort` / `sandbox_mode`。
+- 这些模板使用 Codex 当前支持的扁平 custom agent schema：`name` / `description` / `developer_instructions`，以及可选 `nickname_candidates` / `model` / `model_reasoning_effort` / `sandbox_mode` / `mcp_servers` / `skills.config`。
 - 安装脚本会同步到：`~/.codex/agents/`。
 - 角色模板说明见：`config/codex/templates/agents/README.md`。
 - 验证 wrapper 模板：`config/codex/templates/codex_verify.example.sh`；安装脚本会同步到本机 `~/.codex/bin/codex_verify` 作为全局 fallback。若目标项目接入了 repo-tracked `codex_verify.sh`，则项目脚本优先；否则自动回退到全局 wrapper。wrapper 会自动接入 shared build-queue daemon，把验证型 `xcodebuild` 串行排队执行，并统一使用 Xcode 系统 DerivedData（`~/Library/Developer/Xcode/DerivedData`）。
@@ -72,6 +72,7 @@ ln -s iOSAgentSkills/skills .claude/skills
   - 图示 `AGENTS.md` 对应仓库根 `AGENTS.md`
   - 图示 `skills/*/SKILL.md` 对应本仓库全部 skills（含按需触发的低频技能）
   - 图示 `config.toml` 对应本仓库 `config/codex/codex.shared.toml`
+  - 截至 2026-06-12 的共享 Codex 基线：`model = "gpt-5.5"`、`image_model = "gpt-image-2"`、`features.multi_agent = true` 与 `[agents] max_threads/max_depth`；安装脚本会同步到 `~/.codex/config.toml`
 
 快速发任务模板：
 
@@ -106,8 +107,9 @@ python3 scripts/validate_codex_agent_templates.py config/codex/templates/agents
 - 涉及 CocoaPods 私有库或组件联调时，先查目标工程 `Podfile` / `Podfile.lock` / `Pods/Manifest.lock` 判断真实源码位置。
 - 若命中本地 `:path` Pod，默认修改组件源码仓，不修改 `Pods/<LibraryName>` 下的副本快照。
 - 如本次修改涉及私有库 / 私有组件，主项目默认必须切回或保持本地 `:path` 私有库依赖进行开发与验证；未收到明确指令前，不得把验证基线切到线上版本化依赖或 `Pods/` vendored snapshot。
+- 本地联调阶段允许临时保留本地 `:path` 私有库依赖，但 `git commit` 前必须恢复到可提交的远端/版本化依赖状态；禁止把包含本地 `:path` 私有库引用的 `Podfile` / `Podfile.lock` / `Pods/Manifest.lock` 提交进仓库。
 - `Pods/` 默认视为 vendored cache / generated snapshot，不作为实现 ownership。
-- 仓库自带 `scripts/pod_private_cache_guard.py`，并由 `.githooks/pre-commit` 默认阻断把私有 Pod 副本 staged 进提交。
+- 仓库自带 `scripts/pod_private_cache_guard.py`，并由 `.githooks/pre-commit` 默认阻断两类提交：私有 Pod 副本 staged 进提交；以及 `Podfile` / `Podfile.lock` / `Pods/Manifest.lock` 中仍引用本地 `:path` 私有库的提交。
 - 推荐在本仓库执行：
 
 ```bash
@@ -142,7 +144,7 @@ python3 scripts/validate_codex_agent_templates.py config/codex/templates/agents
 - `codex-subagent-orchestration` 是默认的 iOS 主 Skill 入口；实现、调试、性能、测试、Apple 文档与可选证据验证都应先经过它，再内部路由到对应模块。
 - 编排默认按 `lite` / `standard` / `full` 三档选择角色。
 - 默认先按任务分型器分类，再决定角色激活矩阵（最小集合：`explorer + builder + reporter`）。
-- 当前运行时要求显式授权 subAgent 且用户未授权时，临时回退单 Agent。
+- 本仓库将默认入口视为仓库级显式触发；Codex CLI 暴露原生 subAgent 工具时，主 Agent 可按档位自动使用 subAgent，只有运行时工具不可用、策略禁止或写集不适合并行时才临时回退单 Agent。
 - 即使单 Agent fallback，实现链路仍必须保留 `code-review` 与 `testing`。
 - 计划模式（`proposed_plan`）输出，只要是实现链路也必须显式包含 `code-review` 审查步骤。
 - 日志输出默认低 token：只回传关键错误段或最后 80~120 行；长日志写入 `/tmp/*.log`。

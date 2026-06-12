@@ -41,7 +41,7 @@
 - 只有在主 Agent 明确要求，或 tester 已判断“缺少必要测试代码”时，才升级为 `tester worker`。
 
 ## main agent
-- 默认先选择 `lite` / `standard` / `full` 自适应编排档位；如果本轮因为运行时或上层策略只能退回单 Agent，必须显式说明是 fallback，而不是静默降级。
+- 默认先选择 `lite` / `standard` / `full` 自适应编排档位；本仓库默认入口视为仓库级显式触发，Codex CLI 原生 subAgent 可用时可按档位自动启动合适角色；如果本轮因为工具不可用、策略禁止或写集不适合并行只能退回单 Agent，必须显式说明是 fallback，而不是静默降级。
 - 默认维护 `checkpoint_status`（`CP0` / `CP1` / `CP2` / `CP3`）作为单一事实源；`CP1` 未通过前不启动无必要并行扩散。
 - 聚合 reviewer / tester / gate 结果时，优先用首个真实阻塞点驱动下一轮，不要把多个层级问题混成模糊总结。
 - 遵守 `fail-fix-report`：先 fail 定位，再 fix 重跑，最后 report；不可带着已知阻塞项宣告完成。

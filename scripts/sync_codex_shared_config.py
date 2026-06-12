@@ -30,6 +30,7 @@ except ModuleNotFoundError:  # Python 3.10 fallback
 
 ROOT_SCALAR_PRIORITY = [
     "model",
+    "image_model",
     "model_reasoning_effort",
     "plan_mode_reasoning_effort",
     "service_tier",
@@ -37,6 +38,7 @@ ROOT_SCALAR_PRIORITY = [
 ]
 ROOT_TABLE_PRIORITY = [
     "features",
+    "agents",
     "projects",
     "mcp_servers",
     "notice",

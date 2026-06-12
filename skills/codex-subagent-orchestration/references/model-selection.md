@@ -1,8 +1,8 @@
 # subAgent 模型选择与回退（主 Agent 执行）
 
-目标：当用户要求“coder=强模型 / reviewer=快模型 / tester=强模型（中推理）”时，让主 Agent **每次都自动按角色挑模型**；若指定模型不可用，则 **自动回退**，保证编排不中断。
+目标：Codex CLI 原生 subAgent 可用时，默认优先让 subAgent 继承主 Agent 模型配置；截至 2026-06-12，本仓库共享默认模型为 `gpt-5.5`。只有用户明确要求、任务风险需要或预算/吞吐目标明确时，主 Agent 才按角色显式指定 `model` / `reasoning_effort`。若指定模型不可用，则自动回退，保证编排不中断。
 
-> 约束：本仓库不写死“永远正确”的模型名；但允许提供“候选列表 + 失败回退”的策略。实际可用模型取决于运行时/账号，可能随时间变化。
+> 约束：本仓库不写死“永远正确”的模型名；实际可用模型取决于运行时/账号，可能随时间变化。无明确理由时不传 `model`，让 subAgent 继承主 Agent 默认模型。
 
 ## 角色 -> 意图
 
@@ -32,7 +32,12 @@
 
 ## 主 Agent 执行算法（必须遵守）
 
-### 1) 为每个角色生成候选模型序列
+### 0) 默认继承主模型
+
+- 未命中“用户明确要求 / 高风险任务 / 明确预算或吞吐目标”时，`spawn_agent` 不传 `model`，也不为低风险任务强行指定不同推理强度。
+- 角色模板中的 `model_reasoning_effort` 只表达角色偏好；具体是否覆盖由主 Agent 根据当前任务决定。
+
+### 1) 需要显式指定时，为每个角色生成候选模型序列
 
 - coder：`strong` 序列
 - reviewer：`fast` 序列
@@ -49,11 +54,10 @@
 
 ### 3) 输出要求（可观测性）
 
-主 Agent 在编排开始时，用一行说明本次选择结果（只写最终落地的模型名，不要把所有候选刷屏）：
+主 Agent 在编排开始时，用一行说明本次选择结果（只写最终落地策略，不要把所有候选刷屏）：
 
-- `coder model: ...`
-- `reviewer model: ...`
-- `tester model: ... (reasoning_effort=medium)`
+- `subagent model policy: inherit parent`（默认）
+- 或 `coder model: ...` / `reviewer model: ...` / `tester model: ... (reasoning_effort=medium)`（确有覆盖时）
 
 若发生回退（候选失败）：再追加一行：
 
@@ -72,4 +76,3 @@
   "message": "你是 coder worker：只改 ownership 内文件；不要无关重构。"
 }
 ```
-

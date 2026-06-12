@@ -19,6 +19,7 @@
 - 本仓库根目录 `AGENTS.md` 是本项目共享规则单一来源。
 - `CLAUDE.md` 做薄包装导入，保持与 `AGENTS.md` 同源，并附加 Claude Code 运行时编排指令；Codex 用户不受其影响。
 - `config/codex/codex.shared.toml` 只放可共享的 Codex 默认配置，不放本机状态。
+- 截至 2026-06-12，共享 Codex 基线使用 `model = "gpt-5.5"`、`image_model = "gpt-image-2"`、`features.multi_agent = true` 与 `[agents] max_threads/max_depth`。
 - `skills/` 是本仓库唯一的 Skill 根目录；高频与低频技能统一放在这里，由路由规则决定默认入口与按需触发方式。
 - 仓库内不保存根 `.codex/` 工作目录；可复用模板统一放在 `config/codex/templates/`，由安装脚本同步到 `~/.codex`。
 - `install-local-agent-config.sh` 负责把本仓库规则接到 `~/.codex`、`~/.claude`、`~/.copilot`。
@@ -36,6 +37,7 @@
 - 涉及 CocoaPods / 私有组件联调时，先查目标工程 `Podfile` / `Podfile.lock` / `Pods/Manifest.lock` 判断是否为本地 `:path` Pod；若是，默认修改组件源码仓，不修改 `Pods/` 下的副本快照。
 - 对本地 `:path` Pod / 私有组件，`Pods/<LibraryName>` 默认属于**禁止改动范围**；除非用户明确要求修改 vendored snapshot 并说明原因，否则不得把 `Pods/` 副本当作真实源码位置。
 - 如本次修改涉及私有库 / 私有组件，主项目默认必须切回或保持本地 `:path` 私有库依赖进行开发与验证；未收到明确指令前，不得把验证基线切到线上版本化依赖或 `Pods/` vendored snapshot。
+- 即使本地联调阶段允许主项目临时切到本地 `:path` 私有库依赖，`git commit` 前也必须恢复到可提交的远端/版本化依赖状态；禁止把包含本地 `:path` 私有库引用的 `Podfile` / `Podfile.lock` / `Pods/Manifest.lock` 提交进仓库。
 - 涉及 Apple API 细节、availability、WWDC 指导时，优先使用官方文档，并区分“文档事实”和“推断”。
 - 将 OS/SDK/Xcode/真机或模拟器/Swift 语言模式视为一等约束；结论依赖这些条件时必须显式说明。
 - 新实现默认优先 Swift 与结构化并发；UI 更新保持主线程或 `@MainActor` 隔离。
@@ -71,7 +73,7 @@
 - 编排按 `lite` / `standard` / `full` 三档自适应，不把所有任务升级成全量多 Agent。
 - 默认先按任务分型器归类：`doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`，再映射编排档位与角色集合。
 - 默认最小角色集合为 `explorer + builder + reporter`；仅在边界不清、测试面或高风险任务时再激活 `pm` / `tester`。
-- 当前运行时若要求显式授权 subAgent 且用户未授权，需临时回退为单 Agent；授权条件满足后恢复多 Agent。
+- 本仓库将 `codex-subagent-orchestration` 默认入口视为仓库级显式触发：当 Codex CLI 暴露原生 subAgent 工具时，主 Agent 可按 `lite` / `standard` / `full` 自适应使用 subAgent；仅在运行时工具不可用、策略禁止或本轮写集不适合并行时，临时回退为单 Agent。
 - 实现链路必须包含 `code-review` 审查步骤；不能因单 Agent fallback 跳过审查或测试。
 - 默认启用 checkpoint 合同：`CP0 Intent Lock`、`CP1 Anchor Slice`、`CP2 Validation Baseline Freeze`、`CP3 Final Gate`。
 - `CP1` 未通过前不启动无必要并行扩散；主 Agent 维护 `checkpoint_status` 作为单一事实源。

@@ -32,7 +32,7 @@
 | `ios-feature-implementation` | 默认 iOS feature 实现技能 | service / repository / use case / view model / 导航接线 / async 流程 | UIKit/SwiftUI 专项页面实现、构建配置、自动化、性能 profiling、官方文档检索 | `swiftui-feature-implementation`、`uikit-feature-implementation`、`swift-expert`、`xcode-build`、`ios-performance` |
 | `swiftui-feature-implementation` | SwiftUI 页面统一入口（模式选型 + 实现 + 重构） | 新页面模式选型、常规 SwiftUI 落地、已有大 view 重构 | Liquid Glass 专项、性能取证、通用非 SwiftUI 重构 | `ios-feature-implementation`、`ios-performance`、`refactoring` |
 | `uikit-feature-implementation` | 普通 UIKit 落地实现 | ViewController / UIView / 布局 / 列表 / 页面交互接入 | 通用业务建模、SwiftUI、构建配置、自动化 | `ios-feature-implementation`、`xcode-build`、`debugging`、`ios-performance` |
-| `codex-subagent-orchestration` | 默认 iOS 主 Skill 入口 | 所有 iOS 开发任务的统一入口；先按 `lite` / `standard` / `full` 选择角色，再内部路由到实现 / 调试 / 性能 / 测试 / 审查 / 按需验证模块 | 只做一次纯文档型低频任务，或当前运行时限制且用户未授权 subAgent 时的临时单 Agent 回退 | `ios-feature-implementation`、`debugging`、`ios-performance`、`code-review`、`testing`、`final-evidence-gate`、`verify-ios-build` |
+| `codex-subagent-orchestration` | 默认 iOS 主 Skill 入口 | 所有 iOS 开发任务的统一入口；先按 `lite` / `standard` / `full` 选择角色，再内部路由到实现 / 调试 / 性能 / 测试 / 审查 / 按需验证模块；仓库默认入口视为仓库级显式触发，可在 Codex CLI 原生 subAgent 可用时按档位自动使用 | 只做一次纯文档型低频任务，或运行时工具不可用、策略禁止、本轮写集不适合并行时的临时单 Agent 回退 | `ios-feature-implementation`、`debugging`、`ios-performance`、`code-review`、`testing`、`final-evidence-gate`、`verify-ios-build` |
 
 ## Automation / Build / Validation
 

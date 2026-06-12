@@ -123,8 +123,8 @@
 ## main agent
 
 ### 固定职责
-- 默认先选择 `lite` / `standard` / `full` 档位，必要时明确说明单 Agent fallback
-- 启动与回收 subAgent
+- 默认先选择 `lite` / `standard` / `full` 档位；仓库默认入口视为仓库级显式触发，Codex CLI 原生 subAgent 可用时可按档位自动启动合适角色
+- 启动与回收 subAgent；仅在工具不可用、策略禁止或写集不适合并行时明确说明单 Agent fallback
 - 聚合 coder / reviewer / tester 输出
 - 精确回写 coder
 - 执行默认收口为定向验证 + `code-review`；`final-evidence-gate` / `verify-ios-build` 按需升级
