@@ -1,53 +1,254 @@
 ---
 name: final-evidence-gate
-description: Apple Xcode 项目改动的按需证据验证。用于用户显式要求、发布前自检或高风险场景下，在 `testing` 与 `code-review` 放行后判断现有 xcodebuild test/build 证据是否足够；必要时再切到 `verify-ios-build` 执行项目环境验证。
+description: Apple Xcode 项目改动的按需最终证据裁决 Skill。用于用户显式要求、发布前自检或高风险场景下，在 testing 与 code-review 放行后判断现有验证证据是否足够；必要时才升级到 verify-ios-build 执行项目环境验证。
 ---
 
 # Final Evidence Gate（条件化可选证据验证）
 
-## 角色定位
-- 作为 Apple Xcode 项目改动的按需证据裁决层，不参与所有实现任务的默认强制收尾。
-- 不默认重复运行 `verify-ios-build`；优先复用最后一次代码变更之后已经成功的 `xcodebuild test` / `xcodebuild build` 证据。
-- 当用户显式要求、发布前自检、现有证据不足或风险较高时，可建议升级到 `verify-ios-build`。
-- 如果需要补跑项目环境验证，应统一复用验证 wrapper：优先目标项目已接入的 repo-tracked `codex_verify.sh`，若项目未接入则回退到本机 `~/.codex/bin/codex_verify`。wrapper 会自动接入 shared build-queue daemon，把验证型 `xcodebuild` 串行排队执行，并统一使用 Xcode 系统 DerivedData。
+## Purpose
 
-## 进入条件
-- 用户显式要求、发布前自检，或主 Agent 判断当前 Apple Xcode 项目改动需要补强完整项目环境证据。
-- `testing` 与 `code-review` 已完成。
-- `code-review` 无 `blocking_findings`。
-- 主 Agent 已掌握本轮实际验证命令、workspace/project、scheme、destination、结果与验证发生时间点。
+Decide whether existing targeted validation, build/test evidence, and code-review findings are sufficient for final acceptance of an Apple Xcode project change, or whether the task must escalate to `verify-ios-build`.
 
-## 可接受已有证据的条件
-同时满足以下条件时，可不重复运行 `verify-ios-build`：
-1. 最后一次 repo-tracked 代码变更之后，已经成功执行过目标项目环境中的 `xcodebuild test` 或 `xcodebuild build`。
-   - 对 `code-small` / `code-medium` 的纯逻辑或业务层改动，若最后一次代码变更之后已经成功执行最窄定向单测，且 `code-review` 未发现 consumer app 集成缺口、工程/依赖/签名/资源或设备能力风险，可直接接受为已有充分证据。
-2. 验证覆盖最终交付 target 或同等/更强的 consumer app scheme；定向库测试不能替代 consumer app 集成证据。
-   - 私有库 / 私有组件改动的 consumer app 集成证据默认必须来自主项目本地 `:path` 私有库依赖基线；未收到明确指令前，不接受线上版本化依赖或 `Pods/` vendored snapshot 作为验证基线。
-3. 使用的 workspace/project、scheme、destination 与本轮最终交付基线一致，或明确更严格。
-4. `testing` 记录了 `executed_validation`，并给出 `suggested_validation` / `failure_attribution` / `needs_test_code` / `no_test_reason`（如适用）。
-5. `code-review` 明确审查验证故事，未发现阻塞风险。
+## 中文说明
 
-## 建议升级到 `verify-ios-build` 的场景
-- 修改 `.xcodeproj`、`.xcworkspace`、scheme、test plan、xcconfig、Build Settings、构建脚本。
-- 修改签名、证书、entitlements、plist、capability、App Extension 或真实设备能力相关配置。
-- 修改 `Podfile`、`Podfile.lock`、`Pods/Manifest.lock`、私有 Pod 版本，或从本地 `:path` 切回线上依赖。
-- 修改资源、Storyboard/XIB、Assets、target membership、InfoPlist.strings、bundle packaging 相关内容。
-- 定向测试只覆盖子库/子 target，不能证明主 App/consumer app 已集成通过。
-- `testing` 阶段没有低成本单测路径，只给出了 `no_test_reason` 与 `suggested_validation`，且当前风险不足以直接接受已有静态证据。
-- 测试后又发生代码、配置、资源或依赖快照变更。
-- `code-review` 认为测试覆盖不足、验证基线不一致、或存在必须通过完整 build 暴露的问题。
+该 Skill 是最终证据裁决层，不是默认构建执行器。
 
-## 输出合同
-最终汇报必须给出：
-- `final_evidence_gate`: `accepted_existing_evidence` / `ran_verify_ios_build` / `blocked_insufficient_evidence`
-- 已接受或执行的验证命令类型、workspace/project、scheme、destination、结果。
-- 是否发生过验证后的代码变更。
-- 如果跳过 `verify-ios-build`，说明跳过原因与证据充分性。
-- 如果证据不足且无法补跑，明确写出“完整验证证据不足”，并说明默认收口证据与残余风险。
+负责：
+- 判断现有 testing / build / code-review 证据是否足够。
+- 判断是否需要补一次真实项目环境 `xcodebuild` 验证。
+- 统一输出 `verification_story` 与 `final_evidence_gate` 结论。
+- 避免每次任务结束都重复跑 `verify-ios-build`。
 
-## 与其他技能的关系
-- `testing` 负责补测试、执行或建议定向验证，并记录验证证据。
-- `code-review` 负责静态审查和验证故事审查。
-- `verify-ios-build` 是本技能的升级执行器，只在用户显式要求、证据不足或高风险场景时运行。
-- `xcode-build` 仍负责构建配置、签名、Archive/Export、CI/CD 设计。
-- `codex_verify.sh` / `~/.codex/bin/codex_verify` 是验证入口层的 shared build-queue daemon 接入点；它们不替代本门禁的证据裁决，只负责把真正需要执行的项目环境验证串行排队，并统一使用 Xcode 系统 DerivedData。
+不负责：
+- 编写测试。
+- 静态代码审查。
+- 执行具体项目环境 build/test。
+- 设计 Build Settings、签名、Archive、CI。
+
+## When to Use
+
+Use this Skill when:
+
+- The user explicitly asks for final confidence or final evidence.
+- The user asks whether current validation evidence is enough.
+- The task is release / merge / preflight self-check.
+- The change is high-risk and may need stronger project-environment evidence.
+- `testing` and `code-review` are complete, but the main Agent needs a final evidence decision.
+- There is uncertainty about whether to run `verify-ios-build`.
+
+## When Not to Use
+
+Do not use this Skill when:
+
+- The user directly asks to run project-environment build verification; use `verify-ios-build`.
+- The task still has blocking `code-review` findings.
+- `testing` has not produced executed validation, suggested validation, or `no_test_reason`.
+- The task is build configuration design; use `xcode-build`.
+- The task is device/simulator automation; use `ios-automation`.
+- The task is runtime debugging or performance profiling.
+
+## Agent Rules
+
+### Gate Rules
+
+- Do not run `verify-ios-build` by default.
+- Prefer accepting same-or-stronger existing evidence when valid.
+- Only escalate when evidence is insufficient, stale, mismatched, or risk requires it.
+- If `code-review` has blocking findings, do not accept evidence; return blocked.
+- If testing evidence happened before the latest code/config/resource/dependency change, treat it as stale.
+- If validation baseline does not match final delivery baseline, treat it as insufficient unless it is clearly stronger.
+- If evidence is insufficient and verification cannot run, return blocked with residual risk.
+
+### Existing Evidence Acceptance Rules
+
+Existing evidence can be accepted only when all are true:
+
+1. Evidence happened after the latest repo-tracked code/config/resource/dependency change.
+2. Evidence came from the target project root environment when project-environment evidence is claimed.
+3. Evidence covers final delivery target, consumer app scheme, or a clearly stronger baseline.
+4. Workspace/project, scheme, configuration, and destination match the final delivery baseline or are stricter.
+5. `testing` recorded `executed_validation`, or gave a clear `no_test_reason` and `suggested_validation`.
+6. `code-review` reviewed the verification story and has no blocking findings.
+7. No high-risk change category requires stronger evidence.
+
+For `code-small` / `code-medium` pure logic changes, a successful narrow targeted unit test after the latest code change may be enough when `code-review` finds no integration, project, dependency, signing, resource, or device-capability risk.
+
+### Escalation Triggers
+
+Escalate to `verify-ios-build` when any are true:
+
+- `.xcodeproj`, `.xcworkspace`, scheme, xctestplan, xcconfig, Build Settings, or build scripts changed.
+- Signing, certificates, entitlements, plist, capabilities, App Extensions, or device capability configuration changed.
+- `Podfile`, `Podfile.lock`, `Pods/Manifest.lock`, private Pod version, or dependency baseline changed.
+- Local `:path` dependency was switched back to online versioned dependency.
+- Resources, Storyboard, XIB, Assets, target membership, InfoPlist.strings, or bundle packaging changed.
+- Targeted tests only cover a sub-library and do not prove consumer app integration.
+- Testing produced only `no_test_reason` and risk is not low enough to accept static evidence.
+- Code/config/resource/dependency changed after validation.
+- `code-review` says verification baseline is inconsistent or insufficient.
+- User requests release/merge confidence.
+
+### Private Dependency Rules
+
+- Private library / component integration evidence must come from the main project using local `:path` dependency when that is the development baseline.
+- Do not accept online versioned dependency or `Pods/` vendored snapshot evidence unless the user explicitly asked for that validation baseline.
+
+### Token Budget
+
+- Do not read raw build logs by default.
+- Use summaries from `testing`, `code-review`, `verify-ios-build`, and `ios-build-log-digest`.
+- Only include the evidence decision, baseline, risk, and next action.
+- Do not duplicate full command outputs.
+
+## Inputs
+
+Expected input contract:
+
+```json
+{
+  "task_type": "code-small | code-medium | code-risky | project-config | dependency | release",
+  "latest_change_time": "optional",
+  "changed_files": [],
+  "testing": {
+    "executed_validation": [],
+    "suggested_validation": [],
+    "no_test_reason": null,
+    "failure_attribution": "none"
+  },
+  "code_review": {
+    "blocking_findings": [],
+    "verification_story": "accepted | needs-final-evidence-gate | needs-verify-ios-build | insufficient",
+    "unreviewed_changes": "none"
+  },
+  "existing_evidence": [
+    {
+      "type": "xcodebuild test | xcodebuild build | targeted unit test | ui smoke",
+      "workspace_or_project": "App.xcworkspace",
+      "scheme": "App",
+      "configuration": "Debug",
+      "destination": "platform=iOS Simulator,name=iPhone 16",
+      "status": "passed | failed",
+      "time": "optional",
+      "after_latest_change": true
+    }
+  ],
+  "user_request": "optional"
+}
+```
+
+## Outputs
+
+Return compact structured output:
+
+```json
+{
+  "status": "accepted | escalated | blocked",
+  "final_evidence_gate": "accepted_existing_evidence | needs_verify_ios_build | blocked_insufficient_evidence",
+  "verification_story": "accepted | needs-verify-ios-build | insufficient",
+  "accepted_evidence": [],
+  "rejected_evidence": [],
+  "escalation_reason": null,
+  "required_next_skill": "none | verify-ios-build | testing | code-review | xcode-build",
+  "residual_risk": [],
+  "next_action": "complete | run-verify-ios-build | fix-blocking-review | collect-evidence | blocked"
+}
+```
+
+## Exit Conditions
+
+Return `accepted` when:
+
+- Existing evidence is fresh, relevant, and sufficient.
+- `code-review` has no blocking findings.
+- Validation baseline matches final delivery baseline or is stronger.
+- Residual risk is low and disclosed.
+
+Return `escalated` when:
+
+- Evidence is insufficient but project-environment verification can be run.
+- Output clearly routes to `verify-ios-build` with escalation reason.
+
+Return `blocked` when:
+
+- `code-review` has blocking findings.
+- Evidence is insufficient and verification cannot run.
+- Validation baseline is unknown or stale and cannot be corrected.
+- Required target project, scheme, device, dependency, or credentials are unavailable.
+
+## Escalation Rules
+
+Escalate to `verify-ios-build` when final project-environment evidence is needed.
+
+Escalate to `testing` when no targeted validation or `no_test_reason` exists.
+
+Escalate to `code-review` when verification story has not been reviewed or blocking findings are unresolved.
+
+Escalate to `xcode-build` when the missing piece is signing, Build Settings, Archive, Export, CI, scheme, or destination strategy.
+
+Escalate to `ios-automation` when UI/device evidence is required rather than build evidence.
+
+## Reporting Format
+
+```text
+final_evidence_gate: accepted_existing_evidence | needs_verify_ios_build | blocked_insufficient_evidence
+verification_story: accepted | needs-verify-ios-build | insufficient
+accepted_evidence:
+- ...
+rejected_evidence:
+- ...
+escalation_reason: none | ...
+residual_risk:
+- ...
+next_action: complete | run-verify-ios-build | blocked
+```
+
+## Examples
+
+### Accept Existing Targeted Unit Test
+
+```json
+{
+  "status": "accepted",
+  "final_evidence_gate": "accepted_existing_evidence",
+  "verification_story": "accepted",
+  "accepted_evidence": ["AppTests/SubscriptionServiceTests passed after latest change"],
+  "residual_risk": [],
+  "next_action": "complete"
+}
+```
+
+### Escalate to Verify iOS Build
+
+```json
+{
+  "status": "escalated",
+  "final_evidence_gate": "needs_verify_ios_build",
+  "verification_story": "needs-verify-ios-build",
+  "escalation_reason": "Podfile.lock changed; existing targeted tests do not prove consumer app integration.",
+  "required_next_skill": "verify-ios-build",
+  "next_action": "run-verify-ios-build"
+}
+```
+
+### Blocked Insufficient Evidence
+
+```json
+{
+  "status": "blocked",
+  "final_evidence_gate": "blocked_insufficient_evidence",
+  "verification_story": "insufficient",
+  "rejected_evidence": ["Validation ran before latest resource change"],
+  "residual_risk": ["Consumer app packaging not verified"],
+  "next_action": "blocked"
+}
+```
+
+## Relationship to Other Skills
+
+- `testing` records targeted validation, `no_test_reason`, and suggested validation.
+- `code-review` reviews static risk and verification story.
+- `verify-ios-build` executes project-environment verification when this gate escalates.
+- `xcode-build` owns Build Settings, signing, Archive/Export, CI/CD design.
+- `ios-automation` owns UI/device evidence when device-level automation is needed.
+- `ios-build-log-digest` owns compact build failure attribution.
+- `codex_verify.sh` / `~/.codex/bin/codex_verify` are verification execution wrappers, not evidence decision makers.
