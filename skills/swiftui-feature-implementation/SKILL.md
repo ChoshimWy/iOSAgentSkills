@@ -1,78 +1,283 @@
 ---
 name: swiftui-feature-implementation
-description: SwiftUI 页面统一入口。覆盖三种子模式：1) 模式选型 — 新页面结构、导航层级、状态归属和组件拆分方案选择；2) 常规实现 — 在既定架构下落地 SwiftUI 页面、组件、列表、表单、状态绑定与界面交互；3) 视图重构 — 已有 SwiftUI 文件的结构化整理，抽离子视图、MV 优先数据流、稳定视图树。如果任务核心是 Liquid Glass 专项、性能取证或官方文档检索，不要使用本 skill 作为主 skill；若任务产出修改了 Apple Xcode 项目相关内容，默认以定向测试/必要验证与 `code-review` 放行为收口；`final-evidence-gate` / `verify-ios-build` 仅在用户显式要求或需要补强完整项目环境证据时按需使用。
+description: SwiftUI 页面实现统一入口。覆盖模式选型、常规实现和视图重构三种子模式，用于新页面结构、NavigationStack、sheet、状态归属、组件拆分、列表、表单、状态绑定、动画、预览和已有大 View 拆分；不要把 Liquid Glass 专项、性能取证、UIKit 页面、构建配置或 Apple 官方文档检索误判到本 Skill。
 ---
 
 # SwiftUI Feature 实现
 
-## 角色定位
+## Purpose
 
-SwiftUI 页面开发统一入口，根据任务阶段自动选择子模式。不负责 Liquid Glass 专项、性能 profiling 或 Apple 文档事实查询。
+Implement, structure, or refactor SwiftUI screens and components while preserving stable view trees, explicit state ownership, clear navigation, and predictable handoff to testing and code review.
 
-## 子模式选择
+## 中文说明
 
-首次判断后，后续链路固定在对应子模式：
+该 Skill 是 SwiftUI 页面开发统一入口，覆盖三种子模式：
 
-| 子模式 | 触发条件 |
-|---|---|
-| **模式选型** | 用户在问"新页面该怎么组织 / NavigationStack / sheet / 组件拆分 / 状态放哪" |
-| **常规实现** | 页面结构、路由和状态归属已明确，只差 SwiftUI 代码落地 |
-| **视图重构** | 已有现成的 SwiftUI 文件，`body` 过长、子视图混乱、副作用堆在视图里或状态错位 |
+- 模式选型：新页面结构、导航层级、状态归属、组件拆分方案。
+- 常规实现：在既定架构下落地 SwiftUI 页面、组件、列表、表单、状态绑定与交互。
+- 视图重构：整理已有 SwiftUI 文件，抽离子视图，稳定根视图结构，减少 `body` 复杂度。
 
-## 模式选型工作流
+不负责：
 
-1. 判断页面类型（`TabView` / `NavigationStack` / `sheet` / `List` / `Grid`）
-2. 决定状态归属与路由结构
-3. 从 `references/components-index.md` 进入对应组件参考
+- Liquid Glass 专项设计。
+- UIKit 页面实现。
+- 性能 profiling / benchmark。
+- 构建配置、签名、Archive、CI。
+- Apple 官方 API 事实检索。
 
-## 常规实现工作流
+## When to Use
 
-1. 接入现有 view model、service 或 router
-2. 把业务状态绑定到 SwiftUI 视图
-3. 编写动画、过渡、组件组合与预览代码
+Use this Skill when the user asks about:
 
-## 视图重构工作流
+- SwiftUI 页面结构。
+- `NavigationStack`、`TabView`、`sheet`、`popover`。
+- `List`、`Grid`、`Form`、自定义组件。
+- `@State`、`@Binding`、`@Observable`、`@Bindable`、`@Environment` 状态归属。
+- SwiftUI 页面交互、动画、过渡、预览。
+- 大型 SwiftUI View 拆分。
+- `body` 过长、副作用堆叠、状态错位。
+- SwiftUI 与现有 ViewModel / Service / Router 接线。
 
-1. 理顺视图结构顺序
-2. 抽离 `body` 内动作和副作用
-3. 拆独立子视图，稳定根视图结构
-4. 仅在现有代码明确要求时保留或调整 view model
+## When Not to Use
 
-## 核心规则
+Do not use this Skill when:
 
-- iOS 17+ 默认优先 `@Observable`、`@State`、`@Bindable` 与显式依赖注入
-- 保持根视图结构稳定，避免在 `body` 中堆叠副作用和复杂分支
-- 只把 UI 状态留在 View；业务逻辑放回 `ios-feature-implementation` 管理的类型中
-- 对 `public`/`open` API、跨模块复用类型要求 `///` 文档注释
-- 并发边界、副作用、失败路径语义必须写清注释
-- 复杂分支补 `why` 注释，不重复代码字面含义
-- 新建 `.swift` 文件且项目要求文件头时，`Created by` 必须使用本机用户名称（`whoami` 输出）；日期 `YYYY/M/D`
+- The task is UIKit ViewController / UIView / Auto Layout / collection/table view; use `uikit-feature-implementation`.
+- The task is business service, repository, use case, or domain model; use `ios-feature-implementation`.
+- The task is Liquid Glass 专项；use `swiftui-liquid-glass`.
+- The task is frame drops, redraws, startup, xctrace, or Instruments; use `ios-performance`.
+- The task is build/signing/archive/CI; use `xcode-build`.
+- The task is runtime crash/leak/hang debugging; use `debugging`.
+- The task is Apple API fact lookup; use `apple-docs`.
 
-## 参考资源
+## Agent Rules
 
-- `references/components-index.md` — 组件索引入口
-- `references/swiftui.md` — SwiftUI 通用指南
-- `references/app-wiring.md` — 应用接线
-- `references/async-state.md` — 异步状态
-- `references/navigationstack.md` — 导航栈
-- `references/sheets.md` — Sheet 模式
-- `references/previews.md` — 预览
-- `references/mv-patterns.md` — MV 模式（重构专用）
+### Submode Rules
 
-## 可选证据验证
+Select one submode at the beginning and keep the chain in that submode unless the task clearly changes.
 
-- 如果当前任务没有进入 `codex-subagent-orchestration`（CC 用户参考 CLAUDE.md 三步收口工作流），或当前轮只能以单 Agent 执行，本 skill 完成实现后也不要直接跳到可选验证；默认后续链路按三步执行：`swiftui-feature-implementation -> testing/定向验证 -> code-review`
-- 后续 `testing` 阶段默认只执行最窄定向单测；若没有可低成本执行的单测路径，则给出 `no_test_reason` 与 `suggested_validation`，不自动升级到真机 / 模拟器验证。
-- 只要当前任务产出修改了 Apple Xcode 项目相关内容，默认以定向测试/必要验证与 `code-review` 放行为收口；`final-evidence-gate` / `verify-ios-build` 仅按需使用
-- 若执行可选完整验证，证据必须来自目标项目根目录的项目环境
-- 对 iOS 项目，若升级到 `verify-ios-build`，必须优先 `.xcworkspace`，并默认优先已连接真机
-- 若可选 `final-evidence-gate` / `verify-ios-build` 未执行或失败，应说明已执行的定向测试/审查证据与残余风险。
+| Submode | Use When |
+| --- | --- |
+| `mode-selection` | New screen structure, navigation hierarchy, state ownership, or component split is unclear. |
+| `implementation` | Page structure and state ownership are known; SwiftUI code needs to be implemented. |
+| `view-refactor` | Existing SwiftUI file is too large, `body` is complex, side effects are in views, or state is misplaced. |
 
-## 与其他技能的关系
+### SwiftUI Structure Rules
 
-- Liquid Glass 专项：`swiftui-liquid-glass`
-- 性能 profiling / 掉帧 / 重绘：`ios-performance`
-- 通用代码异味（非 SwiftUI 专项）：`refactoring`
-- 业务层类型、service、导航 wiring：`ios-feature-implementation`
-- UIKit 页面：`uikit-feature-implementation`
-- 视觉设计系统、色板、无障碍：`ui-ux-design-system`
+- Keep root view structure stable.
+- Avoid heavy side effects inside `body`.
+- Move business logic to service / view model / model layers.
+- Keep UI-only state in View when appropriate.
+- Keep app/business state in ViewModel or domain layer.
+- Prefer explicit dependency injection over hidden global dependencies.
+- Use small focused subviews when `body` becomes hard to read.
+- Avoid unnecessary `AnyView` unless type erasure is justified.
+- Keep identity stable in lists and dynamic collections.
+
+### State Rules
+
+- For iOS 17+ projects, prefer `@Observable`, `@State`, `@Bindable`, and explicit dependencies when consistent with the project.
+- Respect existing architecture and minimum deployment target.
+- Do not introduce iOS 17-only state mechanisms into projects that need lower deployment support unless guarded or already adopted.
+- Use `@MainActor` for UI-facing observable state when needed.
+- Keep async state transitions explicit: loading, success, empty, error.
+
+### Navigation Rules
+
+- Keep route identity explicit.
+- Prefer a single owner for navigation state.
+- Do not scatter sheet/navigation booleans across unrelated subviews.
+- For deep links or cross-feature navigation, coordinate with `ios-feature-implementation`.
+
+### Comment / Documentation Rules
+
+- Add `///` documentation for public/open SwiftUI components or reusable types.
+- Document concurrency boundary, side effects, and failure state semantics when relevant.
+- Add `why` comments for complex UI compatibility or business branches.
+- Do not add comments that merely restate SwiftUI syntax.
+
+### File Header Rules
+
+When adding `.swift` files and the project requires headers:
+
+- `Created by` must use local `whoami`.
+- Do not write `Codex`.
+- Date format: `YYYY/M/D`.
+
+### Validation Handoff Rules
+
+- Do not jump directly to full build verification by default.
+- Default chain: `swiftui-feature-implementation -> testing/targeted validation -> code-review`.
+- UI-only changes may have no low-cost unit test; in that case `testing` must provide `no_test_reason` and `suggested_validation`.
+- UI smoke, simulator, or device evidence is optional and only used when requested or risk requires it.
+- `final-evidence-gate` / `verify-ios-build` are optional escalation paths.
+
+### Token Budget
+
+- Do not paste huge SwiftUI files when only a section changed.
+- Summarize view structure changes instead of dumping full bodies.
+- Avoid reading build logs directly; use diagnostics summaries.
+- Keep output focused on structure, state, navigation, and validation impact.
+
+## Submode Workflows
+
+### Mode Selection
+
+1. Identify screen type: `TabView`, `NavigationStack`, `sheet`, `List`, `Grid`, `Form`, or custom layout.
+2. Decide state ownership: View, ViewModel, shared store, router, environment, or domain layer.
+3. Decide navigation and presentation ownership.
+4. Decide component split and reusable subviews.
+5. Reference component guidance from `references/components-index.md` when useful.
+
+### Implementation
+
+1. Connect existing ViewModel, service, router, or dependency.
+2. Bind business state into SwiftUI view state.
+3. Implement view hierarchy, interactions, animations, transitions, and previews.
+4. Keep business behavior outside `body`.
+5. Report test impact and UI validation suggestions.
+
+### View Refactor
+
+1. Preserve behavior first.
+2. Stabilize root view structure.
+3. Extract subviews by responsibility.
+4. Move actions and side effects out of `body`.
+5. Keep existing ViewModel unless change is clearly required.
+6. Avoid unrelated visual redesign.
+
+## Inputs
+
+Expected input contract:
+
+```json
+{
+  "goal": "Implement or refactor SwiftUI screen",
+  "submode": "mode-selection | implementation | view-refactor | auto",
+  "target_files": [],
+  "minimum_ios": "optional",
+  "existing_architecture": "MV | MVVM | Coordinator | Store | unknown",
+  "state_sources": [],
+  "navigation_requirements": [],
+  "visual_constraints": [],
+  "accessibility_requirements": [],
+  "constraints": []
+}
+```
+
+## Outputs
+
+Return compact structured output:
+
+```json
+{
+  "status": "completed | partial | blocked",
+  "submode": "mode-selection | implementation | view-refactor",
+  "changed_files": [],
+  "summary": [],
+  "view_structure_changes": [],
+  "state_ownership": "...",
+  "navigation_changes": [],
+  "contract_changes": [],
+  "known_risks": [],
+  "test_impact": "...",
+  "no_test_reason": null,
+  "suggested_next_skill": "testing | code-review | ios-feature-implementation | ios-performance | blocked",
+  "next_action": "run-targeted-tests | code-review | ask-user | blocked"
+}
+```
+
+## Exit Conditions
+
+Return `completed` when:
+
+- Requested SwiftUI screen/component/refactor is complete.
+- State ownership and navigation impact are clear.
+- Changed files and behavior summary are provided.
+- Test impact or `no_test_reason` is provided.
+- Next validation/review step is clear.
+
+Return `partial` when:
+
+- Structural progress was made but some UI states, assets, copy, API, or product decisions are missing.
+
+Return `blocked` when:
+
+- Required design, product behavior, deployment target, asset, API contract, or architecture decision is missing.
+- The task belongs to UIKit, build, performance, or debugging instead.
+
+## Escalation Rules
+
+Escalate to `ios-feature-implementation` when:
+
+- Business logic, service, repository, use case, router, or deep-link wiring must be changed.
+
+Escalate to `uikit-feature-implementation` when:
+
+- The task becomes UIKit page or UIKit integration work.
+
+Escalate to `swiftui-liquid-glass` when:
+
+- The task is specifically about Liquid Glass visual language.
+
+Escalate to `ios-performance` when:
+
+- The problem is redraw, excessive body invalidation, scrolling performance, startup, or Instruments evidence.
+
+Escalate to `testing` after implementation when:
+
+- Targeted validation or UI test impact must be assessed.
+
+Escalate to `code-review` after testing/validation when:
+
+- Static risk review and verification story review are needed.
+
+Escalate to `ios-automation` when:
+
+- Simulator/device UI smoke, screenshot, accessibility tree, or navigation evidence is required.
+
+Escalate to `xcode-build` when:
+
+- Build settings, signing, Archive/Export, or CI become the main issue.
+
+## Reporting Format
+
+```text
+SwiftUI status: completed | partial | blocked
+Submode: mode-selection | implementation | view-refactor
+Changed files:
+- ...
+View structure changes:
+- ...
+State ownership:
+- ...
+Navigation changes:
+- ...
+Known risks:
+- ...
+Test impact: ...
+No test reason: none | ...
+Next: testing -> code-review
+```
+
+## Reference Resources
+
+- `references/components-index.md`: component index.
+- `references/swiftui.md`: SwiftUI general guidance.
+- `references/app-wiring.md`: app wiring.
+- `references/async-state.md`: async state.
+- `references/navigationstack.md`: navigation stack.
+- `references/sheets.md`: sheet patterns.
+- `references/previews.md`: previews.
+- `references/mv-patterns.md`: MV patterns for refactor mode.
+
+## Relationship to Other Skills
+
+- Liquid Glass: `swiftui-liquid-glass`.
+- Performance profiling / redraws / dropped frames: `ios-performance`.
+- General code smells not specific to SwiftUI: `refactoring`.
+- Business layer, service, navigation wiring: `ios-feature-implementation`.
+- UIKit page implementation: `uikit-feature-implementation`.
+- Visual design system, color, accessibility design guidance: `ui-ux-design-system`.
+- After implementation: `testing` then `code-review`.
+- Optional final evidence: `final-evidence-gate` / `verify-ios-build` only when needed.
