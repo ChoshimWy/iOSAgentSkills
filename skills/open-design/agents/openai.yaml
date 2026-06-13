@@ -1,4 +1,0 @@
-interface:
-  display_name: "Open Design"
-  short_description: "本地优先的设计原型、设计文档与 deck 生成工作流"
-  default_prompt: "使用 $open-design 把设计生成类任务路由到合适的 Open Design 模式（prototype / deck / document / media）；先收集输出类型、设计系统、视觉方向、导出格式与可用 agent，再按最小可行模式推进，避免一开始就扩散到过大的生成范围。"
