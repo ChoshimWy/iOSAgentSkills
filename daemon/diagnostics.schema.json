@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ChoshimWy/iOSAgentSkills/daemon/diagnostics.schema.json",
+  "title": "iOS Build Queue Diagnostics",
+  "description": "Compact diagnostics emitted by the iOS build-queue daemon or log digest script. Agents should read this instead of raw xcodebuild logs.",
+  "type": "object",
+  "required": ["status", "diagnostics"],
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": ["passed", "failed", "cancelled", "skipped", "unknown", "error"]
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["none", "lint", "typecheck", "build", "unit", "ui", "full", "archive", "auto"]
+    },
+    "fingerprint": {
+      "type": "string",
+      "description": "Stable hash for the diff, command, scheme, destination, and verification mode."
+    },
+    "cached": {
+      "type": "boolean",
+      "default": false
+    },
+    "summary": {
+      "type": "string"
+    },
+    "command": {
+      "type": "string",
+      "description": "Sanitized command or wrapper request. Avoid secrets and very long arguments."
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "finished_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "duration_seconds": {
+      "type": "number",
+      "minimum": 0
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["kind", "severity", "message"],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "project_config_error",
+              "missing_dependency",
+              "missing_module",
+              "swift_compile_error",
+              "objc_compile_error",
+              "linker_error",
+              "test_compile_error",
+              "test_failure",
+              "signing_error",
+              "destination_error",
+              "timeout",
+              "warning",
+              "note",
+              "unknown"
+            ]
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["error", "warning", "note", "info"]
+          },
+          "file": {
+            "type": "string"
+          },
+          "line": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "column": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "message": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "test_identifier": {
+            "type": "string"
+          },
+          "raw_excerpt": {
+            "type": "string",
+            "description": "Short excerpt only. Do not include large raw logs."
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "properties": {
+        "diagnostics_json": { "type": "string" },
+        "build_summary": { "type": "string" },
+        "test_summary": { "type": "string" },
+        "xcresult_summary": { "type": "string" },
+        "raw_log": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "next_action": {
+      "type": "string"
+    },
+    "raw_log_policy": {
+      "type": "string",
+      "enum": ["forbidden_by_default", "summary_only", "allowed_when_requested"]
+    }
+  },
+  "additionalProperties": true
+}
