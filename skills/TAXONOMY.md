@@ -20,6 +20,7 @@
 - 执行可选 `xcodebuild` 验证时，证据必须来自目标项目根目录的项目环境，而不是 sandbox 结果；同时继续遵守 `.xcworkspace` 优先、优先选择绑定了单元测试 `*Tests` target / bundle 的 scheme、iOS 默认优先已连接真机约束。验证链路默认由 wrapper 接入 shared build-queue daemon，统一串行执行验证型 `xcodebuild`，并复用 Xcode 系统 DerivedData。
 - 本地执行 `xcodebuild`（含 `-list` / `-showdestinations` / build/test）默认都走非沙盒项目环境；同机同仓如果有多个 Codex / Claude CLI 并发处理同一 Xcode 项目，项目环境验证必须统一经 wrapper 入口执行：优先目标项目根目录的 `codex_verify.sh`，若项目未接入则回退到本机 `~/.codex/bin/codex_verify`。可通过 `--queue-status` 查看 daemon 当前 active job 与 pending jobs；旧 `XCODE_DERIVED_DATA_*` / `CODEX_DERIVED_DATA_SLOT` 公开配置不再支持。
 - 默认优先切到 `codex-subagent-orchestration` 做自适应编排：先按 `lite` / `standard` / `full` 选择角色，再协调编码、调试、性能、测试、审查与按需验证；构建、测试、自动化、截图与日志优先切 `ios-automation`、`xcode-build`、`testing`，需要补强证据时再切 `final-evidence-gate` 或 `verify-ios-build`。
+- 低 token 验证链路默认优先切 `ios-verification-router` 做验证级别分流；涉及测试选择时切 `ios-affected-tests`；构建失败归因时切 `ios-build-log-digest`，优先消费 `diagnostics.json`，禁止默认读取完整 raw build log。
 - 多 Agent 编排默认遵守 checkpoint 合同：`CP0` / `CP1` / `CP2` / `CP3`。
 - 多 Agent 编排默认遵守 `fail-fix-report`：先定位失败、修复并重跑，再汇报。
 - 如果当前任务未进入 `codex-subagent-orchestration`，或当前轮只能以单 Agent 执行，实现型任务默认三步收口：`实现 skill -> testing/定向验证 -> code-review`。
@@ -42,6 +43,8 @@
 | `xcode-build` | 构建配置与交付链路 | Build Settings、签名、Archive、导出 IPA、CI/CD | 任务末尾只做默认收口审查 | `testing`、`code-review`、`final-evidence-gate` |
 | `final-evidence-gate` | 按需证据裁决 | 用户显式要求、发布前自检或高风险场景下裁决现有 `xcodebuild test/build` 证据是否足够，必要时建议升级 `verify-ios-build` | 默认实现任务的强制收尾、构建签名、Archive、导出、CI 设计 | `verify-ios-build`、`xcode-build` |
 | `verify-ios-build` | 按需项目环境构建验证 | 用户显式要求、发布前自检、证据不足或高风险场景下的项目环境验证 | 默认实现任务的强制收尾、构建签名、Archive、导出、CI 设计 | `final-evidence-gate`、`xcode-build` |
+| `ios-verification-router` | 低 token 验证前置路由 | 多 Agent / build-queue 场景下，根据 diff 分型选择 `none` / `lint` / `build` / `unit` / `ui` / `full`，避免无效 full build | 已明确要求 archive/export、签名交付或构建配置设计 | `ios-affected-tests`、`ios-build-log-digest`、`verify-ios-build`、`testing` |
+| `ios-affected-tests` | 受影响测试选择 | 根据 changed files 生成最小 `-only-testing` 集合，或给出 `no_test_reason` / `suggested_validation` | 用户明确要求全量测试、发布前完整验证、无测试目录可供分析 | `testing`、`ios-verification-router`、`code-review` |
 | `testing` | 测试编写专项 | 单元测试、UI 测试、Mock/Stub/Spy、异步测试，并记录可复用验证证据 | 性能 benchmark、`measure(metrics:)`、`xctrace`、一次性完成态裁决 | `ios-performance`、`final-evidence-gate`、`code-review`、`debugging` |
 
 ## Diagnostics
@@ -50,6 +53,7 @@
 | --- | --- | --- | --- | --- |
 | `code-review` | 静态审查 | review 代码、PR diff、public API 评审 | 直接实现修复、运行时定位 | `debugging`、`ios-performance`、`sdk-architecture` |
 | `debugging` | 运行时排障 | crash、异常、未释放、符号化栈、LLDB 定位 | 纯静态审查、性能分析与 benchmark、构建配置设计 | `code-review`、`ios-performance`、`xcode-build` |
+| `ios-build-log-digest` | 低 token 构建失败归因 | `xcodebuild` / build-queue 失败后读取 `diagnostics.json` / `build-summary.txt`，只定位第一个真实 blocking error | 纯运行时 crash、用户明确要求分析完整 raw log、非构建类业务问题 | `debugging`、`xcode-build`、`ios-verification-router` |
 | `ios-performance` | 性能分析与测试 | 掉帧、启动慢、CPU / 内存异常、性能回归基线、`measure(metrics:)`、`xctrace`、Instruments | 通用业务实现、普通单元/UI 测试补齐、泛化 crash 排查 | `testing`、`debugging`、`swift-expert` |
 | `swift-expert` | 进阶 Swift 设计 | `actor`、`Sendable`、`PAT`、类型擦除、多平台可用性 | 普通 iOS 业务实现、性能 profiling / benchmark、通用页面实现 | `ios-feature-implementation`、`swiftui-feature-implementation`、`uikit-feature-implementation`、`ios-performance` |
 
