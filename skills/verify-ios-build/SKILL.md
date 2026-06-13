@@ -1,91 +1,390 @@
 ---
 name: verify-ios-build
-description: Apple Xcode 工程的按需项目环境构建验证执行器。由用户显式要求或 `final-evidence-gate` 在现有 `xcodebuild test/build` 证据不足、高风险场景下调用；执行一次 `xcodebuild` 验证，iOS 默认优先 `.xcworkspace` 与已连接真机，找不到连接真机时回退 simulator。
+description: Apple Xcode 工程的按需项目环境构建验证执行器。由用户显式要求或 final-evidence-gate 在现有 xcodebuild test/build 证据不足、高风险场景下调用；通过 codex_verify wrapper 接入 shared build-queue daemon 执行一次项目环境 xcodebuild 验证，并优先输出 diagnostics.json / build-summary.txt 等低 token 证据。
 ---
 
 # Verify iOS Build（项目环境构建验证执行器）
 
-## 角色定位
-- 将本 skill 作为按需项目环境验证执行器，而不是所有 Apple Xcode 改动的默认重复步骤。
-- 本 skill 不作为 `testing` 的默认后继步骤；默认 testing 不会自动触发真机 / 模拟器验证。
-- 在前置 `testing` 与 `code-review` 都已放行、且现有验证证据不足或风险要求完整验证时，执行一次性 `xcodebuild` 项目环境验证。
-- 不负责判断低风险场景是否可接受已有证据；该裁决由 `final-evidence-gate` 完成。
-- 不负责构建系统设计、签名配置或 Archive/Export 流程。
-- 本 skill 应统一复用验证 wrapper 来执行真正的项目环境 `xcodebuild`：优先目标项目已提供的 repo-tracked `codex_verify.sh`，若项目未接入则回退到本机 `~/.codex/bin/codex_verify`。wrapper 会自动接入 shared build-queue daemon，把验证型 `xcodebuild` 串行排队执行，并统一使用 Xcode 系统 DerivedData（`~/Library/Developer/Xcode/DerivedData`）。
+## Purpose
 
-## 触发判定（硬边界）
-- 用户明确要求“编译验证 / 跑一下 xcodebuild / 最后确认还能编译”时，使用本 skill。
-- `final-evidence-gate` 判定现有证据不足、高风险，或用户需要发布前/完整项目环境验证时，使用本 skill。
-- 建议升级的典型场景：`.xcodeproj` / `.xcworkspace` / scheme / xctestplan / xcconfig / Build Settings / 构建脚本、签名/entitlements/plist/capability、`Podfile` / `Podfile.lock` / 私有 Pod 版本或 `:path` 回切线上、资源/Storyboard/XIB/Assets/target membership、consumer app 集成证据缺失。
-- 如果最后一次代码变更之后，已经有同等或更强的目标项目环境 `xcodebuild test/build` 成功证据，且 `testing` 与 `code-review` 均放行，不要无条件重复执行本 skill。
-- 如果任务核心是签名、证书、Archive、导出、CI、xcconfig、build script 或 destination 策略设计，不要用本 skill 作为主 skill，切换到 `xcode-build`。
-- 如果任务核心是写测试代码或选择真机 / 模拟器自动化执行路径，分别切换到 `testing`、`ios-automation`。
+Execute one on-demand project-environment Xcode verification for Apple platform projects while preserving build-queue serialization, stable validation baselines, structured diagnostics, and low-token failure reporting.
 
-## 适用场景
-- 当前仓库需要补一条完整项目环境构建证据。
-- 现有定向测试没有覆盖最终交付 target / consumer app scheme。
-- 用户明确要求单次构建检查。
-- 完整 diff/PR 审查或工作区未提交代码审查交给 `code-review`。
+## 中文说明
 
-## 核心工作流
-1. 确认前置 `testing` 与 `code-review` 已完成，且 `code-review` 没有 `blocking_findings`；若是由 `final-evidence-gate` 升级，记录升级原因。
-2. 运行当前 skill 自带的 `scripts/build-check.sh <目标仓库根目录>`。
-   - `scripts/build-check.sh` 指的是 **本 skill 目录下** 的脚本路径，不是目标仓库根目录里的同名脚本。
-   - 不要因为目标仓库没有 `scripts/build-check.sh` 就误判 skill 不可执行。
-   - 如果目标仓库根目录存在 repo-tracked `codex_verify.sh`，`build-check.sh` 应先委托给该包装入口提交到 shared build-queue daemon；若项目未接入，则自动回退到本机 `~/.codex/bin/codex_verify`；随后再由包装入口回调本 skill 的 `build-check.sh`。不要绕过包装入口并发裸跑 `xcodebuild`。
-   - 项目环境验证必须在**目标项目根目录**执行（CC 使用 `Bash` 工具；Codex 使用 `functions.exec_command` + `sandbox_permissions="require_escalated"` / `require_escalated`）；不要把沙箱内构建结果当作最终验收。
-   - 本地 `xcodebuild` 命令（含 `-list` / `-showdestinations` / build/test）统一按非沙盒项目环境执行，不做沙盒内降级。
-3. `build-check.sh` 的首次校验选择顺序固定为：
-   - `.codex/xcodebuild.env` 显式设置了 `XCODE_DESTINATION`：按显式 destination 执行；
-   - iOS 工程且同时存在 `.xcworkspace` 与 `.xcodeproj`：始终优先 `.xcworkspace`；
-   - 如果同一任务中已经先跑过定向测试或其它 build/test，验证默认复用同一套 workspace / scheme / destination 基线；不要无说明切换 scheme；
-   - 私有库 / 私有组件改动默认使用主项目本地 `:path` 私有库依赖执行项目环境验证；未收到明确指令前，不要回切线上版本化依赖或 `Pods/` vendored snapshot 作为验证基线；
-   - 如果用户没有显式指定 `XCODE_SCHEME`，默认优先选择绑定了单元测试 `*Tests` target / bundle 的 scheme；若不存在，再回退到其它测试 scheme（例如 `*UITests`、`*_TEST`）；
-   - iOS 工程未显式 destination：优先已连接真机；找不到连接中的真机时自动回退到 simulator；
-   - macOS Xcode 工程：走宿主机 `xcodebuild build`，不强行拼装 iOS destination。
-4. 真机选择必须基于 `xcodebuild -showdestinations` 的真实 iOS destination，并结合 `xcrun devicectl list devices` 只选择 `connected` 设备；不要把已配对但未连接的设备当作默认最终验证目标。
-5. 只有当首次校验是 simulator，且 simulator 失败、首个真实失败点命中“第三方依赖导致的 simulator-only 链接白名单错误”时，脚本才自动切换到已连接真机再校验一次。
-6. 如果首次 simulator 失败但首个真实失败点属于本次实现链路自己的真实错误，或不属于白名单错误，则不要切真机，直接按真实失败收口；如果需要真机回退但当前没有连接中的真实 iOS destination，明确写出阻塞原因。
-7. 只有当本 skill 成功完成时，`final-evidence-gate` 才能接受该验证证据；若验证失败、被环境阻塞、或还没拿到项目环境结果，最终回复必须明确完整验证失败点、默认收口证据与残余风险。
-8. 最终回复直接给构建结果；如果用户显式走 simulator 且触发真机回退，要分别说明 simulator 阶段与真机阶段的结果。
-9. 如果首次构建成功且满足以下条件，执行 UI smoke：
-   - `XCODE_UI_SMOKE_MODE=auto|required`；
-   - 当前变更命中 UI 敏感文件（View/ViewController/Router/Coordinator/Storyboard/XIB/Assets）；
-   - 首次 destination 为 simulator；
-   - `XCODE_UI_SMOKE_SPEC` 指向的 spec 文件存在（默认 `.codex/ui-smoke.yml`，该文件属于目标仓库可选文件，不存在时按 mode 规则处理）。
-10. UI smoke 采用 text-first 验证：优先基于 accessibility tree 的结构化断言；截图只用于视觉证据和失败取证，不作为唯一状态判断依据。
+该 Skill 是按需项目环境验证执行器，不是所有 iOS / Xcode 改动的默认收尾步骤。
 
-## 特殊情况
-- 不要求本 skill 再自行审查本次任务全量差异与直接影响面；这些属于前置 `code-review` 职责。
-- 不要让 `.codex/xcodebuild.env` 覆盖配置绕过前置 `testing` / `code-review`；它只用于指定 workspace/project/scheme/configuration/destination。
-- `codex_verify.sh` / `~/.codex/bin/codex_verify` 只负责接入 shared build-queue daemon 与项目环境验证入口控制；它不改变本 skill 的 workspace / scheme / destination 选择策略，也不能绕过前置 `testing` / `code-review`。
-- 本地 `verify-ios-build` 默认固定使用 Xcode 系统 DerivedData 根目录；旧 `XCODE_DERIVED_DATA_*` / `CODEX_DERIVED_DATA_SLOT` 公开配置已移除，如果仍在环境变量或 `.codex/xcodebuild.env` 中设置，wrapper 会 fail-fast。
-- `.codex/xcodebuild.env` 可以额外控制默认真机 destination 选择，或显式切到 simulator 首次校验并控制回退行为，但不能绕过固定链路里的 `testing` / `code-review` 放行，也不能把项目环境验证降级回沙箱。
-- 如果当前 turn 已经先执行过定向测试，验证应优先复用同一套 workspace / scheme / destination 基线；若先前执行路径与默认策略不一致，必须在回复里明确说明为什么切换。
-- 如果仓库不是 Xcode 工程，直接说明本 skill 不适用，而不是伪造构建结论。
-- 真机是 iOS 最终 `build` 校验的默认首选路径；找不到连接中的真机时才切 simulator。若是 macOS Xcode 工程，则直接走宿主机 build。
-- 如果任务已经变成 test / install / launch / 签名策略设计，不要继续扩展本 skill，切换到 `ios-automation` 或 `xcode-build`。
-- UI smoke 控制变量：
-  - `XCODE_UI_SMOKE_MODE=off|auto|required`（默认 `auto`）
-  - `XCODE_UI_SMOKE_SPEC=<relative-path>`（默认 `.codex/ui-smoke.yml`）
-  - `auto` 模式下 spec 不存在只告警不阻塞；`required` 模式下 spec 不存在或 smoke 失败会阻塞门禁。
+它负责在用户显式要求、发布前检查、或 `final-evidence-gate` 判定现有证据不足 / 风险较高时，执行一次真实项目环境 `xcodebuild` 验证。验证必须通过项目 wrapper 或全局 wrapper 接入 shared build-queue daemon，避免多个 Agent 并发裸跑 `xcodebuild`。
 
-## 输出要求
-按以下顺序组织最终回复：
-1. 前置阶段状态（`testing` 是否完成、`code-review` 是否放行）与升级原因（如来自 `final-evidence-gate`）
-2. 首次构建阶段使用的 workspace/project、scheme、configuration、destination、结果；如果是默认真机路径，再补充选中的 connected device destination 与选择原因；如果是 simulator / macOS 路径，也写明回退或选择原因；如果失败，给出首个真实失败点
-3. 若显式 simulator 且触发真机回退，再补充：选中的 device destination、结果，以及是否成功完成回退校验
-4. 如果被阻塞或失败，明确阻塞点或首个真实错误，并说明默认收口证据与残余风险
-5. 如果触发了 UI smoke，补充说明：spec 路径、是否执行、结果，以及失败证据目录（如有）
+本 Skill 不负责：
 
-## 参考资源
+- 默认 testing 后继步骤。
+- 判断低风险任务是否可接受已有证据。
+- 编写测试代码。
+- 构建系统设计、签名配置、Archive、Export、CI/CD 策略。
+- 全量 diff / PR 审查。
+
+这些分别由 `testing`、`final-evidence-gate`、`xcode-build`、`code-review` 等 Skill 负责。
+
+## When to Use
+
+Use this Skill when:
+
+- The user explicitly asks for build verification, `xcodebuild`, final compile check, or project-environment verification.
+- `final-evidence-gate` escalates because existing `xcodebuild build/test` evidence is insufficient.
+- The change is high-risk and needs one real project-environment build/test signal.
+- The change touches project configuration, scheme, xctestplan, xcconfig, Build Settings, build scripts, plist, entitlements, capabilities, assets, target membership, dependency configuration, or consumer app integration.
+- The last successful validation evidence is older than the latest code change.
+- A release / merge confidence gate requires project-environment evidence.
+
+## When Not to Use
+
+Do not use this Skill when:
+
+- The task only needs unit test authoring or test scope selection; use `testing` or `ios-affected-tests`.
+- The task is build system design, signing, certificate, Archive, Export, CI, xcconfig, build script, or destination policy work; use `xcode-build`.
+- The task only requires code review; use `code-review`.
+- The task only requires simulator / device automation, install, launch, screenshots, or UI flow validation; use `ios-automation`.
+- A same-or-stronger successful project-environment build/test already exists after the latest code change, and `testing` plus `code-review` already passed.
+- The repository is not an Xcode project.
+- The user has not asked for full verification and the diff is low-risk with adequate targeted evidence.
+
+## Agent Rules
+
+### Execution Boundaries
+
+- Treat this Skill as an on-demand executor, not the default final step for every Apple platform change.
+- Confirm preceding `testing` and `code-review` status when this Skill is used as a final gate executor.
+- If invoked by `final-evidence-gate`, record the escalation reason.
+- Do not bypass `testing` / `code-review` by changing `.codex/xcodebuild.env`.
+- Do not review the entire diff inside this Skill; that belongs to `code-review`.
+- Do not design signing, archive, export, CI, or build setting strategies inside this Skill; route to `xcode-build`.
+- Do not write or modify test code inside this Skill; route to `testing`.
+
+### Wrapper and Build Queue Rules
+
+- Never run validation-type `xcodebuild` directly.
+- Always prefer the target project repo-tracked wrapper: `./codex_verify.sh`.
+- If the target project wrapper is absent, use the shared fallback wrapper: `~/.codex/bin/codex_verify`.
+- The wrapper must submit validation-type `xcodebuild` to the shared build-queue daemon.
+- The daemon serializes `xcodebuild` and reuses Xcode system DerivedData: `~/Library/Developer/Xcode/DerivedData`.
+- Do not reintroduce public `XCODE_DERIVED_DATA_*` or `CODEX_DERIVED_DATA_SLOT` configuration. If those variables are present, wrapper should fail fast.
+- Project-environment verification must run in the target project root, not in a sandbox copy.
+- For Codex, use non-sandbox project execution with required escalation when necessary.
+
+### Baseline Selection Rules
+
+- If `.codex/xcodebuild.env` explicitly sets `XCODE_DESTINATION`, use that destination.
+- If an iOS project has both `.xcworkspace` and `.xcodeproj`, prefer `.xcworkspace`.
+- If earlier validation in the same task already used a workspace / scheme / destination, reuse that baseline unless there is a clear reason to change.
+- For private Pod / private component changes, keep the main project on the local `:path` dependency for project-environment verification unless the user explicitly asks to restore versioned dependency.
+- If no `XCODE_SCHEME` is explicit, prefer a scheme bound to unit test targets / bundles such as `*Tests`.
+- If no test-bound scheme exists, fall back to another test-related scheme such as `*UITests` or `*_TEST`.
+- For iOS projects with no explicit destination, prefer connected physical iOS devices.
+- If no connected physical iOS device exists, fall back to simulator.
+- For macOS Xcode projects, use host `xcodebuild build` and do not force iOS destinations.
+
+### Device Selection Rules
+
+- Real-device selection must be based on `xcodebuild -showdestinations` and `xcrun devicectl list devices`.
+- Only `connected` devices can be selected by default.
+- Do not treat paired but disconnected devices as default final verification targets.
+- If simulator verification fails, switch to real device only when the first real failure matches a known simulator-only third-party dependency/linking allowlist issue.
+- If the simulator failure is a real implementation error, do not switch to real device.
+- If real-device fallback is required but no connected iOS destination exists, report a blocked state with the reason.
+
+### UI Smoke Rules
+
+Run UI smoke only when all conditions are met:
+
+- First build verification succeeded.
+- `XCODE_UI_SMOKE_MODE=auto|required`.
+- The diff touches UI-sensitive files: View, ViewController, Router, Coordinator, Storyboard, XIB, Assets.
+- First destination is simulator.
+- `XCODE_UI_SMOKE_SPEC` exists. Default: `.codex/ui-smoke.yml`.
+
+UI smoke must be text-first:
+
+- Prefer structured accessibility tree assertions.
+- Use screenshots only as visual evidence or failure artifacts.
+- Screenshots must not be the only state assertion.
+
+### Token Budget
+
+- Prefer structured output from wrapper / daemon.
+- Read `diagnostics.json` first.
+- Then read `build-summary.txt`.
+- Then read `test-summary.json` or `xcresult-summary.json` if available.
+- Do not read full raw `build.log` by default.
+- Do not dump full `.xcresult` JSON by default.
+- Do not recursively inspect `DerivedData`.
+- Report only the first real blocking error when verification fails.
+- Do not paste large build logs into the conversation.
+
+## Core Workflow
+
+1. Confirm trigger source: user explicit request, `final-evidence-gate` escalation, release / merge confidence, or high-risk project-environment evidence need.
+2. Confirm preceding `testing` and `code-review` status if this is a final verification path.
+3. Determine target project root and confirm it is an Xcode project.
+4. Determine wrapper path: `./codex_verify.sh` first, then `~/.codex/bin/codex_verify`.
+5. Determine verification mode and baseline: workspace/project, scheme, configuration, destination.
+6. Compute or request verification fingerprint if supported by wrapper / daemon.
+7. If the same fingerprint already has a same-or-stronger successful result, skip duplicate build and report cached evidence.
+8. If the same fingerprint already has a failed result, read cached `diagnostics.json` before requesting another build.
+9. Submit one verification request through wrapper / daemon.
+10. Read structured result artifacts, starting with `diagnostics.json`.
+11. If failed, report first real blocking error and next action.
+12. If succeeded and UI smoke conditions are met, run UI smoke through the supported wrapper path.
+13. Return compact verification evidence and residual risk.
+
+## Verification Fingerprint
+
+When wrapper / daemon supports fingerprinting, use a stable key based on:
+
+```text
+sha256(diff + workspace/project + scheme + configuration + destination + verification mode + xcode version if available)
+```
+
+Rules:
+
+- Same fingerprint + successful same-or-stronger evidence: do not rebuild.
+- Same fingerprint + failed evidence: do not rebuild until code, config, destination, or mode changes; read cached diagnostics first.
+- Different destination or scheme means a different fingerprint.
+- Changing from simulator to real device creates a different fingerprint.
+- Fingerprint is advisory if wrapper / daemon does not support it yet; do not fake success.
+
+## Inputs
+
+Expected input contract:
+
+```json
+{
+  "mode": "auto | build | unit | ui | full",
+  "trigger": "user_requested | final_evidence_gate | release_check | high_risk",
+  "target_project_root": "/path/to/project",
+  "changed_files": [],
+  "workspace": "App.xcworkspace",
+  "project": null,
+  "scheme": "App",
+  "configuration": "Debug",
+  "destination": "platform=iOS,id=...",
+  "allow_full_build": true,
+  "allow_full_log": false,
+  "fingerprint": "optional-existing-fingerprint",
+  "previous_validation": {
+    "testing_status": "passed | failed | skipped | unknown",
+    "code_review_blocking_findings": []
+  }
+}
+```
+
+Minimal input when invoked manually:
+
+```json
+{
+  "mode": "auto",
+  "target_project_root": ".",
+  "trigger": "user_requested"
+}
+```
+
+## Outputs
+
+Return compact output using this contract:
+
+```json
+{
+  "status": "passed | failed | skipped | blocked",
+  "mode": "auto | build | unit | ui | full",
+  "verification_route": "wrapper -> build-queue daemon -> xcodebuild",
+  "fingerprint": "abc123",
+  "cached": false,
+  "workspace_or_project": "App.xcworkspace",
+  "scheme": "App",
+  "configuration": "Debug",
+  "destination": "platform=iOS,id=...",
+  "selected_device_reason": "connected physical iOS device preferred",
+  "diagnostics_path": "build-results/latest/diagnostics.json",
+  "summary_path": "build-results/latest/build-summary.txt",
+  "first_blocking_error": {
+    "kind": "swift_compile_error",
+    "file": "App/File.swift",
+    "line": 10,
+    "message": "..."
+  },
+  "ui_smoke": {
+    "executed": false,
+    "spec": ".codex/ui-smoke.yml",
+    "result": "skipped | passed | failed"
+  },
+  "summary": "...",
+  "residual_risk": [],
+  "next_action": "none | fix_first_error | connect_device | inspect_environment | run_final_evidence_gate"
+}
+```
+
+## Exit Conditions
+
+Return `passed` when:
+
+- Wrapper / daemon completed the requested project-environment verification successfully.
+- The selected workspace/project, scheme, configuration, and destination are reported.
+- If UI smoke was required, it passed.
+- Evidence is available through compact artifact paths or summaries.
+
+Return `failed` when:
+
+- `xcodebuild` ran and produced a real project, compile, link, test, signing, destination, or UI smoke failure.
+- The first real blocking error is identified from `diagnostics.json` / summaries.
+- The next action is specific, usually `fix_first_error`.
+
+Return `blocked` when:
+
+- Target project root is unavailable.
+- The repository is not an Xcode project.
+- Wrapper is unavailable and raw `xcodebuild` is not allowed.
+- Required device / destination is unavailable.
+- Dependency, certificate, permission, or environment access prevents verification.
+- Required UI smoke spec is missing while `XCODE_UI_SMOKE_MODE=required`.
+
+Return `skipped` when:
+
+- Same-or-stronger successful evidence exists after the latest change.
+- The task is low-risk and `final-evidence-gate` decides existing evidence is enough.
+- The user did not ask for project-environment verification and targeted evidence is sufficient.
+
+## Escalation Rules
+
+Escalate to `xcode-build` when:
+
+- Signing, certificates, provisioning, Archive, Export, CI, xcconfig, build scripts, or destination strategy must be designed or changed.
+
+Escalate to `ios-automation` when:
+
+- The task becomes install, launch, navigation, screenshot, accessibility, simulator lifecycle, or real-device automation.
+
+Escalate to `testing` when:
+
+- New or modified unit/UI tests are required.
+- Test scope selection is the primary task.
+
+Escalate to `ios-build-log-digest` when:
+
+- Verification fails and compact failure attribution is needed.
+- Raw log analysis is being considered.
+
+Escalate to raw log inspection only when:
+
+- `diagnostics.json`, `build-summary.txt`, `test-summary.json`, and compact `.xcresult` summaries are insufficient.
+- The inspected section is narrowly targeted.
+- The user explicitly asks for raw log analysis.
+
+## Environment Controls
+
+Supported target-project environment file:
+
+```text
+.codex/xcodebuild.env
+```
+
+It may specify:
+
+- `XCODE_WORKSPACE`
+- `XCODE_PROJECT`
+- `XCODE_SCHEME`
+- `XCODE_CONFIGURATION`
+- `XCODE_DESTINATION`
+- `XCODE_UI_SMOKE_MODE=off|auto|required`
+- `XCODE_UI_SMOKE_SPEC=<relative-path>`
+
+It must not be used to bypass `testing`, `code-review`, wrapper routing, daemon serialization, or project-environment execution.
+
+Deprecated / forbidden public configuration:
+
+- `XCODE_DERIVED_DATA_*`
+- `CODEX_DERIVED_DATA_SLOT`
+
+## Reporting Format
+
+Final response should be ordered as:
+
+1. Precondition status: `testing`, `code-review`, and escalation reason.
+2. Verification baseline: workspace/project, scheme, configuration, destination.
+3. Selected device or simulator reason.
+4. Result: passed / failed / skipped / blocked.
+5. If failed: first real blocking error from `diagnostics.json` or summary.
+6. If simulator fallback to real device happened: report both stages.
+7. UI smoke status if triggered.
+8. Evidence artifact paths.
+9. Residual risk and next action.
+
+Compact failed example:
+
+```text
+Verification failed.
+Baseline: App.xcworkspace / App / Debug / iPhone 16 Simulator.
+First blocking error: App/File.swift:10 cannot find `foo` in scope.
+Evidence: build-results/latest/diagnostics.json.
+Raw log: skipped by policy.
+Next action: fix_first_error.
+```
+
+## Examples
+
+### Cached Success
+
+```json
+{
+  "status": "skipped",
+  "cached": true,
+  "fingerprint": "abc123",
+  "summary": "Same fingerprint already has successful build evidence after latest change.",
+  "next_action": "none"
+}
+```
+
+### Build Failure
+
+```json
+{
+  "status": "failed",
+  "cached": false,
+  "fingerprint": "def456",
+  "first_blocking_error": {
+    "kind": "swift_compile_error",
+    "file": "App/ViewModel.swift",
+    "line": 82,
+    "message": "Cannot find 'productID' in scope"
+  },
+  "diagnostics_path": "build-results/latest/diagnostics.json",
+  "next_action": "fix_first_error"
+}
+```
+
+### Blocked Device
+
+```json
+{
+  "status": "blocked",
+  "summary": "Real-device verification required but no connected iOS destination is available.",
+  "next_action": "connect_device"
+}
+```
+
+## Reference Resources
+
 - `scripts/build-check.sh`
 - `references/override-config.md`
+- `../ios-verification-router/SKILL.md`
+- `../ios-build-log-digest/SKILL.md`
+- `../../daemon/diagnostics.schema.json`
 
-## 与其他技能的关系
-- 当任务已经实现完成，且 `final-evidence-gate` 判定需要补完整项目环境构建证据时，使用本技能。
-- 如果当前任务属于非编排 / 单 Agent 的实现链路，本 skill 只作为 `final-evidence-gate` 的升级执行器，不再无条件承接第四步。
-- 需要完整 diff/PR 审查、API 设计评审或非收尾阶段 code review 时，切换到 `code-review`。
-- 如果任务本身是在改 Build Settings、签名、Archive/Export、CI 或构建脚本，主技能应是 `xcode-build`。
-- 本技能不替代测试编写；需要补单元测试或 UI 测试时切换到 `testing`。
-- 本技能只负责“项目环境构建验证”，不替代默认的定向验证、`testing`、`code-review` 流程，也不替代 `final-evidence-gate` 的完成态裁决。
+## Relationship to Other Skills
+
+- `final-evidence-gate` decides whether this Skill is needed when evidence is insufficient.
+- `ios-verification-router` should be used before this Skill for low-token verification route selection.
+- `ios-affected-tests` should be used before broad test execution.
+- `ios-build-log-digest` should be used after verification failure.
+- `code-review` owns full diff / PR review and blocking findings.
+- `testing` owns test writing and targeted test strategy.
+- `ios-automation` owns install, launch, screenshot, accessibility, simulator, and device automation.
+- `xcode-build` owns signing, archive, export, CI, build setting, and destination strategy design.
