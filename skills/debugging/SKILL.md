@@ -1,69 +1,273 @@
 ---
 name: debugging
-description: iOS 调试与问题排查技能。只在存在 crash、异常、运行时错误、对象未释放、内存泄漏、僵死等症状并需要诊断根因时使用；不要把“编译验证 / 构建验证 / 构建检查 / 门禁验收 / 最后验证一下能不能编译 / 跑一下 xcodebuild”这类收尾门禁请求误判到本 skill，这类请求统一交给 `verify-ios-build`；也不要把它当作静态 code review、benchmark / profiling / `xctrace` 或构建配置技能；若任务产出修改了 Apple Xcode 项目相关内容，默认以定向测试/必要验证与 `code-review` 放行为收口；`final-evidence-gate` / `verify-ios-build` 仅在用户显式要求或需要补强完整项目环境证据时按需使用。
+description: iOS/macOS 运行时调试与问题排查 Skill。用于 crash、异常、运行时错误、对象未释放、内存泄漏、Watchdog、卡死、行为异常等有运行时症状的问题；不要把编译验证、静态代码审查、性能 profiling、benchmark 或构建配置误判到本 Skill。
 ---
 
 # iOS 调试与问题排查
 
-## 角色定位
-- 诊断型 skill。
-- 负责根据症状、日志、调用栈和运行时行为定位根因，并给出复现路径、LLDB 命令和修复方向。
-- 不负责替代代码审查、构建设置设计或泛化重构。
+## Purpose
 
-## 触发判定（硬边界）
-- 至少已有日志、调用栈、错误信息、复现步骤或明确运行时症状之一时，使用本 skill。
-- 如果手头只有静态 diff、没有运行时证据，主 skill 应切换到 `code-review`。
-- 如果问题核心是 benchmark、`measure(metrics:)`、`xctrace`、Instruments、掉帧或启动性能，不要用本 skill 作为主 skill，切换到 `ios-performance`。
+Diagnose iOS/macOS runtime failures using symptoms, logs, stack traces, reproduction steps, and runtime evidence, then provide root-cause analysis, focused fixes, and verification guidance.
 
-## 适用场景
-- 需要分析 crash、异常、僵死、主线程阻塞、内存泄漏、视图未释放。
-- 需要根据错误日志、符号化栈或复现步骤定位问题。
-- 需要给出 LLDB 命令、Memory Graph / Instruments 排查路径。
+## 中文说明
 
-## 核心工作流
-1. 先识别症状类型
+该 Skill 是运行时排障专项 Skill。
 
-| 异常类型 | 常见原因 | 排查方向 |
+负责：
+- 分析 crash、异常、运行时错误。
+- 定位对象未释放、内存泄漏、僵尸对象、循环引用。
+- 分析 Watchdog、主线程阻塞、死锁、卡死。
+- 根据日志、调用栈、复现步骤和运行时行为判断根因。
+- 给出 LLDB、Memory Graph、Instruments 排查路径。
+- 给出修复方案和防御建议。
+
+不负责：
+- 静态 diff 代码审查。
+- 编译验证或构建门禁。
+- 性能 benchmark / profiling。
+- 构建设置、签名、Archive、CI 配置。
+- 泛化重构或无症状代码优化。
+
+## When to Use
+
+Use this Skill when at least one runtime signal exists:
+
+- Crash log.
+- Symbolicated or unsymbolicated stack trace.
+- Exception name or error message.
+- Reproduction steps.
+- Console log.
+- LLDB output.
+- Memory Graph evidence.
+- User-visible runtime symptom.
+- Object not deallocated.
+- Watchdog / hang / deadlock symptom.
+
+## When Not to Use
+
+Do not use this Skill when:
+
+- Only static diff exists and no runtime symptom is known; use `code-review`.
+- The request is final compile/build verification; use `final-evidence-gate` / `verify-ios-build`.
+- The request is benchmark, dropped frames, startup time, CPU trace, `xctrace`, or Instruments workflow; use `ios-performance`.
+- The request is signing, Archive, Export, CI, build settings, destination policy; use `xcode-build`.
+- The request is writing tests; use `testing`.
+- The request is implementing a feature without runtime failure; use an implementation Skill.
+
+## Agent Rules
+
+### Evidence Rules
+
+- Start from runtime evidence, not speculation.
+- Identify symptom type before proposing fixes.
+- Prefer crash thread and first app-owned frame.
+- If evidence is missing, state the missing evidence explicitly.
+- If root cause is inferred, mark it as probable rather than proven.
+- Do not claim a crash is fixed without reproduction or validation evidence.
+- Do not paste huge logs; extract the smallest relevant stack or error section.
+
+### Root Cause Rules
+
+- Separate symptom, trigger, root cause, and fix.
+- Distinguish current-change regression from pre-existing issue when possible.
+- For async/concurrency issues, inspect actor/main-thread boundaries, shared mutable state, callback queue, cancellation, and lifecycle.
+- For memory leaks, inspect closure captures, delegates, timers, NotificationCenter, KVO, Combine/Rx subscriptions, CADisplayLink, retain cycles, and view-controller lifecycle.
+- For Objective-C interop issues, inspect selector names, optional protocol methods, dynamic dispatch, KVC/KVO, nullability, and bridging.
+- For UI lifecycle issues, inspect view loading, containment, presentation/dismissal, reuse, and thread confinement.
+
+### Validation Rules
+
+- After proposing a fix, include the narrowest validation path.
+- If code changes are made, default closure still requires targeted validation / necessary verification and `code-review`.
+- `final-evidence-gate` / `verify-ios-build` are optional strengthening steps only when explicitly requested or risk requires it.
+- Do not auto-upgrade to full build, simulator, or real-device validation for every debugging task.
+
+### Token Budget
+
+- Do not read full raw build logs by default.
+- Do not dump full crash archives if a stack trace is enough.
+- Do not paste full console logs.
+- Prefer minimal stack, first app frame, exception reason, device/OS/app version, and reproduction steps.
+- For build/test failure logs encountered during debugging, use `ios-build-log-digest`.
+
+## Symptom Classification
+
+| Symptom | Common Causes | First Checks |
 | --- | --- | --- |
-| `EXC_BAD_ACCESS` | 野指针、`nil` 解包、数组越界 | 检查可选值解包、数组边界、多线程访问 |
-| `EXC_BAD_INSTRUCTION` | `fatalError`、`preconditionFailure` | 检查断言、强制解包、边界条件 |
-| `SIGABRT` | `NSException`、`unrecognized selector` | 查看异常信息、检查 ObjC 互操作 |
-| `Watchdog` | 主线程阻塞超时 | 检查主线程同步 I/O、死锁、长事务 |
+| `EXC_BAD_ACCESS` | Use-after-free, unsafe pointer, invalid memory access, data race | Zombie objects, memory graph, thread access, first app frame |
+| `EXC_BAD_INSTRUCTION` | `fatalError`, `preconditionFailure`, forced unwrap, invalid cast | Assertion site, optional chain, type assumptions |
+| `SIGABRT` | `NSException`, unrecognized selector, Auto Layout exception, KVC issue | Exception reason, ObjC selector, view hierarchy |
+| `Watchdog` | Main thread blocked, deadlock, long launch/background task | Main thread stack, synchronous I/O, locks, launch work |
+| Object not deallocated | Retain cycle, timer, delegate, subscription, notification | Memory Graph, closure captures, dispose/cancel lifecycle |
+| UI freeze | Main thread work, layout loop, lock contention | main thread backtrace, runloop, layout invalidation |
+| Async wrong state | Race, cancellation, callback order, actor boundary | task lifetime, state machine, main actor, cancellation path |
 
-2. 再做根因定位
-- 先看异常类型和崩溃线程调用栈。
-- 再回到上下文代码，确认触发条件和共享状态。
-- 缺少运行时证据时，明确写出“当前是高概率推断”。
+## Inputs
 
-3. 最后给出修复与防御
-- 修复方案必须尽量具体，优先给可执行改法。
-- 同时给出防御建议，避免问题以不同形式再次出现。
+Expected input contract:
 
-## 参考资源
-- `references/memory-leak.md`：常见泄漏模式与 Memory Graph 使用。
-- 常用 LLDB 命令：`po <变量>`、`bt`、`bt all`、`expr <表达式>`。
-
-## 输出要求
-- 默认按以下格式输出：
-
-```text
-🔍 问题类型: [类型]
-📍 位置: [文件:方法:行]
-💡 根因分析: [分析]
-🔧 修复方案: [代码或修改建议]
-🛡️ 防御建议: [如何预防]
+```json
+{
+  "symptom": "crash | exception | leak | hang | wrong_behavior | unknown",
+  "logs": [],
+  "stack_trace": "optional",
+  "exception_reason": "optional",
+  "reproduction_steps": [],
+  "device": "optional",
+  "os_version": "optional",
+  "app_version": "optional",
+  "changed_files": [],
+  "recent_changes": [],
+  "constraints": []
+}
 ```
 
-- 如果无法定位到行号，必须说明还缺什么证据。
+Minimal useful input:
 
-## 可选证据验证
-- 只要当前任务产出修改了 Apple Xcode 项目相关内容（代码、测试、资源、工程文件、构建脚本、plist / entitlements / xcconfig / scheme 或项目内环境配置），最终默认以定向测试/必要验证与 `code-review` 放行为收口；`final-evidence-gate` / `verify-ios-build` 仅在用户显式要求或需要补强完整项目环境证据时按需使用。
-- 若执行可选完整验证，证据必须来自目标项目根目录的项目环境；沙箱内的构建结果不能作为完整项目环境证据。
-- 对 iOS 项目，若升级到 `verify-ios-build`，必须优先 `.xcworkspace`（当 `.xcworkspace` 与 `.xcodeproj` 同时存在时），并默认优先已连接真机；找不到连接中的真机时再回退到 simulator。
-- 若可选 `final-evidence-gate` / `verify-ios-build` 未执行或失败，应在交付中说明已执行的定向测试/审查证据与残余风险。
+```json
+{
+  "symptom": "crash",
+  "stack_trace": "...",
+  "reproduction_steps": ["..."]
+}
+```
 
-## 与其他技能的关系
-- 只是静态代码质量审查时，切换到 `code-review`。
-- 掉帧、启动慢、CPU / 内存异常、`measure(metrics:)`、`xctrace` 或 Instruments 模板选择等性能问题，优先切换到 `ios-performance`。
-- 需要构建签名、Archive、导出或 CI 配置时，切换到 `xcode-build`。
-- 需要直接整理实现代码而非定位运行时根因时，切换到 `refactoring`、`swiftui-feature-implementation` 或其它实现型 skill。
+## Outputs
+
+Return compact structured output:
+
+```json
+{
+  "status": "diagnosed | probable | needs-more-evidence | fixed | blocked",
+  "symptom_type": "crash | exception | leak | hang | wrong_behavior | unknown",
+  "location": "File.swift:method:line | unknown",
+  "first_app_frame": "optional",
+  "root_cause": "...",
+  "confidence": "high | medium | low",
+  "evidence": [],
+  "fix_plan": [],
+  "defensive_changes": [],
+  "validation_plan": [],
+  "residual_risk": [],
+  "next_action": "fix | collect-evidence | run-targeted-validation | code-review | blocked"
+}
+```
+
+## Exit Conditions
+
+Return `diagnosed` when:
+
+- Symptom type is clear.
+- Root cause is supported by runtime evidence.
+- Location or first app-owned frame is identified.
+- Fix and validation plan are specific.
+
+Return `probable` when:
+
+- Evidence points strongly to one cause but reproduction or stack details are incomplete.
+- The answer clearly marks uncertainty.
+
+Return `needs-more-evidence` when:
+
+- Logs, stack trace, reproduction steps, or environment details are insufficient.
+- Multiple plausible root causes remain.
+
+Return `fixed` when:
+
+- A fix was applied and narrow validation or reproduction verification supports it.
+- Remaining risks are disclosed.
+
+Return `blocked` when:
+
+- Required runtime evidence, device access, crash log, symbols, credentials, or reproduction environment is unavailable.
+
+## Escalation Rules
+
+Escalate to `code-review` when:
+
+- There is no runtime evidence and only static diff exists.
+- The next step is quality/risk review after a debugging fix.
+
+Escalate to `ios-performance` when:
+
+- The issue is primarily frame drops, startup time, CPU/memory benchmark, energy, `xctrace`, or Instruments evidence.
+
+Escalate to `testing` when:
+
+- A regression test should be added after identifying the root cause.
+- A deterministic unit/UI test can reproduce the bug.
+
+Escalate to `ios-build-log-digest` when:
+
+- The failure is actually a build/test log issue and compact log attribution is needed.
+
+Escalate to `verify-ios-build` only when:
+
+- The user explicitly asks for project-environment verification.
+- `final-evidence-gate` determines the debugging fix needs full build evidence.
+
+Escalate to implementation/refactoring Skills when:
+
+- Root cause is clear and code changes are needed.
+
+## Reporting Format
+
+```text
+🔍 问题类型: crash | exception | leak | hang | wrong_behavior
+📍 位置: File.swift:method:line | unknown
+🧩 首个 App 栈帧: ...
+💡 根因分析: ...
+📎 证据: ...
+🔧 修复方案: ...
+🛡️ 防御建议: ...
+✅ 验证计划: ...
+⚠️ 残余风险: ...
+```
+
+If evidence is insufficient:
+
+```text
+当前无法确认根因。
+缺少证据:
+- symbolicated crash stack
+- reproduction steps
+- device / OS version
+下一步: collect-evidence
+```
+
+## Useful Commands
+
+LLDB:
+
+```text
+bt
+bt all
+po <variable>
+expr <expression>
+thread backtrace all
+image lookup -a <address>
+```
+
+Memory / lifecycle:
+
+```text
+Memory Graph
+Zombies
+Malloc Stack Logging
+Leaks instrument
+Allocations instrument
+```
+
+## Reference Resources
+
+- `references/memory-leak.md`: common leak patterns and Memory Graph usage.
+
+## Relationship to Other Skills
+
+- Static review only: use `code-review`.
+- Performance profiling or benchmark: use `ios-performance`.
+- Build verification: use `verify-ios-build`.
+- Build/test log attribution: use `ios-build-log-digest`.
+- Test writing: use `testing`.
+- Build/signing/archive/CI: use `xcode-build`.
+- Code implementation after diagnosis: use `refactoring`, `ios-feature-implementation`, `swiftui-feature-implementation`, or `uikit-feature-implementation`.
