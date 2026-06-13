@@ -1,77 +1,264 @@
 ---
 name: ios-feature-implementation
-description: 默认 iOS feature 实现技能。只用于与具体 UI 技术栈无关的通用业务实现：service / repository / use case / domain model / view model、依赖注入、导航接线和常规 async/await 落地；如果任务核心已经变成 SwiftUI / UIKit 页面代码、页面模式选型、已有 SwiftUI 大 view 重构、构建配置、模拟器/真机自动化、性能取证或官方文档检索，不要使用本 skill 作为主 skill；若任务产出修改了 Apple Xcode 项目相关内容，默认以定向测试/必要验证与 `code-review` 放行为收口；`final-evidence-gate` / `verify-ios-build` 仅在用户显式要求或需要补强完整项目环境证据时按需使用。
+description: 默认 iOS feature 通用业务实现 Skill。用于 service、repository、use case、domain model、view model、coordinator、router、依赖注入、导航接线和常规 async/await 落地；不要把 SwiftUI/UIKit 页面专项实现、构建配置、设备自动化、性能取证或 Apple 官方文档检索误判到本 Skill。
 ---
 
 # iOS Feature 实现
 
-## 角色定位
-- 默认型主 skill。
-- 负责大多数通用 iOS feature 业务代码与应用层 glue code。
-- 不直接承担 UIKit / SwiftUI 专项页面结构设计，也不负责构建、自动化与性能取证。
+## Purpose
 
-## 触发判定（硬边界）
-- 用户主要在问 `service`、`repository`、`use case`、`view model`、`coordinator`、`router`、依赖注入或导航接线时，使用本 skill。
-- 用户主要在问 `NavigationStack` / `TabView` / `sheet` / `body` / 页面布局 / `UIViewController` / 组件样式时，不要用本 skill 作为主 skill。
-- 用户主要在问 `xcodebuild` 门禁、签名、`simctl`、`devicectl`、`xctrace`、`measure(metrics:)` 或 Apple 官方 API 事实时，切换到对应专项 skill。
+Implement general iOS feature business logic and application-layer wiring while preserving clear ownership, test handoff, review handoff, and minimal unrelated changes.
 
-## 适用场景
-- 编写或修改 service、repository、use case、domain model、view model。
-- 处理依赖注入、feature wiring、导航接线和错误流转。
-- 落地常规 async/await、状态同步和业务层内存安全约束。
+## 中文说明
 
-## 核心规则
-- 默认优先值类型、严格访问控制、`guard` 提前返回和结构化并发。
-- UI 更新放在主线程或 `@MainActor`。
-- 业务逻辑进入 service / model / coordinator，不堆进 view 或 view controller。
-- 如果目标工程使用 CocoaPods 且涉及私有组件/本地联调，先查 `Podfile` / `Podfile.lock` / `Pods/Manifest.lock`，确认是否为本地 `:path` Pod；命中时默认修改组件源码仓，不修改 `Pods/` 副本。
-- 对本地 `:path` Pod / 私有组件，`Pods/<LibraryName>` 默认属于禁止改动范围；实现阶段的 ownership 应指向真实组件仓路径，而不是 `Pods/` 快照。
-- 如本次实现修改私有库 / 私有组件，主项目默认必须切回或保持本地 `:path` 私有库依赖进行开发与验证；除非用户明确要求回线上依赖验证，否则不要把验证基线切到线上版本化依赖或 `Pods/` 快照。
-- 文件、方法或类型体量超过常规阈值时优先拆分，而不是继续堆叠复杂度。
-- 对 `public` / `open` API、跨模块复用类型与可复用协议要求，默认补 `///` 文档注释；至少说明输入、输出、失败语义与关键副作用。
-- 涉及并发边界（`@MainActor` / actor / 回调线程）、副作用（状态/DB/缓存/磁盘/网络）或失败路径（throws/错误码/回退条件）的实现，注释必须写清约束。
-- 复杂分支补 `why` 注释，解释业务原因/兼容背景/失败保护；不要只复述代码字面含义。
-- 只补文件头注释不算完成；关键函数与关键分支必须有可执行语义的内联注释。
-- 对应项目中新建 `.swift`、`.h`、`.m`、`.mm` 等源码文件且项目要求文件头时，`Created by` 必须使用本机用户名称（`whoami` 输出），不要写 `Codex`；日期默认使用 `YYYY/M/D`，例如 `Created by $(whoami) on 2026/4/11.`。
+该 Skill 是通用 iOS feature 业务实现入口。
 
-## 参考资源
-- `references/navigation.md`：导航组织与深链。
-- `references/memory-management.md`：内存管理与循环引用防护。
+负责：
+- service / repository / use case。
+- domain model / DTO / mapper。
+- view model / state management。
+- coordinator / router / navigation wiring。
+- dependency injection。
+- 常规 async/await 与错误流转。
+- 业务层内存安全与并发边界。
 
-## 实现阶段输出合同
-- 默认输出以下字段，便于后续 `code-review` / `testing` / `verify-ios-build` 聚合：
+不负责：
+- SwiftUI 页面结构、布局、`body` 重构。
+- UIKit ViewController / UIView 专项页面实现。
+- Build Settings、签名、Archive/Export、CI。
+- 设备自动化、安装启动、截图。
+- 性能 profiling / benchmark。
+- Apple 官方 API 事实检索。
 
-```text
-changed_files:
-  - ...
-summary:
-  - ...
-known_risks:
-  - ...
-test_impact: <测试影响面>
-no_test_reason: <仅当本轮不涉及新增测试时填写>
+## When to Use
+
+Use this Skill when the user asks to implement or modify:
+
+- Service。
+- Repository。
+- Use case。
+- Domain model。
+- View model。
+- Coordinator / Router。
+- Dependency injection。
+- Navigation wiring。
+- Business error flow。
+- State synchronization。
+- General async/await business flow。
+
+## When Not to Use
+
+Do not use this Skill as the main Skill when:
+
+- The task is primarily SwiftUI view structure, `NavigationStack`, `TabView`, `sheet`, `body`, layout, or View refactor; use `swiftui-feature-implementation`.
+- The task is primarily UIKit page, `UIViewController`, `UIView`, collection/table view, or Auto Layout; use `uikit-feature-implementation`.
+- The task is complex Swift language design, protocols, type erasure, actor isolation, or cross-platform availability strategy; use `swift-expert`.
+- The task is build configuration, signing, Archive/Export, or CI; use `xcode-build`.
+- The task is simulator/device automation; use `ios-automation`.
+- The task is performance profiling or benchmark; use `ios-performance`.
+- The task is runtime debugging; use `debugging`.
+- The task is Apple API / availability / WWDC fact lookup; use `apple-docs`.
+
+## Agent Rules
+
+### Implementation Rules
+
+- Prefer value types where appropriate.
+- Use strict access control.
+- Use `guard` for early exits.
+- Keep business logic in service / model / coordinator / view model, not directly in view or view controller.
+- Keep UI updates on the main thread or under `@MainActor`.
+- Keep changes minimal and scoped to the requested feature.
+- Do not rewrite unrelated code.
+- Do not roll back user or other Agent changes.
+- Split oversized files, methods, or types instead of stacking complexity.
+
+### Architecture Rules
+
+- Separate domain logic from networking, persistence, and UI.
+- Prefer dependency injection over hidden singletons when adding testable behavior.
+- Keep side effects explicit.
+- Keep error semantics visible and typed where practical.
+- Avoid introducing global mutable state.
+- For async flows, define cancellation, threading, and lifecycle expectations.
+
+### Private Dependency Rules
+
+- If the project uses CocoaPods and the task involves private components or local integration, inspect `Podfile`, `Podfile.lock`, and `Pods/Manifest.lock`.
+- If local `:path` Pod is active, modify the real component repository, not `Pods/<LibraryName>`.
+- Treat `Pods/<LibraryName>` as forbidden write scope when it is a vendored snapshot.
+- For private library/component implementation, keep or switch the main project to local `:path` dependency for development and validation unless the user explicitly asks otherwise.
+- Do not switch validation baseline to online versioned dependency unless explicitly requested.
+
+### Documentation / Comment Rules
+
+- Add `///` documentation for public/open APIs, cross-module reusable types, and reusable protocols.
+- Public API documentation should describe input, output, failure semantics, and important side effects.
+- For concurrency boundaries, document actor/main-thread/callback queue assumptions.
+- For side effects, document state, database, cache, disk, network, or notification impact.
+- For failure paths, document throws/error-code/fallback semantics.
+- Add `why` comments for complex business branches; do not only restate code.
+- File header alone is not enough.
+
+### File Header Rules
+
+When adding `.swift`, `.h`, `.m`, `.mm` files and the project requires headers:
+
+- `Created by` must use local `whoami`.
+- Do not write `Codex`.
+- Date format: `YYYY/M/D`, for example `Created by $(whoami) on 2026/4/11.`.
+
+### Validation Handoff Rules
+
+- Implementation does not directly jump to full verification by default.
+- Default single-Agent chain: `ios-feature-implementation -> testing/targeted validation -> code-review`.
+- `testing` should run or suggest the narrowest useful validation.
+- If no low-cost test exists, `testing` must provide `no_test_reason` and `suggested_validation`.
+- `final-evidence-gate` / `verify-ios-build` are optional escalation paths only when user asks or evidence/risk requires it.
+
+### Token Budget
+
+- Do not paste large diffs.
+- Do not paste full files unless necessary.
+- Summaries should focus on behavior and contract changes.
+- Keep risk and validation impact compact.
+- Do not read large build logs; use diagnostics summaries when needed.
+
+## Inputs
+
+Expected input contract:
+
+```json
+{
+  "goal": "Implement feature behavior",
+  "target_files": [],
+  "ownership": [],
+  "forbidden_paths": ["Pods/"],
+  "constraints": [],
+  "success_criteria": [],
+  "existing_architecture": {
+    "pattern": "MVVM | Coordinator | Service | Repository | unknown",
+    "dependencies": []
+  }
+}
 ```
 
-- 字段规则：
-  - `changed_files` 只列本轮实际改动文件。
-  - `summary` 聚焦行为变化与契约变化，不粘贴大段 diff。
-  - `known_risks` 仅记录尚未消除的真实风险；无则写 `[]`。
-  - `test_impact` 与 `no_test_reason` 二选一必须填写。
+## Outputs
 
-## 可选证据验证
-- 如果当前任务没有进入 `codex-subagent-orchestration`（CC 用户参考 CLAUDE.md 三步收口工作流），或当前轮只能以单 Agent 执行，本 skill 完成实现后也不要直接跳到可选验证；默认后续链路按三步执行：`ios-feature-implementation -> testing/定向验证 -> code-review`。
-- 后续 `testing` 阶段默认只执行最窄定向单测；若没有可低成本执行的单测路径，则给出 `no_test_reason` 与 `suggested_validation`，不自动升级到真机 / 模拟器验证。
-- 只要当前任务产出修改了 Apple Xcode 项目相关内容（代码、测试、资源、工程文件、构建脚本、plist / entitlements / xcconfig / scheme 或项目内环境配置），最终默认以定向测试/必要验证与 `code-review` 放行为收口；`final-evidence-gate` / `verify-ios-build` 仅在用户显式要求或需要补强完整项目环境证据时按需使用。
-- 若执行可选完整验证，证据必须来自目标项目根目录的项目环境；沙箱内的构建结果不能作为完整项目环境证据。
-- 对 iOS 项目，若升级到 `verify-ios-build`，必须优先 `.xcworkspace`（当 `.xcworkspace` 与 `.xcodeproj` 同时存在时），并默认优先已连接真机；找不到连接中的真机时再回退到 simulator。
-- 若可选 `final-evidence-gate` / `verify-ios-build` 未执行或失败，应在交付中说明已执行的定向测试/审查证据与残余风险。
+Return compact structured output:
 
-## 与其他技能的关系
-- 通用 iOS feature 业务开发默认优先使用本技能。
-- 如果当前任务属于非编排 / 单 Agent 的实现链路，本 skill 完成代码修改后，默认先切到 `testing/定向验证`，再切到 `code-review`；`final-evidence-gate` / `verify-ios-build` 仅按需升级。
-- 如果任务核心已经进入普通 SwiftUI 页面落地，本 skill 只作为业务层辅助，主 skill 切换到 `swiftui-feature-implementation`。
-- 如果任务核心已经进入普通 UIKit 页面落地，本 skill 只作为业务层辅助，主 skill 切换到 `uikit-feature-implementation`。
-- 如果任务进入复杂并发、类型擦除、协议族或跨平台可用性策略，切换到 `swift-expert`。
-- 如果任务已经变成 benchmark、`measure(metrics:)`、`xctrace`、Instruments 或启动 / 滚动性能分析，切换到 `ios-performance`。
-- 如果任务是构建配置、签名、Archive/Export 或 CI，切换到 `xcode-build`。
-- 如果只是查询 Apple 官方 API、可用性或 WWDC 内容，切换到 `apple-docs`。
+```json
+{
+  "status": "completed | partial | blocked",
+  "changed_files": [],
+  "summary": [],
+  "contract_changes": [],
+  "known_risks": [],
+  "test_impact": "...",
+  "no_test_reason": null,
+  "suggested_next_skill": "testing | code-review | swiftui-feature-implementation | uikit-feature-implementation | swift-expert | blocked",
+  "next_action": "run-targeted-tests | code-review | ask-user | blocked"
+}
+```
+
+Field rules:
+
+- `changed_files`: only files changed by this implementation.
+- `summary`: behavior and contract changes, not raw diff.
+- `contract_changes`: public API, model, error, persistence, navigation, or dependency contract changes.
+- `known_risks`: real remaining risks only; use `[]` when none.
+- `test_impact` or `no_test_reason` must be present.
+
+## Exit Conditions
+
+Return `completed` when:
+
+- Requested business behavior is implemented.
+- Changes are scoped and summarized.
+- `test_impact` or `no_test_reason` is provided.
+- Next validation/review step is clear.
+
+Return `partial` when:
+
+- Useful implementation progress was made but some requested behavior is intentionally deferred.
+- Missing context prevents full completion but does not invalidate completed work.
+
+Return `blocked` when:
+
+- Required project context, dependency source, API contract, product decision, or credentials are missing.
+- Ownership would require modifying forbidden paths such as vendored `Pods/` snapshots.
+- The task actually belongs to another Skill and cannot be safely handled here.
+
+## Escalation Rules
+
+Escalate to `swiftui-feature-implementation` when:
+
+- The task becomes SwiftUI page structure, view layout, navigation presentation, or large SwiftUI view refactor.
+
+Escalate to `uikit-feature-implementation` when:
+
+- The task becomes UIKit ViewController / UIView / Auto Layout / table / collection implementation.
+
+Escalate to `swift-expert` when:
+
+- The task becomes complex Swift type system, actor isolation, Sendable, type erasure, protocol families, or availability design.
+
+Escalate to `testing` after implementation when:
+
+- Code changed and targeted validation or test impact must be assessed.
+
+Escalate to `code-review` after testing/validation when:
+
+- Static risk review and verification story review are needed.
+
+Escalate to `debugging` when:
+
+- The task is driven by runtime crash/hang/leak symptoms.
+
+Escalate to `ios-performance` when:
+
+- The task becomes performance profiling, benchmark, xctrace, Instruments, startup, scrolling, or memory regression.
+
+Escalate to `xcode-build` when:
+
+- Build Settings, signing, Archive/Export, CI, or scheme configuration is the main issue.
+
+Escalate to `apple-docs` when:
+
+- Official Apple API facts, availability, or WWDC references are required.
+
+## Reporting Format
+
+```text
+Implementation status: completed | partial | blocked
+Changed files:
+- ...
+Summary:
+- ...
+Contract changes:
+- ...
+Known risks:
+- ...
+Test impact: ...
+No test reason: none | ...
+Next: testing -> code-review
+```
+
+## Reference Resources
+
+- `references/navigation.md`: navigation organization and deep links.
+- `references/memory-management.md`: memory management and retain-cycle prevention.
+
+## Relationship to Other Skills
+
+- General iOS business implementation defaults to this Skill.
+- SwiftUI page work routes to `swiftui-feature-implementation`.
+- UIKit page work routes to `uikit-feature-implementation`.
+- Advanced Swift design routes to `swift-expert`.
+- After implementation, route to `testing` then `code-review` by default.
+- Optional final evidence routes to `final-evidence-gate` / `verify-ios-build` only when required.
+- Build configuration routes to `xcode-build`.
+- Device automation routes to `ios-automation`.
+- Runtime diagnosis routes to `debugging`.
+- Performance evidence routes to `ios-performance`.
+- Apple official facts route to `apple-docs`.
