@@ -51,11 +51,12 @@
 
 | Skill | 角色 | 主触发场景 | 不要触发的场景 | 切换到 |
 | --- | --- | --- | --- | --- |
-| `code-review` | 静态审查 | review 代码、PR diff、public API 评审 | 直接实现修复、运行时定位 | `debugging`、`ios-performance`、`sdk-architecture` |
+| `code-review` | 静态审查 | review 代码、PR diff、public API 评审 | 直接实现修复、运行时定位 | `debugging`、`ios-performance`、`ios-sdk-architecture` |
 | `debugging` | 运行时排障 | crash、异常、未释放、符号化栈、LLDB 定位 | 纯静态审查、性能分析与 benchmark、构建配置设计 | `code-review`、`ios-performance`、`xcode-build` |
 | `ios-build-log-digest` | 低 token 构建失败归因 | `xcodebuild` / build-queue 失败后读取 `diagnostics.json` / `build-summary.txt`，只定位第一个真实 blocking error | 纯运行时 crash、用户明确要求分析完整 raw log、非构建类业务问题 | `debugging`、`xcode-build`、`ios-verification-router` |
 | `ios-performance` | 性能分析与测试 | 掉帧、启动慢、CPU / 内存异常、性能回归基线、`measure(metrics:)`、`xctrace`、Instruments | 通用业务实现、普通单元/UI 测试补齐、泛化 crash 排查 | `testing`、`debugging`、`swift-expert` |
 | `swift-expert` | 进阶 Swift 设计 | `actor`、`Sendable`、`PAT`、类型擦除、多平台可用性 | 普通 iOS 业务实现、性能 profiling / benchmark、通用页面实现 | `ios-feature-implementation`、`swiftui-feature-implementation`、`uikit-feature-implementation`、`ios-performance` |
+| `ios-sdk-architecture` | iOS SDK / Framework 架构 | SDK 模块边界、Public API、入口类、Configuration、SPM/XCFramework、版本演进 | 普通 App 功能实现、纯测试补写、一次性构建验证 | `swift-expert`、`testing`、`code-review`、`xcode-build` |
 
 ## Internal Modules
 
@@ -63,7 +64,7 @@
 - `apple-docs`
 - `swiftui-liquid-glass`
 - `refactoring`
-- `sdk-architecture`
+- `ios-sdk-architecture`
 
 ## Additional Skills
 
