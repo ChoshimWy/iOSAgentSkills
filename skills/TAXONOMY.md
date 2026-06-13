@@ -71,4 +71,3 @@
 - `docs`：`html-docs`
 - `research`：`ui-ux-design-system`、`app-store-changelog`、`app-store-opportunity-research`、`open-design`
 - `workflow`：`git-workflow`、`gh-pr-flow`
-- `macos`：`macos-menubar-tuist-app`、`macos-spm-app-packaging`
