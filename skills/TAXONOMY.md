@@ -70,5 +70,5 @@
 
 这些技能同样位于 `skills/` 下，但默认按需触发，不作为 iOS 主链路的第一入口：
 - `docs`：`html-docs`
-- `research`：`ui-ux-design-system`、`app-store-changelog`、`app-store-opportunity-research`、`open-design`
+- `research`：`ui-ux-design-system`、`app-store-changelog`、`app-store-opportunity-research`
 - `workflow`：`git-workflow`、`gh-pr-flow`
