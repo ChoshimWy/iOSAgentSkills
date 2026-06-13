@@ -1,147 +1,405 @@
 ---
 name: codex-subagent-orchestration
-description: 默认优先使用的 iOS 主 Skill 入口；它先按任务复杂度选择 lite / standard / full 档位，再协调 coder / reviewer / tester / main agent 分工，并在内部路由到实现、调试、性能、测试、审查与按需验证模块；仓库默认入口视为仓库级显式触发，Codex CLI 原生 subAgent 可用时按档位自动使用，仅在工具不可用、策略禁止或写集不适合并行时临时回退单 Agent。
+description: 默认优先使用的 iOS 主 Skill 入口；先按任务复杂度选择 lite / standard / full 档位，再协调 coder / reviewer / tester / reporter / main agent 分工，并在内部路由到实现、调试、性能、测试、审查与按需验证模块；Codex CLI 原生 subAgent 可用时按档位自动使用，仅在工具不可用、策略禁止或写集不适合并行时临时回退单 Agent。
 ---
 
 # Codex 多 Agent 编排
 
-## 角色定位
-- 编排型 skill。
-- 负责在 Codex 原生能力范围内，先按任务复杂度选择 `lite` / `standard` / `full` 档位，再把实现、调试、性能、测试、审查与按需验证拆成合适的角色协同。
-- 默认完成态由主 Agent 基于定向测试/必要验证与 `code-review` 结论裁决；`final-evidence-gate` / `verify-ios-build` 仅作为按需补强验证。
+## Purpose
 
-## 触发判定（硬边界）
-- 默认优先使用本 skill 作为 iOS 任务的主入口，但必须先评估复杂度，不要把所有任务都升级为全量多 Agent。
-- 如果任务只是单一职责工作，例如纯代码审查、纯测试补写、纯一次性最终证据裁决或构建验证，优先直接切到对应 skill，不要先切本 skill。
-- 本仓库将默认进入本 skill 视为仓库级显式触发：当 Codex CLI 暴露原生 `spawn_agent` / `send_input` / `wait_agent` / `close_agent` 能力时，主 Agent 可按 `lite` / `standard` / `full` 档位自动使用 subAgent。
-- 仅当运行时工具不可用、上层策略禁止、本轮写集不适合并行或低风险 `lite` 任务无需并行时，才临时回退单 Agent；回退不能跳过 testing/定向验证与 `code-review` 收口。
+Coordinate iOS development tasks through an adaptive multi-agent workflow while keeping verification narrow, evidence-based, and low-token by default.
 
-## 自适应编排档位
-- `lite`：极小、单文件、无明确测试面或纯文档/规则小改。优先单 Agent；实现型任务仍必须保留 `testing/定向验证` 与 `code-review` 审查阶段。
-- `standard`：普通代码/规则改动。默认 `coder worker + reviewer explorer（复用 code-review） + 主 Agent 聚合收口`；只有出现测试面、失败归因或用户明确要求时才启动 `tester explorer`。
-- `full`：跨模块、高风险、并发/availability/公共契约变更、测试或日志归因复杂、私有库联调，或用户要求完整项目环境验证。采用 `coder worker + reviewer explorer（复用 code-review） + tester explorer + 主 Agent 聚合收口`；必要时按需执行 `final-evidence-gate` / `verify-ios-build`。
+## 中文说明
 
-## 任务分型器（新增默认规则）
-- 在选择 `lite` / `standard` / `full` 前，先将任务归类到以下五种类型：
-  - `doc-only`：纯文档改写或信息整理，无实现变更；
-  - `rule-only`：规则、流程、模板或 lint 策略小改；
-  - `code-small`：小范围代码变更（通常单模块/少文件）；
-  - `code-medium`：常规代码变更（跨文件但边界清晰）；
-  - `code-risky`：高风险变更（跨模块、并发/availability/公共契约或复杂验证链路）。
-- 默认映射：
-  - `doc-only` -> `lite`
-  - `rule-only` -> `lite`
-  - `code-small` -> `standard`
-  - `code-medium` -> `standard`
-  - `code-risky` -> `full`
+该 Skill 是本仓库默认 iOS 主入口。它不直接替代实现、测试、审查、构建或调试 Skill，而是负责：
 
-## 角色激活矩阵（新增默认规则）
-- 默认最小集合为：`explorer + builder + reporter`。
-- 仅在命中以下条件时激活附加角色：
-  - 激活 `pm`：需求边界不清、验收标准缺失、或存在多目标冲突；
-  - 激活 `tester explorer`：出现测试面、失败归因需求、或任务类型为 `code-risky`；
-  - 激活 `reviewer explorer`：所有实现型变更默认激活；`doc-only` / `rule-only` 可由主 Agent 轻量审查替代。
-- 任务涉及 Apple Xcode 项目改动时，默认由主 Agent 聚合定向验证与 `code-review` 结论；用户显式要求或高风险时可按需执行 `final-evidence-gate` / `verify-ios-build`。
+- 判断任务类型与复杂度。
+- 选择 `lite` / `standard` / `full` 编排档位。
+- 协调 coder / reviewer / tester / reporter / main agent 的职责边界。
+- 决定何时内部路由到实现、调试、性能、测试、审查与按需验证模块。
+- 在多 Agent 场景下保证 checkpoint、fail-fix-report 与低 token 验证纪律。
 
-## 默认编排
-1. 主 Agent 先本地确定目标文件范围、成功标准、编排档位，以及需要复用的 workspace / scheme / destination 基线（如适用）。
-   - 若目标工程使用 CocoaPods 且任务涉及私有组件/依赖联调，先额外锁定依赖来源：检查 `Podfile` / `Podfile.lock` / `Pods/Manifest.lock`；本次需要修改私有库时，主项目默认切回或保持本地 `:path` 私有库依赖进行开发与验证；命中本地依赖时把真实组件仓设为 ownership，把 `Pods/` 副本设为禁止改动范围。
-2. 按 `lite` / `standard` / `full` 选择是否启动 `coder worker`、`reviewer explorer`、`tester explorer`，不要为低风险任务启动无必要角色。
-3. `wait_agent(...)` 只在需要结果推进下一步时使用，不为轮询频繁等待。
-4. 如果 reviewer 或 tester 发现阻塞问题，主 Agent 用 `send_input(..., interrupt=true)` 精确回写给 coder。
-5. 如果 tester 判断必须补测试代码，再单独启动 `tester worker`，且只持有测试文件 ownership。
-6. 当代码、定向验证与 `code-review` 收敛后，主 Agent 可按默认标准收口；用户显式要求或高风险时再按需执行 `final-evidence-gate` / `verify-ios-build`。
-7. 如果可选证据验证或升级验证失败，主 Agent 把首个真实失败点、影响范围和验证基线回写给 coder，再进入下一轮修复。
+默认完成态必须由主 Agent 基于定向测试 / 必要验证与 `code-review` 结论裁决；任何 subAgent 都不能替代主 Agent 宣告完成。
 
-## Checkpoint 合同（新增默认规则）
-- 默认启用四个 checkpoint：`CP0 Intent Lock`、`CP1 Anchor Slice`、`CP2 Validation Baseline Freeze`、`CP3 Final Gate`。
-- `CP1` 未通过前，不启动无必要并行扩散；先完成首个关键切片并由主 Agent 验收。
-- 所有阶段以主 Agent 维护的 `checkpoint_status` 为单一事实源，避免阶段命名漂移。
-- 具体定义见 `references/checkpoint-contract.md`。
+## When to Use
 
-## Fail-Fix-Report 纪律（新增默认规则）
-- `fail`：出现阻塞项时，先定位首个真实失败点和影响范围。
-- `fix`：可修复则优先修复，并在同一验证基线重跑必要验证。
-- `report`：仅在“已修复并重跑”或“明确 blocked”两种状态下汇报。
-- 禁止带着已知阻塞项直接宣告完成。
-- 同一类问题默认最多回环 2 次；超过上限仍未收敛时，`next_action` 只能是 `blocked`。
+Use this skill when:
 
-## 可选：按角色指定 subAgent 模型（推荐）
-当你需要“coder=强模型 / reviewer=快模型 / tester=强模型（中推理）”这类分工时：
-- 在 `spawn_agent` 时为每个 subAgent **单独传 `model`**（不传则继承主 Agent 的默认模型）。
-- 如需控制推理强度，可为每个 subAgent **单独传 `reasoning_effort`**（例如 `medium`）。
+- The task is an iOS / Apple platform development task and does not clearly belong to one single specialized Skill.
+- The task contains implementation, review, testing, debugging, performance, Apple API, or optional evidence verification steps.
+- The task may benefit from adaptive role splitting.
+- The task involves multiple files, unclear risk, or a need to coordinate implementation and verification.
+- The user explicitly asks to use the iOS Agent workflow or multi-agent Codex workflow.
 
-推荐默认（可按项目/预算调整）：
-- `coder worker`: 强模型（实现质量优先）
-- `reviewer explorer`: 快模型（读审吞吐优先）
-- `tester explorer`: 强模型 + `reasoning_effort=medium`（定位/归因质量优先）
+## When Not to Use
 
-注意：
-- 具体可用的 `model` 取决于当前运行时/账号；不可用时应回退为不指定（继承默认）。
-- 本 Skill 只规定“如何表达分工”，不强行绑定某个具体模型名（避免随平台迭代过期）。
+Do not use this Skill as the first route when the task is clearly one of these single-purpose tasks:
 
-## Plan 输出模板（建议在需要时直接使用）
+- Pure code review: route directly to `code-review`.
+- Pure test writing: route directly to `testing`.
+- Pure Xcode build setting, signing, archive, or export task: route directly to `xcode-build`.
+- Pure final evidence decision or explicit project build verification: route to `final-evidence-gate` / `verify-ios-build`.
+- Pure Apple API / availability / WWDC lookup: route to `apple-docs`.
+- Pure runtime crash or debugging request: route to `debugging`.
+- Pure performance profiling or benchmark request: route to `ios-performance`.
+- Pure documentation or rule edit that does not need role splitting.
 
-当用户要求我给出计划（例如 `proposed_plan`）且任务包含实现/验证链路时，默认按以下结构输出：
+## Agent Rules
 
-- **Step 1 主 Agent 计划拆解**
-  - 目标、边界、成功标准、所选 `lite` / `standard` / `full` 档位、workspace/scheme/destination 基线、回退条件
-- **Step 2 coder worker（按需）**
-  - 代码变更任务（含 ownership 与禁止项）
-- **Step 3 testing（实现链路必选；可由 tester explorer 或主 Agent 承担）**
-  - 默认只输出 `suggested_validation`、`executed_validation`、`failure_attribution`、`needs_test_code`
-- **Step 4 code-review 审查（实现链路必选；可由 reviewer explorer 或主 Agent 承担）**
-  - 只输出 `blocking_findings` / `non_blocking_findings`
-- **Step 5 主 Agent 聚合与裁决**
-  - 回写规则、最多 2 轮回环；默认以定向验证/必要验证通过且 `code-review` 无阻塞收口，必要时按需升级 `final-evidence-gate` / `verify-ios-build`
+### Hard Boundaries
 
-如果是私有库本地调试场景，新增补充步骤：
-- 私有库本地修改与验证（`pod :path` / 本地引用）
-- 私有库提交/推送
-- 主项目保持本地 `:path` 私有库依赖完成验证；回线上版本化引用与复测仅在用户明确要求时执行
+- Always classify task type before selecting `lite` / `standard` / `full`.
+- Do not upgrade all tasks to full multi-agent execution.
+- Use Codex native subAgent tools only when available and useful.
+- If runtime subAgent tools are unavailable, policy-forbidden, or unsuitable for the current write set, fall back to single Agent execution.
+- Single Agent fallback must still preserve testing / targeted validation and `code-review` closure for implementation tasks.
+- Do not let subAgents share unsafe write ownership.
+- Do not use `multi_tool_use.parallel` when tools may touch the same write set, `apply_patch`, Git state, build queue, or project files.
+- Do not introduce external orchestrators unless the user explicitly asks.
+- Use only built-in `worker` and `explorer` agent types unless the runtime provides additional official types.
+- Do not invent new low-level Agent types.
 
-## 角色边界
-- `coder worker`
-  - 只负责实现或修复代码。
-  - prompt 必须写清 ownership、成功标准、禁止无关改动、不要回滚他人改动。
-  - 输出除 `changed_files`、`summary`、`known_risks` 外，还必须补 `test_impact` 或 `no_test_reason`；只给摘要和影响面，不贴大段 diff、文件全文或完整日志。
-  - 编码阶段优先复用：`ios-feature-implementation`、`uikit-feature-implementation`、`swiftui-feature-implementation`、`swift-expert`。
-- `reviewer explorer`
-  - 只做静态读审，不改代码、不执行可选证据验证。
-  - 只输出 `blocking_findings` / `non_blocking_findings`；`blocking_findings` 只放真实阻塞项，其余建议全部留在 `non_blocking_findings`，无阻塞项时写 `blocking_findings: []`。
-  - 默认复用 `code-review`，重点检查并发隔离、API availability、边界遗漏、架构越界与潜在回归风险。
-- `tester`
-  - 默认先用 `explorer` 做测试面分析、定向验证建议、失败归因与日志解释。
-  - 默认执行面只覆盖最窄定向单测；真机 / 模拟器验证不属于默认 testing 执行面，只有用户显式要求或主 Agent 判定证据不足/高风险时才升级。
-  - 默认只输出 `suggested_validation`、`executed_validation`、`failure_attribution`、`failure_attribution_type`、`needs_test_code`；`test_scope` / `suggested_fix` 仅在确实影响决策时补充。
-  - 只有在明确需要补测试代码时才升级为 `worker`。
-  - 默认复用：`testing`、`ios-automation`。
-- `reporter`
-  - 汇总交付时输出 `acceptance_matrix`（需求项 / 证据 / 状态）与残余风险，禁止带阻塞项宣告完成。
-- `main agent`
-  - 负责聚合、回写、轮次控制、默认收口裁决，以及必要时执行 `final-evidence-gate` / `verify-ios-build`。
+### Token Budget
 
-## 核心规则
-- 在不引入额外外部 orchestrator 的前提下，按 `lite` / `standard` / `full` 档位使用 Codex CLI 原生 `spawn_agent`、`send_input`、`wait_agent`、`close_agent` 编排；仓库默认入口已构成显式触发，主 Agent 仍负责控制并发、写集 ownership、等待与回收。
-- 运行时默认只使用内建 `worker` 与 `explorer`，不额外发明新的底层 Agent 类型。
-- Apple API、availability、WWDC 与 framework 指导优先 `appleDeveloperDocs`；构建、测试、simulator、真机、截图与日志优先 `Build iOS Apps` / `xcodebuildmcp` 相关工具；需要在目标项目环境越过 sandbox 时，由主 Agent 使用 `functions.exec_command` 并按需申请升级。工具与日志默认低 Token：搜索优先 `rg` 精确匹配，build/test/log 输出只回传关键错误段、过滤摘要或最后 80~120 行，长日志写入 `/tmp/*.log`。
-- 只有当多个开发者工具彼此独立、不会共享写集，也不涉及 `apply_patch` 这类写操作时，才允许使用 `multi_tool_use.parallel`；否则保持串行。
-- 默认完成态由主 Agent 基于定向验证/必要验证与 `code-review` 结论裁决；任何 subAgent 都不能替代主 Agent 宣告收口。需要按需补构建证据时，`final-evidence-gate` / `verify-ios-build` 也只能由主 Agent 执行。
-- 如果同一任务中已经先跑过定向测试或其它 build/test，可选证据验证默认复用同一套 workspace / scheme / destination 基线。
-- 长任务默认按“排查 / 实现 / 验证 / 提交”切分会话；新会话只携带目标、关键路径、验证基线和上一轮结论，不复制完整历史。
+- Prefer `rg` and precise file reads over broad scans.
+- Do not paste large diffs, full files, full build logs, full `.xcresult` dumps, or recursive `DerivedData` output.
+- Build / test / log output should be summarized as key error sections, filtered summaries, or the last 80-120 relevant lines.
+- Long logs should be written to files and digested before being read by Agents.
+- For build failures, prefer `diagnostics.json` then `build-summary.txt`.
+- Default raw log policy: forbidden unless summaries are insufficient or the user explicitly asks.
 
-## 按需阅读的参考文件
-- `references/coding-standards.md`：coder / reviewer / tester / main 的编码与输出规范。
-- `references/checkpoint-contract.md`：`CP0` / `CP1` / `CP2` / `CP3` 与 `fail-fix-report` 合同。
-- `references/tool-routing.md`：角色到 MCP / 工具 / 升级策略的固定矩阵。
-- `references/model-selection.md`：按角色自动挑选 subAgent 模型与回退策略（强/快/中推理）。
-- `references/role-contracts.md`：四个角色的输入输出契约。
-- `references/prompt-templates.md`：coder / reviewer / tester 的 prompt 模板。
-- `references/handoff-loop.md`：失败回环、回写与停止条件。
-- `references/apple-gate-rules.md`：Apple/Xcode 项目的可选证据验证特殊约束。
+### Verification Discipline
 
-## 与其他技能的关系
-- 本 skill 是默认的 iOS 主 Skill 入口，不替代现有技能，但统一负责决定何时调用它们。
-- 普通实现内部路由到 `ios-feature-implementation` / `swiftui-feature-implementation` / `uikit-feature-implementation`。
-- 调试内部路由到 `debugging`，性能内部路由到 `ios-performance`，Apple 文档内部路由到 `apple-docs`。
-- 测试内部路由到 `testing`；默认由主 Agent 聚合定向验证与 `code-review` 收口，必要时再按需切 `final-evidence-gate` / `verify-ios-build`。
+- Implementation tasks must close through targeted testing / necessary validation and `code-review`.
+- `final-evidence-gate` and `verify-ios-build` are optional strengthening paths, not default mandatory closure.
+- For low-token build routing, use `ios-verification-router` before optional project-environment verification.
+- For test selection, use `ios-affected-tests` before requesting broad test execution.
+- For build failure attribution, use `ios-build-log-digest` before reading raw logs.
+- Any local `xcodebuild` verification must go through the target project wrapper `./codex_verify.sh` when available, otherwise `~/.codex/bin/codex_verify`.
+- Shared build-queue daemon remains the default path for validation-type `xcodebuild`.
+- Reuse the same workspace / scheme / destination baseline when a task already ran targeted build or test validation.
+
+### Private Pod / Local Path Rules
+
+- If the target project uses CocoaPods and the task touches private components or dependency integration, inspect `Podfile`, `Podfile.lock`, and `Pods/Manifest.lock` before implementation.
+- If a local `:path` private Pod is active, modify the real component repository, not the `Pods/<LibraryName>` vendored copy.
+- During local integration, keep or switch the main project to local `:path` dependency when required for development and verification.
+- Do not commit local `:path` dependency references unless the user explicitly asks.
+
+## Task Classification
+
+Classify into one of these types before selecting orchestration level:
+
+| Type | Meaning | Default Level |
+| --- | --- | --- |
+| `doc-only` | Documentation rewrite, product notes, information organization | `lite` |
+| `rule-only` | Rules, workflow, template, or lint policy changes | `lite` |
+| `code-small` | Small code change, usually one module or a few files | `standard` |
+| `code-medium` | Normal code change across multiple files with clear boundary | `standard` |
+| `code-risky` | Cross-module, concurrency, availability, public contract, dependency, private library, or complex validation path | `full` |
+
+## Orchestration Levels
+
+### `lite`
+
+Use for tiny, single-file, low-risk, doc-only, or rule-only tasks.
+
+Default behavior:
+
+- Prefer single Agent execution.
+- Preserve targeted validation and `code-review` for implementation tasks.
+- Do not spawn unnecessary tester or reviewer subAgents for pure documentation / rule changes.
+
+### `standard`
+
+Use for normal code or workflow changes with clear boundaries.
+
+Default behavior:
+
+- `coder worker` for implementation when useful.
+- `reviewer explorer` using `code-review` for implementation tasks.
+- Main Agent aggregates and decides closure.
+- Start `tester explorer` only when there is a test surface, failure attribution need, or user asks.
+
+### `full`
+
+Use for high-risk or cross-module tasks.
+
+Default behavior:
+
+- `coder worker` for implementation.
+- `reviewer explorer` using `code-review`.
+- `tester explorer` for test surface, validation advice, and failure attribution.
+- Main Agent controls checkpoint, loop count, and final closure.
+- Use `final-evidence-gate` / `verify-ios-build` only when risk or user request justifies it.
+
+## Role Activation Matrix
+
+Default minimum role set: `explorer + builder + reporter`.
+
+Activate additional roles only when justified:
+
+| Role | Activate When | Default Skill Reuse |
+| --- | --- | --- |
+| `pm` | Requirements are unclear, acceptance criteria are missing, or goals conflict | planning / requirement clarification |
+| `coder worker` | Code or test implementation is needed | `ios-feature-implementation`, `uikit-feature-implementation`, `swiftui-feature-implementation`, `swift-expert` |
+| `reviewer explorer` | Any implementation task; risky rule changes | `code-review` |
+| `tester explorer` | Test surface exists, failure attribution is needed, or task is `code-risky` | `testing`, `ios-affected-tests`, `ios-build-log-digest` |
+| `tester worker` | Test code must be added or updated | `testing` |
+| `reporter` | Delivery summary, acceptance matrix, residual risk | this Skill |
+| `main agent` | Always active for aggregation, control, and final decision | this Skill |
+
+## Workflow
+
+1. Main Agent determines intent, ownership, success criteria, risk level, and task type.
+2. Main Agent freezes relevant workspace / scheme / destination baseline when verification may be needed.
+3. Main Agent checks private Pod / local `:path` ownership if dependencies are involved.
+4. Main Agent selects `lite` / `standard` / `full`.
+5. Main Agent spawns only the minimum required subAgents.
+6. `wait_agent(...)` is used only when the result is needed to advance the next step; do not poll aggressively.
+7. If reviewer or tester finds a blocking issue, Main Agent uses `send_input(..., interrupt=true)` to route the precise issue back to coder.
+8. If tester determines test code is required, start `tester worker` with ownership limited to test files.
+9. Main Agent applies fail-fix-report discipline until resolved or blocked.
+10. Main Agent performs final closure using targeted validation / necessary verification and `code-review` findings.
+11. Only if requested or high-risk, Main Agent routes to `final-evidence-gate` / `verify-ios-build`.
+
+## Checkpoints
+
+Default checkpoints:
+
+| Checkpoint | Meaning |
+| --- | --- |
+| `CP0 Intent Lock` | Confirm intent, constraints, success criteria, and non-goals. |
+| `CP1 Anchor Slice` | Complete and inspect the first meaningful slice before expanding parallel work. |
+| `CP2 Validation Baseline Freeze` | Freeze validation baseline, affected tests, wrapper path, and log policy. |
+| `CP3 Final Gate` | Decide completion based on evidence and blocking findings. |
+
+Rules:
+
+- Do not start unnecessary parallel expansion before `CP1` passes.
+- `checkpoint_status` maintained by Main Agent is the single source of truth.
+- See `references/checkpoint-contract.md` for detailed definitions.
+
+## Fail-Fix-Report Discipline
+
+- `fail`: identify the first real blocking failure and its impact scope.
+- `fix`: if fixable, fix it and rerun only the necessary validation on the same baseline.
+- `report`: report only when fixed and rerun, or when clearly blocked.
+- Do not declare completion with known blocking issues.
+- Default maximum loop count for the same issue class: 2.
+- After loop limit is exceeded, `next_action` must be `blocked`.
+
+## Inputs
+
+Expected input from the user or upstream Agent:
+
+```json
+{
+  "goal": "Implement or modify an iOS feature",
+  "context": ["files", "directories", "logs", "screenshots", "constraints"],
+  "constraints": ["minimal changes", "do not run full build", "use build queue"],
+  "success_criteria": ["targeted validation passes", "code-review has no blocking findings"],
+  "preferred_validation": "auto"
+}
+```
+
+Optional runtime inputs:
+
+```json
+{
+  "workspace": "App.xcworkspace",
+  "scheme": "App",
+  "destination": "platform=iOS Simulator,name=iPhone 16",
+  "changed_files": [],
+  "available_subagents": ["worker", "explorer"],
+  "build_wrapper": "./codex_verify.sh"
+}
+```
+
+## Outputs
+
+Main Agent final output should follow this contract:
+
+```json
+{
+  "status": "completed | blocked | partial",
+  "task_type": "doc-only | rule-only | code-small | code-medium | code-risky",
+  "orchestration_level": "lite | standard | full",
+  "roles_used": ["main", "coder", "reviewer", "tester", "reporter"],
+  "changed_files": [],
+  "validation": {
+    "executed": [],
+    "skipped": [],
+    "no_test_reason": null,
+    "suggested_validation": null
+  },
+  "review": {
+    "blocking_findings": [],
+    "non_blocking_findings": []
+  },
+  "acceptance_matrix": [
+    {
+      "requirement": "...",
+      "evidence": "...",
+      "status": "passed | failed | skipped"
+    }
+  ],
+  "known_risks": [],
+  "next_action": "none | blocked | needs_user_input | needs_verification"
+}
+```
+
+SubAgent outputs must stay compact:
+
+- `coder worker`: `changed_files`, `summary`, `test_impact` or `no_test_reason`, `known_risks`.
+- `reviewer explorer`: `blocking_findings`, `non_blocking_findings`.
+- `tester explorer`: `suggested_validation`, `executed_validation`, `failure_attribution`, `failure_attribution_type`, `needs_test_code`.
+- `reporter`: `acceptance_matrix`, `residual_risks`, `completion_status`.
+
+## Exit Conditions
+
+A task may be marked `completed` only when:
+
+- User goal is satisfied or explicitly scoped down.
+- Changed files are summarized.
+- Targeted validation / necessary verification is executed or a clear `no_test_reason` is provided.
+- `code-review` has no blocking findings.
+- Known risks are disclosed.
+- No subAgent has unresolved blocking output.
+- Main Agent, not a subAgent, makes the final completion decision.
+
+A task must be marked `blocked` when:
+
+- Required context, credentials, project state, dependency access, device, or build environment is unavailable.
+- The same failure class exceeded the default 2-loop fail-fix-report limit.
+- A blocking review or validation issue remains unresolved.
+- The user must decide between competing product or technical directions.
+
+A task may be marked `partial` when:
+
+- Useful work was completed but final validation or acceptance is intentionally deferred.
+- The user asked for a partial refactor or staged migration.
+- The implementation is complete but evidence is limited and disclosed.
+
+## Escalation Rules
+
+Escalate from `lite` to `standard` when:
+
+- Code changes span more than one small ownership boundary.
+- A reviewer is needed to inspect potential regression.
+- Tests or validation decisions are non-trivial.
+
+Escalate from `standard` to `full` when:
+
+- The task is cross-module or high-risk.
+- It touches concurrency, availability, public API contracts, dependency resolution, private libraries, subscriptions, BLE/Mesh, persistence, signing, or release paths.
+- Failure attribution requires tester exploration.
+- The user requests full validation or release confidence.
+
+Escalate to `final-evidence-gate` / `verify-ios-build` only when:
+
+- The user explicitly asks for final evidence or project-environment verification.
+- Targeted validation is insufficient for risk level.
+- Project or dependency configuration changed.
+- Release, archive, signing, or merge confidence is required.
+
+Escalate to raw logs only when:
+
+- `diagnostics.json`, `build-summary.txt`, and `test-summary.json` are insufficient.
+- The raw log section is narrowly targeted.
+- The user explicitly requests raw log analysis.
+
+## Model Selection Guidance
+
+When runtime supports per-subAgent model selection:
+
+- `coder worker`: quality-priority model.
+- `reviewer explorer`: fast reading/review model.
+- `tester explorer`: quality-priority model with medium reasoning when failure attribution is complex.
+
+Do not hardcode model names in this Skill. Available model names depend on runtime and account state. If a requested model is unavailable, omit the model parameter and inherit the Main Agent default.
+
+## Plan Output Template
+
+When the user asks for a plan and the task includes implementation / verification:
+
+```text
+Step 1 Main Agent: intent, boundaries, success criteria, level, baseline, fallback conditions.
+Step 2 Coder Worker: implementation ownership and forbidden changes.
+Step 3 Testing: suggested_validation, executed_validation, failure_attribution, needs_test_code.
+Step 4 Code Review: blocking_findings and non_blocking_findings.
+Step 5 Main Agent: aggregate, loop control, final gate, residual risks.
+```
+
+For private library local debugging, add:
+
+```text
+- Resolve local :path dependency ownership.
+- Modify and validate the private library source repository.
+- Keep main project local :path validation unless the user asks to restore versioned dependency.
+```
+
+## Examples
+
+### Standard Feature Change
+
+```json
+{
+  "task_type": "code-medium",
+  "orchestration_level": "standard",
+  "roles_used": ["main", "coder", "reviewer"],
+  "validation_route": "ios-affected-tests + targeted build",
+  "final_gate": "targeted validation + code-review"
+}
+```
+
+### Risky BLE / Mesh Change
+
+```json
+{
+  "task_type": "code-risky",
+  "orchestration_level": "full",
+  "roles_used": ["main", "coder", "reviewer", "tester"],
+  "validation_route": "affected tests first; real-device verification only if explicitly required",
+  "raw_log_policy": "diagnostics.json first"
+}
+```
+
+### Documentation-Only Change
+
+```json
+{
+  "task_type": "doc-only",
+  "orchestration_level": "lite",
+  "roles_used": ["main"],
+  "validation": {
+    "executed": [],
+    "no_test_reason": "Documentation-only change; no runtime behavior changed."
+  }
+}
+```
+
+## Reference Files
+
+Read these only when needed:
+
+- `references/coding-standards.md`: coder / reviewer / tester / main coding and output rules.
+- `references/checkpoint-contract.md`: CP0 / CP1 / CP2 / CP3 and fail-fix-report contract.
+- `references/tool-routing.md`: role-to-tool routing matrix.
+- `references/model-selection.md`: role-based model selection and fallback strategy.
+- `references/role-contracts.md`: role input/output contracts.
+- `references/prompt-templates.md`: coder / reviewer / tester prompt templates.
+- `references/handoff-loop.md`: failure loop, handoff, and stop conditions.
+- `references/apple-gate-rules.md`: Apple / Xcode optional evidence verification constraints.
+
+## Relationship to Other Skills
+
+- This Skill is the default iOS main entry and decides when to call other Skills.
+- Implementation routes to `ios-feature-implementation`, `swiftui-feature-implementation`, `uikit-feature-implementation`, or `swift-expert`.
+- Debugging routes to `debugging`.
+- Performance routes to `ios-performance`.
+- Apple documentation routes to `apple-docs`.
+- Testing routes to `testing` and may use `ios-affected-tests`.
+- Build failure attribution routes to `ios-build-log-digest`.
+- Verification routing uses `ios-verification-router`.
+- Optional final evidence routes to `final-evidence-gate` / `verify-ios-build`.
