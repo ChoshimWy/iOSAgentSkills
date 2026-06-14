@@ -18,6 +18,7 @@ Decide whether existing targeted validation, build/test evidence, and code-revie
 - 判断是否需要补一次真实项目环境 `xcodebuild` 验证。
 - 统一输出 `verification_story` 与 `final_evidence_gate` 结论。
 - 避免每次任务结束都重复跑 `verify-ios-build`。
+- 不替代 `ios-verification-router` 的执行前模式选择，也不替代 `verify-ios-build` 的实际执行。
 
 不负责：
 - 编写测试。

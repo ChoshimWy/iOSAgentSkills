@@ -15,6 +15,12 @@ Use this skill when:
 - An Agent is about to inspect a raw `build.log`.
 - The user asks why verification consumes too many tokens.
 
+## When Not to Use
+
+- The issue is a runtime crash, hang, leak, or behavior bug; use `debugging`.
+- The next step is to decide verification sufficiency rather than digest a failure artifact; use `final-evidence-gate`.
+- No compact build/test artifact exists yet; use `testing` or `verify-ios-build` first.
+
 ## Agent Rules
 
 - Never read full raw `xcodebuild` logs by default.
@@ -37,6 +43,19 @@ Read files in this order:
 3. `test-summary.json`
 4. `xcresult-summary.json`
 5. Small targeted source file around the reported error location
+
+## Inputs
+
+```json
+{
+  "diagnostics_path": "optional",
+  "summary_path": "optional",
+  "test_summary_path": "optional",
+  "xcresult_summary_path": "optional",
+  "raw_log_path": "optional",
+  "goal": "Digest the first real blocking build failure"
+}
+```
 
 ## Forbidden by Default
 
@@ -89,6 +108,24 @@ When multiple diagnostics exist, handle them in this order:
 7. Runtime test failure.
 8. Warnings and non-blocking notes.
 
+## Outputs
+
+```json
+{
+  "status": "passed | failed | blocked | skipped",
+  "summary": "...",
+  "first_blocking_error": {
+    "kind": "swift_compile_error",
+    "file": "App/File.swift",
+    "line": 10,
+    "message": "..."
+  },
+  "evidence_source": "diagnostics.json | build-summary.txt | test-summary.json | xcresult-summary.json",
+  "known_risks": [],
+  "next_action": "fix_first_error | verify_again | blocked | none"
+}
+```
+
 ## Response Format
 
 When reporting a failure, keep it compact:
@@ -111,6 +148,13 @@ Avoid:
 - Re-running verification without changing code.
 - Treating simulator/device failures as required for every small Swift change.
 
+## Exit Conditions
+
+- `failed`: the first real blocking error is identified and summarized from compact evidence.
+- `passed`: diagnostics indicate there is no blocking error left to summarize.
+- `skipped`: no digest work is needed because another compact summary already resolved the failure.
+- `blocked`: only unusable raw artifacts exist and no trustworthy compact evidence can be produced.
+
 ## Build-Queue Integration
 
 The build-queue daemon should emit compact files:
@@ -124,3 +168,21 @@ build-results/
 ```
 
 Agents should consume only these files unless escalation is justified.
+
+## Escalation Rules
+
+- Escalate to `verify-ios-build` when no fresh verification evidence exists yet.
+- Escalate to `debugging` when the first failure is clearly a runtime crash, hang, or behavior issue instead of a build/test failure.
+- Escalate to raw log inspection only when compact summaries are insufficient and the user explicitly asks.
+
+## Token Budget
+
+- Never read full raw `xcodebuild` logs by default.
+- Prefer `diagnostics.json`, then `build-summary.txt`, then `test-summary.json`.
+- Report only the first real blocking error relevant to the current change.
+
+## Relationship to Other Skills
+
+- Use `verify-ios-build` or `testing` to generate verification evidence.
+- Use this Skill to digest failures before another verification request.
+- Use `code-review` after failure attribution when the next decision is static risk assessment rather than rerun.

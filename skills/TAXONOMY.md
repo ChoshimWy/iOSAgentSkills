@@ -1,6 +1,7 @@
 # 业务 Skill 分类索引（single-entry iOS core）
 
 本文覆盖本仓库 `skills/` 下的全部 skills。用户默认入口只有 `codex-subagent-orchestration`；低频技能与高频技能统一保存在同一根目录下。
+根级 `AGENTS.md` 只保留仓库总纲；本文件承接默认入口、路由与验证升级策略。
 
 ## 分类原则
 - `Core Implementation`：默认优先触发的通用实现技能。
@@ -10,6 +11,7 @@
 - `Additional Skills`：按需触发的低频技能；与 core skills 共用同一目录，只通过路由策略区分。
 
 ## 严格路由总则
+- iOS 开发任务默认先进入 `codex-subagent-orchestration`；由主入口决定单 Agent 还是 `lite` / `standard` / `full` 编排，再按需路由到实现、测试、审查与验证模块。
 - 默认完成标准：定向测试或必要验证通过，且 `code-review` 无 blocking findings。
 - 涉及代码改动时，`testing` 默认只执行**最窄定向单测**：优先 `-only-testing` 到单个 test case / test class，其次最小受影响 test file / bundle；真机 / 模拟器验证不属于默认 testing 执行面。
 - 如果当前改动不适合运行测试，`testing` 阶段必须给出 `no_test_reason` 与替代验证依据，然后进入 `code-review`。
@@ -19,12 +21,23 @@
 - `final-evidence-gate` 与 `verify-ios-build` 不再是所有 Apple Xcode 项目改动的强制收尾，仅作为用户显式要求、发布前自检或高风险场景的按需补强验证。
 - 执行可选 `xcodebuild` 验证时，证据必须来自目标项目根目录的项目环境，而不是 sandbox 结果；同时继续遵守 `.xcworkspace` 优先、优先选择绑定了单元测试 `*Tests` target / bundle 的 scheme、iOS 默认优先已连接真机约束。验证链路默认由 wrapper 接入 shared build-queue daemon，统一串行执行验证型 `xcodebuild`，并复用 Xcode 系统 DerivedData。
 - 本地执行 `xcodebuild`（含 `-list` / `-showdestinations` / build/test）默认都走非沙盒项目环境；同机同仓如果有多个 Codex / Claude CLI 并发处理同一 Xcode 项目，项目环境验证必须统一经 wrapper 入口执行：优先目标项目根目录的 `codex_verify.sh`，若项目未接入则回退到本机 `~/.codex/bin/codex_verify`。可通过 `--queue-status` 查看 daemon 当前 active job 与 pending jobs；旧 `XCODE_DERIVED_DATA_*` / `CODEX_DERIVED_DATA_SLOT` 公开配置不再支持。
-- 默认优先切到 `codex-subagent-orchestration` 做自适应编排：先按 `lite` / `standard` / `full` 选择角色，再协调编码、调试、性能、测试、审查与按需验证；构建、测试、自动化、截图与日志优先切 `ios-automation`、`xcode-build`、`testing`，需要补强证据时再切 `final-evidence-gate` 或 `verify-ios-build`。
+- 主入口 `codex-subagent-orchestration` 负责自适应编排：先按 `lite` / `standard` / `full` 选择角色，再协调编码、调试、性能、测试、审查与按需验证；构建、测试、自动化、截图与日志优先切 `ios-automation`、`xcode-build`、`testing`，需要补强证据时再切 `final-evidence-gate` 或 `verify-ios-build`。
 - 低 token 验证链路默认优先切 `ios-verification-router` 做验证级别分流；涉及测试选择时切 `ios-affected-tests`；构建失败归因时切 `ios-build-log-digest`，优先消费 `diagnostics.json`，禁止默认读取完整 raw build log。
 - 多 Agent 编排默认遵守 checkpoint 合同：`CP0` / `CP1` / `CP2` / `CP3`。
 - 多 Agent 编排默认遵守 `fail-fix-report`：先定位失败、修复并重跑，再汇报。
 - 如果当前任务未进入 `codex-subagent-orchestration`，或当前轮只能以单 Agent 执行，实现型任务默认三步收口：`实现 skill -> testing/定向验证 -> code-review`。
 - Apple API / availability / WWDC 问题优先在主 Skill 内部路由到 `apple-docs` 并使用 `appleDeveloperDocs`。
+
+## 边界优先级
+
+- 实现链路：
+  `ios-feature-implementation` / `swiftui-feature-implementation` / `uikit-feature-implementation` 负责真正实现；`swift-expert`、`refactoring`、`ios-sdk-architecture` 只在问题已经明确落到语言设计、通用重构或 SDK 架构时再切入，不作为普通 iOS feature 的默认首入口。
+- 测试链路：
+  `testing` 负责测试代码与定向验证执行；`ios-affected-tests` 只负责在测试面不明显时推导最窄 `-only-testing` 候选，不替代 `testing`。
+- 验证链路：
+  `ios-verification-router` 负责执行前的验证模式选择；`final-evidence-gate` 负责 testing + review 之后的证据是否足够判断；`verify-ios-build` 只负责真正执行项目环境验证。
+- 诊断链路：
+  `debugging` 只处理运行时症状；`ios-build-log-digest` 只处理 build/test 失败摘要归因；`ios-performance` 只处理性能证据与基线，不接泛化 crash 或普通测试补写。
 
 ## Core Implementation
 

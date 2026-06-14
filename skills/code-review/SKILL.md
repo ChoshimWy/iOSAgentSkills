@@ -144,6 +144,7 @@ Review iOS/macOS code changes, identify correctness and maintainability risks, e
 
 ```json
 {
+  "status": "complete | blocked | partial",
   "blocking_findings": [],
   "non_blocking_findings": [],
   "review_scope": "...",
@@ -270,5 +271,5 @@ next_action:
 - 修复问题时切换实现型 Skill。
 - Crash/泄漏/卡顿切换 debugging。
 - 性能问题切换 ios-performance。
-- SDK 边界设计可联动 sdk-architecture。
+- SDK 边界设计可联动 ios-sdk-architecture。
 - 本 Skill 只负责审查与结论，不负责实现。

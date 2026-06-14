@@ -5,18 +5,28 @@ description: Git 通用工作流技能。用于分支命名、commit message、P
 
 # Git 工作流
 
-## 角色定位
-- 默认型辅助 skill。
-- 负责通用 Git 规范和提交文案质量。
-- 不负责显式执行 `gh` 提审流程。
+## Purpose
 
-## 适用场景
+Provide general Git workflow rules for branch naming, commit messages, PR text templates, and safe local Git hygiene without taking over `gh` based PR execution.
+
+## 中文说明
+
+该 Skill 负责通用 Git 规范和提交文案质量。
+
+## When to Use
+
 - 需要创建或规范分支名。
 - 需要编写 Conventional Commit。
 - 需要整理 PR 描述模板或 `.gitignore`。
 - 需要在不依赖 `gh` 的前提下执行常规 Git 操作。
 
-## 核心规则
+## When Not to Use
+
+- 用户明确要求使用 `gh` 完成暂存、提交、推送和开 PR 时。
+- 任务主目标仍是代码评审、重构或调试时。
+
+## Agent Rules
+
 - 分支命名默认使用：
 
 ```text
@@ -35,17 +45,53 @@ refactor/<简短描述>
 
 - `subject` 中文、不加句号、单行长度不超过 72 字符。commit 强制单行，不允许正文（body）、脚注（footer）或 `Co-Authored-By` 尾注。
 - PR 标题与正文默认使用中文；仅当目标仓库明确要求英文时再切换。
-- commit 只能单行，不允许正文（body）、脚注（footer）或 `Co-Authored-By` 尾注；不要使用多个 `-m` 参数。
+- 不要使用多个 `-m` 参数。
 - 提交前检查 diff，避免调试代码、临时文件和敏感信息。
 
-## 输出要求
-- 默认给出 branch、commit 和 PR 描述建议。
-- 需要 PR 模板时，默认使用中文小节，并至少覆盖：概述、变更类型、改动详情、测试情况、影响范围、关联 Issue。
-- iOS 仓库应明确忽略：`DerivedData/`、`*.xcuserdata/`、`.DS_Store`、`Pods/`、`.build/` 等常见噪音。
-- 如果仓库已配置 `commit-msg` / commitlint 门禁，提交文案必须先本地过钩子校验，再执行 `git commit`。
+## Inputs
 
-## 与其他技能的关系
-- 如果只是规范 Git 操作和文本，优先使用本技能。
-- 如果用户明确要求用 `gh` 完成暂存、提交、推送和开 PR，切换到 `gh-pr-flow`。
-- 如果任务主目标是代码评审、重构或调试，本技能只作为收尾辅助技能使用。
+```json
+{
+  "goal": "Prepare Git workflow text or guidance",
+  "change_summary": [],
+  "ticket_id": "optional",
+  "repo_constraints": [],
+  "need_pr_template": false
+}
+```
+
+## Outputs
+
+```json
+{
+  "status": "completed | partial | blocked",
+  "branch_suggestions": [],
+  "commit_subjects": [],
+  "pr_template_sections": [],
+  "git_hygiene_notes": [],
+  "next_action": "commit | gh-pr-flow | ask-user | blocked"
+}
+```
+
+## Exit Conditions
+
+- `completed`: usable branch, commit, or PR text guidance is ready.
+- `partial`: some text guidance is ready but repo policy or scope is still ambiguous.
+- `blocked`: repository conventions are too unclear to produce safe guidance.
+
+## Escalation Rules
+
+- Escalate to `gh-pr-flow` when the user explicitly requests `gh` based PR execution.
+- Escalate to implementation, review, or debugging Skills when Git text is not the primary problem.
+
+## Token Budget
+
+- Do not paste large diffs only to derive commit text.
+- Prefer short candidate branch names, one or two commit subjects, and a compact PR outline.
+
+## Relationship to Other Skills
+
+- Use this Skill for Git rules and text.
+- Use `gh-pr-flow` for `gh` execution.
+- Use it as a closing helper after implementation, testing, and review work.
 

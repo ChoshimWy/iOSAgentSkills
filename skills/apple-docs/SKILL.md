@@ -6,36 +6,81 @@ metadata: {"clawdbot":{"emoji":"🍎","requires":{"bins":["node"]}}}
 
 # Apple 官方文档检索
 
-## 角色定位
-- 辅助型 skill。
-- 负责检索 Apple 官方 API、平台兼容性、WWDC 内容和示例工程，为其它 Apple 平台 skill 提供事实依据。
-- 不负责主导实现代码、替代架构判断或直接承担调试、重构、构建配置任务。
+## Purpose
 
-## 适用场景
+Retrieve Apple official documentation facts for APIs, platform availability, WWDC content, and sample-code references to support other Apple-platform Skills.
+
+## 中文说明
+
+该 Skill 是 Apple 官方文档检索辅助 Skill，只负责提供官方事实依据，不承担主实现或构建职责。
+
+## When to Use
+
 - 需要确认 Apple 官方 API 定义、可用性、废弃替代方案。
 - 需要查询 SwiftUI、UIKit、Foundation、AppKit 等框架的官方说明。
 - 需要追溯 WWDC 会话、示例工程或技术总览。
 - 用户明确要求“查 Apple 官方文档”或需要最新官方依据时。
 
-## 核心工作流
-1. 先缩小搜索范围。
-2. 读取官方详情。
-3. 交叉核对历史资料。
+## When Not to Use
 
-## 输出要求
-- 优先给出：API 定义、平台可用性、版本要求和官方建议替代方案。
-- 回答中明确区分“官方文档事实”和“基于文档的推断”。
-- 涉及版本差异时，必须标注平台与最低系统版本。
-- 若当前检索结果不足以支持结论，直接说明缺口并给出下一步检索命令。
+- 任务核心是写或改 iOS/macOS 业务代码时。
+- 任务核心是运行时排障、重构、构建配置或测试编写时。
 
-## 参考资源
-- `cli.js`：Apple Docs MCP 命令入口。
-- Apple Developer Documentation：`https://developer.apple.com/documentation/`
-- Apple Developer：`https://developer.apple.com/`
+## Agent Rules
 
-## 与其他技能的关系
-- 需要写或改 iOS/macOS 业务代码时，主技能应是 `ios-feature-implementation`、`swiftui-feature-implementation`、`uikit-feature-implementation`、`swift-expert`、`swiftui-feature-implementation`、`swiftui-liquid-glass` 或对应专项 skill，`apple-docs` 只作为辅助查询。
-- 需要运行时排障时，切换到 `debugging`。
-- 需要构建配置、签名、Archive 或 CI 时，切换到 `xcode-build`。
-- 需要官方 API 依据来支撑其它技能的结论时，再附带使用本 skill。
+- Distinguish official documentation facts from inference.
+- Always include platform and minimum OS version when availability matters.
+- Prefer the narrowest query that answers the task.
+- If official evidence is insufficient, state the gap explicitly instead of guessing.
+
+## Inputs
+
+```json
+{
+  "query": "required",
+  "framework": "optional",
+  "platform": "optional",
+  "need_availability": true,
+  "need_wwdc": false
+}
+```
+
+## Outputs
+
+```json
+{
+  "status": "completed | partial | blocked",
+  "official_facts": [],
+  "availability_notes": [],
+  "wwdc_refs": [],
+  "sample_code_refs": [],
+  "known_gaps": [],
+  "next_action": "implementation-skill | debugging | xcode-build | blocked"
+}
+```
+
+## Exit Conditions
+
+- `completed`: official facts and relevant availability notes are explicit.
+- `partial`: some official evidence exists but important gaps remain.
+- `blocked`: query cannot be resolved from available official sources in the current environment.
+
+## Escalation Rules
+
+- Escalate to implementation Skills when the next step becomes code changes.
+- Escalate to `debugging` for runtime diagnosis.
+- Escalate to `xcode-build` for build, signing, archive, or CI tasks.
+
+## Token Budget
+
+- Do not paste large doc bodies.
+- Prefer short fact bullets, availability notes, and direct references.
+- Only load detailed references when the task needs them.
+
+## Relationship to Other Skills
+
+- Use implementation Skills for actual code changes.
+- Use `debugging` for runtime investigation.
+- Use `xcode-build` for build and release setup.
+- Use this Skill as supporting evidence for other Apple-platform Skills.
 

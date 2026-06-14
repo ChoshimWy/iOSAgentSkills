@@ -5,60 +5,81 @@ description: App Store 机会研究技能。用于在指定赛道中识别可商
 
 # App Store 机会研究 / App Store Opportunity Research
 
-## 角色定位 / Role
-- 策略研究型 skill。
-- 负责从“赛道选择”到“机会排序”再到“PRD 落地”的完整研究链路。
-- 不负责保证营收结果，不替代真实财务尽调、法务合规审查或商店上架执行。
+## Purpose
 
-## 适用场景 / Use Cases
+Research App Store opportunity spaces, rank candidate product opportunities with evidence, and produce a compact MVP-oriented recommendation.
+
+## 中文说明
+
+该 Skill 负责从“赛道选择”到“机会排序”再到“MVP PRD 落地”的研究链路。
+
+## When to Use
+
 - 用户想知道“现在做什么 iOS App 更有机会”。
 - 需要在某个分类里找未被满足的真实需求。
 - 需要基于竞品评分、评论、定价和用户抱怨做机会优先级判断。
 - 需要输出可执行的 Top-3 机会报告与 MVP PRD。
 
-## 核心工作流 / Core Workflow
-1. 定义研究边界 / Define scope
-- 明确分类、目标用户、预算约束、目标收入区间。
+## When Not to Use
 
-2. 图表与竞品采样 / Chart and competitor sampling
-- 在目标分类采样头部与中腰部应用（建议 25-50 个）。
-- 记录名称、评分数、星级、价格模型、定位描述。
+- 需要保证营收结果、替代财务尽调、法务合规审查或商店上架执行时。
+- 需要直接落地 iOS 业务代码实现时。
 
-3. 深度竞品分析 / Competitor deep-dive
-- 对 5-8 个候选竞品做深入拆解。
-- 重点收集：核心功能、定价策略、用户差评主题、缺失能力、可见增长信号。
+## Agent Rules
 
-4. 缺口识别与打分 / Gap analysis and scoring
-- 用统一维度评估每个机会：需求强度、痛点集中度、变现可行性、开发复杂度、竞争压力。
-- 对每个结论标注证据来源与置信度。
+- Make all ranking logic evidence-backed and explicit about assumptions.
+- Prefer comparable competitors and recurring complaint themes over anecdotal signals.
+- Avoid fake precision in market sizing, revenue, or conversion estimates.
+- Each recommended opportunity must include target user, gap, monetization path, implementation complexity, and main risk.
+- Default deliverable is a compact Top-3 list plus one recommended pick.
 
-5. 产出 Top-3 机会报告 / Produce top-3 report
-- 每个机会输出：一句话定位、目标用户、市场缺口、收入路径、实现复杂度、主要风险。
-- 给出明确推荐项（#1）与理由。
+## Inputs
 
-6. 生成 MVP PRD（可选原型）/ Generate MVP PRD (optional prototype)
-- 用户确认推荐方向后，输出 `PRD-{AppName}.md`。
-- 若用户要求原型，可额外生成 Rork 提示词（Prompt）用于快速搭建。
+```json
+{
+  "category": "optional",
+  "target_users": [],
+  "budget_constraints": [],
+  "target_revenue_range": "optional",
+  "need_prd": true
+}
+```
 
-## 输出要求 / Deliverables
-- `Top 3 Opportunity Report`
-- 每个机会都必须包含可追溯证据、关键假设和风险说明。
-- `PRD-{AppName}.md` 至少包含：产品目标、用户画像、功能范围、关键流程、定价方案、成功指标、风险与缓解。
-- 估算类信息必须显式标注“假设”与“不确定性”，禁止伪精确。
+## Outputs
 
-## 判断准则 / Decision Heuristics
-- Green flags
-- 多个竞品存在相似高频差评且指向同一功能缺口。
-- 目标用户有明确付费场景，且现有定价区间可支持独立开发者模式。
-- 中腰部竞品已验证需求，但体验或价值主张明显不完整。
+```json
+{
+  "status": "completed | partial | blocked",
+  "top_opportunities": [],
+  "recommended_pick": "...",
+  "evidence_notes": [],
+  "assumptions": [],
+  "known_risks": [],
+  "next_action": "write-prd | ask-user | app-store-changelog | blocked"
+}
+```
 
-- Red flags
-- 头部应用高度垄断且评分量级远超可挑战区间。
-- 需要重资产能力（硬件、强监管、复杂资质）才能形成完整价值。
-- 用户抱怨分散且缺乏单一可打穿的高价值痛点。
+## Exit Conditions
 
-## 与其他技能的关系 / Skill Boundaries
-- 需要生成 App Store 发布文案时，切换到 `app-store-changelog`。
-- 需要落地 iOS 业务代码实现时，切换到 `ios-feature-implementation`、`swiftui-feature-implementation` 或 `swiftui-feature-implementation`。
-- 需要构建配置、签名、Archive/Export、CI/CD 时，切换到 `xcode-build`。
+- `completed`: top opportunities, recommendation, evidence, assumptions, and risks are explicit.
+- `partial`: useful opportunity ranking exists but sampling or evidence depth is incomplete.
+- `blocked`: research boundary is too unclear or evidence quality is too weak to recommend a direction.
+
+## Escalation Rules
+
+- Escalate to `app-store-changelog` when the task becomes release-note writing.
+- Escalate to implementation Skills when the task becomes product delivery.
+- Escalate to `xcode-build` when the task becomes build, signing, archive, export, or CI work.
+
+## Token Budget
+
+- Do not dump large competitor tables into the conversation.
+- Prefer compact ranked findings, explicit assumptions, and one recommendation.
+- Summarize only the evidence that changes prioritization.
+
+## Relationship to Other Skills
+
+- Use `app-store-changelog` for App Store release copy.
+- Use implementation Skills for actual app delivery.
+- Use `xcode-build` for build and release pipeline work.
 

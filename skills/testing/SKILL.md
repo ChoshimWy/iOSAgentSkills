@@ -63,6 +63,7 @@ Do not use this Skill when:
 - Selection order: single test method -> single test class -> smallest affected test file / bundle.
 - Prefer `-only-testing` over full test bundle execution.
 - Use `ios-affected-tests` when mapping changed files to test classes is non-trivial.
+- Keep `ios-affected-tests` as a selection helper only; this Skill still owns actual targeted validation execution and `no_test_reason` decisions.
 - Do not automatically expand to UI tests, simulator navigation, or real-device validation.
 - Real-device / simulator verification is not part of default testing execution scope.
 - If no low-cost test exists, output `no_test_reason` and `suggested_validation`; do not auto-escalate to full build or device testing.
@@ -163,7 +164,8 @@ Return compact structured output:
   "first_failure": null,
   "needs_test_code": "yes | no",
   "no_test_reason": null,
-  "suggested_next_skill": "code-review | ios-affected-tests | ios-build-log-digest | final-evidence-gate | verify-ios-build | none"
+  "suggested_next_skill": "code-review | ios-affected-tests | ios-build-log-digest | final-evidence-gate | verify-ios-build | none",
+  "next_action": "code-review | ios-affected-tests | verify-ios-build | blocked | none"
 }
 ```
 
@@ -317,4 +319,4 @@ Rules:
 - Use `verify-ios-build` only for explicit or escalated project-environment build verification.
 - Use `debugging` for runtime crashes, leaks, hangs, or behavior investigation.
 - Use `ios-performance` for benchmarks and Instruments workflows.
-- Use `sdk-architecture` when testability requires SDK-level boundary design.
+- Use `ios-sdk-architecture` when testability requires SDK-level boundary design.

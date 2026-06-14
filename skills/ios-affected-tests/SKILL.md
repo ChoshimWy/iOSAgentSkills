@@ -15,6 +15,12 @@ Use this skill when:
 - A build-queue request needs `only_testing` suggestions.
 - Tests exist but full test execution is too expensive.
 
+## When Not to Use
+
+- The task is to actually execute targeted tests or write test code; use `testing`.
+- The task is to decide whether any Xcode verification should run at all; use `ios-verification-router`.
+- The task is final evidence sufficiency or project-environment verification; use `final-evidence-gate` / `verify-ios-build`.
+
 ## Agent Rules
 
 - Never default to full test for normal feature changes.
@@ -25,6 +31,19 @@ Use this skill when:
 - Do not run UI tests unless the change directly affects UI behavior and targeted UI tests are available or explicitly requested.
 - If only production code changed and matching tests exist, request targeted unit tests plus build.
 - If only tests changed, run only the changed tests.
+
+## Inputs
+
+```json
+{
+  "changed_files": [],
+  "goal": "Select the smallest useful test scope",
+  "known_test_targets": [],
+  "workspace": "optional",
+  "scheme": "optional",
+  "constraints": []
+}
+```
 
 ## Mapping Rules
 
@@ -54,12 +73,13 @@ When proposing affected tests:
 5. Prefer exact test class matches.
 6. If no tests exist, report `no_test_reason`.
 
-## Output Shape
+## Outputs
 
 Return a compact verification request:
 
 ```json
 {
+  "status": "passed | skipped | blocked",
   "mode": "unit",
   "reason": "Changed SubscriptionService and PurchaseViewModel; matching unit tests exist.",
   "only_testing": [
@@ -68,7 +88,8 @@ Return a compact verification request:
   ],
   "also_build": true,
   "allow_full_build": false,
-  "allow_full_log": false
+  "allow_full_log": false,
+  "next_action": "testing | code-review | verify-ios-build | blocked"
 }
 ```
 
@@ -76,12 +97,14 @@ If no targeted tests exist:
 
 ```json
 {
+  "status": "skipped",
   "mode": "build",
   "reason": "Changed BLE provisioning state machine; no low-cost deterministic unit tests found.",
   "no_test_reason": "No matching test class or stable simulator/device-independent test path exists.",
   "suggested_validation": "Run build plus code-review; add state-machine unit tests if this area changes repeatedly.",
   "allow_full_build": false,
-  "allow_full_log": false
+  "allow_full_log": false,
+  "next_action": "code-review"
 }
 ```
 
@@ -110,6 +133,24 @@ Escalate from affected tests to full verification only when:
 - A release, merge, or archive confidence gate is explicitly requested.
 - Targeted tests passed but integration risk remains high and cannot be reviewed statically.
 - The changed code crosses multiple modules with no reliable narrow test boundary.
+
+## Exit Conditions
+
+- `passed`: exact or near-exact affected tests are identified with a usable `only_testing` set.
+- `skipped`: no low-cost deterministic test path exists and `no_test_reason` plus `suggested_validation` are provided.
+- `blocked`: changed files, test targets, or repo context are too unclear to produce a trustworthy narrow scope.
+
+## Token Budget
+
+- Do not read unrelated full test suites.
+- Prefer basename match, type-name references, and nearest feature-folder matches.
+- Return only the smallest useful `only_testing` set and one fallback validation path.
+
+## Relationship to Other Skills
+
+- Use `testing` when the next step is actual test execution or new test code authoring.
+- Use `ios-verification-router` when verification mode selection is still undecided.
+- Use `code-review` after affected tests are selected and validation evidence is available.
 
 ## Reporting
 

@@ -5,47 +5,84 @@ description: 使用 iOS 26+ 的 Liquid Glass API 构建、审查或改进 SwiftU
 
 # SwiftUI Liquid Glass
 
-## 角色定位
-- 专项型 skill。
-- 负责 iOS 26+ `Liquid Glass` 视觉体系的实现、审查和回退策略。
-- 不负责一般 SwiftUI 页面模式选型，也不替代跨技术栈 UI/UX 设计或通用性能审计。
+## Purpose
 
-## 触发判定（硬边界）
-- 用户明确在问 `glassEffect`、`GlassEffectContainer`、`.buttonStyle(.glass)`、玻璃层级或 iOS 26+ 兼容性回退时，使用本 skill。
-- 如果问题只是普通 SwiftUI 页面结构、导航模式或组件组织，不要用本 skill 作为主 skill，切换到 `swiftui-feature-implementation`。
-- 如果问题核心是品牌气质、色板、排版和设计系统方向，而不是 Liquid Glass API 本身，切换到 `ui-ux-design-system`。
+Implement, review, or refine SwiftUI Liquid Glass usage on iOS 26+ with explicit compatibility fallback and clear visual hierarchy guidance.
 
-## 适用场景
+## 中文说明
+
+该 Skill 只在问题核心是 `glassEffect`、`GlassEffectContainer`、玻璃按钮样式或 iOS 26+ 兼容性回退时使用。
+
+- 负责：Liquid Glass 视觉层级、API 选型、回退策略、用法审查。
+- 不负责：普通 SwiftUI 页面模式、跨技术栈视觉设计、通用性能审计。
+
+## When to Use
+
 - 需要在 iOS 26+ 的 SwiftUI 界面中引入 Liquid Glass。
 - 需要审查现有界面的 Liquid Glass 使用是否正确、统一且具备回退方案。
 - 需要把按钮、卡片、胶囊、工具条等表面改造为玻璃化视觉。
 
-## 核心工作流
-1. 先确认 Liquid Glass 是否真的需要。
-2. 设计玻璃层级，优先使用 `glassEffect`、`GlassEffectContainer`、`.buttonStyle(.glass)`、`.buttonStyle(.glassProminent)`。
-3. 做兼容性和一致性校验，并在需要时查询 Apple 官方文档。
-4. 如果实现中新增 `.swift` 文件且项目要求文件头，`Created by` 必须使用本机用户名称（`whoami` 输出），不要写 `Codex`；日期默认使用 `YYYY/M/D`，例如 `Created by $(whoami) on 2026/4/11.`。
+## When Not to Use
 
-## 参考资源
-- `references/liquid-glass.md`：Liquid Glass 的基础用法、形状、过渡和最佳实践。
+- 问题只是普通 SwiftUI 页面结构、导航模式或组件组织；使用 `swiftui-feature-implementation`。
+- 问题核心是品牌气质、色板、排版和设计系统方向；使用 `ui-ux-design-system`。
+- 问题核心是运行时性能取证；使用 `ios-performance`。
 
-## 输出要求
-- 审查现有功能时，至少覆盖：
-  - 可用性回退是否完整。
-  - 容器与 modifier 顺序是否正确。
-  - 交互态是否只用于可操作元素。
-  - 形状与视觉层级是否统一。
-- 新实现或重构时，优先给出可直接落地的 `SwiftUI` 写法和兼容性分支。
+## Agent Rules
 
-## 可选证据验证
-- 只要当前任务产出修改了 Apple Xcode 项目相关内容（代码、测试、资源、工程文件、构建脚本、plist / entitlements / xcconfig / scheme 或项目内环境配置），最终默认以定向测试/必要验证与 `code-review` 放行为收口；`final-evidence-gate` / `verify-ios-build` 仅在用户显式要求或需要补强完整项目环境证据时按需使用。
-- 若执行可选完整验证，证据必须来自目标项目根目录的项目环境；沙箱内的构建结果不能作为完整项目环境证据。
-- 对 iOS 项目，若升级到 `verify-ios-build`，必须优先 `.xcworkspace`（当 `.xcworkspace` 与 `.xcodeproj` 同时存在时），并默认优先已连接真机；找不到连接中的真机时再回退到 simulator。
-- 若可选 `final-evidence-gate` / `verify-ios-build` 未执行或失败，应在交付中说明已执行的定向测试/审查证据与残余风险。
+- Confirm Liquid Glass is actually needed before introducing the API surface.
+- Prefer `glassEffect`, `GlassEffectContainer`, `.buttonStyle(.glass)`, and `.buttonStyle(.glassProminent)` where semantically appropriate.
+- Always provide compatibility fallback for non-iOS 26 paths when relevant.
+- Review should cover fallback completeness, modifier ordering, interactive-only usage, and hierarchy consistency.
+- If code changes are produced, final closure follows targeted validation / necessary verification plus `code-review`.
 
-## 与其他技能的关系
-- 新建普通 SwiftUI 页面、`TabView` 架构或布局模式，切换到 `swiftui-feature-implementation`。
-- 页面模式已经明确、只需要普通 SwiftUI 落地时，切换到 `swiftui-feature-implementation`。
-- 需要先做跨技术栈视觉方向、配色、排版和设计系统方案时，切换到 `ui-ux-design-system`。
-- 需要运行时性能诊断或 `xctrace` 取证时，切换到 `ios-performance`。
-- 需要官方 API 事实依据时，可辅以 `apple-docs`。
+## Inputs
+
+```json
+{
+  "goal": "Implement or review Liquid Glass usage",
+  "surface": [],
+  "minimum_os": "iOS 26+ | mixed",
+  "needs_fallback": true,
+  "constraints": []
+}
+```
+
+## Outputs
+
+```json
+{
+  "status": "completed | partial | blocked",
+  "summary": [],
+  "recommended_api_usage": [],
+  "fallback_strategy": [],
+  "review_findings": [],
+  "known_risks": [],
+  "next_action": "swiftui-feature-implementation | code-review | apple-docs | blocked"
+}
+```
+
+## Exit Conditions
+
+- `completed`: API choice, hierarchy, fallback, and review or implementation guidance are explicit.
+- `partial`: useful guidance exists but some compatibility or product-direction input is still missing.
+- `blocked`: task is not actually a Liquid Glass problem or no safe fallback path can be defined.
+
+## Escalation Rules
+
+- Escalate to `swiftui-feature-implementation` for general SwiftUI implementation.
+- Escalate to `ui-ux-design-system` for broader visual direction and design language work.
+- Escalate to `apple-docs` when official API facts or availability rules must be confirmed.
+
+## Token Budget
+
+- Do not paste large visual design essays.
+- Prefer short API recommendations, fallback branches, and review findings.
+- Load `references/liquid-glass.md` only when detailed usage guidance is needed.
+
+## Relationship to Other Skills
+
+- Use `swiftui-feature-implementation` for normal SwiftUI pages and layout work.
+- Use `ui-ux-design-system` for broader design-system direction.
+- Use `ios-performance` for runtime performance diagnosis.
+- Use `apple-docs` for official API fact lookup.

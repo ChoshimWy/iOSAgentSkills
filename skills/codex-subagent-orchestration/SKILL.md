@@ -20,6 +20,7 @@ Coordinate iOS development tasks through an adaptive multi-agent workflow while 
 - 在多 Agent 场景下保证 checkpoint、fail-fix-report 与低 token 验证纪律。
 
 默认完成态必须由主 Agent 基于定向测试 / 必要验证与 `code-review` 结论裁决；任何 subAgent 都不能替代主 Agent 宣告完成。
+只有定向测试 / 必要验证已完成，且 `code-review` 无 blocking findings 时，主 Agent 才能宣告实现任务完成。
 
 ## When to Use
 
@@ -48,6 +49,7 @@ Do not use this Skill as the first route when the task is clearly one of these s
 
 ### Hard Boundaries
 
+- For iOS development tasks, this Skill is the default first route unless the task is clearly a doc-only / rule-only change or clearly belongs to one single-purpose Skill.
 - Always classify task type before selecting `lite` / `standard` / `full`.
 - Do not upgrade all tasks to full multi-agent execution.
 - Use Codex native subAgent tools only when available and useful.
@@ -58,6 +60,13 @@ Do not use this Skill as the first route when the task is clearly one of these s
 - Do not introduce external orchestrators unless the user explicitly asks.
 - Use only built-in `worker` and `explorer` agent types unless the runtime provides additional official types.
 - Do not invent new low-level Agent types.
+
+### Boundary Precedence
+
+- `testing` owns test code and targeted validation execution; `ios-affected-tests` is only a helper for exact narrow test selection.
+- `ios-verification-router` decides whether and how to verify before any `xcodebuild`; `final-evidence-gate` decides whether existing evidence is enough after testing/review; `verify-ios-build` executes project-environment verification only when escalation is justified.
+- `debugging` owns runtime symptom diagnosis; `ios-build-log-digest` only digests build/test failure artifacts; `ios-performance` only owns performance evidence and benchmark workflows.
+- `swift-expert`, `refactoring`, and `ios-sdk-architecture` are specialist routes, not default first routes for ordinary iOS feature implementation.
 
 ### Token Budget
 
@@ -160,7 +169,7 @@ Activate additional roles only when justified:
 7. If reviewer or tester finds a blocking issue, Main Agent uses `send_input(..., interrupt=true)` to route the precise issue back to coder.
 8. If tester determines test code is required, start `tester worker` with ownership limited to test files.
 9. Main Agent applies fail-fix-report discipline until resolved or blocked.
-10. Main Agent performs final closure using targeted validation / necessary verification and `code-review` findings.
+10. Main Agent performs final closure only when targeted validation / necessary verification is current and `code-review` has no blocking findings.
 11. Only if requested or high-risk, Main Agent routes to `final-evidence-gate` / `verify-ios-build`.
 
 ## Checkpoints

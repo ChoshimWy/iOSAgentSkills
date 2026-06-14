@@ -247,7 +247,7 @@ Escalate to `ios-build-log-digest` when:
 
 - A raw build log needs compact failure attribution.
 
-Escalate to `sdk-architecture` when:
+Escalate to `ios-sdk-architecture` when:
 
 - The task is SDK distribution boundary, module design, package layout, or XCFramework product strategy.
 
@@ -295,4 +295,4 @@ Next action:
 - Use `testing` for unit/UI test writing and targeted test scope.
 - Use `code-review` for static review of configuration changes.
 - Use `ios-build-log-digest` for compact build failure attribution.
-- Use `sdk-architecture` for SDK distribution and module boundary strategy.
+- Use `ios-sdk-architecture` for SDK distribution and module boundary strategy.

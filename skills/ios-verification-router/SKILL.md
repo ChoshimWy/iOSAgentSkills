@@ -10,12 +10,13 @@ Choose the cheapest valid verification path before requesting any Xcode build or
 
 Use this skill when:
 
-- An Agent is about to request final verification.
+- An Agent is about to request any Xcode verification and the cheapest valid mode is still unclear.
 - The task changed Swift, Objective-C, Xcode project, dependency, test, UI, asset, or configuration files.
 - The user complains that xcodebuild is slow or consumes too many tokens.
 - Multiple Agents share a build-queue daemon.
 
 Do not use this skill for pure product discussion, UI mockup writing, or documentation-only tasks unless the user explicitly asks for verification policy changes.
+Do not use this skill to replace `testing`, `final-evidence-gate`, or `verify-ios-build`; it selects the route but does not author tests, decide final evidence sufficiency, or execute project-environment verification.
 
 ## Agent Rules
 
@@ -79,6 +80,34 @@ When asking the build-queue daemon or wrapper for verification, prefer a structu
 }
 ```
 
+## Inputs
+
+```json
+{
+  "changed_files": [],
+  "goal": "Choose the cheapest valid verification route",
+  "workspace": "optional",
+  "scheme": "optional",
+  "previous_verification": {},
+  "constraints": []
+}
+```
+
+## Outputs
+
+```json
+{
+  "status": "passed | skipped | blocked",
+  "mode": "none | lint | typecheck | build | unit | ui | full",
+  "reason": "...",
+  "changed_files": [],
+  "prefer_cached_result": true,
+  "allow_full_build": false,
+  "allow_full_log": false,
+  "next_action": "testing | verify-ios-build | code-review | none | blocked"
+}
+```
+
 ## Required Output Back to User
 
 When reporting verification choices, keep the response short:
@@ -106,3 +135,16 @@ Escalate to stronger verification only when:
 - Do not open full `.xcresult` dumps.
 - Prefer one concise diagnostics object over raw command output.
 - Summarize only actionable errors and skipped validation reasons.
+
+## Exit Conditions
+
+- `passed`: the smallest sufficient verification mode is selected with a clear reason.
+- `skipped`: no Xcode verification is needed because the diff is doc-only, rule-only, or otherwise non-runtime-affecting.
+- `blocked`: changed files or repository context are too unclear to choose a safe verification route.
+
+## Relationship to Other Skills
+
+- Use `ios-affected-tests` when exact `-only-testing` candidates are non-trivial.
+- Use `testing` when test code or targeted XCTest execution becomes the next step.
+- Use `verify-ios-build` when a stronger project-environment verification path is explicitly required.
+- Use `ios-build-log-digest` when a verification failure needs compact attribution.

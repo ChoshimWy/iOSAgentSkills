@@ -52,6 +52,7 @@ Do not use this Skill when:
 - The request is benchmark, dropped frames, startup time, CPU trace, `xctrace`, or Instruments workflow; use `ios-performance`.
 - The request is signing, Archive, Export, CI, build settings, destination policy; use `xcode-build`.
 - The request is writing tests; use `testing`.
+- The request is compact attribution of a build/test failure artifact rather than runtime diagnosis; use `ios-build-log-digest`.
 - The request is implementing a feature without runtime failure; use an implementation Skill.
 
 ## Agent Rules
