@@ -1,3 +1,8 @@
+---
+name: ios-build-log-digest
+description: iOS 构建日志摘要 Skill。用于 xcodebuild build/test 失败后读取 diagnostics.json、build-summary.txt、test-summary.json 或 xcresult 摘要，避免直接读取完整 build.log 或 DerivedData；不负责执行验证、判断最终证据充分性或运行时问题排查。
+---
+
 # iOS Build Log Digest
 
 ## Purpose

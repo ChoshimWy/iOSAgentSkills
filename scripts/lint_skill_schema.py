@@ -3,7 +3,7 @@
 
 This linter intentionally separates hard failures from migration warnings:
 
-- FAIL: missing mandatory sections required by Skill Schema v1.
+- FAIL: missing YAML frontmatter or mandatory sections required by Skill Schema v1.
 - WARN: missing recommended sections or weak output contract fields.
 
 Usage:
@@ -20,6 +20,11 @@ import argparse
 from dataclasses import dataclass
 from pathlib import Path
 import sys
+
+REQUIRED_FRONTMATTER_FIELDS = [
+    "name",
+    "description",
+]
 
 REQUIRED_SECTIONS = [
     "## Purpose",
@@ -59,29 +64,60 @@ LEGACY_WARNING_ONLY = {
 class LintResult:
     file: Path
     name: str
+    missing_frontmatter: list[str]
     missing_required: list[str]
     missing_recommended: list[str]
     missing_keywords: list[str]
 
     @property
     def has_failures(self) -> bool:
-        return bool(self.missing_required)
+        return bool(self.missing_frontmatter or self.missing_required)
 
     @property
     def has_warnings(self) -> bool:
         return bool(self.missing_recommended or self.missing_keywords)
 
 
-def read_skill_name(text: str, skill_file: Path) -> str:
-    for line in text.splitlines():
-        if line.startswith("name:"):
-            return line.split(":", 1)[1].strip()
+def read_frontmatter(text: str) -> tuple[dict[str, str], list[str]]:
+    if not text.startswith("---\n"):
+        return {}, ["frontmatter delimited by ---"]
+
+    lines = text.splitlines()
+    closing_index: int | None = None
+    for index, line in enumerate(lines[1:], start=1):
+        if line == "---":
+            closing_index = index
+            break
+
+    if closing_index is None:
+        return {}, ["frontmatter closing ---"]
+
+    frontmatter: dict[str, str] = {}
+    for line in lines[1:closing_index]:
+        if ":" not in line:
+            continue
+        key, value = line.split(":", 1)
+        frontmatter[key.strip()] = value.strip().strip('"').strip("'")
+
+    missing = [
+        field
+        for field in REQUIRED_FRONTMATTER_FIELDS
+        if not frontmatter.get(field)
+    ]
+    return frontmatter, missing
+
+
+def read_skill_name(frontmatter: dict[str, str], skill_file: Path) -> str:
+    name = frontmatter.get("name")
+    if name:
+        return name
     return skill_file.parent.name
 
 
 def lint_file(skill_file: Path) -> LintResult:
     text = skill_file.read_text(encoding="utf-8", errors="ignore")
-    name = read_skill_name(text, skill_file)
+    frontmatter, missing_frontmatter = read_frontmatter(text)
+    name = read_skill_name(frontmatter, skill_file)
 
     missing_required = [section for section in REQUIRED_SECTIONS if section not in text]
     missing_recommended = [section for section in RECOMMENDED_SECTIONS if section not in text]
@@ -90,6 +126,7 @@ def lint_file(skill_file: Path) -> LintResult:
     return LintResult(
         file=skill_file,
         name=name,
+        missing_frontmatter=missing_frontmatter,
         missing_required=missing_required,
         missing_recommended=missing_recommended,
         missing_keywords=missing_keywords,
@@ -98,6 +135,10 @@ def lint_file(skill_file: Path) -> LintResult:
 
 def print_result(prefix: str, result: LintResult) -> None:
     print(f"{prefix:<5} {result.file}")
+    if result.missing_frontmatter:
+        print("      missing frontmatter:")
+        for item in result.missing_frontmatter:
+            print(f"        - {item}")
     if result.missing_required:
         print("      missing required:")
         for item in result.missing_required:
@@ -139,7 +180,9 @@ def main() -> int:
     passes: list[LintResult] = []
 
     for result in results:
-        if result.has_failures and result.name not in LEGACY_WARNING_ONLY:
+        if result.missing_frontmatter:
+            failures.append(result)
+        elif result.has_failures and result.name not in LEGACY_WARNING_ONLY:
             failures.append(result)
         elif result.has_failures or result.has_warnings:
             warnings.append(result)

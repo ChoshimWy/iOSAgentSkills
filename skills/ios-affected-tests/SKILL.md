@@ -1,3 +1,8 @@
+---
+name: ios-affected-tests
+description: iOS 受影响测试选择 Skill。用于根据 Swift、Objective-C、ViewModel、Service、Repository、数据库、UI 或测试改动推断最小有效 XCTest / -only-testing 范围，减少不必要的全量 xcodebuild test；不负责实际执行测试或最终验证裁决。
+---
+
 # iOS Affected Tests
 
 ## Purpose

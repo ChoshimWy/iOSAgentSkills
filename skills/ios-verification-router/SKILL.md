@@ -1,3 +1,8 @@
+---
+name: ios-verification-router
+description: iOS 验证路由 Skill。用于在请求 Xcode build/test 前按 diff 类型选择最低有效验证等级、wrapper 入口和重复验证抑制策略；适用于 iOS 项目验证慢、token 消耗高或多 Agent 共享 build-queue daemon 的场景，不替代 testing、final-evidence-gate 或 verify-ios-build。
+---
+
 # iOS Verification Router
 
 ## Purpose
