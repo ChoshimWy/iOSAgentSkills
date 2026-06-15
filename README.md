@@ -111,6 +111,7 @@ python3 scripts/validate_codex_agent_templates.py config/codex/templates/agents
 - 本地联调阶段允许临时保留本地 `:path` 私有库依赖，但 `git commit` 前必须恢复到可提交的远端/版本化依赖状态；禁止把包含本地 `:path` 私有库引用的 `Podfile` / `Podfile.lock` / `Pods/Manifest.lock` 提交进仓库。
 - `Pods/` 默认视为 vendored cache / generated snapshot，不作为实现 ownership。
 - 仓库自带 `scripts/pod_private_cache_guard.py`，并由 `.githooks/pre-commit` 默认阻断两类提交：私有 Pod 副本 staged 进提交；以及 `Podfile` / `Podfile.lock` / `Pods/Manifest.lock` 中仍引用本地 `:path` 私有库的提交。
+- `bash install-local-agent-config.sh` 会同步全局 `~/.config/git/commitlint.py` 与 `~/.config/git/hooks/commit-msg`，并设置全局 `core.hooksPath`，使其他项目也使用同一套 commit message 规范。
 - 推荐在本仓库执行：
 
 ```bash

@@ -24,6 +24,7 @@ Configure local Codex and Claude entrypoints to use this cloned iOSAgentSkills r
   - ~/.codex/config.toml -> merge repo config/codex/codex.shared.toml into local shared defaults
   - ~/.codex/config.toml -> ensure model_instructions_file points to ~/.codex/AGENTS.md
   - ~/.codex/config.toml -> keep Codex memories enabled without overwriting local-only state
+  - ~/.config/git/commitlint.py + hooks/commit-msg -> repo-managed global commit message lint
 
 When --ccswitch is specified, the script synchronizes skills into:
   ~/.cc-switch/iOSAgentSkills/skills
@@ -32,7 +33,7 @@ from deleting files in the current checked-out repository.
 ~/.copilot/skills will follow the same target as ~/.codex/skills.
 
 When --claude-only is specified, all Codex-specific steps (~/.codex/*, ~/.copilot/*) are skipped.
-Only Claude Code setup remains.
+Claude Code setup and global Git commitlint hook synchronization still run.
 
 When --init-memory <path> is specified, the script prints a memory-seeding prompt to use as
 the first message when starting Claude Code in the given project directory.
@@ -93,6 +94,7 @@ REPO_CLAUDE_SETTINGS="$REPO_CLAUDE_CONFIG/settings.json"
 REPO_CLAUDE_AGENTS="$REPO_CLAUDE_CONFIG/agents"
 REPO_CLAUDE_MEMORY_SEED="$REPO_CLAUDE_CONFIG/memory-seed.md"
 CLAUDE_SYNC_SCRIPT="$REPO_ROOT/scripts/sync_claude_settings.py"
+REPO_COMMITLINT_SCRIPT="$REPO_ROOT/scripts/commitlint.py"
 
 HOME_DIR="${HOME:?HOME is required}"
 CODEX_DIR="$HOME_DIR/.codex"
@@ -117,6 +119,10 @@ CCSWITCH_PUBLIC_SKILLS="$HOME_DIR/.cc-switch/skills"
 CCSWITCH_CACHE_ROOT="$HOME_DIR/.cc-switch/iOSAgentSkills"
 CCSWITCH_SKILLS="$CCSWITCH_CACHE_ROOT/skills"
 TARGET_SKILLS="$REPO_SKILLS"
+GLOBAL_GIT_DIR="$HOME_DIR/.config/git"
+GLOBAL_GIT_HOOKS_DIR="$GLOBAL_GIT_DIR/hooks"
+GLOBAL_GIT_COMMITLINT="$GLOBAL_GIT_DIR/commitlint.py"
+GLOBAL_GIT_COMMIT_MSG_HOOK="$GLOBAL_GIT_HOOKS_DIR/commit-msg"
 
 BACKUP_BASE="$HOME_DIR/.agent-skills-backups/iOSAgentSkills"
 BACKUP_DIR=""
@@ -546,6 +552,23 @@ sync_codex_verify_wrapper() {
   fi
 }
 
+GLOBAL_COMMIT_MSG_HOOK_CONTENT=$'#!/usr/bin/env bash\nset -euo pipefail\nexec python3 "$HOME/.config/git/commitlint.py" "$1"'
+
+sync_global_git_hooks() {
+  [[ -f "$REPO_COMMITLINT_SCRIPT" ]] || return 0
+
+  ensure_directory "$GLOBAL_GIT_HOOKS_DIR"
+  ensure_file_copied "$GLOBAL_GIT_COMMITLINT" "$REPO_COMMITLINT_SCRIPT" "~/.config/git/commitlint.py"
+  ensure_text_file "$GLOBAL_GIT_COMMIT_MSG_HOOK" "$GLOBAL_COMMIT_MSG_HOOK_CONTENT" "~/.config/git/hooks/commit-msg"
+
+  if [[ "$DRY_RUN" == '0' ]]; then
+    chmod +x "$GLOBAL_GIT_COMMITLINT" "$GLOBAL_GIT_COMMIT_MSG_HOOK"
+    git config --global core.hooksPath "$GLOBAL_GIT_HOOKS_DIR"
+  else
+    log "dry-run: git config --global core.hooksPath $GLOBAL_GIT_HOOKS_DIR"
+  fi
+}
+
 if [[ ! -f "$REPO_AGENTS" ]]; then
   echo "Error: missing AGENTS.md in repo root: $REPO_AGENTS" >&2
   exit 1
@@ -576,6 +599,11 @@ if [[ "$CLAUDE_ONLY" == '0' ]]; then
     echo "Error: missing Codex agent validation script: $CODEX_AGENT_VALIDATE_SCRIPT" >&2
     exit 1
   fi
+fi
+
+if [[ ! -f "$REPO_COMMITLINT_SCRIPT" ]]; then
+  echo "Error: missing commitlint script: $REPO_COMMITLINT_SCRIPT" >&2
+  exit 1
 fi
 
 CLAUDE_MD_CONTENT="$(build_claude_md_content)"
@@ -672,6 +700,16 @@ verify_codex_agent_templates() {
   fi
 }
 
+verify_global_git_hooks() {
+  [[ -f "$GLOBAL_GIT_COMMITLINT" && ! -L "$GLOBAL_GIT_COMMITLINT" ]] || fail "~/.config/git/commitlint.py is missing or not a regular file"
+  cmp -s "$REPO_COMMITLINT_SCRIPT" "$GLOBAL_GIT_COMMITLINT" || fail "~/.config/git/commitlint.py does not match repo script"
+  [[ -x "$GLOBAL_GIT_COMMITLINT" ]] || fail "~/.config/git/commitlint.py is not executable"
+  [[ -f "$GLOBAL_GIT_COMMIT_MSG_HOOK" && ! -L "$GLOBAL_GIT_COMMIT_MSG_HOOK" ]] || fail "~/.config/git/hooks/commit-msg is missing or not a regular file"
+  [[ "$(cat "$GLOBAL_GIT_COMMIT_MSG_HOOK")" == "$GLOBAL_COMMIT_MSG_HOOK_CONTENT" ]] || fail "~/.config/git/hooks/commit-msg does not match expected content"
+  [[ -x "$GLOBAL_GIT_COMMIT_MSG_HOOK" ]] || fail "~/.config/git/hooks/commit-msg is not executable"
+  [[ "$(git config --global --get core.hooksPath)" == "$GLOBAL_GIT_HOOKS_DIR" ]] || fail "global core.hooksPath does not point to ~/.config/git/hooks"
+}
+
 verify_installation() {
   if [[ "$CLAUDE_ONLY" == '0' ]]; then
     [[ -L "$CODEX_AGENTS" ]] || fail "~/.codex/AGENTS.md is not a symlink"
@@ -702,6 +740,7 @@ verify_installation() {
   [[ "$(resolve_physical_path "$CCSWITCH_PUBLIC_SKILLS")" == "$(resolve_physical_path "$REPO_SKILLS")" ]] || fail "~/.cc-switch/skills does not point to repo skills"
 
   [[ -f "$CLAUDE_SETTINGS" && ! -L "$CLAUDE_SETTINGS" ]] || fail "~/.claude/settings.json is missing or not a regular file"
+  verify_global_git_hooks
 }
 
 if [[ "$CLAUDE_ONLY" == '0' ]]; then
@@ -724,6 +763,7 @@ ensure_symlink "$CLAUDE_SKILLS" "$TARGET_SKILLS" "~/.claude/skills"
 ensure_symlink "$CCSWITCH_PUBLIC_SKILLS" "$REPO_SKILLS" "~/.cc-switch/skills"
 ensure_claude_settings
 ensure_claude_agents
+sync_global_git_hooks
 
 if [[ -n "$INIT_MEMORY_PATH" ]]; then
   seed_claude_memory "$INIT_MEMORY_PATH"
