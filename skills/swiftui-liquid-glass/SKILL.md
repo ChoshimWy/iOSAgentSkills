@@ -34,6 +34,8 @@ Implement, review, or refine SwiftUI Liquid Glass usage on iOS 26+ with explicit
 - Prefer `glassEffect`, `GlassEffectContainer`, `.buttonStyle(.glass)`, and `.buttonStyle(.glassProminent)` where semantically appropriate.
 - Always provide compatibility fallback for non-iOS 26 paths when relevant.
 - Review should cover fallback completeness, modifier ordering, interactive-only usage, and hierarchy consistency.
+- When editing Liquid Glass code, document non-obvious availability guards, fallback rationale, visual hierarchy constraints, and interaction side effects in touched code.
+- Update stale comments and avoid adding comments that only restate SwiftUI modifier syntax.
 - If code changes are produced, final closure follows targeted validation / necessary verification plus independent reviewer subAgent `code-review`; the implementation Agent must not self-review.
 
 ## Inputs

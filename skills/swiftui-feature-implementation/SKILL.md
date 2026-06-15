@@ -93,7 +93,9 @@ Select one submode at the beginning and keep the chain in that submode unless th
 
 - Add `///` documentation for public/open SwiftUI components or reusable types.
 - Document concurrency boundary, side effects, and failure state semantics when relevant.
+- When editing existing code, review touched declarations and branches for missing or stale comments.
 - Add `why` comments for complex UI compatibility or business branches.
+- Update comments when behavior changes; remove or fix misleading comments.
 - Do not add comments that merely restate SwiftUI syntax.
 
 ### File Header Rules

@@ -97,7 +97,9 @@ Do not use this Skill as the main Skill when:
 - For concurrency boundaries, document actor/main-thread/callback queue assumptions.
 - For side effects, document state, database, cache, disk, network, or notification impact.
 - For failure paths, document throws/error-code/fallback semantics.
+- When editing existing code, review touched declarations and branches for missing or stale comments.
 - Add `why` comments for complex business branches; do not only restate code.
+- Update comments when behavior changes; remove or fix misleading comments.
 - File header alone is not enough.
 
 ### File Header Rules

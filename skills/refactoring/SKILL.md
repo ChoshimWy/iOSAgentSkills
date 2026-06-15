@@ -34,6 +34,8 @@ Refactor general-purpose code smells with minimal behavior change, small safe st
 - Do not mix feature work into refactoring-only changes.
 - Move in small steps and preserve or improve the validation story.
 - Prefer seams that improve readability, ownership, and testability without over-abstracting.
+- When editing code, preserve or improve necessary comments on touched public APIs, reusable abstractions, complex branches, side effects, and failure paths.
+- Update stale comments and avoid adding comments that only restate the refactored code.
 - If code changes are produced, final closure follows targeted validation / necessary verification plus independent reviewer subAgent `code-review`; the refactoring Agent must not self-review.
 
 ## Inputs

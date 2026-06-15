@@ -100,7 +100,9 @@ Do not use this Skill when:
 
 - Add `///` documentation for public/open UIKit components or reusable APIs.
 - Document concurrency boundary, side effects, and failure state semantics when relevant.
+- When editing existing code, review touched declarations and branches for missing or stale comments.
 - Add `why` comments for complex compatibility, layout, or business branches.
+- Update comments when behavior changes; remove or fix misleading comments.
 - Do not add comments that only restate UIKit syntax.
 
 ### File Header Rules

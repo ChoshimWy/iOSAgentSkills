@@ -102,7 +102,9 @@ Do not use this Skill when:
 
 - Add `///` documentation for public/open APIs, cross-module reusable types, protocols, and abstractions.
 - Documentation must include input, output, failure semantics, concurrency semantics, side effects, and availability when relevant.
+- When editing existing code, review touched declarations and invariants for missing or stale comments.
 - Add `why` comments for non-obvious abstractions or concurrency invariants.
+- Update comments when behavior changes; remove or fix misleading comments.
 - Do not add comments that merely restate Swift syntax.
 
 ### File Header Rules
