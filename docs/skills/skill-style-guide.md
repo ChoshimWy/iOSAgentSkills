@@ -72,12 +72,22 @@
 
 ## Commit Message 规范
 
-统一使用中文 Conventional Commit 风格：
+统一使用中文 Conventional Commit 风格，并标明代码来源：
 
 ```text
-feat(skill): 新增技能
-fix(skill): 修复技能逻辑
-refactor(skill): 重构技能结构
-docs(skill): 更新技能文档
-test(skill): 补充技能测试
+<type>(<scope>): [TAG] <subject>
+```
+
+`TAG` 只允许：
+
+- `[Codex-GENERATED]`：完全由 AI Agent 自动化生成，没有人工代码。
+- `[Codex-ASSIST]`：AI 辅助生成，人工参与决策或只生成部分代码。
+- `[HUMAN]`：完全由人工编写。
+
+示例：
+
+```text
+feat(Action Panel): [Codex-GENERATED] 增加Action Panel主页面UI
+refactor(Cue): [Codex-ASSIST] Cue增量更新重构
+fix(bug): [HUMAN] 修复ONES bug #xxxxx
 ```

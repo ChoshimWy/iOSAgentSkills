@@ -19,7 +19,8 @@ ALLOWED_TYPES = {
     "test",
 }
 SPECIAL_PREFIXES = ("Merge ", "Revert ", "fixup! ", "squash! ")
-HEADER_PATTERN = re.compile(r"^(?P<type>[a-z]+)\((?P<scope>[^()\s:]+)\): (?P<subject>.+)$")
+COMMIT_SOURCE_TAGS = ("[Codex-GENERATED]", "[Codex-ASSIST]", "[HUMAN]")
+HEADER_PATTERN = re.compile(r"^(?P<type>[a-z]+)\((?P<scope>[^():]+)\): (?P<subject>.+)$")
 CHINESE_CHARACTER_PATTERN = re.compile(r"[㐀-䶿一-鿿豈-﫿]")
 CO_AUTHORED_PATTERN = re.compile(r"Co-Authored-By:", re.IGNORECASE)
 
@@ -42,20 +43,35 @@ def validate_header(header: str) -> list[str]:
         return errors
 
     commit_type = match.group("type")
+    scope = match.group("scope").strip()
     subject = match.group("subject").strip()
 
     if commit_type not in ALLOWED_TYPES:
         allowed = ", ".join(sorted(ALLOWED_TYPES))
         errors.append(f"type 不合法：{commit_type}；允许值：{allowed}")
 
+    if not scope:
+        errors.append("scope 不能为空")
+
     if not subject:
         errors.append("subject 不能为空")
         return errors
 
-    if subject.endswith((".", "。")):
+    matched_tag = next((tag for tag in COMMIT_SOURCE_TAGS if subject.startswith(f"{tag} ")), None)
+    if not matched_tag:
+        allowed_tags = ", ".join(COMMIT_SOURCE_TAGS)
+        errors.append(f"subject 必须以提交来源标记开头：{allowed_tags}")
+        return errors
+
+    body_subject = subject[len(matched_tag) :].strip()
+    if not body_subject:
+        errors.append("提交来源标记后必须填写 subject")
+        return errors
+
+    if body_subject.endswith((".", "。")):
         errors.append("subject 不能以句号结尾")
 
-    if not CHINESE_CHARACTER_PATTERN.search(subject):
+    if not CHINESE_CHARACTER_PATTERN.search(body_subject):
         errors.append("subject 必须包含中文")
 
     return errors
@@ -87,12 +103,14 @@ def main() -> int:
         print(f"  - {error}", file=sys.stderr)
     print("", file=sys.stderr)
     print("要求：", file=sys.stderr)
-    print("  - 使用 Conventional Commits：<type>(<scope>): <subject>", file=sys.stderr)
+    print("  - 使用 Conventional Commits：<type>(<scope>): [TAG] <subject>", file=sys.stderr)
+    print("  - TAG 只允许 [Codex-GENERATED]、[Codex-ASSIST]、[HUMAN]", file=sys.stderr)
     print("  - subject 使用中文，不加句号，首行不超过 72 字符", file=sys.stderr)
     print("", file=sys.stderr)
     print("示例：", file=sys.stderr)
-    print("  feat(skills): 新增提交信息门禁", file=sys.stderr)
-    print("  fix(git-workflow): 修复提交规范校验缺失", file=sys.stderr)
+    print("  feat(Action Panel): [Codex-GENERATED] 增加Action Panel主页面UI", file=sys.stderr)
+    print("  refactor(Cue): [Codex-ASSIST] Cue增量更新重构", file=sys.stderr)
+    print("  fix(bug): [HUMAN] 修复ONES bug #xxxxx", file=sys.stderr)
     return 1
 
 

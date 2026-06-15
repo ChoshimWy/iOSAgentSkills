@@ -40,10 +40,23 @@ refactor/<简短描述>
 - Commit 使用 Conventional Commits：
 
 ```text
-<type>(<scope>): <subject>
+<type>(<scope>): [TAG] <subject>
 ```
 
+- `TAG` 必须使用以下三者之一：
+  - `[Codex-GENERATED]`：完全由 AI Agent 自动化生成，没有人工代码。
+  - `[Codex-ASSIST]`：AI 辅助生成，人工参与决策或只生成部分代码。
+  - `[HUMAN]`：完全由人工编写。
+- `scope` 可包含空格；冒号后必须有一个空格，例如 `feat(Action Panel): [Codex-GENERATED] ...`。
 - `subject` 中文、不加句号、单行长度不超过 72 字符。commit 强制单行，不允许正文（body）、脚注（footer）或 `Co-Authored-By` 尾注。
+- 示例：
+
+```text
+feat(Action Panel): [Codex-GENERATED] 增加Action Panel主页面UI
+refactor(Cue): [Codex-ASSIST] Cue增量更新重构
+fix(bug): [HUMAN] 修复ONES bug #xxxxx
+```
+
 - PR 标题与正文默认使用中文；仅当目标仓库明确要求英文时再切换。
 - 不要使用多个 `-m` 参数。
 - 提交前检查 diff，避免调试代码、临时文件和敏感信息。
@@ -94,4 +107,3 @@ refactor/<简短描述>
 - Use this Skill for Git rules and text.
 - Use `gh-pr-flow` for `gh` execution.
 - Use it as a closing helper after implementation, testing, and review work.
-

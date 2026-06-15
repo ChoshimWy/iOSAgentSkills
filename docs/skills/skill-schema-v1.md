@@ -232,13 +232,24 @@ verify-ios-build -> ios-build-log-digest
 
 ## Commit Message 规范
 
-后续提交统一使用中文 Conventional Commit：
+后续提交统一使用中文 Conventional Commit，并标明代码来源：
 
 ```text
-feat(skill): 新增 xxx Skill
-refactor(skill): 统一 xxx Skill 结构
-docs(skill): 更新 xxx 规范
-fix(script): 修复 xxx 脚本
+<type>(<scope>): [TAG] <subject>
+```
+
+`TAG` 只允许：
+
+- `[Codex-GENERATED]`：完全由 AI Agent 自动化生成，没有人工代码。
+- `[Codex-ASSIST]`：AI 辅助生成，人工参与决策或只生成部分代码。
+- `[HUMAN]`：完全由人工编写。
+
+示例：
+
+```text
+feat(Action Panel): [Codex-GENERATED] 增加Action Panel主页面UI
+refactor(Cue): [Codex-ASSIST] Cue增量更新重构
+fix(bug): [HUMAN] 修复ONES bug #xxxxx
 ```
 
 ## Lint 建议
