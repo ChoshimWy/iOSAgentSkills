@@ -121,6 +121,7 @@ def main() -> int:
             "`checkpoint_status`",
             "`fail-fix-report`",
             "本地 `:path` Pod",
+            "主项目默认必须切回或保持本地 `:path` 私有库依赖",
             "`git commit` 前也必须恢复到可提交的远端",
             "默认进入编排入口不等于默认实际 spawn subAgent",
         ],

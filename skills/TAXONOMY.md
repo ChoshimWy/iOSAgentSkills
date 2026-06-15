@@ -22,6 +22,7 @@
 - 执行可选 `xcodebuild` 验证时，证据必须来自目标项目根目录的项目环境，而不是 sandbox 结果；同时继续遵守 `.xcworkspace` 优先、优先选择绑定了单元测试 `*Tests` target / bundle 的 scheme、iOS 默认优先已连接真机约束。验证链路默认由 wrapper 接入 shared build-queue daemon，统一串行执行验证型 `xcodebuild`，并复用 Xcode 系统 DerivedData。
 - 本地执行 `xcodebuild`（含 `-list` / `-showdestinations` / build/test）默认都走非沙盒项目环境；同机同仓如果有多个 Codex / Claude CLI 并发处理同一 Xcode 项目，项目环境验证必须统一经 wrapper 入口执行：优先目标项目根目录的 `codex_verify.sh`，若项目未接入则回退到本机 `~/.codex/bin/codex_verify`。可通过 `--queue-status` 查看 daemon 当前 active job 与 pending jobs；旧 `XCODE_DERIVED_DATA_*` / `CODEX_DERIVED_DATA_SLOT` 公开配置不再支持。
 - 主入口 `codex-subagent-orchestration` 负责自适应编排：先按 `lite` / `standard` / `full` 选择角色，再协调编码、调试、性能、测试、审查与按需验证；实现链路的审查角色必须独立启动 reviewer subAgent；构建、测试、自动化、截图与日志优先切 `ios-automation`、`xcode-build`、`testing`，需要补强证据时再切 `final-evidence-gate` 或 `verify-ios-build`。
+- coder / tester 原生 subAgent 仅在用户显式要求 subAgent / parallel agent / delegation、当前 prompt 明确授权或风险需要时才启用；否则默认由主 Agent 串行承担对应逻辑角色。
 - 低 token 验证链路默认优先切 `ios-verification-router` 做验证级别分流；涉及测试选择时切 `ios-affected-tests`；构建失败归因时切 `ios-build-log-digest`，优先消费 `diagnostics.json`，禁止默认读取完整 raw build log。
 - 多 Agent 编排默认遵守 checkpoint 合同：`CP0` / `CP1` / `CP2` / `CP3`。
 - 多 Agent 编排默认遵守 `fail-fix-report`：先定位失败、修复并重跑，再汇报。

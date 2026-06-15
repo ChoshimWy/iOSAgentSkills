@@ -76,7 +76,7 @@ FULL
 
 - 涉及 CocoaPods / 私有组件联调时，先检查目标工程 `Podfile`、`Podfile.lock` 与 `Pods/Manifest.lock`。
 - 若目标依赖是本地 `:path` Pod，默认修改真实组件源码仓，不修改 `Pods/` 下的副本快照。
-- 未收到明确指令前，不把验证基线切到线上版本化依赖或 `Pods/` vendored snapshot。
+- 如本次修改涉及私有库 / 私有组件，主项目默认必须切回或保持本地 `:path` 私有库依赖进行开发与验证；未收到明确指令前，不得把验证基线切到线上版本化依赖或 `Pods/` vendored snapshot。
 - 即使联调阶段允许临时切到本地 `:path` 依赖，`git commit` 前也必须恢复到可提交的远端 / 版本化依赖状态；不要提交带本地 `:path` 引用的依赖文件。
 
 ## Checkpoint 与 Fail-Fix-Report

@@ -16,6 +16,7 @@
 ## wait 与聚合策略
 - `wait_agent(...)` 只在主 Agent 需要当前结果推进下一步时使用，不要为轮询而频繁等待。
 - reviewer / tester 的结论优先按“首个真实阻塞点 -> 影响范围 -> 下一轮成功标准”聚合，再回写 coder。
+- 默认进入 `codex-subagent-orchestration` 不等于默认实际 spawn subAgent。
 - 默认进入 `codex-subagent-orchestration` 不等于默认实际 spawn coder / tester subAgent；只有用户显式要求 subAgent / parallel agent / delegation、当前 prompt 明确授权或风险需要时才真正拉起 coder / tester subAgent。未显式授权、工具不可用、上层策略禁止或写集不适合并行时，主 Agent 必须显式说明 coder / tester 本轮按单 Agent 执行。实现链路 reviewer subAgent 必须独立启动；不可用时报告 blocked / pending review。
 - `CP1` 未通过前禁止无必要并行扩散；先收敛首个关键切片再扩展后续角色或任务面。
 
@@ -31,6 +32,7 @@
 - 同一类问题最多回写 coder 2 次
 - 如果问题仍未收敛，主 Agent 直接收口为 blocked
 - 如果定向验证、审查或按需完整验证被环境阻塞，主 Agent 明确报告阻塞点，不继续盲目循环
+- 定向验证失败或 `code-review` 存在 blocking findings 时，不得宣告默认收口完成
 - 定向验证失败、独立 reviewer subAgent 未执行、或 `code-review` 存在 blocking findings 时，不得宣告默认收口完成
 - 已达到同类问题回环上限时，`next_action` 只能是 `blocked`，不能标记为 `complete`
 
