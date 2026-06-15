@@ -6,7 +6,7 @@
 
 本段是 Claude Code 特有的运行时编排指令，位于共享规则 AGENTS.md 之上。Codex 用户不受本段影响。
 
-## Plan Mode 作为 CP0 Intent Lock
+## Plan Mode 作为 CP0 Intent Lock (对应 AGENTS.md "默认工作流" → 编排入口)
 
 当任务涉及实现且边界不明确时，先使用 `EnterPlanMode` 进入计划模式：
 - 输出任务目标、成功标准、边界范围
@@ -16,7 +16,7 @@
 
 退出条件：目标与边界已明确，主 Agent 确认可进入实现阶段。
 
-## Agent 工具角色映射
+## Agent 工具角色映射 (对应 AGENTS.md "默认工作流" → 多角色协作)
 
 Claude Code 的 `Agent` 工具支持以下 `subagent_type`：
 
@@ -36,7 +36,7 @@ Claude Code 的 `Agent` 工具支持以下 `subagent_type`：
 
 角色 prompt 模板参见 `config/claude-code/agents/*.md`。
 
-## 自适应编排档位
+## 自适应编排档位 (对应 AGENTS.md "默认工作流" → 编排策略)
 
 ### lite（doc-only / rule-only）
 - 单 Agent 执行
@@ -55,35 +55,26 @@ Claude Code 的 `Agent` 工具支持以下 `subagent_type`：
 - 并行启动：`Agent:Explore`（审查）∥ `Agent:general-purpose`（测试）
 - 主 Agent 聚合测试与审查结论；按需执行 `final-evidence-gate` / `verify-ios-build`
 
-## Skill 使用声明
+## 三步收口工作流 (对应 AGENTS.md "默认工作流" → 三步收口)
 
-使用任何 Skill 前，必须先输出 `>>> Skill: <skill-name>` 声明即将使用的 skill，让用户明确知道当前路由到了哪个 skill。
+遵循 AGENTS.md 定义的三步收口流程（实现 → 定向验证 → 独立审查）。Claude Code 补充：
 
-## 三步收口工作流（默认）
-
-所有实现型任务默认按以下三步收口；`final-evidence-gate` / `verify-ios-build` 仅作为按需补强验证：
-
-```
-Step 1 — 实现：Skill("ios-feature-implementation") 或 SwiftUI/UIKit 变体
-Step 2 — 测试/定向验证：Skill("testing")，或记录 no_test_reason 与替代验证依据
-Step 3 — 审查：独立 reviewer 子 Agent 调用 Skill("code-review")
-```
-
-Step 3 必须由未参与实现的 reviewer 子 Agent 审查本次任务全量差异及本次修改带来的直接影响面，包含 staged、unstaged、untracked 与任务起点基线之后的相关提交；同一 Agent 实现后自审无效。
-
-补充：
 - Step 2 默认只执行最窄定向单测：优先 `-only-testing` 到单个 test case / test class，其次最小受影响 test file / bundle。
 - 若没有可低成本执行的单测路径，则记录 `no_test_reason` 与 `suggested_validation`，不自动升级到真机 / 模拟器验证。
 - 真机 / 模拟器验证仅在用户显式要求、发布前自检、高风险或证据不足时，按需进入 `final-evidence-gate` / `verify-ios-build`。
 
-循环控制：
+循环控制（源自 AGENTS.md "Checkpoint 与 Fail-Fix-Report"）：
 - 同类问题最多回写实现步骤 2 次
 - 超过上限仍未收敛 → `next_action = blocked`
 - 定向验证失败、独立 reviewer 子 Agent 未执行、或 code-review 存在阻塞项时不得宣告默认收口完成
 
-## Task 工具用于 Checkpoint 跟踪
+## Skill 使用声明 (对应 AGENTS.md "默认工作流" → Skill 路由)
 
-使用 `TaskCreate` / `TaskUpdate` / `TaskList` 跟踪四个 Checkpoint：
+调用 `Skill` 工具前，必须先输出 `>>> Skill: <skill-name>` 声明即将使用的 skill，让用户明确知道当前路由到了哪个 skill。
+
+## Task 工具用于 Checkpoint 跟踪 (对应 AGENTS.md "Checkpoint 与 Fail-Fix-Report")
+
+使用 `TaskCreate` / `TaskUpdate` / `TaskList` 跟踪 AGENTS.md 定义的四个 Checkpoint：
 
 | CP | 名称 | Task 示例 |
 |---|---|---|
