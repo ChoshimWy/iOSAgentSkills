@@ -9,6 +9,7 @@ This linter intentionally separates hard failures from migration warnings:
 Usage:
     python scripts/lint_skill_schema.py
     python scripts/lint_skill_schema.py --strict
+    python scripts/lint_skill_schema.py --include-system
 
 In normal mode, warnings do not fail the command. In strict mode, warnings fail.
 """
@@ -114,6 +115,11 @@ def print_result(prefix: str, result: LintResult) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Lint skills against Skill Schema v1")
     parser.add_argument("--strict", action="store_true", help="treat warnings as failures")
+    parser.add_argument(
+        "--include-system",
+        action="store_true",
+        help="also lint vendored/system skills under skills/.system",
+    )
     parser.add_argument("--skills-dir", default="skills", help="skills directory path")
     args = parser.parse_args()
 
@@ -122,7 +128,11 @@ def main() -> int:
         print(f"FAIL  skills directory not found: {skills_dir}")
         return 1
 
-    results = [lint_file(path) for path in sorted(skills_dir.rglob("SKILL.md"))]
+    results = [
+        lint_file(path)
+        for path in sorted(skills_dir.rglob("SKILL.md"))
+        if args.include_system or ".system" not in path.relative_to(skills_dir).parts
+    ]
 
     failures: list[LintResult] = []
     warnings: list[LintResult] = []

@@ -2,7 +2,7 @@
 
 ## subAgent 模型分工（可选，但推荐）
 
-默认让 subAgent 继承主 Agent 的模型配置；当用户明确要求分工、任务风险需要或预算/吞吐目标明确时，主 Agent 才在 `spawn_agent` 参数里按角色指定 `model` / `reasoning_effort`：
+只有用户显式要求 subAgent / parallel agent / delegation，或当前 prompt 明确授权时才调用原生 subAgent；调用后默认让 subAgent 继承主 Agent 的模型配置。当用户明确要求模型分工、任务风险需要或预算/吞吐目标明确时，主 Agent 才在 `spawn_agent` 参数里按角色指定 `model` / `reasoning_effort`：
 
 - coder：强模型
 - reviewer：快模型
@@ -11,7 +11,7 @@
 说明：
 - 这里不写死具体模型名；由主 Agent 按当前运行时可用模型选择。
 - 不传 `model` 时，subAgent 会继承主 Agent 默认模型。
-- 本仓库默认入口视为仓库级显式触发；Codex CLI 原生 subAgent 可用时，主 Agent 可按 `lite` / `standard` / `full` 自动启动合适角色。
+- 默认进入 `codex-subagent-orchestration` 不等于默认实际 spawn subAgent；只有显式授权原生 subAgent 时，主 Agent 才可按 `lite` / `standard` / `full` 启动合适角色。
 
 ## coder worker
 

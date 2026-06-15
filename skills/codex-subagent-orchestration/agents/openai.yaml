@@ -1,7 +1,7 @@
 interface:
   display_name: "Codex 多 Agent 编排"
   short_description: "默认优先的 iOS 主 Skill 入口：按 lite/standard/full 协调实现、调试、性能、审查、测试与可选验证"
-  default_prompt: "默认优先使用 $codex-subagent-orchestration 作为默认优先的自适应多 Agent 编排与 iOS 主 Skill 入口；本仓库将默认入口视为仓库级显式触发，Codex CLI 原生 subAgent 可用时按 lite / standard / full 自动使用 subAgent，再协调实现、调试、性能、审查、测试与按需补强验证；默认 testing 只执行最窄定向单测，真机 / 模拟器验证仅在用户显式要求、发布前、高风险或证据不足时按需进入 $final-evidence-gate / $verify-ios-build；仅在工具不可用、策略禁止或写集不适合并行时临时回退单 Agent。"
+  default_prompt: "默认优先使用 $codex-subagent-orchestration 作为 iOS 主 Skill 入口；先按 lite / standard / full 做编排决策并协调实现、调试、性能、审查、测试与按需补强验证。只有用户显式要求 subAgent / parallel agent / delegation 或当前 prompt 明确授权时才调用 Codex 原生 subAgent；未显式授权时按单 Agent 执行，但仍保留最窄定向验证与 $code-review 收口。真机 / 模拟器验证仅在用户显式要求、发布前、高风险或证据不足时按需进入 $final-evidence-gate / $verify-ios-build。"
 
 policy:
   allow_implicit_invocation: false

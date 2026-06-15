@@ -22,11 +22,20 @@
 ## 默认工作流
 
 - `doc-only` / `rule-only` 任务：直接修改目标文档或规则文件，并检查相关引用是否仍一致。
-- iOS 开发任务默认先进入 `codex-subagent-orchestration`；由主入口决定单 Agent 还是 `lite` / `standard` / `full` 编排，并按需路由到实现、测试、审查与验证模块。
+- iOS 开发任务默认先进入 `codex-subagent-orchestration`；由主入口按任务分型器归类为 `doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`，再决定单 Agent 还是 `lite` / `standard` / `full` 编排，并按需路由到实现、测试、审查与验证模块。
+- 使用任何 Skill 前，必须先输出 `>>> Skill: <skill-name>` 声明即将使用的 skill，让用户明确知道当前路由到了哪个 skill。
+- 默认进入编排入口不等于默认实际 spawn subAgent；只有用户显式要求 subAgent / parallel agent / delegation，或当前 prompt 明确授权时，才调用 Codex 原生 subAgent。未显式授权时按单 Agent 执行，但仍保留实现链路的定向验证 + `code-review` 收口。
+- 默认逻辑角色集合为 `explorer + builder + reporter`；这些角色默认可由主 Agent 串行承担，只有显式授权原生 subAgent 时才拆成独立 subAgent。
 - 实现型任务默认三步收口：主入口 Skill / 实现 Skill -> 定向验证 -> `code-review`。
 - 审查型任务默认优先输出 blocking findings；没有阻塞项时要明确说明无 blocking findings，并指出剩余风险或验证缺口。
 - 高风险任务才升级更强验证；不要把完整 build、Archive、真机验证或 FULL verification 当成默认收尾动作。
 - 路由细节、验证升级条件和 Skill 切换规则以下游 Skill 与 `skills/TAXONOMY.md` 为准。
+
+## Codex 共享配置基线
+
+- 截至 2026-06-15，本仓共享 Codex 配置保留 `model = "gpt-5.5"`、`image_model = "gpt-image-2"`、`features.multi_agent = true` 与 `[agents] max_threads/max_depth`。
+- `image_model = "gpt-image-2"` 是本仓共享配置基线，用于对齐 Codex 内置 image generation 使用 `gpt-image-2` 的行为；不要把它表述为官方 config reference 已公开稳定字段。
+- 默认 `model_reasoning_effort = "medium"` / `plan_mode_reasoning_effort = "medium"` 以匹配低 token 目标；高难任务可通过 profile 或临时配置升到 `xhigh`。
 
 ## Apple 平台工程规则
 
@@ -66,13 +75,20 @@ FULL
 - iOS 验证默认优先已连接真机；无真机时再回退 simulator。
 - 验证型 `xcodebuild` 优先通过目标项目根目录 `./codex_verify.sh` 执行；若项目未接入，再回退到 `~/.codex/bin/codex_verify`。
 - 验证证据必须来自目标项目根目录的项目环境，不把 sandbox 中的构建结果当作完整项目环境证据。
+- 可选项目环境验证继续使用 Xcode 系统 DerivedData，并通过 shared build-queue daemon 串行执行；可用 `codex_verify.sh --queue-status` 查看队列状态。
 
 ## CocoaPods / 私有组件规则
 
 - 涉及 CocoaPods / 私有组件联调时，先检查目标工程 `Podfile`、`Podfile.lock` 与 `Pods/Manifest.lock`。
 - 若目标依赖是本地 `:path` Pod，默认修改真实组件源码仓，不修改 `Pods/` 下的副本快照。
 - 未收到明确指令前，不把验证基线切到线上版本化依赖或 `Pods/` vendored snapshot。
-- 即使联调阶段允许临时切到本地 `:path` 依赖，提交前也必须恢复到可提交的远端 / 版本化依赖状态；不要提交带本地 `:path` 引用的依赖文件。
+- 即使联调阶段允许临时切到本地 `:path` 依赖，`git commit` 前也必须恢复到可提交的远端 / 版本化依赖状态；不要提交带本地 `:path` 引用的依赖文件。
+
+## Checkpoint 与 Fail-Fix-Report
+
+- 编排默认遵守 checkpoint 合同：`CP0 Intent Lock`、`CP1 Anchor Slice`、`CP2 Validation Baseline Freeze`、`CP3 Final Gate`。
+- 主 Agent 维护 `checkpoint_status` 作为单一事实源。
+- 默认遵守 `fail-fix-report`：先定位失败、修复并重跑，再汇报；同类问题默认最多回环 2 次。
 
 ## Skill 与规则维护
 

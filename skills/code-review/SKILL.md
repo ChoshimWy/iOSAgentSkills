@@ -61,6 +61,7 @@ Review iOS/macOS code changes, identify correctness and maintainability risks, e
 
 - Findings 必须优先输出。
 - Findings 按严重等级排序。
+- 无阻塞项时必须显式输出 `blocking_findings: []`。
 - 必须尽量绑定文件和行号。
 - 不得伪造运行时证据。
 - 缺少证据时必须明确说明限制。

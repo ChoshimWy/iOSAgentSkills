@@ -16,7 +16,7 @@
 ## wait 与聚合策略
 - `wait_agent(...)` 只在主 Agent 需要当前结果推进下一步时使用，不要为轮询而频繁等待。
 - reviewer / tester 的结论优先按“首个真实阻塞点 -> 影响范围 -> 下一轮成功标准”聚合，再回写 coder。
-- 本仓库默认入口视为仓库级显式触发；如果当前轮因为工具不可用、上层策略禁止或写集不适合并行而无法真正拉起 subAgent，主 Agent 必须显式说明本轮是单 Agent fallback。
+- 默认进入 `codex-subagent-orchestration` 不等于默认实际 spawn subAgent；只有用户显式要求 subAgent / parallel agent / delegation 或当前 prompt 明确授权时才真正拉起 subAgent。未显式授权、工具不可用、上层策略禁止或写集不适合并行时，主 Agent 必须显式说明本轮按单 Agent 执行。
 - `CP1` 未通过前禁止无必要并行扩散；先收敛首个关键切片再扩展后续角色或任务面。
 
 ## 回写 coder 的格式

@@ -21,7 +21,7 @@
 - `xcode-build/`
 - `final-evidence-gate/`
 - `verify-ios-build/`
-- `codex-subagent-orchestration/` —— 默认优先的自适应多 Agent 编排入口
+- `codex-subagent-orchestration/` —— 默认优先的自适应编排入口；仅在用户显式要求 subAgent / parallel agent / delegation 或当前 prompt 明确授权时才实际调用原生 subAgent
 
 ### Diagnostics
 - `code-review/`
@@ -72,13 +72,14 @@ ln -s iOSAgentSkills/skills .claude/skills
   - 图示 `AGENTS.md` 对应仓库根 `AGENTS.md`
   - 图示 `skills/*/SKILL.md` 对应本仓库全部 skills（含按需触发的低频技能）
   - 图示 `config.toml` 对应本仓库 `config/codex/codex.shared.toml`
-  - 截至 2026-06-12 的共享 Codex 基线：`model = "gpt-5.5"`、`image_model = "gpt-image-2"`、`features.multi_agent = true` 与 `[agents] max_threads/max_depth`；安装脚本会同步到 `~/.codex/config.toml`
+  - 截至 2026-06-15 的共享 Codex 基线：`model = "gpt-5.5"`、`image_model = "gpt-image-2"`、`features.multi_agent = true`、`[agents] max_threads/max_depth`，以及默认 `model_reasoning_effort = "medium"` / `plan_mode_reasoning_effort = "medium"`；安装脚本会同步到 `~/.codex/config.toml`。`image_model` 是本仓共享配置基线，用于对齐 Codex 内置 image generation 使用 `gpt-image-2` 的行为，不把它表述为官方 config reference 已公开稳定字段。
 
 快速发任务模板：
 
 ```text
 请使用 codex-subagent-orchestration 处理这个 iOS 任务。
-按 ~/.codex/agents 角色分工执行：默认 explorer -> builder -> reporter；
+默认按单 Agent 执行并套用 explorer -> builder -> reporter 逻辑角色；
+只有我显式要求 subAgent / parallel agent / delegation 时才调用 ~/.codex/agents 原生 subAgent；
 若边界不清激活 pm，若需要测试面或失败归因激活 tester。
 目标：<需求>
 上下文：<目录/文件/报错>
@@ -144,8 +145,8 @@ python3 scripts/validate_codex_agent_templates.py config/codex/templates/agents
 - `codex-subagent-orchestration` 是默认的 iOS 主 Skill 入口；实现、调试、性能、测试、Apple 文档与可选证据验证都应先经过它，再内部路由到对应模块。
 - 编排默认按 `lite` / `standard` / `full` 三档选择角色。
 - 默认先按任务分型器分类，再决定角色激活矩阵（最小集合：`explorer + builder + reporter`）。
-- 本仓库将默认入口视为仓库级显式触发；Codex CLI 暴露原生 subAgent 工具时，主 Agent 可按档位自动使用 subAgent，只有运行时工具不可用、策略禁止或写集不适合并行时才临时回退单 Agent。
-- 即使单 Agent fallback，实现链路仍必须保留 `code-review` 与 `testing`。
+- 默认进入编排入口不等于默认实际 spawn subAgent；只有用户显式要求 subAgent / parallel agent / delegation，或当前 prompt 明确授权时，主 Agent 才可按 `lite` / `standard` / `full` 调用原生 subAgent 工具。未显式授权时按单 Agent 执行，但仍保留实现链路的定向验证 + `code-review` 收口。
+- 即使未使用原生 subAgent 或因工具/策略/写集限制回到单 Agent，实现链路仍必须保留 `testing` 与 `code-review`。
 - 计划模式（`proposed_plan`）输出，只要是实现链路也必须显式包含 `code-review` 审查步骤。
 - 日志输出默认低 token：只回传关键错误段或最后 80~120 行；长日志写入 `/tmp/*.log`。
 
@@ -160,10 +161,13 @@ python3 scripts/validate_codex_agent_templates.py config/codex/templates/agents
 ```bash
 bash install-local-agent-config.sh
 ./scripts/install-git-hooks.sh
+python3 scripts/lint_skill_schema.py
+python3 scripts/validate_codex_agent_templates.py config/codex/templates/agents
 python3 scripts/lint_subagent_orchestration_policy.py
 python3 scripts/lint_workflow_contract_policy.py
-python3 scripts/lint_verify_ios_build_policy.py
 python3 scripts/lint_harness_workflow_policy.py
+python3 scripts/lint_verify_ios_build_policy.py
+git diff --check
 ```
 
 ## 贡献

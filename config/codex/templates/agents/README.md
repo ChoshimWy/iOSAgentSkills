@@ -18,7 +18,7 @@
 
 说明：
 - 这些 `.toml` 是 Codex custom agent 文件，使用当前支持的扁平 schema：`name` / `description` / `developer_instructions`，以及可选 `nickname_candidates` / `model` / `model_reasoning_effort` / `sandbox_mode` / `mcp_servers` / `skills.config`。
-- 截至 2026-06-12 的共享 Codex 基线使用 `model = "gpt-5.5"`、`image_model = "gpt-image-2"` 与 `features.multi_agent = true`；当前 Codex CLI releases 默认启用 subAgent 工作流，本仓库把 `codex-subagent-orchestration` 默认入口视为仓库级显式触发，主 Agent 可按 `lite` / `standard` / `full` 自动使用原生 subAgent 工具。
+- 截至 2026-06-15 的共享 Codex 基线使用 `model = "gpt-5.5"`、`image_model = "gpt-image-2"`、`features.multi_agent = true` 与 `[agents] max_threads/max_depth`；默认 reasoning effort 为 `medium`，高难任务可通过 profile 或临时配置升到 `xhigh`。默认进入 `codex-subagent-orchestration` 只表示先做编排决策；只有用户显式要求 subAgent / parallel agent / delegation，或当前 prompt 明确授权时，主 Agent 才可按 `lite` / `standard` / `full` 调用原生 subAgent 工具。
 - 模型默认继承主 Agent；只有用户明确要求、任务风险需要或预算/吞吐目标明确时才在 `spawn_agent` 中覆盖 `model` / `reasoning_effort`。
 - 工作流合同字段不再放单独 TOML table，而是内嵌在 `developer_instructions` 中约束输出与职责边界。
 - 安装脚本会把它们同步到 `~/.codex/agents/`。
@@ -30,12 +30,13 @@
 - Apple Xcode 项目改动默认以定向验证与 code-review 收口；`final-evidence-gate` / `verify-ios-build` 仅按需补强。
 - `testing` 默认只执行最窄定向单测；真机 / 模拟器验证不属于默认收口执行面。
 - 默认先做任务分型：`doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`。
-- 默认最小角色集合：`explorer + builder + reporter`；命中风险条件再激活 `pm` 与 `tester`。
+- 默认最小逻辑角色集合：`explorer + builder + reporter`；命中风险条件再激活 `pm` 与 `tester`。这些角色默认可由主 Agent 串行承担，只有显式授权原生 subAgent 时才拆成独立 subAgent。
 - 统一字段：每个角色输出都需包含 `checkpoint_status`、`first_failure`、`next_action`（无阻塞时 `first_failure: none`）。
 
 快速任务模板：
 ```text
-请按 ~/.codex/agents 角色分工执行：默认 explorer -> builder -> reporter；
+请按 explorer -> builder -> reporter 逻辑角色执行，默认由主 Agent 串行承担；
+只有我显式要求 subAgent / parallel agent / delegation 时才调用 ~/.codex/agents 原生 subAgent；
 若边界不清激活 pm，若需要测试面或失败归因激活 tester。
 目标：<需求>
 上下文：<目录/文件/报错>

@@ -66,7 +66,7 @@ Do not use this Skill when:
 - Always prefer the target project repo-tracked wrapper: `./codex_verify.sh`.
 - If the target project wrapper is absent, use the shared fallback wrapper: `~/.codex/bin/codex_verify`.
 - The wrapper must submit validation-type `xcodebuild` to the shared build-queue daemon.
-- The daemon serializes `xcodebuild` and reuses Xcode system DerivedData: `~/Library/Developer/Xcode/DerivedData`.
+- The daemon serializes `xcodebuild` and reuses Xcode system DerivedData（Xcode 系统 DerivedData）: `~/Library/Developer/Xcode/DerivedData`.
 - Do not reintroduce public `XCODE_DERIVED_DATA_*` or `CODEX_DERIVED_DATA_SLOT` configuration. If those variables are present, wrapper should fail fast.
 - Project-environment verification must run in the target project root, not in a sandbox copy.
 - For Codex, use non-sandbox project execution with required escalation when necessary.
