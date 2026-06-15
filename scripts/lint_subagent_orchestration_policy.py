@@ -227,6 +227,15 @@ def main() -> int:
         failures,
     )
     require_contains(
+        SKILL_ROOT / "references" / "coding-standards.md",
+        [
+            "主项目切回或保持在本地 `:path` 私有库依赖",
+            "私有库仓内自测不能替代主项目验证",
+            "禁止把 `Pods/` 副本当作 ownership",
+        ],
+        failures,
+    )
+    require_contains(
         SKILL_ROOT / "references" / "role-contracts.md",
         [
             "默认进入编排入口只做决策",
