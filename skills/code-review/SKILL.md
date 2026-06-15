@@ -1,6 +1,6 @@
 ---
 name: code-review
-description: iOS/Swift 静态代码审查 Skill。用于 review diff、PR、SDK API 与实现质量，只输出基于代码和已知上下文的审查结论，不负责直接修复实现、运行时排障、性能取证或构建配置。
+description: iOS/Swift 静态代码审查 Skill。用于 review diff、PR、SDK API 与实现质量；用于实现链路收口时必须由未参与实现的独立 reviewer subAgent 执行，避免同一 Agent 实现后自审；只输出基于代码和已知上下文的审查结论，不负责直接修复实现、运行时排障、性能取证或构建配置。
 ---
 
 # 代码审查
@@ -29,7 +29,7 @@ Review iOS/macOS code changes, identify correctness and maintainability risks, e
 ## When to Use
 
 - 用户要求 review 代码、PR、diff。
-- 实现任务进入 testing 之后的静态审查阶段。
+- 实现任务进入 testing 之后的静态审查阶段；该场景必须由未参与实现的独立 reviewer subAgent 执行。
 - SDK、Framework、公共 API 设计评审。
 - 合入前质量门禁。
 - 验证证据充分性评估。
@@ -56,6 +56,13 @@ Review iOS/macOS code changes, identify correctness and maintainability risks, e
 → 可维护性
 → 一致性
 ```
+
+### Reviewer Independence Rules
+
+- 用于实现链路收口时，必须由未参与本轮实现的独立 reviewer subAgent 执行。
+- 同一 Agent 先实现再执行本 Skill 的审查结论无效，不能作为完成条件。
+- 如果无法确认 reviewer 独立性或无法启动 reviewer subAgent，输出 `status: blocked`、`first_failure: reviewer subAgent unavailable`、`next_action: blocked`。
+- 纯 review 请求也应由独立 reviewer subAgent 执行；如果平台无法启动 reviewer subAgent，必须说明审查独立性缺口。
 
 ### Evidence Rules
 
@@ -137,7 +144,8 @@ Review iOS/macOS code changes, identify correctness and maintainability risks, e
   "diff_scope": "working-tree",
   "testing_result": {},
   "verification_result": {},
-  "constraints": []
+  "constraints": [],
+  "reviewer_independence": "independent-subagent | pure-review | unavailable"
 }
 ```
 
@@ -154,6 +162,7 @@ Review iOS/macOS code changes, identify correctness and maintainability risks, e
   "first_failure": "none",
   "verification_story": "accepted | needs-final-evidence-gate | needs-verify-ios-build | insufficient",
   "risk_level": "low | medium | high",
+  "reviewer_independence": "independent-subagent | pure-review | unavailable",
   "next_action": "fix-and-rerun | blocked | complete"
 }
 ```
@@ -188,6 +197,7 @@ Positive observation
 
 ### complete
 
+- 审查已由独立 reviewer subAgent 执行；实现链路收口审查确认未由实现 Agent 自审。
 - blocking_findings 为空。
 - review_scope 明确。
 - impact_scope 已覆盖。
@@ -195,6 +205,7 @@ Positive observation
 
 ### blocked
 
+- 实现链路收口审查无法确认独立 reviewer subAgent 或 reviewer subAgent 不可用。
 - 存在 blocking_findings。
 - 存在未确认高风险影响面。
 - 验证故事无法成立。
@@ -259,6 +270,9 @@ first_failure:
 verification_story:
   accepted
 
+reviewer_independence:
+  independent-subagent
+
 risk_level:
   low
 
@@ -268,9 +282,9 @@ next_action:
 
 ## Relationship to Other Skills
 
-- 默认承接 testing 之后的第三步。
+- 默认承接 testing 之后的第三步，且该第三步必须由独立 reviewer subAgent 执行。
 - 修复问题时切换实现型 Skill。
 - Crash/泄漏/卡顿切换 debugging。
 - 性能问题切换 ios-performance。
 - SDK 边界设计可联动 ios-sdk-architecture。
-- 本 Skill 只负责审查与结论，不负责实现。
+- 本 Skill 只负责审查与结论，不负责实现；实现者自审不得作为实现任务完成条件。

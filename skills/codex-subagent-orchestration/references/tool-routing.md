@@ -8,7 +8,7 @@
 - 构建、测试、simulator、真机、截图、日志、xcresult：优先 `Build iOS Apps` / `xcodebuildmcp` 相关工具。
 - `tester` 做定向验证、失败归因、日志查看时，优先复用 `ios-automation`、`testing` 既有能力。
 - 默认 testing 先收敛到最窄定向单测；真机 / 模拟器验证不属于默认 testing 执行面，只有用户显式要求或主 Agent 判定证据不足 / 高风险时才升级。
-- 默认收口为定向验证 + `code-review`；`final-evidence-gate` / `verify-ios-build` 按需升级，不下放给 subAgent；需要在目标项目环境执行可选验证或越过 sandbox 时，由主 Agent 使用 `functions.exec_command` 并按需设置 `sandbox_permissions=\"require_escalated\"`。
+- 默认收口为定向验证 + 独立 reviewer subAgent `code-review`；`final-evidence-gate` / `verify-ios-build` 按需升级，不下放给 subAgent；需要在目标项目环境执行可选验证或越过 sandbox 时，由主 Agent 使用 `functions.exec_command` 并按需设置 `sandbox_permissions=\"require_escalated\"`。
 - 本地凡是执行 `xcodebuild`（含 `-list` / `-showdestinations` / build/test），默认都走非沙盒项目环境：使用 `functions.exec_command` 并显式设置 `sandbox_permissions=\"require_escalated\"`。
 
 ## 并行与写操作

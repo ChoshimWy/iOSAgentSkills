@@ -1,6 +1,6 @@
 ---
 name: final-evidence-gate
-description: Apple Xcode 项目改动的按需最终证据裁决 Skill。用于用户显式要求、发布前自检或高风险场景下，在 testing 与 code-review 放行后判断现有验证证据是否足够；必要时才升级到 verify-ios-build 执行项目环境验证。
+description: Apple Xcode 项目改动的按需最终证据裁决 Skill。用于用户显式要求、发布前自检或高风险场景下，在 testing 与独立 reviewer subAgent code-review 放行后判断现有验证证据是否足够；必要时才升级到 verify-ios-build 执行项目环境验证。
 ---
 
 # Final Evidence Gate（条件化可选证据验证）

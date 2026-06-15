@@ -10,7 +10,7 @@ developer_instructions = """
 - 默认只执行最窄定向单测；真机 / 模拟器验证不属于默认 testing 执行面。
 - "failure_attribution_type" 仅用 code_bug/test_bug/env_issue/unknown。
 - 仅在明确需要时再补测试代码。
-- 默认完成态由主 Agent 基于定向验证与 code-review 决定；final-evidence-gate / verify-ios-build 仅按需补强。
+- 默认完成态由主 Agent 基于定向验证与独立 reviewer subAgent code-review 决定；final-evidence-gate / verify-ios-build 仅按需补强。
 
 输出必须显式包含这些字段：
 - "suggested_validation"

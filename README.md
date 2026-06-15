@@ -78,8 +78,9 @@ ln -s iOSAgentSkills/skills .claude/skills
 
 ```text
 请使用 codex-subagent-orchestration 处理这个 iOS 任务。
-默认按单 Agent 执行并套用 explorer -> builder -> reporter 逻辑角色；
-只有我显式要求 subAgent / parallel agent / delegation 时才调用 ~/.codex/agents 原生 subAgent；
+默认按主 Agent 串行承担 explorer -> builder -> reporter 逻辑角色；
+实现链路收口必须启动独立 reviewer subAgent 执行 code-review，不能由实现 Agent 自审；
+仅当我显式要求 subAgent / parallel agent / delegation、prompt 明确授权或风险需要时，才为 coder / tester 调用 ~/.codex/agents 原生 subAgent；
 若边界不清激活 pm，若需要测试面或失败归因激活 tester。
 目标：<需求>
 上下文：<目录/文件/报错>
@@ -129,16 +130,16 @@ python3 scripts/validate_codex_agent_templates.py config/codex/templates/agents
 
 ## 默认收口与可选证据验证
 
-- 默认完成标准：定向测试或必要验证通过，且 `code-review` 无 blocking findings。
+- 默认完成标准：定向测试或必要验证通过，且独立 reviewer subAgent 执行的 `code-review` 无 blocking findings。
 - 涉及代码改动时，`testing` 默认只执行**最窄定向单测**：优先 `-only-testing` 到单个 test case / test class，其次最小受影响 test file / bundle；真机 / 模拟器验证不属于默认 testing 执行面。
-- 如果当前改动不适合运行测试，`testing` 阶段必须给出 `no_test_reason` 与替代验证依据，然后进入 `code-review`。
+- 如果当前改动不适合运行测试，`testing` 阶段必须给出 `no_test_reason` 与替代验证依据，然后交给独立 reviewer subAgent 执行 `code-review`。
 - 如果当前改动没有可低成本执行的单测路径，`testing` 阶段必须给出 `no_test_reason` 与 `suggested_validation`，且不要自动升级到真机 / 模拟器验证。
-- `code-review` 默认审查本次任务全量差异及本次修改带来的直接影响面，包含 staged、unstaged、untracked 与任务起点基线之后的相关提交。
+- `code-review` 默认审查本次任务全量差异及本次修改带来的直接影响面，包含 staged、unstaged、untracked 与任务起点基线之后的相关提交；用于实现链路收口时必须由未参与实现的独立 reviewer subAgent 执行。
 - `final-evidence-gate` 与 `verify-ios-build` 不再是所有 Apple Xcode 项目改动的强制收尾，仅作为按需补强验证。
 - 执行可选 `xcodebuild` 验证时，仍必须在目标项目根目录的项目环境执行，不能把 sandbox 结果当作完整项目环境证据。
 - 本地所有 `xcodebuild` 命令（含 `-list` / `-showdestinations` / build/test）默认都在非沙盒项目环境执行；同机同仓若存在多个 Codex / Claude CLI 并发处理同一 Xcode 项目，验证型 `xcodebuild` 必须统一经 wrapper 入口执行：优先目标项目根目录的 `codex_verify.sh`，若项目未接入则回退到本机 `~/.codex/bin/codex_verify`。wrapper 会自动接入 shared build-queue daemon，把验证型 `xcodebuild` 串行排队执行，并统一使用 Xcode 系统 DerivedData。
 - 可选完整验证继续遵守既有 Xcode 约束：优先 `.xcworkspace`，优先绑定了单元测试 `*Tests` target / bundle 的 scheme，iOS 路径默认优先已连接真机。验证链路由 wrapper 提交到 daemon；可通过 `codex_verify.sh --queue-status` 查看当前 active job 与 pending jobs。非验证型构建讨论仍以 Xcode 系统 DerivedData 为基线；旧 `XCODE_DERIVED_DATA_*` / `CODEX_DERIVED_DATA_SLOT` 公开配置不再支持。
-- 实现链路默认三步收口：`实现 skill -> testing/定向验证 -> code-review`。
+- 实现链路默认三步收口：`实现 skill -> testing/定向验证 -> reviewer subAgent(code-review)`。
 - 未执行可选完整验证时，交付应说明已执行的定向测试/必要验证、`code-review` 结论与残余风险。
 
 ## 多 Agent 编排锚点
@@ -146,9 +147,9 @@ python3 scripts/validate_codex_agent_templates.py config/codex/templates/agents
 - `codex-subagent-orchestration` 是默认的 iOS 主 Skill 入口；实现、调试、性能、测试、Apple 文档与可选证据验证都应先经过它，再内部路由到对应模块。
 - 编排默认按 `lite` / `standard` / `full` 三档选择角色。
 - 默认先按任务分型器分类，再决定角色激活矩阵（最小集合：`explorer + builder + reporter`）。
-- 默认进入编排入口不等于默认实际 spawn subAgent；只有用户显式要求 subAgent / parallel agent / delegation，或当前 prompt 明确授权时，主 Agent 才可按 `lite` / `standard` / `full` 调用原生 subAgent 工具。未显式授权时按单 Agent 执行，但仍保留实现链路的定向验证 + `code-review` 收口。
-- 即使未使用原生 subAgent 或因工具/策略/写集限制回到单 Agent，实现链路仍必须保留 `testing` 与 `code-review`。
-- 计划模式（`proposed_plan`）输出，只要是实现链路也必须显式包含 `code-review` 审查步骤。
+- 默认进入编排入口不等于默认实际 spawn coder / tester subAgent；只有用户显式要求 subAgent / parallel agent / delegation、当前 prompt 明确授权或风险需要时，主 Agent 才可按 `lite` / `standard` / `full` 调用 coder / tester 原生 subAgent 工具。未显式授权时 coder / tester 可由主 Agent 串行承担，但实现链路的 `code-review` 必须交给独立 reviewer subAgent。
+- 即使 coder / tester 未使用原生 subAgent 或因工具/策略/写集限制回到主 Agent 串行执行，实现链路仍必须保留 `testing` 与独立 reviewer subAgent `code-review`；reviewer subAgent 不可用时只能报告 blocked / pending review。
+- 计划模式（`proposed_plan`）输出，只要是实现链路也必须显式包含独立 reviewer subAgent 执行的 `code-review` 审查步骤。
 - 日志输出默认低 token：只回传关键错误段或最后 80~120 行；长日志写入 `/tmp/*.log`。
 
 ## Harness Workflow 合同（新增）

@@ -105,7 +105,7 @@ When adding `.swift`, `.h`, `.m`, `.mm` files and the project requires headers:
 
 ### Validation Handoff Rules
 
-- SDK architecture changes should route to `testing` for test impact and then `code-review`.
+- SDK architecture changes should route to `testing` for test impact and then independent reviewer subAgent `code-review`; the implementation/design Agent must not self-review.
 - Consumer app integration evidence may require `final-evidence-gate` / `verify-ios-build` only when risk or user request requires it.
 - Distribution, signing, archive, and CI strategy routes to `xcode-build`.
 
@@ -224,7 +224,7 @@ Versioning plan:
 - ...
 Known risks:
 - ...
-Next: testing -> code-review
+Next: testing -> reviewer subAgent(code-review)
 ```
 
 ## Reference Resources

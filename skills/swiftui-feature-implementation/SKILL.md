@@ -107,7 +107,7 @@ When adding `.swift` files and the project requires headers:
 ### Validation Handoff Rules
 
 - Do not jump directly to full build verification by default.
-- Default chain: `swiftui-feature-implementation -> testing/targeted validation -> code-review`.
+- Default chain: `swiftui-feature-implementation -> testing/targeted validation -> reviewer subAgent(code-review)`; the implementation Agent must not self-review.
 - UI-only changes may have no low-cost unit test; in that case `testing` must provide `no_test_reason` and `suggested_validation`.
 - UI smoke, simulator, or device evidence is optional and only used when requested or risk requires it.
 - `final-evidence-gate` / `verify-ios-build` are optional escalation paths.
@@ -257,7 +257,7 @@ Known risks:
 - ...
 Test impact: ...
 No test reason: none | ...
-Next: testing -> code-review
+Next: testing -> reviewer subAgent(code-review)
 ```
 
 ## Reference Resources
@@ -279,5 +279,5 @@ Next: testing -> code-review
 - Business layer, service, navigation wiring: `ios-feature-implementation`.
 - UIKit page implementation: `uikit-feature-implementation`.
 - Visual design system, color, accessibility design guidance: `ui-ux-design-system`.
-- After implementation: `testing` then `code-review`.
+- After implementation: `testing` then independent reviewer subAgent `code-review`.
 - Optional final evidence: `final-evidence-gate` / `verify-ios-build` only when needed.

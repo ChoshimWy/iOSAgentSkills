@@ -114,7 +114,7 @@ When adding `.swift`, `.h`, `.m`, `.mm` files and the project requires headers:
 ### Validation Handoff Rules
 
 - Do not jump directly to full project verification by default.
-- Default chain: `uikit-feature-implementation -> testing/targeted validation -> code-review`.
+- Default chain: `uikit-feature-implementation -> testing/targeted validation -> reviewer subAgent(code-review)`; the implementation Agent must not self-review.
 - UI-only changes may have no low-cost unit test; `testing` must provide `no_test_reason` and `suggested_validation`.
 - Simulator/device UI smoke is optional and only used when user asks or risk requires it.
 - `final-evidence-gate` / `verify-ios-build` are optional escalation paths.
@@ -237,7 +237,7 @@ Known risks:
 - ...
 Test impact: ...
 No test reason: none | ...
-Next: testing -> code-review
+Next: testing -> reviewer subAgent(code-review)
 ```
 
 ## Reference Resources
@@ -253,5 +253,5 @@ Next: testing -> code-review
 - Device automation routes to `ios-automation`.
 - Runtime failures route to `debugging`.
 - Performance profiling routes to `ios-performance`.
-- After implementation, route to `testing` then `code-review`.
+- After implementation, route to `testing` then independent reviewer subAgent `code-review`.
 - Optional final evidence routes to `final-evidence-gate` / `verify-ios-build` only when needed.

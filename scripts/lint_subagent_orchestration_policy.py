@@ -70,9 +70,38 @@ def main() -> int:
         SKILL_ROOT / "references" / "prompt-templates.md",
         SKILL_ROOT / "references" / "role-contracts.md",
         ROOT / "config" / "codex" / "templates" / "agents" / "README.md",
+        ROOT / "config" / "claude-code" / "memory-seed.md",
     ]
     for path in policy_paths:
         require_not_contains(path, FORBIDDEN_AUTO_SUBAGENT_PHRASES, failures)
+
+    stale_review_policy_paths = [
+        ROOT / "skills" / "ios-feature-implementation" / "SKILL.md",
+        ROOT / "skills" / "uikit-feature-implementation" / "SKILL.md",
+        ROOT / "skills" / "swiftui-feature-implementation" / "SKILL.md",
+        ROOT / "skills" / "ios-sdk-architecture" / "SKILL.md",
+        ROOT / "skills" / "ios-performance" / "SKILL.md",
+        ROOT / "skills" / "swiftui-liquid-glass" / "SKILL.md",
+        ROOT / "skills" / "refactoring" / "SKILL.md",
+        ROOT / "skills" / "ios-automation" / "SKILL.md",
+        SKILL_ROOT / "references" / "apple-gate-rules.md",
+        SKILL_ROOT / "references" / "checkpoint-contract.md",
+        ROOT / "config" / "codex" / "templates" / "agents" / "README.md",
+    ]
+    for path in stale_review_policy_paths:
+        require_not_contains(
+            path,
+            [
+                "-> code-review",
+                "then `code-review`",
+                "plus `code-review`",
+                "且 `code-review` 无 blocking findings",
+                "定向验证与 code-review 收口",
+                "只有显式授权原生 subAgent 时才拆成独立 subAgent",
+                "只有我显式要求 subAgent / parallel agent / delegation 时才调用",
+            ],
+            failures,
+        )
 
     require_contains(
         ROOT / "AGENTS.md",
@@ -81,9 +110,9 @@ def main() -> int:
             "iOS 开发任务默认先进入 `codex-subagent-orchestration`",
             "`doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`",
             "默认进入编排入口不等于默认实际 spawn subAgent",
-            "只有用户显式要求 subAgent / parallel agent / delegation",
+            "独立 reviewer subAgent",
             "`explorer + builder + reporter`",
-            "定向验证 + `code-review`",
+            "独立 reviewer subAgent 执行 `code-review`",
             "最窄定向验证",
         ],
         failures,
@@ -93,8 +122,9 @@ def main() -> int:
         [
             "`codex-subagent-orchestration/` —— 默认优先的自适应编排入口",
             "只有用户显式要求 subAgent / parallel agent / delegation",
-            "默认进入编排入口不等于默认实际 spawn subAgent",
-            "`实现 skill -> testing/定向验证 -> code-review`",
+            "默认进入编排入口不等于默认实际 spawn coder / tester subAgent",
+            "`实现 skill -> testing/定向验证 -> reviewer subAgent(code-review)`",
+            "独立 reviewer subAgent 执行的 `code-review` 无 blocking findings",
             "最窄定向单测",
             "80~120 行",
             "image_model = \"gpt-image-2\"",
@@ -108,11 +138,11 @@ def main() -> int:
         ROOT / "skills" / "TAXONOMY.md",
         [
             "iOS 开发任务默认先进入 `codex-subagent-orchestration`",
-            "`实现 skill -> testing/定向验证 -> code-review`",
+            "`实现 skill -> testing/定向验证 -> reviewer subAgent(code-review)`",
             "最窄定向单测",
             "`appleDeveloperDocs`",
             "`lite` / `standard` / `full`",
-            "仅在用户显式要求 subAgent / parallel agent / delegation",
+            "reviewer subAgent 是强制收口角色",
             "需要补强证据时再切 `final-evidence-gate` 或 `verify-ios-build`",
             "保持本地 `:path` 私有库依赖",
         ],
@@ -124,10 +154,10 @@ def main() -> int:
         skill_md,
         [
             "默认优先使用的 iOS 主 Skill 入口",
-            "Native subAgents are used only when explicitly requested",
-            "Use Codex native subAgent tools only when the user explicitly asks",
-            "Default to single Agent execution when native subAgent use is not explicitly authorized",
-            "Single Agent execution must still preserve testing / targeted validation and `code-review` closure",
+            "Coder and tester subAgents are used only when explicitly requested",
+            "always use an independent reviewer subAgent",
+            "Default coder / tester work to the main Agent",
+            "hand off `code-review` to an independent reviewer subAgent",
             "`test_impact` or `no_test_reason`",
             "`blocking_findings`",
             "`suggested_validation`",
@@ -167,8 +197,8 @@ def main() -> int:
                 "iOS 主 Skill 入口",
                 "$codex-subagent-orchestration",
                 "lite / standard / full",
-                "只有用户显式要求 subAgent / parallel agent / delegation",
-                "未显式授权时按单 Agent 执行",
+                "coder / tester 只有在用户显式要求 subAgent / parallel agent / delegation",
+                "实现后的 $code-review 必须交给独立 reviewer subAgent",
             ],
             failures,
         )
@@ -177,10 +207,10 @@ def main() -> int:
     require_contains(
         SKILL_ROOT / "references" / "model-selection.md",
         [
-            "只有用户显式要求 subAgent / parallel agent / delegation",
+            "reviewer subAgent 是强制独立审查角色",
             "截至 2026-06-15",
             "默认 reasoning effort 为 `medium`",
-            "不调用 `spawn_agent`",
+            "不为 coder / tester 调用 `spawn_agent`",
             "继承主 Agent 默认模型",
         ],
         failures,
@@ -188,8 +218,8 @@ def main() -> int:
     require_contains(
         SKILL_ROOT / "references" / "prompt-templates.md",
         [
-            "默认进入 `codex-subagent-orchestration` 不等于默认实际 spawn subAgent",
-            "只有显式授权原生 subAgent",
+            "默认进入 `codex-subagent-orchestration` 不等于默认实际 spawn coder / tester subAgent",
+            "实现链路 reviewer subAgent 始终独立启动",
             "最窄定向单测",
             "code-review 审查（实现链路必选",
             "回线上版本化引用与复测仅在用户明确要求时执行",
@@ -200,9 +230,9 @@ def main() -> int:
         SKILL_ROOT / "references" / "role-contracts.md",
         [
             "默认进入编排入口只做决策",
-            "只有用户显式要求 subAgent / parallel agent / delegation",
+            "reviewer subAgent 必须独立启动",
             "未显式授权",
-            "按单 Agent 执行",
+            "coder / tester 按单 Agent 执行",
             "`blocking_findings: []`",
         ],
         failures,
@@ -210,9 +240,9 @@ def main() -> int:
     require_contains(
         SKILL_ROOT / "references" / "handoff-loop.md",
         [
-            "默认进入 `codex-subagent-orchestration` 不等于默认实际 spawn subAgent",
-            "只有用户显式要求 subAgent / parallel agent / delegation",
-            "按单 Agent 执行",
+            "默认进入 `codex-subagent-orchestration` 不等于默认实际 spawn coder / tester subAgent",
+            "reviewer subAgent 必须独立启动",
+            "coder / tester 本轮按单 Agent 执行",
             "同一类问题最多回写 coder 2 次",
         ],
         failures,

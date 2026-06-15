@@ -46,11 +46,35 @@ def main() -> int:
         SKILL_ROOT / "SKILL.md",
         SKILL_ROOT / "references" / "prompt-templates.md",
         SKILL_ROOT / "references" / "role-contracts.md",
+        SKILL_ROOT / "references" / "apple-gate-rules.md",
+        SKILL_ROOT / "references" / "checkpoint-contract.md",
+        ROOT / "skills" / "ios-feature-implementation" / "SKILL.md",
+        ROOT / "skills" / "uikit-feature-implementation" / "SKILL.md",
+        ROOT / "skills" / "swiftui-feature-implementation" / "SKILL.md",
+        ROOT / "skills" / "ios-sdk-architecture" / "SKILL.md",
+        ROOT / "skills" / "ios-performance" / "SKILL.md",
+        ROOT / "skills" / "swiftui-liquid-glass" / "SKILL.md",
+        ROOT / "skills" / "refactoring" / "SKILL.md",
+        ROOT / "skills" / "ios-automation" / "SKILL.md",
         ROOT / "config" / "codex" / "templates" / "agents" / "README.md",
+        ROOT / "config" / "claude-code" / "memory-seed.md",
     ):
         require_not_contains(
             path,
             ["仓库级显式触发", "自动使用 subAgent", "按档位自动", "默认启用 subAgent 工作流"],
+            failures,
+        )
+        require_not_contains(
+            path,
+            [
+                "-> code-review",
+                "then `code-review`",
+                "plus `code-review`",
+                "且 `code-review` 无 blocking findings",
+                "定向验证与 code-review 收口",
+                "只有显式授权原生 subAgent 时才拆成独立 subAgent",
+                "只有我显式要求 subAgent / parallel agent / delegation 时才调用",
+            ],
             failures,
         )
 
@@ -68,7 +92,7 @@ def main() -> int:
     require_contains(
         ROOT / "README.md",
         [
-            "默认按单 Agent 执行并套用 explorer -> builder -> reporter 逻辑角色",
+            "默认按主 Agent 串行承担 explorer -> builder -> reporter 逻辑角色",
             "任务分型：`doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`",
             "默认先按任务分型器分类",
             "`explorer + builder + reporter`",
@@ -147,7 +171,7 @@ def main() -> int:
             "`code-risky`",
             "## Role Activation Matrix",
             "Default minimum logical role set: `explorer + builder + reporter`",
-            "separate subAgents are started only after explicit authorization",
+            "implementation-chain `reviewer explorer` is a required independent subAgent",
             "Default maximum loop count for the same issue class: 2",
             "`failure_attribution_type`",
             "`acceptance_matrix`",
@@ -165,7 +189,7 @@ def main() -> int:
             "`checkpoint_status`",
             "`first_failure`",
             "`next_action`",
-            "只有用户显式要求 subAgent / parallel agent / delegation",
+            "reviewer subAgent 必须独立启动",
         ],
         failures,
     )
@@ -177,7 +201,7 @@ def main() -> int:
             "`failure_attribution_type`",
             "## reporter",
             "acceptance_matrix",
-            "默认进入 `codex-subagent-orchestration` 不等于默认实际 spawn subAgent",
+            "默认进入 `codex-subagent-orchestration` 不等于默认实际 spawn coder / tester subAgent",
             "next_action 不能是 complete",
         ],
         failures,
@@ -188,7 +212,7 @@ def main() -> int:
         [
             "任务分型器判定",
             "`CP1` 未通过前禁止无必要并行扩散",
-            "默认进入 `codex-subagent-orchestration` 不等于默认实际 spawn subAgent",
+            "默认进入 `codex-subagent-orchestration` 不等于默认实际 spawn coder / tester subAgent",
             "next_action` 只能是 `blocked`",
         ],
         failures,
@@ -226,7 +250,8 @@ def main() -> int:
         [
             "任务分型",
             "默认最小逻辑角色集合：`explorer + builder + reporter`",
-            "只有用户显式要求 subAgent / parallel agent / delegation",
+            "reviewer subAgent 是强制收口角色",
+            "实现链路收口必须启动独立 reviewer subAgent 执行 code-review",
             "统一字段",
         ],
         failures,

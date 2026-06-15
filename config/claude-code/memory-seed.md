@@ -20,10 +20,10 @@
 ## 实现链路（硬约束）
 
 ```
-实现 skill -> testing -> code-review
+实现 skill -> testing -> reviewer subAgent(code-review)
 ```
 
-默认三步收口：实现 -> testing/定向验证 -> code-review；CP3 以定向验证与审查收口为准，final-evidence-gate / verify-ios-build 仅按需补强。
+默认三步收口：实现 -> testing/定向验证 -> reviewer subAgent(code-review)；CP3 以定向验证与审查收口为准，final-evidence-gate / verify-ios-build 仅按需补强。
 - `testing` 默认只执行最窄定向单测：优先 `-only-testing` 到单个 test case / test class，其次最小受影响 test file / bundle。
 - 若没有可低成本执行的单测路径，则记录 `no_test_reason` 与 `suggested_validation`，不自动升级到真机 / 模拟器验证。
 
@@ -68,7 +68,7 @@
 - CP0 Intent Lock — Plan Mode 输出目标 / 范围 / 成功标准 / 档位
 - CP1 Anchor Slice — 首个关键切片验收
 - CP2 Validation Baseline Freeze — 锁定 workspace / scheme / destination
-- CP3 Final Gate — 定向测试/必要验证 + `code-review` 收口；必要时再按需进入 `final-evidence-gate`
+- CP3 Final Gate — 定向测试/必要验证 + 独立 reviewer subAgent `code-review` 收口；必要时再按需进入 `final-evidence-gate`
 
 ## Fail-Fix-Report
 

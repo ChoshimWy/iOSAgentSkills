@@ -61,7 +61,7 @@ def main() -> int:
             path,
             [
                 "最终都必须进入 `final-evidence-gate`",
-                "`实现 skill -> testing -> code-review -> final-evidence-gate`",
+                "`实现 skill -> testing -> reviewer subAgent(code-review) -> final-evidence-gate`",
                 "任务都不算完成",
                 "四步收口",
                 "固定四步",
@@ -74,14 +74,14 @@ def main() -> int:
     require_contains(
         ROOT / "AGENTS.md",
         [
-            "定向验证 + `code-review` 收口",
+            "独立 reviewer subAgent 执行 `code-review`",
             "目标项目根目录的项目环境",
             "完整项目环境证据",
             "Xcode 系统 DerivedData",
             "shared build-queue daemon",
             "--queue-status",
             "最窄定向验证",
-            "`code-review` 无 blocking findings",
+            "独立 reviewer subAgent 执行的 `code-review` 无 blocking findings",
         ],
         failures,
     )
@@ -94,7 +94,7 @@ def main() -> int:
             "shared build-queue daemon",
             "--queue-status",
             "最窄定向单测",
-            "`实现 skill -> testing/定向验证 -> code-review`",
+            "`实现 skill -> testing/定向验证 -> reviewer subAgent(code-review)`",
             "python3 scripts/lint_verify_ios_build_policy.py",
         ],
         failures,
@@ -108,7 +108,7 @@ def main() -> int:
             "`.xcworkspace` 优先",
             "shared build-queue daemon",
             "--queue-status",
-            "`实现 skill -> testing/定向验证 -> code-review`",
+            "`实现 skill -> testing/定向验证 -> reviewer subAgent(code-review)`",
             "`final-evidence-gate` 与 `verify-ios-build` 不再是所有 Apple Xcode 项目改动的强制收尾",
         ],
         failures,

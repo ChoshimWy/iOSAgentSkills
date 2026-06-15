@@ -111,7 +111,7 @@ When adding `.swift`, `.h`, `.m`, `.mm` files and the project requires headers:
 ### Validation Handoff Rules
 
 - Implementation does not directly jump to full verification by default.
-- Default single-Agent chain: `ios-feature-implementation -> testing/targeted validation -> code-review`.
+- Default main-Agent implementation chain: `ios-feature-implementation -> testing/targeted validation -> reviewer subAgent(code-review)`; the implementation Agent must not self-review.
 - `testing` should run or suggest the narrowest useful validation.
 - If no low-cost test exists, `testing` must provide `no_test_reason` and `suggested_validation`.
 - `final-evidence-gate` / `verify-ios-build` are optional escalation paths only when user asks or evidence/risk requires it.
@@ -241,7 +241,7 @@ Known risks:
 - ...
 Test impact: ...
 No test reason: none | ...
-Next: testing -> code-review
+Next: testing -> reviewer subAgent(code-review)
 ```
 
 ## Reference Resources
@@ -255,7 +255,7 @@ Next: testing -> code-review
 - SwiftUI page work routes to `swiftui-feature-implementation`.
 - UIKit page work routes to `uikit-feature-implementation`.
 - Advanced Swift design routes to `swift-expert`.
-- After implementation, route to `testing` then `code-review` by default.
+- After implementation, route to `testing` then independent reviewer subAgent `code-review` by default; the implementation Agent must not self-review.
 - Optional final evidence routes to `final-evidence-gate` / `verify-ios-build` only when required.
 - Build configuration routes to `xcode-build`.
 - Device automation routes to `ios-automation`.

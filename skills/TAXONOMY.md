@@ -12,20 +12,20 @@
 
 ## 严格路由总则
 - iOS 开发任务默认先进入 `codex-subagent-orchestration`；由主入口决定单 Agent 还是 `lite` / `standard` / `full` 编排，再按需路由到实现、测试、审查与验证模块。
-- 默认完成标准：定向测试或必要验证通过，且 `code-review` 无 blocking findings。
+- 默认完成标准：定向测试或必要验证通过，且独立 reviewer subAgent 执行的 `code-review` 无 blocking findings。
 - 涉及代码改动时，`testing` 默认只执行**最窄定向单测**：优先 `-only-testing` 到单个 test case / test class，其次最小受影响 test file / bundle；真机 / 模拟器验证不属于默认 testing 执行面。
-- 如果当前改动不适合运行测试，`testing` 阶段必须给出 `no_test_reason` 与替代验证依据，然后进入 `code-review`。
+- 如果当前改动不适合运行测试，`testing` 阶段必须给出 `no_test_reason` 与替代验证依据，然后交给独立 reviewer subAgent 执行 `code-review`。
 - 如果当前改动没有可低成本执行的单测路径，`testing` 阶段必须给出 `no_test_reason` 与 `suggested_validation`，且不要自动升级到真机 / 模拟器验证。
-- `code-review` 默认审查本次任务全量差异及本次修改带来的直接影响面，包含 staged、unstaged、untracked 与任务起点基线之后的相关提交。
+- `code-review` 默认审查本次任务全量差异及本次修改带来的直接影响面，包含 staged、unstaged、untracked 与任务起点基线之后的相关提交；用于实现链路收口时必须由未参与实现的独立 reviewer subAgent 执行，同一 Agent 自审无效。
 - 私有库 / 私有组件改动默认要求主项目切回或保持本地 `:path` 私有库依赖进行开发与验证；未收到明确指令前，不把验证基线切到线上版本化依赖或 `Pods/` vendored snapshot。
 - `final-evidence-gate` 与 `verify-ios-build` 不再是所有 Apple Xcode 项目改动的强制收尾，仅作为用户显式要求、发布前自检或高风险场景的按需补强验证。
 - 执行可选 `xcodebuild` 验证时，证据必须来自目标项目根目录的项目环境，而不是 sandbox 结果；同时继续遵守 `.xcworkspace` 优先、优先选择绑定了单元测试 `*Tests` target / bundle 的 scheme、iOS 默认优先已连接真机约束。验证链路默认由 wrapper 接入 shared build-queue daemon，统一串行执行验证型 `xcodebuild`，并复用 Xcode 系统 DerivedData。
 - 本地执行 `xcodebuild`（含 `-list` / `-showdestinations` / build/test）默认都走非沙盒项目环境；同机同仓如果有多个 Codex / Claude CLI 并发处理同一 Xcode 项目，项目环境验证必须统一经 wrapper 入口执行：优先目标项目根目录的 `codex_verify.sh`，若项目未接入则回退到本机 `~/.codex/bin/codex_verify`。可通过 `--queue-status` 查看 daemon 当前 active job 与 pending jobs；旧 `XCODE_DERIVED_DATA_*` / `CODEX_DERIVED_DATA_SLOT` 公开配置不再支持。
-- 主入口 `codex-subagent-orchestration` 负责自适应编排：先按 `lite` / `standard` / `full` 选择角色，再协调编码、调试、性能、测试、审查与按需验证；构建、测试、自动化、截图与日志优先切 `ios-automation`、`xcode-build`、`testing`，需要补强证据时再切 `final-evidence-gate` 或 `verify-ios-build`。
+- 主入口 `codex-subagent-orchestration` 负责自适应编排：先按 `lite` / `standard` / `full` 选择角色，再协调编码、调试、性能、测试、审查与按需验证；实现链路的审查角色必须独立启动 reviewer subAgent；构建、测试、自动化、截图与日志优先切 `ios-automation`、`xcode-build`、`testing`，需要补强证据时再切 `final-evidence-gate` 或 `verify-ios-build`。
 - 低 token 验证链路默认优先切 `ios-verification-router` 做验证级别分流；涉及测试选择时切 `ios-affected-tests`；构建失败归因时切 `ios-build-log-digest`，优先消费 `diagnostics.json`，禁止默认读取完整 raw build log。
 - 多 Agent 编排默认遵守 checkpoint 合同：`CP0` / `CP1` / `CP2` / `CP3`。
 - 多 Agent 编排默认遵守 `fail-fix-report`：先定位失败、修复并重跑，再汇报。
-- 如果当前任务未进入 `codex-subagent-orchestration`，或当前轮只能以单 Agent 执行，实现型任务默认三步收口：`实现 skill -> testing/定向验证 -> code-review`。
+- 如果当前任务未进入 `codex-subagent-orchestration`，或 coder / tester 只能由主 Agent 串行承担，实现型任务仍必须三步收口：`实现 skill -> testing/定向验证 -> reviewer subAgent(code-review)`；若 reviewer subAgent 不可用，只能报告 blocked / pending review，不能降级为实现者自审。
 - Apple API / availability / WWDC 问题优先在主 Skill 内部路由到 `apple-docs` 并使用 `appleDeveloperDocs`。
 
 ## 边界优先级
@@ -46,7 +46,7 @@
 | `ios-feature-implementation` | 默认 iOS feature 实现技能 | service / repository / use case / view model / 导航接线 / async 流程 | UIKit/SwiftUI 专项页面实现、构建配置、自动化、性能 profiling、官方文档检索 | `swiftui-feature-implementation`、`uikit-feature-implementation`、`swift-expert`、`xcode-build`、`ios-performance` |
 | `swiftui-feature-implementation` | SwiftUI 页面统一入口（模式选型 + 实现 + 重构） | 新页面模式选型、常规 SwiftUI 落地、已有大 view 重构 | Liquid Glass 专项、性能取证、通用非 SwiftUI 重构 | `ios-feature-implementation`、`ios-performance`、`refactoring` |
 | `uikit-feature-implementation` | 普通 UIKit 落地实现 | ViewController / UIView / 布局 / 列表 / 页面交互接入 | 通用业务建模、SwiftUI、构建配置、自动化 | `ios-feature-implementation`、`xcode-build`、`debugging`、`ios-performance` |
-| `codex-subagent-orchestration` | 默认 iOS 主 Skill 入口 | 所有 iOS 开发任务的统一入口；先按 `lite` / `standard` / `full` 做编排决策，再内部路由到实现 / 调试 / 性能 / 测试 / 审查 / 按需验证模块；仅在用户显式要求 subAgent / parallel agent / delegation 或当前 prompt 明确授权时才实际调用原生 subAgent | 只做一次纯文档型低频任务；或未显式授权原生 subAgent、运行时工具不可用、策略禁止、本轮写集不适合并行时的单 Agent 执行 | `ios-feature-implementation`、`debugging`、`ios-performance`、`code-review`、`testing`、`final-evidence-gate`、`verify-ios-build` |
+| `codex-subagent-orchestration` | 默认 iOS 主 Skill 入口 | 所有 iOS 开发任务的统一入口；先按 `lite` / `standard` / `full` 做编排决策，再内部路由到实现 / 调试 / 性能 / 测试 / 审查 / 按需验证模块；coder / tester 仅在显式授权或明确需要时才实际调用原生 subAgent，但实现后的 reviewer subAgent 是强制收口角色 | 只做一次纯文档型低频任务；或运行时工具不可用、策略禁止导致 reviewer subAgent 无法启动时，需要报告 blocked / pending review | `ios-feature-implementation`、`debugging`、`ios-performance`、`code-review`、`testing`、`final-evidence-gate`、`verify-ios-build` |
 
 ## Automation / Build / Validation
 
@@ -64,7 +64,7 @@
 
 | Skill | 角色 | 主触发场景 | 不要触发的场景 | 切换到 |
 | --- | --- | --- | --- | --- |
-| `code-review` | 静态审查 | review 代码、PR diff、public API 评审 | 直接实现修复、运行时定位 | `debugging`、`ios-performance`、`ios-sdk-architecture` |
+| `code-review` | 静态审查 | review 代码、PR diff、public API 评审；默认由独立 reviewer subAgent 执行 | 直接实现修复、运行时定位 | `debugging`、`ios-performance`、`ios-sdk-architecture` |
 | `debugging` | 运行时排障 | crash、异常、未释放、符号化栈、LLDB 定位 | 纯静态审查、性能分析与 benchmark、构建配置设计 | `code-review`、`ios-performance`、`xcode-build` |
 | `ios-build-log-digest` | 低 token 构建失败归因 | `xcodebuild` / build-queue 失败后读取 `diagnostics.json` / `build-summary.txt`，只定位第一个真实 blocking error | 纯运行时 crash、用户明确要求分析完整 raw log、非构建类业务问题 | `debugging`、`xcode-build`、`ios-verification-router` |
 | `ios-performance` | 性能分析与测试 | 掉帧、启动慢、CPU / 内存异常、性能回归基线、`measure(metrics:)`、`xctrace`、Instruments | 通用业务实现、普通单元/UI 测试补齐、泛化 crash 排查 | `testing`、`debugging`、`swift-expert` |

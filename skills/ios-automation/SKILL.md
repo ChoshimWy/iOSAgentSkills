@@ -285,7 +285,7 @@ Next action: none | route-xcode-build | route-debugging | blocked
 ## Optional Evidence Verification
 
 - `ios-automation` is not the default final validation step for all code changes.
-- Default closure remains targeted testing / necessary validation plus `code-review`.
+- Default closure remains targeted testing / necessary validation plus independent reviewer subAgent `code-review`.
 - Use automation only when user asks, UI/device evidence is needed, or the main Agent decides device-level evidence is required.
 - If full project-environment build evidence is needed, use `final-evidence-gate` / `verify-ios-build`.
 - Any optional full verification evidence must come from target project root, not sandbox-only results.

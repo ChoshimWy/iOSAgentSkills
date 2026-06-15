@@ -1,4 +1,4 @@
 interface:
   display_name: "iOS SDK 架构设计"
   short_description: "设计 iOS SDK / Framework 边界、公共 API、配置、测试与分发策略"
-  default_prompt: "使用 $ios-sdk-architecture 设计 iOS SDK / Framework 的模块边界、公共 API、入口类、Configuration、可测试架构和分发策略；若任务产出修改了 Apple Xcode 项目相关内容，默认以定向测试/必要验证与 $code-review 放行为收口；$final-evidence-gate / $verify-ios-build 仅在用户显式要求或需要补强完整项目环境证据时按需使用。"
+  default_prompt: "使用 $ios-sdk-architecture 设计 iOS SDK / Framework 的模块边界、公共 API、入口类、Configuration、可测试架构和分发策略；若任务产出修改了 Apple Xcode 项目相关内容，默认以定向测试/必要验证与独立 reviewer subAgent 执行的 $code-review 放行为收口；$final-evidence-gate / $verify-ios-build 仅在用户显式要求或需要补强完整项目环境证据时按需使用。"

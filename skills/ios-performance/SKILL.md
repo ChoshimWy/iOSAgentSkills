@@ -1,6 +1,6 @@
 ---
 name: ios-performance
-description: iOS 性能分析与测试技能。只在需要处理 UIKit / SwiftUI 的掉帧、启动慢、CPU / 内存压力、性能回归基线、`measure(metrics:)`、`xctrace` 或 Instruments 取证时使用；如果问题核心是 crash、异常、对象未释放根因、纯静态审查或普通单元/UI 测试补齐，不要把它当作主 skill；若任务产出修改了 Apple Xcode 项目相关内容，默认以定向测试/必要验证与 `code-review` 放行为收口；`final-evidence-gate` / `verify-ios-build` 仅在用户显式要求或需要补强完整项目环境证据时按需使用。
+description: iOS 性能分析与测试技能。只在需要处理 UIKit / SwiftUI 的掉帧、启动慢、CPU / 内存压力、性能回归基线、`measure(metrics:)`、`xctrace` 或 Instruments 取证时使用；如果问题核心是 crash、异常、对象未释放根因、纯静态审查或普通单元/UI 测试补齐，不要把它当作主 skill；若任务产出修改了 Apple Xcode 项目相关内容，默认以定向测试/必要验证与独立 reviewer subAgent `code-review` 放行为收口；`final-evidence-gate` / `verify-ios-build` 仅在用户显式要求或需要补强完整项目环境证据时按需使用。
 ---
 
 # iOS 性能分析与测试
@@ -35,7 +35,7 @@ Analyze and improve iOS performance issues using the smallest credible evidence 
 - Distinguish baseline design from runtime evidence collection.
 - Prefer Release configuration and stable device / OS baselines for comparison.
 - Output should include symptom, evidence, hypothesis, optimization direction, and validation method.
-- If code changes are produced, final closure still follows targeted validation / necessary verification plus `code-review`.
+- If code changes are produced, final closure still follows targeted validation / necessary verification plus independent reviewer subAgent `code-review`; the implementation Agent must not self-review.
 
 ## Inputs
 

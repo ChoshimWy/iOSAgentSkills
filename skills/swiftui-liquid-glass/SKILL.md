@@ -1,6 +1,6 @@
 ---
 name: swiftui-liquid-glass
-description: 使用 iOS 26+ 的 Liquid Glass API 构建、审查或改进 SwiftUI 功能。只在问题核心是 `glassEffect`、`GlassEffectContainer`、玻璃按钮样式与兼容性回退时使用；不要把它当作通用 SwiftUI 页面模式、跨技术栈视觉设计、普通页面落地或性能审计技能；若任务产出修改了 Apple Xcode 项目相关内容，默认以定向测试/必要验证与 `code-review` 放行为收口；`final-evidence-gate` / `verify-ios-build` 仅在用户显式要求或需要补强完整项目环境证据时按需使用。
+description: 使用 iOS 26+ 的 Liquid Glass API 构建、审查或改进 SwiftUI 功能。只在问题核心是 `glassEffect`、`GlassEffectContainer`、玻璃按钮样式与兼容性回退时使用；不要把它当作通用 SwiftUI 页面模式、跨技术栈视觉设计、普通页面落地或性能审计技能；若任务产出修改了 Apple Xcode 项目相关内容，默认以定向测试/必要验证与独立 reviewer subAgent `code-review` 放行为收口；`final-evidence-gate` / `verify-ios-build` 仅在用户显式要求或需要补强完整项目环境证据时按需使用。
 ---
 
 # SwiftUI Liquid Glass
@@ -34,7 +34,7 @@ Implement, review, or refine SwiftUI Liquid Glass usage on iOS 26+ with explicit
 - Prefer `glassEffect`, `GlassEffectContainer`, `.buttonStyle(.glass)`, and `.buttonStyle(.glassProminent)` where semantically appropriate.
 - Always provide compatibility fallback for non-iOS 26 paths when relevant.
 - Review should cover fallback completeness, modifier ordering, interactive-only usage, and hierarchy consistency.
-- If code changes are produced, final closure follows targeted validation / necessary verification plus `code-review`.
+- If code changes are produced, final closure follows targeted validation / necessary verification plus independent reviewer subAgent `code-review`; the implementation Agent must not self-review.
 
 ## Inputs
 

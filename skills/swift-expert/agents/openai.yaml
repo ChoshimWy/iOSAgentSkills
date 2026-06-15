@@ -1,4 +1,4 @@
 interface:
   display_name: "Swift 进阶开发"
   short_description: "处理复杂 Swift 并发隔离、类型擦除与可用性策略设计"
-  default_prompt: "使用 $swift-expert 处理复杂 Swift 并发隔离、类型擦除、协议族设计和跨平台可用性策略问题；若任务产出修改了 Apple Xcode 项目相关内容，默认以定向测试/必要验证与 $code-review 放行为收口；$final-evidence-gate / $verify-ios-build 仅在用户显式要求或需要补强完整项目环境证据时按需使用。"
+  default_prompt: "使用 $swift-expert 处理复杂 Swift 并发隔离、类型擦除、协议族设计和跨平台可用性策略问题；若任务产出修改了 Apple Xcode 项目相关内容，默认以定向测试/必要验证与独立 reviewer subAgent 执行的 $code-review 放行为收口；$final-evidence-gate / $verify-ios-build 仅在用户显式要求或需要补强完整项目环境证据时按需使用。"

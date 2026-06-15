@@ -1,7 +1,7 @@
 # Apple/Xcode 项目可选证据验证规则
 
 ## 固定原则
-- 默认完成标准是定向测试或必要验证通过，且 `code-review` 无 blocking findings。
+- 默认完成标准是定向测试或必要验证通过，且独立 reviewer subAgent 执行的 `code-review` 无 blocking findings；reviewer subAgent 不可用时只能 blocked / pending review。
 - 涉及代码改动时，`testing` 默认只执行最窄定向单测；真机 / 模拟器验证不属于默认 testing 执行面。
 - `final-evidence-gate` / `verify-ios-build` 仅作为按需补强验证，由主 Agent 在用户显式要求、发布前自检或高风险时执行。
 - 如果可选证据验证或升级验证需要越过 sandbox，由主 Agent 使用 `functions.exec_command` 并按需设置 `sandbox_permissions="require_escalated"`。

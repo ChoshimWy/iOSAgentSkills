@@ -1,6 +1,6 @@
 ---
 name: refactoring
-description: 通用代码重构技能。用于处理长方法、重复代码、深层嵌套、回调地狱、God Object 等通用代码异味；如果目标是已有 SwiftUI 视图文件的结构化整理，应优先使用 `swiftui-feature-implementation`；若任务产出修改了 Apple Xcode 项目相关内容，默认以定向测试/必要验证与 `code-review` 放行为收口；`final-evidence-gate` / `verify-ios-build` 仅在用户显式要求或需要补强完整项目环境证据时按需使用。
+description: 通用代码重构技能。用于处理长方法、重复代码、深层嵌套、回调地狱、God Object 等通用代码异味；如果目标是已有 SwiftUI 视图文件的结构化整理，应优先使用 `swiftui-feature-implementation`；若任务产出修改了 Apple Xcode 项目相关内容，默认以定向测试/必要验证与独立 reviewer subAgent `code-review` 放行为收口；`final-evidence-gate` / `verify-ios-build` 仅在用户显式要求或需要补强完整项目环境证据时按需使用。
 ---
 
 # 代码重构
@@ -34,7 +34,7 @@ Refactor general-purpose code smells with minimal behavior change, small safe st
 - Do not mix feature work into refactoring-only changes.
 - Move in small steps and preserve or improve the validation story.
 - Prefer seams that improve readability, ownership, and testability without over-abstracting.
-- If code changes are produced, final closure follows targeted validation / necessary verification plus `code-review`.
+- If code changes are produced, final closure follows targeted validation / necessary verification plus independent reviewer subAgent `code-review`; the refactoring Agent must not self-review.
 
 ## Inputs
 

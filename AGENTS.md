@@ -24,10 +24,10 @@
 - `doc-only` / `rule-only` 任务：直接修改目标文档或规则文件，并检查相关引用是否仍一致。
 - iOS 开发任务默认先进入 `codex-subagent-orchestration`；由主入口按任务分型器归类为 `doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`，再决定单 Agent 还是 `lite` / `standard` / `full` 编排，并按需路由到实现、测试、审查与验证模块。
 - 使用任何 Skill 前，必须先输出 `>>> Skill: <skill-name>` 声明即将使用的 skill，让用户明确知道当前路由到了哪个 skill。
-- 默认进入编排入口不等于默认实际 spawn subAgent；只有用户显式要求 subAgent / parallel agent / delegation，或当前 prompt 明确授权时，才调用 Codex 原生 subAgent。未显式授权时按单 Agent 执行，但仍保留实现链路的定向验证 + `code-review` 收口。
-- 默认逻辑角色集合为 `explorer + builder + reporter`；这些角色默认可由主 Agent 串行承担，只有显式授权原生 subAgent 时才拆成独立 subAgent。
-- 实现型任务默认三步收口：主入口 Skill / 实现 Skill -> 定向验证 -> `code-review`。
-- 审查型任务默认优先输出 blocking findings；没有阻塞项时要明确说明无 blocking findings，并指出剩余风险或验证缺口。
+- 默认进入编排入口不等于默认实际 spawn subAgent；coder / tester 默认仍可由主 Agent 串行承担，但实现后的 `code-review` 必须交给独立 reviewer subAgent，避免同一 Agent 实现后自审。若 reviewer subAgent 不可用，本次实现任务不得宣告完成，必须报告 blocked / pending review。
+- 默认逻辑角色集合为 `explorer + builder + reporter`；这些角色默认可由主 Agent 串行承担，但实现链路的 reviewer 是强制独立角色，必须由未参与实现的 reviewer subAgent 执行。
+- 实现型任务默认三步收口：主入口 Skill / 实现 Skill -> 定向验证 -> 独立 reviewer subAgent 执行 `code-review`。
+- 审查型任务默认交给独立 reviewer subAgent 执行并优先输出 blocking findings；没有阻塞项时要明确说明无 blocking findings，并指出剩余风险或验证缺口。
 - 高风险任务才升级更强验证；不要把完整 build、Archive、真机验证或 FULL verification 当成默认收尾动作。
 - 路由细节、验证升级条件和 Skill 切换规则以下游 Skill 与 `skills/TAXONOMY.md` 为准。
 
@@ -103,5 +103,5 @@ python scripts/lint_skill_schema.py --strict
 ## 完成标准
 
 - `doc-only` / `rule-only` 任务：内容已更新，交叉引用一致，无多余改动。
-- 实现任务：已完成定向测试或必要验证，且 `code-review` 无 blocking findings；如无法测试，已明确 `no_test_reason` 与替代验证建议。
+- 实现任务：已完成定向测试或必要验证，且独立 reviewer subAgent 执行的 `code-review` 无 blocking findings；如无法测试，已明确 `no_test_reason` 与替代验证建议。
 - 最终回复默认包含：改了什么、如何验证、仍有哪些已知风险或后续动作。

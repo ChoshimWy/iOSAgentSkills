@@ -27,7 +27,7 @@
 
 ### 不负责
 - 最终完成态裁决
-- 默认收口为定向验证 + `code-review`；`final-evidence-gate` / `verify-ios-build` 按需升级
+- 默认收口为定向验证 + 独立 reviewer subAgent `code-review`；`final-evidence-gate` / `verify-ios-build` 按需升级
 - 静态代码审查结论
 
 ## reviewer explorer
@@ -50,6 +50,8 @@
 - `next_action`
 
 ### 额外要求
+- 必须由未参与本轮实现的独立 reviewer subAgent 执行；同一 Agent 实现后自审无效
+- 如果 reviewer subAgent 无法启动，返回 `next_action: blocked` 并声明 `first_failure: reviewer subAgent unavailable`
 - `blocking_findings` 只放真实阻塞项
 - 若无阻塞项，写 `blocking_findings: []`，不要展开长解释
 - `review_scope` 必须说明基线与纳入审查的 staged / unstaged / untracked / 提交范围
@@ -123,11 +125,11 @@
 ## main agent
 
 ### 固定职责
-- 默认先选择 `lite` / `standard` / `full` 档位；默认进入编排入口只做决策，只有用户显式要求 subAgent / parallel agent / delegation 或当前 prompt 明确授权时才按档位启动原生 subAgent 角色
-- 显式授权时才启动与回收 subAgent；未显式授权、工具不可用、策略禁止或写集不适合并行时按单 Agent 执行并说明原因
+- 默认先选择 `lite` / `standard` / `full` 档位；默认进入编排入口只做决策，coder / tester 只有在用户显式要求 subAgent / parallel agent / delegation、当前 prompt 明确授权或风险需要时才按档位启动原生 subAgent 角色；实现链路的 reviewer subAgent 必须独立启动
+- 显式授权时才启动与回收 coder / tester subAgent；未显式授权、工具不可用、策略禁止或写集不适合并行时 coder / tester 按单 Agent 执行并说明原因；reviewer subAgent 不可用时不得降级自审，必须报告 blocked / pending review
 - 聚合 coder / reviewer / tester 输出
 - 精确回写 coder
-- 执行默认收口为定向验证 + `code-review`；`final-evidence-gate` / `verify-ios-build` 按需升级
+- 执行默认收口为定向验证 + 独立 reviewer subAgent `code-review`；`final-evidence-gate` / `verify-ios-build` 按需升级
 - 判定任务完成 / 未完成 / 阻塞
 
 ### 固定输出（汇总态）

@@ -2,7 +2,7 @@
 
 ## subAgent 模型分工（可选，但推荐）
 
-只有用户显式要求 subAgent / parallel agent / delegation，或当前 prompt 明确授权时才调用原生 subAgent；调用后默认让 subAgent 继承主 Agent 的模型配置。当用户明确要求模型分工、任务风险需要或预算/吞吐目标明确时，主 Agent 才在 `spawn_agent` 参数里按角色指定 `model` / `reasoning_effort`：
+coder / tester 只有在用户显式要求 subAgent / parallel agent / delegation、当前 prompt 明确授权或风险需要时才调用原生 subAgent；实现链路的 `code-review` 必须调用独立 reviewer subAgent；调用后默认让 subAgent 继承主 Agent 的模型配置。当用户明确要求模型分工、任务风险需要或预算/吞吐目标明确时，主 Agent 才在 `spawn_agent` 参数里按角色指定 `model` / `reasoning_effort`：
 
 - coder：强模型
 - reviewer：快模型
@@ -11,7 +11,7 @@
 说明：
 - 这里不写死具体模型名；由主 Agent 按当前运行时可用模型选择。
 - 不传 `model` 时，subAgent 会继承主 Agent 默认模型。
-- 默认进入 `codex-subagent-orchestration` 不等于默认实际 spawn subAgent；只有显式授权原生 subAgent 时，主 Agent 才可按 `lite` / `standard` / `full` 启动合适角色。
+- 默认进入 `codex-subagent-orchestration` 不等于默认实际 spawn coder / tester subAgent；只有显式授权、prompt 授权或风险需要时，主 Agent 才可按 `lite` / `standard` / `full` 启动 coder / tester；实现链路 reviewer subAgent 始终独立启动。
 
 ## coder worker
 
@@ -37,7 +37,7 @@
 ## reviewer explorer
 
 ```text
-你是 reviewer explorer。请只做静态读审，不要改代码。
+你是独立 reviewer explorer。请只做静态读审，不要改代码；你没有参与本轮实现，必须以审查者视角验证 diff 与验证故事。
 
 请重点检查：
 - 本次任务全量差异：staged、unstaged、untracked，以及 `review_base_ref` 之后的相关提交
@@ -140,7 +140,7 @@
    同时先给任务分型：`doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`
 2. coder worker（按需）：实现任务与 ownership
 3. testing（实现链路必选；可由 tester explorer 或主 Agent 承担）：suggested_validation / executed_validation / failure_attribution / needs_test_code
-4. code-review 审查（实现链路必选；可由 reviewer explorer 或主 Agent 承担）：blocking_findings / non_blocking_findings
+4. code-review 审查（实现链路必选；必须由未参与实现的 reviewer explorer subAgent 执行，主 Agent 不得自审）：blocking_findings / non_blocking_findings
 5. reporter（按需）：acceptance_matrix（需求项/证据/状态）
 6. 主 Agent 聚合：回写规则、回环（默认最多 2 轮）、何时 blocked
 7. 可选补强验证：用户显式要求或高风险时，按需执行 `final-evidence-gate` / `verify-ios-build`
