@@ -85,9 +85,6 @@ def main() -> int:
             "`explorer + builder + reporter`",
             "定向验证 + `code-review`",
             "最窄定向验证",
-            "model = \"gpt-5.5\"",
-            "image_model = \"gpt-image-2\"",
-            "model_reasoning_effort = \"medium\"",
         ],
         failures,
     )

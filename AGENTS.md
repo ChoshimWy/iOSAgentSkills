@@ -31,12 +31,6 @@
 - 高风险任务才升级更强验证；不要把完整 build、Archive、真机验证或 FULL verification 当成默认收尾动作。
 - 路由细节、验证升级条件和 Skill 切换规则以下游 Skill 与 `skills/TAXONOMY.md` 为准。
 
-## Codex 共享配置基线
-
-- 截至 2026-06-15，本仓共享 Codex 配置保留 `model = "gpt-5.5"`、`image_model = "gpt-image-2"`、`features.multi_agent = true` 与 `[agents] max_threads/max_depth`。
-- `image_model = "gpt-image-2"` 是本仓共享配置基线，用于对齐 Codex 内置 image generation 使用 `gpt-image-2` 的行为；不要把它表述为官方 config reference 已公开稳定字段。
-- 默认 `model_reasoning_effort = "medium"` / `plan_mode_reasoning_effort = "medium"` 以匹配低 token 目标；高难任务可通过 profile 或临时配置升到 `xhigh`。
-
 ## Apple 平台工程规则
 
 - 当任务与 iOS、macOS、watchOS、tvOS、visionOS、Swift、Objective-C、Xcode、SwiftUI、UIKit、AppKit、Foundation、Swift Package Manager、CocoaPods、Tuist、签名、打包、测试或性能相关时，默认提供专家级 Apple 平台工程指导。

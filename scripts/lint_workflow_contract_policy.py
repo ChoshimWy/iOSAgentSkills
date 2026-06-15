@@ -61,9 +61,6 @@ def main() -> int:
             "`doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`",
             "`explorer + builder + reporter`",
             "默认进入编排入口不等于默认实际 spawn subAgent",
-            "model = \"gpt-5.5\"",
-            "image_model = \"gpt-image-2\"",
-            "model_reasoning_effort = \"medium\"",
         ],
         failures,
     )
