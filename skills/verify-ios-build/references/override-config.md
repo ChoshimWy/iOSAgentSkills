@@ -37,7 +37,8 @@ XCODE_UI_SMOKE_SPEC=".codex/ui-smoke.yml"
 - 默认不做 `clean build`
 - 可选验证仍必须在目标项目根目录的项目环境执行；`.codex/xcodebuild.env` 只负责补充参数，不会把最终验证降级成沙箱构建
 - `codex_verify.sh` / `~/.codex/bin/codex_verify` 负责接入 shared build-queue daemon 与验证入口控制；workspace / scheme / destination 仍由本文件与脚本默认策略决定
-- 本地执行 `xcodebuild`（含 `-list` / `-showdestinations` / build/test）默认在项目环境直接执行（CC 使用 `Bash` 工具；Codex 使用 `functions.exec_command` + `require_escalated`）
+- 本地需要执行 `xcodebuild` 参数探测或验证（含 `-list` / `-showdestinations` / build/test）时，默认在项目环境由主 Agent 通过 wrapper 执行（CC 使用 `Bash` 工具启动 `codex_verify.sh` / `~/.codex/bin/codex_verify`；Codex 使用 `functions.exec_command` + `require_escalated` 启动同一 wrapper）；不得直接调用 `xcodebuild` 二进制
+- 如果 `--queue-status`、wrapper 输出或 `build.db is locked` 表明已有其他 Agent 正在执行验证，当前 Agent 默认应等待 shared build-queue daemon，或把本轮标记为 `env_issue` / `blocked`；不要切到单独 `-derivedDataPath` 跑同一组验证来绕过锁
 - iOS 工程默认优先真机校验；如果未设置 `XCODE_DESTINATION`，脚本会先尝试“已连接真机”，找不到连接中的真机时自动回退到 `generic/platform=iOS Simulator`
 - macOS Xcode 工程在未显式指定 destination 时走宿主机 `xcodebuild build`
 - `XCODE_DEVICE_ID`、`XCODE_DEVICE_NAME`、`XCODE_PREFER_MODEL` 只影响“已连接真机”的自动选择与 simulator → 真机回退阶段

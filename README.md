@@ -139,7 +139,8 @@ python3 scripts/validate_codex_agent_templates.py config/codex/templates/agents
 - `code-review` 默认审查本次任务全量差异及本次修改带来的直接影响面，包含 staged、unstaged、untracked 与任务起点基线之后的相关提交；用于实现链路收口时必须由未参与实现的独立 reviewer subAgent 执行。
 - `final-evidence-gate` 与 `verify-ios-build` 不再是所有 Apple Xcode 项目改动的强制收尾，仅作为按需补强验证。
 - 执行可选 `xcodebuild` 验证时，仍必须在目标项目根目录的项目环境执行，不能把 sandbox 结果当作完整项目环境证据。
-- 本地所有 `xcodebuild` 命令（含 `-list` / `-showdestinations` / build/test）默认都在非沙盒项目环境执行；同机同仓若存在多个 Codex / Claude CLI 并发处理同一 Xcode 项目，验证型 `xcodebuild` 必须统一经 wrapper 入口执行：优先目标项目根目录的 `codex_verify.sh`，若项目未接入则回退到本机 `~/.codex/bin/codex_verify`。wrapper 会自动接入 shared build-queue daemon，把验证型 `xcodebuild` 串行排队执行，并统一使用 Xcode 系统 DerivedData。
+- 本地所有 `xcodebuild` 参数探测与验证需求（含 `-list` / `-showdestinations` / build/test）默认都在非沙盒项目环境通过 wrapper 执行：由主 Agent 使用 `functions.exec_command` 启动目标项目根目录的 `codex_verify.sh`，若项目未接入则回退到本机 `~/.codex/bin/codex_verify`。不得直接调用 `xcodebuild` 二进制，也不要让多个 Agent 各自裸跑 `xcodebuild`；wrapper 会自动接入 shared build-queue daemon，把验证型 `xcodebuild` 串行排队执行，并统一使用 Xcode 系统 DerivedData。
+- 如果 `--queue-status`、wrapper 输出或错误信息表明已有其他 Agent 正在执行验证，当前 Agent 应等待 shared build-queue daemon 完成当前任务，或把本轮标记为 `env_issue` / `blocked`；不要为了绕过同一个 `build.db` 锁而切到单独 `-derivedDataPath` 跑同一组最窄测试。
 - 可选完整验证继续遵守既有 Xcode 约束：优先 `.xcworkspace`，优先绑定了单元测试 `*Tests` target / bundle 的 scheme，iOS 路径默认优先已连接真机。验证链路由 wrapper 提交到 daemon；可通过 `codex_verify.sh --queue-status` 查看当前 active job 与 pending jobs。非验证型构建讨论仍以 Xcode 系统 DerivedData 为基线；旧 `XCODE_DERIVED_DATA_*` / `CODEX_DERIVED_DATA_SLOT` 公开配置不再支持。
 - 实现链路默认三步收口：`实现 skill -> testing/定向验证 -> reviewer subAgent(code-review)`。
 - 未执行可选完整验证时，交付应说明已执行的定向测试/必要验证、`code-review` 结论与残余风险。

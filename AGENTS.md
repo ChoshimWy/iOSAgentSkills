@@ -69,6 +69,8 @@ FULL
 - 优先选择绑定单元测试 `*Tests` target / bundle 的 scheme。
 - iOS 验证默认优先已连接真机；无真机时再回退 simulator。
 - 验证型 `xcodebuild` 优先通过目标项目根目录 `./codex_verify.sh` 执行；若项目未接入，再回退到 `~/.codex/bin/codex_verify`。
+- 凡是本地需要执行 `xcodebuild` 参数探测或验证（含 `-list` / `-showdestinations` / build/test），都必须由主 Agent 使用 `functions.exec_command` 启动上述 wrapper 入口，并接入 shared build-queue daemon；不得直接调用 `xcodebuild` 二进制，也不要让多个 Agent 各自裸跑 `xcodebuild`。
+- 如果发现其他 Agent 已在执行验证，当前 Agent 必须等待 shared build-queue daemon 串行出队，或明确报告 `env_issue` / `blocked`；不得为了绕过同一个 `build.db` 锁而切到单独 `-derivedDataPath` 继续执行同一组验证。
 - 验证证据必须来自目标项目根目录的项目环境，不把 sandbox 中的构建结果当作完整项目环境证据。
 - 可选项目环境验证继续使用 Xcode 系统 DerivedData，并通过 shared build-queue daemon 串行执行；可用 `codex_verify.sh --queue-status` 查看队列状态。
 

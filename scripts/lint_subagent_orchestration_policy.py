@@ -244,6 +244,7 @@ def main() -> int:
             "reviewer subAgent 必须独立启动",
             "coder / tester 本轮按单 Agent 执行",
             "同一类问题最多回写 coder 2 次",
+            "不切到单独 `-derivedDataPath` 绕开同一个 `build.db`",
         ],
         failures,
     )
@@ -259,6 +260,8 @@ def main() -> int:
             "`apply_patch`",
             "80~120 行",
             "`/tmp/*.log`",
+            "不得直接调用 `xcodebuild` 二进制",
+            "不要切到单独 `-derivedDataPath` 跑同一组验证来规避 `build.db` 锁",
         ],
         failures,
     )

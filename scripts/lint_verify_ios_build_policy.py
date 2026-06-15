@@ -82,6 +82,8 @@ def main() -> int:
             "--queue-status",
             "最窄定向验证",
             "独立 reviewer subAgent 执行的 `code-review` 无 blocking findings",
+            "不得直接调用 `xcodebuild` 二进制",
+            "不得为了绕过同一个 `build.db` 锁而切到单独 `-derivedDataPath`",
         ],
         failures,
     )
@@ -96,6 +98,8 @@ def main() -> int:
             "最窄定向单测",
             "`实现 skill -> testing/定向验证 -> reviewer subAgent(code-review)`",
             "python3 scripts/lint_verify_ios_build_policy.py",
+            "不得直接调用 `xcodebuild` 二进制",
+            "不要为了绕过同一个 `build.db` 锁而切到单独 `-derivedDataPath`",
         ],
         failures,
     )
@@ -165,6 +169,8 @@ def main() -> int:
             "公开配置已移除",
             "项目环境执行",
             "`.xcworkspace` 优先于 `.xcodeproj`",
+            "不得直接调用 `xcodebuild` 二进制",
+            "不要切到单独 `-derivedDataPath` 跑同一组验证来绕过锁",
         ],
         failures,
     )

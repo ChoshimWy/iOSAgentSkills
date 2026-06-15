@@ -9,7 +9,8 @@
 - `tester` 做定向验证、失败归因、日志查看时，优先复用 `ios-automation`、`testing` 既有能力。
 - 默认 testing 先收敛到最窄定向单测；真机 / 模拟器验证不属于默认 testing 执行面，只有用户显式要求或主 Agent 判定证据不足 / 高风险时才升级。
 - 默认收口为定向验证 + 独立 reviewer subAgent `code-review`；`final-evidence-gate` / `verify-ios-build` 按需升级，不下放给 subAgent；需要在目标项目环境执行可选验证或越过 sandbox 时，由主 Agent 使用 `functions.exec_command` 并按需设置 `sandbox_permissions=\"require_escalated\"`。
-- 本地凡是执行 `xcodebuild`（含 `-list` / `-showdestinations` / build/test），默认都走非沙盒项目环境：使用 `functions.exec_command` 并显式设置 `sandbox_permissions=\"require_escalated\"`。
+- 本地凡是需要执行 `xcodebuild` 参数探测或验证（含 `-list` / `-showdestinations` / build/test），默认都走非沙盒项目环境，并由主 Agent 使用 `functions.exec_command` 显式设置 `sandbox_permissions=\"require_escalated\"` 来启动 `codex_verify.sh` / `~/.codex/bin/codex_verify`；不得直接调用 `xcodebuild` 二进制，也不要让多个 Agent 各自裸跑 `xcodebuild`。
+- 如果发现已有其他 Agent 正在执行验证，当前 Agent 应等待 shared build-queue daemon 串行出队，或按 `env_issue` / `blocked` 收口；不要切到单独 `-derivedDataPath` 跑同一组验证来规避 `build.db` 锁。
 
 ## 并行与写操作
 - 只有当多个开发者工具彼此独立、不会共享写集，也不涉及 `apply_patch`、格式化改写或其它写操作时，才允许使用 `multi_tool_use.parallel`。
