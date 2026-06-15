@@ -37,11 +37,48 @@ args = ["-y", "@kimsungwhee/apple-docs-mcp@latest"]
 status_line = ["model-with-reasoning", "used-tokens", "project-name", "context-remaining", "five-hour-limit", "weekly-limit", "total-input-tokens", "total-output-tokens", "task-progress"]
 status_line_use_colors = true
 
+# Local-only skills mode:
+# Keep ~/.codex/skills symlinked to this repository's skills/ directory and
+# disable plugin-contributed skills/tools. Do not delete plugin caches; disabling
+# config is the durable guard against account/marketplace sync re-enabling them.
 [plugins."build-ios-apps@openai-curated"]
-enabled = true
+enabled = false
 
 [plugins."build-macos-apps@openai-curated"]
 enabled = false
 
 [plugins."figma@openai-curated"]
+enabled = false
+
+[plugins."github@openai-curated"]
+enabled = false
+
+[plugins."figma@openai-curated-remote"]
+enabled = false
+
+[plugins."product-design@openai-curated-remote"]
+enabled = false
+
+[plugins."superpowers@openai-curated-remote"]
+enabled = false
+
+[plugins."documents@openai-primary-runtime"]
+enabled = false
+
+[plugins."spreadsheets@openai-primary-runtime"]
+enabled = false
+
+[plugins."presentations@openai-primary-runtime"]
+enabled = false
+
+[plugins."pdf@openai-primary-runtime"]
+enabled = false
+
+[plugins."browser@openai-bundled"]
+enabled = false
+
+[plugins."chrome@openai-bundled"]
+enabled = false
+
+[plugins."computer-use@openai-bundled"]
 enabled = false

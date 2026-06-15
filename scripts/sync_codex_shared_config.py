@@ -51,6 +51,22 @@ REPLACE_NAMED_CHILDREN_TABLES = {"mcp_servers", "plugins"}
 BARE_KEY_PATTERN = re.compile(r"^[A-Za-z0-9_-]+$")
 
 
+def disable_plugin_entry(plugin_config: Any) -> dict[str, Any]:
+    """Return a plugin config copy with the plugin disabled.
+
+    The repo-managed shared config runs Codex in local-only skills mode. Account
+    or marketplace sync may leave extra plugin entries in ~/.codex/config.toml;
+    preserving those entries but forcing enabled=false keeps the local config
+    reversible without letting plugin-contributed skills/tools load.
+    """
+    if isinstance(plugin_config, dict):
+        disabled = deepcopy(plugin_config)
+    else:
+        disabled = {}
+    disabled["enabled"] = False
+    return disabled
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--shared-config", required=True)
@@ -94,6 +110,17 @@ def merge_shared_config(
     merged = deepcopy(existing)
 
     for key, value in shared.items():
+        if key == "plugins" and isinstance(value, dict):
+            current: dict[str, Any] = {}
+            existing_plugins = merged.get(key)
+            if isinstance(existing_plugins, dict):
+                for child_key, child_value in existing_plugins.items():
+                    current[child_key] = disable_plugin_entry(child_value)
+            for child_key, child_value in value.items():
+                current[child_key] = deepcopy(child_value)
+            merged[key] = current
+            continue
+
         if key in REPLACE_NAMED_CHILDREN_TABLES and isinstance(value, dict):
             current = deepcopy(merged.get(key)) if isinstance(merged.get(key), dict) else {}
             for child_key, child_value in value.items():
@@ -129,6 +156,10 @@ def format_value(value: Any) -> str:
     if isinstance(value, time):
         return value.isoformat()
     raise TypeError(f"Unsupported TOML value type: {type(value).__name__}")
+
+
+def is_array_of_tables(value: Any) -> bool:
+    return isinstance(value, list) and bool(value) and all(isinstance(item, dict) for item in value)
 
 
 def ordered_root_scalar_items(data: dict[str, Any]) -> list[tuple[str, Any]]:
@@ -169,10 +200,19 @@ def table_header(path: list[str]) -> str:
     return "[" + ".".join(format_key_segment(segment) for segment in path) + "]"
 
 
+def array_table_header(path: list[str]) -> str:
+    return "[[" + ".".join(format_key_segment(segment) for segment in path) + "]]"
+
+
 def emit_table(path: list[str], mapping: dict[str, Any]) -> list[str]:
     lines: list[str] = []
-    scalar_items = [(key, value) for key, value in mapping.items() if not isinstance(value, dict)]
+    scalar_items = [
+        (key, value)
+        for key, value in mapping.items()
+        if not isinstance(value, dict) and not is_array_of_tables(value)
+    ]
     child_items = [(key, value) for key, value in mapping.items() if isinstance(value, dict)]
+    array_table_items = [(key, value) for key, value in mapping.items() if is_array_of_tables(value)]
 
     if path and scalar_items:
         lines.append(table_header(path))
@@ -186,6 +226,20 @@ def emit_table(path: list[str], mapping: dict[str, Any]) -> list[str]:
             if lines and lines[-1] != "":
                 lines.append("")
             lines.extend(child_lines)
+
+    for child_key, entries in array_table_items:
+        for entry in entries:
+            if lines and lines[-1] != "":
+                lines.append("")
+            lines.append(array_table_header(path + [child_key]))
+            for key, value in entry.items():
+                if isinstance(value, dict) or is_array_of_tables(value):
+                    raise TypeError(
+                        "Nested tables inside arrays of tables are not supported "
+                        f"at {'.'.join(path + [child_key, key])}"
+                    )
+                lines.append(f"{format_key_segment(key)} = {format_value(value)}")
+            lines.append("")
 
     return lines
 

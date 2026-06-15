@@ -33,6 +33,7 @@
 - 默认用户入口只有一个：`codex-subagent-orchestration`。
 - 其它 iOS skills 主要作为主 Skill 的内部执行模块 / 高级手动入口。
 - 低频技能也直接保存在 `skills/` 下，由路由规则决定何时按需触发，而不是再走额外目录。
+- Codex 默认采用 **local-only skills mode**：`~/.codex/skills` 指向本仓 `skills/`，同时通过 `~/.codex/config.toml` 将所有 plugin-contributed skills/tools 设为 `enabled = false`。这不会删除 `~/.codex/plugins/cache`，但可防止账号/marketplace 同步回来的插件 Skill 自动生效。
 
 ## 使用方法
 
@@ -73,6 +74,7 @@ ln -s iOSAgentSkills/skills .claude/skills
   - 图示 `skills/*/SKILL.md` 对应本仓库全部 skills（含按需触发的低频技能）
   - 图示 `config.toml` 对应本仓库 `config/codex/codex.shared.toml`
   - 截至 2026-06-15 的共享 Codex 基线：`model = "gpt-5.5"`、`image_model = "gpt-image-2"`、`features.multi_agent = true`、`[agents] max_threads/max_depth`，以及默认 `model_reasoning_effort = "medium"` / `plan_mode_reasoning_effort = "medium"`；安装脚本会同步到 `~/.codex/config.toml`。`image_model` 是本仓共享配置基线，用于对齐 Codex 内置 image generation 使用 `gpt-image-2` 的行为，不把它表述为官方 config reference 已公开稳定字段。
+  - 本仓 shared config 会禁用 `openai-curated`、`openai-curated-remote`、`openai-primary-runtime`、`openai-bundled` 等插件来源；如需恢复某个插件，需显式把对应 `[plugins."<id>"] enabled = true` 改回。
 
 快速发任务模板：
 

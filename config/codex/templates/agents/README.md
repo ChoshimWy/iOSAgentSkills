@@ -22,6 +22,7 @@
 - 模型默认继承主 Agent；只有用户明确要求、任务风险需要或预算/吞吐目标明确时才在 `spawn_agent` 中覆盖 `model` / `reasoning_effort`。
 - 工作流合同字段不再放单独 TOML table，而是内嵌在 `developer_instructions` 中约束输出与职责边界。
 - 安装脚本会把它们同步到 `~/.codex/agents/`。
+- Codex 默认采用 local-only skills mode：`~/.codex/skills` 指向本仓 `skills/`，共享配置会把所有 plugin-contributed skills/tools 设为 `enabled = false`；插件 cache 可保留但不会自动参与 Skill 选择。
 - 安装脚本也会同步 `~/.codex/bin/codex_verify` 作为全局验证入口。
 - `codex_verify.example.sh` 会同步到 `~/.codex/templates/codex_verify.example.sh`，供目标项目复制落地。
 - 推荐优先级：`<repo-root>/codex_verify.sh` > `~/.codex/bin/codex_verify`。

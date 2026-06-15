@@ -4,11 +4,40 @@ from __future__ import annotations
 from pathlib import Path
 import sys
 
+try:  # Python 3.11+
+    import tomllib  # type: ignore[attr-defined]
+except ModuleNotFoundError:  # Python 3.10 fallback
+    try:
+        import tomli as tomllib  # type: ignore[no-redef]
+    except ModuleNotFoundError:
+        try:
+            import pip._vendor.tomli as tomllib  # type: ignore[no-redef]
+        except ModuleNotFoundError as exc:
+            raise SystemExit(
+                "lint_workflow_contract_policy.py requires Python 3.11+, `tomli`, or pip's vendored tomli"
+            ) from exc
+
 
 ROOT = Path(__file__).resolve().parent.parent
 SKILL_ROOT = ROOT / "skills" / "codex-subagent-orchestration"
 CODEX_TEMPLATE_AGENTS = ROOT / "config" / "codex" / "templates" / "agents"
 CODEX_AGENT_VALIDATE_SCRIPT = ROOT / "scripts" / "validate_codex_agent_templates.py"
+EXPECTED_DISABLED_PLUGINS = {
+    "build-ios-apps@openai-curated",
+    "build-macos-apps@openai-curated",
+    "figma@openai-curated",
+    "github@openai-curated",
+    "figma@openai-curated-remote",
+    "product-design@openai-curated-remote",
+    "superpowers@openai-curated-remote",
+    "documents@openai-primary-runtime",
+    "spreadsheets@openai-primary-runtime",
+    "presentations@openai-primary-runtime",
+    "pdf@openai-primary-runtime",
+    "browser@openai-bundled",
+    "chrome@openai-bundled",
+    "computer-use@openai-bundled",
+}
 
 
 def require_contains(path: Path, snippets: list[str], failures: list[str]) -> None:
@@ -34,6 +63,32 @@ def require_not_contains(path: Path, snippets: list[str], failures: list[str]) -
 def require_exists(path: Path, failures: list[str]) -> None:
     if not path.exists():
         failures.append(f"{path.relative_to(ROOT)} missing")
+
+
+def require_codex_plugins_disabled(path: Path, failures: list[str]) -> None:
+    if not path.exists():
+        failures.append(f"{path.relative_to(ROOT)} missing")
+        return
+
+    data = tomllib.loads(path.read_text())
+    plugins = data.get("plugins")
+    if not isinstance(plugins, dict):
+        failures.append(f"{path.relative_to(ROOT)} missing plugins table")
+        return
+
+    missing = sorted(EXPECTED_DISABLED_PLUGINS - set(plugins))
+    if missing:
+        failures.append(f"{path.relative_to(ROOT)} missing disabled plugin entries: {', '.join(missing)}")
+
+    enabled_or_invalid = sorted(
+        plugin_id
+        for plugin_id, config in plugins.items()
+        if not isinstance(config, dict) or config.get("enabled") is not False
+    )
+    if enabled_or_invalid:
+        failures.append(
+            f"{path.relative_to(ROOT)} plugins must all set enabled = false: {', '.join(enabled_or_invalid)}"
+        )
 
 
 def main() -> int:
@@ -104,6 +159,8 @@ def main() -> int:
             "python3 scripts/validate_codex_agent_templates.py",
             "config/codex/templates/agents/",
             "~/.codex/agents/",
+            "local-only skills mode",
+            "plugin-contributed skills/tools",
         ],
         failures,
     )
@@ -119,9 +176,15 @@ def main() -> int:
             "[agents]",
             "max_threads = 6",
             "max_depth = 1",
+            "[plugins.\"build-ios-apps@openai-curated\"]",
+            "[plugins.\"superpowers@openai-curated-remote\"]",
+            "[plugins.\"browser@openai-bundled\"]",
+            "[plugins.\"documents@openai-primary-runtime\"]",
+            "enabled = false",
         ],
         failures,
     )
+    require_codex_plugins_disabled(ROOT / "config" / "codex" / "codex.shared.toml", failures)
     require_contains(
         ROOT / "scripts" / "sync_codex_shared_config.py",
         [
@@ -129,6 +192,8 @@ def main() -> int:
             '"agents"',
             '"model_reasoning_effort"',
             '"plan_mode_reasoning_effort"',
+            "disable_plugin_entry",
+            "local-only skills mode",
         ],
         failures,
     )
