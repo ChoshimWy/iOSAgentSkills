@@ -324,10 +324,10 @@ Escalate to raw logs only when:
 When runtime supports per-subAgent model selection:
 
 - `coder worker`: quality-priority model.
-- `reviewer explorer`: fast reading/review model.
+- `reviewer explorer`: `gpt-5.3-codex-spark` by default for fast reading/review.
 - `tester explorer`: quality-priority model with medium reasoning when failure attribution is complex.
 
-Do not hardcode model names in this Skill. Available model names depend on runtime and account state. If a requested model is unavailable, omit the model parameter and inherit the Main Agent default.
+Do not hardcode other model names in this Skill. Available model names depend on runtime and account state. If the reviewer default model or another requested model is unavailable, omit the model parameter and inherit the Main Agent default.
 
 ## Plan Output Template
 

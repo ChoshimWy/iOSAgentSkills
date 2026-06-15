@@ -2,15 +2,15 @@
 
 ## subAgent 模型分工（可选，但推荐）
 
-coder / tester 只有在用户显式要求 subAgent / parallel agent / delegation、当前 prompt 明确授权或风险需要时才调用原生 subAgent；实现链路的 `code-review` 必须调用独立 reviewer subAgent；调用后默认让 subAgent 继承主 Agent 的模型配置。当用户明确要求模型分工、任务风险需要或预算/吞吐目标明确时，主 Agent 才在 `spawn_agent` 参数里按角色指定 `model` / `reasoning_effort`：
+coder / tester 只有在用户显式要求 subAgent / parallel agent / delegation、当前 prompt 明确授权或风险需要时才调用原生 subAgent；实现链路的 `code-review` 必须调用独立 reviewer subAgent，且 reviewer 默认在 `spawn_agent` 参数里指定 `model="gpt-5.3-codex-spark"`。当用户明确要求模型分工、任务风险需要或预算/吞吐目标明确时，主 Agent 才为 coder / tester 在 `spawn_agent` 参数里按角色指定 `model` / `reasoning_effort`：
 
 - coder：强模型
-- reviewer：快模型
+- reviewer：`gpt-5.3-codex-spark`
 - tester：强模型 + `reasoning_effort=medium`
 
 说明：
-- 这里不写死具体模型名；由主 Agent 按当前运行时可用模型选择。
-- 不传 `model` 时，subAgent 会继承主 Agent 默认模型。
+- 除 reviewer 默认模型 `gpt-5.3-codex-spark` 外，不写死其他具体模型名；由主 Agent 按当前运行时可用模型选择。
+- 不传 `model` 时，subAgent 会继承主 Agent 默认模型；若 reviewer 指定模型不可用，回退为不传 `model`。
 - 默认进入 `codex-subagent-orchestration` 不等于默认实际 spawn coder / tester subAgent；只有显式授权、prompt 授权或风险需要时，主 Agent 才可按 `lite` / `standard` / `full` 启动 coder / tester；实现链路 reviewer subAgent 始终独立启动。
 
 ## coder worker
@@ -189,5 +189,16 @@ next_action: <fix-and-rerun|blocked|complete>
   "model": "<strong-model-if-needed>",
   "reasoning_effort": "high",
   "message": "负责实现；只改 ownership 内文件；不要无关重构。"
+}
+```
+
+reviewer 默认参数形态：
+
+```json
+{
+  "agent_type": "explorer",
+  "fork_context": true,
+  "model": "gpt-5.3-codex-spark",
+  "message": "负责 code-review；只读审查本次 diff 与验证故事，不改代码。"
 }
 ```
