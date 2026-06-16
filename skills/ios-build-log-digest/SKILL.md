@@ -30,6 +30,8 @@ Use this skill when:
 
 - Never read full raw `xcodebuild` logs by default.
 - Never paste large build logs into the conversation.
+- Do not install, invoke, or choose log formatter tools manually. The verification wrapper / digest script owns tool bootstrap, formatter selection, parsing, redaction, and artifact generation.
+- Treat `xcbeautify`, `xcpretty`, `xcprint`, and `xcresulttool` output as script-internal parser inputs; the Agent contract remains `verification-report.json` first.
 - Prefer `verification-report.json` first.
 - Then read `diagnostics.json`.
 - Then read `build-summary.txt`.
@@ -39,6 +41,18 @@ Use this skill when:
 - Do not open full `.xcresult` dumps unless the user explicitly asks or summaries are insufficient.
 - Fix only the first real blocking error before requesting another verification.
 - Do not request another build without a code change or a clear reason.
+
+## Script-Owned Tooling
+
+The script layer must handle formatter availability without Agent judgment:
+
+- Auto-detect formatter candidates such as `xcbeautify`, `xcpretty`, and `xcprint`.
+- If the selected formatter is missing, attempt installation through the script using supported package managers or explicit script environment overrides.
+- Preserve the `xcodebuild` exit code; formatter success must never mask a build or test failure.
+- Continue with the built-in digest parser when external formatters are optional and installation fails.
+- Return `blocked` only when the script marks formatter tooling as required and cannot install it.
+- Record `tool_bootstrap` in `verification-report.json` so Agents can see what happened without running installers themselves.
+- Redact sensitive values before writing structured JSON summaries.
 
 ## Preferred Inputs
 
@@ -83,6 +97,10 @@ Expected `verification-report.json` shape:
 
 ```json
 {
+  "schema_version": 1,
+  "producer": "codex_verify",
+  "parser": "builtin-digest-parser",
+  "formatter": "xcbeautify | xcpretty | xcprint | null",
   "status": "failed",
   "mode": "unit",
   "fingerprint": "abc123",
@@ -99,7 +117,22 @@ Expected `verification-report.json` shape:
   "artifact_paths": {
     "diagnostics_json": "build-results/latest/diagnostics.json",
     "build_summary": "build-results/latest/build-summary.txt",
+    "formatted_log": "build-results/latest/formatted-build.log",
+    "source_context": "build-results/latest/source-context.txt",
     "raw_log": "build-results/latest/build.log"
+  },
+  "tool_bootstrap": {
+    "formatter": "xcbeautify",
+    "status": "available | installed | fallback_builtin_parser | required_formatter_unavailable | missing_install_disabled | disabled | dry_run",
+    "install_attempted": false,
+    "install_succeeded": false,
+    "message": "..."
+  },
+  "baseline": {
+    "workspace_or_project": "App.xcworkspace",
+    "scheme": "App",
+    "configuration": "Debug",
+    "destination": "platform=iOS,id=..."
   },
   "suggested_next_action": "Fix the first real blocking error only, then request verification again.",
   "raw_log_policy": "forbidden_by_default",
@@ -124,7 +157,9 @@ Expected `diagnostics.json` shape:
       "line": 82,
       "column": 17,
       "message": "Cannot find 'productID' in scope",
-      "target": "App"
+      "target": "App",
+      "failure_domain": "code | test | project_config | signing | destination | dependency | infra",
+      "retryable": false
     }
   ],
   "next_action": "Fix the first real compiler error only, then request verification again."
@@ -201,6 +236,8 @@ build-results/latest/ or build-queue job dir:
   diagnostics.json
   build-summary.txt
   test-summary.json
+  formatted-build.log
+  source-context.txt
 ```
 
 Agents should consume only these files unless escalation is justified.

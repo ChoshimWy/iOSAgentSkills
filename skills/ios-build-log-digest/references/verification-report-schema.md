@@ -6,6 +6,10 @@
 
 ```json
 {
+  "schema_version": 1,
+  "producer": "codex_verify",
+  "parser": "builtin-digest-parser",
+  "formatter": "xcbeautify | xcpretty | xcprint | null",
   "status": "passed | failed | blocked | unknown",
   "mode": "auto | build | unit | ui | full | xcodebuild | build-check",
   "fingerprint": "short stable log or verification fingerprint",
@@ -18,7 +22,27 @@
     "verification_report": ".../verification-report.json",
     "diagnostics_json": ".../diagnostics.json",
     "build_summary": ".../build-summary.txt",
-    "raw_log": ".../job.log"
+    "test_summary": ".../test-summary.json",
+    "xcresult_summary": ".../xcresult-summary.json",
+    "formatted_log": ".../formatted-build.log",
+    "source_context": ".../source-context.txt",
+    "raw_log": ".../build.log"
+  },
+  "tool_bootstrap": {
+    "formatter": "xcbeautify | xcpretty | xcprint | null",
+    "status": "available | installed | fallback_builtin_parser | required_formatter_unavailable | missing_install_disabled | disabled | dry_run",
+    "install_attempted": false,
+    "install_succeeded": false,
+    "install_command": null,
+    "message": "script-owned formatter bootstrap summary"
+  },
+  "baseline": {
+    "workspace_or_project": "App.xcworkspace",
+    "scheme": "App",
+    "configuration": "Debug",
+    "action": "build",
+    "destination": "platform=iOS Simulator,name=iPhone 16",
+    "derived_data": "Xcode default"
   },
   "suggested_next_action": "fix_first_error | inspect_environment | blocked | none",
   "raw_log_policy": "forbidden_by_default",
@@ -30,6 +54,16 @@
 
 1. Read `verification-report.json`.
 2. If `first_blocking_error` is present, inspect only the targeted source location or test selector.
-3. Read `diagnostics.json` only when the report is incomplete.
-4. Read `build-summary.txt` only when additional local context is required.
-5. Read raw log snippets only when `needs_raw_log=true` or the user explicitly asks.
+3. Read `source-context.txt` only when the first error points to a source line and the snippet is enough.
+4. Read `diagnostics.json` only when the report is incomplete.
+5. Read `build-summary.txt` only when additional local context is required.
+6. Read `formatted-build.log` only when the report says formatter output is needed.
+7. Read raw log snippets only when `needs_raw_log=true` or the user explicitly asks.
+
+## Tooling Contract
+
+- The wrapper / digest script owns `xcbeautify`, `xcpretty`, `xcprint`, `xcresulttool`, or similar tooling.
+- If the chosen formatter is missing, the script attempts installation and records the result in `tool_bootstrap`.
+- Agents must not run package-manager installs or formatter commands manually.
+- Formatter output is intermediate evidence; `parser` identifies the digest parser and `formatter` records the optional external formatter used before digesting. `verification-report.json` remains the Agent contract.
+- The real `xcodebuild` exit code must be preserved even when formatter parsing succeeds.

@@ -66,6 +66,9 @@ Do not use this Skill when:
 - Always prefer the target project repo-tracked wrapper: `./codex_verify.sh`.
 - If the target project wrapper is absent, use the shared fallback wrapper: `~/.codex/bin/codex_verify`.
 - The wrapper must submit validation-type `xcodebuild` to the shared build-queue daemon.
+- The wrapper / build-check script must own formatter selection, missing-tool installation, structured parsing, redaction, and artifact generation. Agents must not manually install or invoke `xcbeautify`, `xcpretty`, `xcprint`, `xcresulttool`, or similar formatter/parser tools.
+- External formatter/parser output is an intermediate input only. The Agent-facing contract is still `verification-report.json` -> `diagnostics.json` -> summaries.
+- Formatter bootstrap must preserve the real `xcodebuild` exit code; formatter success must never turn a failing verification into success.
 - The daemon serializes `xcodebuild` and reuses Xcode system DerivedData（Xcode 系统 DerivedData）: `~/Library/Developer/Xcode/DerivedData`.
 - Do not reintroduce public `XCODE_DERIVED_DATA_*` or `CODEX_DERIVED_DATA_SLOT` configuration. If those variables are present, wrapper should fail fast.
 - Project-environment verification must run in the target project root, not in a sandbox copy.
@@ -111,6 +114,7 @@ UI smoke must be text-first:
 ### Token Budget
 
 - Prefer structured output from wrapper / daemon.
+- Prefer script-generated artifacts over formatter output. Do not inspect `formatted-build.log` unless `verification-report.json` asks for it.
 - Read `verification-report.json` first.
 - Then read `diagnostics.json`.
 - Then read `build-summary.txt`.
@@ -128,14 +132,15 @@ UI smoke must be text-first:
 3. Determine target project root and confirm it is an Xcode project.
 4. Determine wrapper path: `./codex_verify.sh` first, then `~/.codex/bin/codex_verify`.
 5. Determine verification mode and baseline: workspace/project, scheme, configuration, destination.
-6. Compute or request verification fingerprint if supported by wrapper / daemon.
-7. If the same fingerprint already has a same-or-stronger successful result, skip duplicate build and report cached evidence.
-8. If the same fingerprint already has a failed result, read cached `verification-report.json` before requesting another build.
-9. Submit one verification request through wrapper / daemon.
-10. Read structured result artifacts, starting with `verification-report.json`.
-11. If failed, report first real blocking error and next action.
-12. If succeeded and UI smoke conditions are met, run UI smoke through the supported wrapper path.
-13. Return compact verification evidence and residual risk.
+6. Let the wrapper / script bootstrap formatter tooling if needed; do not let the Agent choose or install tools.
+7. Compute or request verification fingerprint if supported by wrapper / daemon.
+8. If the same fingerprint already has a same-or-stronger successful result, skip duplicate build and report cached evidence.
+9. If the same fingerprint already has a failed result, read cached `verification-report.json` before requesting another build.
+10. Submit one verification request through wrapper / daemon.
+11. Read structured result artifacts, starting with `verification-report.json`.
+12. If failed, report first real blocking error and next action.
+13. If succeeded and UI smoke conditions are met, run UI smoke through the supported wrapper path.
+14. Return compact verification evidence and residual risk.
 
 ## Verification Fingerprint
 
@@ -199,6 +204,9 @@ Return compact output using this contract:
   "verification_route": "wrapper -> build-queue daemon -> xcodebuild",
   "fingerprint": "abc123",
   "cached": false,
+  "schema_version": 1,
+  "parser": "builtin-digest-parser",
+  "formatter": "xcbeautify | xcpretty | xcprint | null",
   "workspace_or_project": "App.xcworkspace",
   "scheme": "App",
   "configuration": "Debug",
@@ -207,6 +215,14 @@ Return compact output using this contract:
   "verification_report_path": "build-results/latest/verification-report.json",
   "diagnostics_path": "build-results/latest/diagnostics.json",
   "summary_path": "build-results/latest/build-summary.txt",
+  "formatted_log_path": "build-results/latest/formatted-build.log",
+  "source_context_path": "build-results/latest/source-context.txt",
+  "tool_bootstrap": {
+    "formatter": "xcbeautify",
+    "status": "available | installed | fallback_builtin_parser | required_formatter_unavailable | missing_install_disabled | disabled | dry_run",
+    "install_attempted": false,
+    "install_succeeded": false
+  },
   "first_blocking_error": {
     "kind": "swift_compile_error",
     "file": "App/File.swift",
@@ -297,8 +313,13 @@ It may specify:
 - `XCODE_DESTINATION`
 - `XCODE_UI_SMOKE_MODE=off|auto|required`
 - `XCODE_UI_SMOKE_SPEC=<relative-path>`
+- `CODEX_VERIFY_ARTIFACT_DIR=<relative-or-absolute-path>`
+- `CODEX_VERIFY_FORMATTER=auto|xcbeautify|xcpretty|xcprint|none`
+- `CODEX_VERIFY_TOOL_INSTALL=auto|off|required`
+- `CODEX_VERIFY_INSTALL_XCBEAUTIFY` / `CODEX_VERIFY_INSTALL_XCPRETTY` / `CODEX_VERIFY_INSTALL_XCPRINT` for script-owned custom install commands when defaults are not enough
 
 It must not be used to bypass `testing`, `code-review`, wrapper routing, daemon serialization, or project-environment execution.
+Formatter-related controls are consumed by scripts only. Agents should not set them ad hoc to avoid tool installation or parsing decisions unless the user explicitly requests a project policy change.
 
 Deprecated / forbidden public configuration:
 

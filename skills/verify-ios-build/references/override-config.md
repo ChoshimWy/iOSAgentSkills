@@ -24,6 +24,10 @@ XCODE_PREFER_MODEL="iPad"
 # UI smoke（可选）
 XCODE_UI_SMOKE_MODE="auto"
 XCODE_UI_SMOKE_SPEC=".codex/ui-smoke.yml"
+# 验证 artifact 与日志 formatter（可选，脚本自动处理；Agent 不应手动安装或调用）
+CODEX_VERIFY_ARTIFACT_DIR=".codex/build-results/latest"
+CODEX_VERIFY_FORMATTER="auto"
+CODEX_VERIFY_TOOL_INSTALL="auto"
 ```
 
 ## 规则
@@ -51,6 +55,11 @@ XCODE_UI_SMOKE_SPEC=".codex/ui-smoke.yml"
 - `XCODE_UI_SMOKE_MODE` 控制 UI smoke：`off`（关闭）、`auto`（命中 UI 改动且 spec 存在时执行）、`required`（命中 UI 改动时强制执行并阻塞失败）
 - `XCODE_UI_SMOKE_SPEC` 指定 smoke spec 路径，默认 `.codex/ui-smoke.yml`
 - UI smoke 默认采用 text-first 断言（accessibility tree），截图用于失败证据
+- `CODEX_VERIFY_ARTIFACT_DIR` 指定结构化验证证据输出目录，默认 `.codex/build-results/latest`
+- `CODEX_VERIFY_FORMATTER` 控制脚本内部 formatter：`auto`、`xcbeautify`、`xcpretty`、`xcprint`、`none`
+- `CODEX_VERIFY_TOOL_INSTALL` 控制脚本是否自动安装缺失 formatter：`auto`（默认，失败后回退内建解析）、`off`（不安装）、`required`（无法安装即 blocked）
+- 如需指定非默认安装命令，可在项目环境中设置 `CODEX_VERIFY_INSTALL_XCBEAUTIFY`、`CODEX_VERIFY_INSTALL_XCPRETTY`、`CODEX_VERIFY_INSTALL_XCPRINT`；值会由脚本解析并执行，Agent 不需要判断安装方式
+- formatter 安装、选择、解析和脱敏都由 wrapper / 脚本负责；Agent 只读取 `verification-report.json`、`diagnostics.json`、`build-summary.txt` 等 artifact
 - 这些覆盖配置只影响 `xcodebuild` 参数，不会跳过固定链路里的前置 `testing` / `code-review`，也不会改变“`.xcworkspace` 优先于 `.xcodeproj`”的默认规则
 - 如需查看当前队列状态，使用 `codex_verify.sh --queue-status` 或 `~/.codex/bin/codex_verify --queue-status`
 
