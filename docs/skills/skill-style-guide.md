@@ -67,7 +67,7 @@
 - 禁止读取完整 build.log
 - 禁止递归扫描 DerivedData
 - 禁止读取完整 xcresult dump
-- 优先读取 diagnostics.json
+- 优先读取 verification-report.json，再按需读取 diagnostics.json
 - 优先返回摘要而非原始日志
 
 ## Commit Message 规范

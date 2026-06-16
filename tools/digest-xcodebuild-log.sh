@@ -1,29 +1,33 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Convert a raw xcodebuild log into compact diagnostics.json and build-summary.txt.
-# Agents should read diagnostics.json first and avoid the raw log by default.
+# Convert a raw xcodebuild log into compact diagnostics.json, build-summary.txt,
+# and verification-report.json. Agents should read verification-report.json first
+# and avoid the raw log by default.
 #
 # Usage:
-#   tools/digest-xcodebuild-log.sh build.log diagnostics.json build-summary.txt
+#   tools/digest-xcodebuild-log.sh build.log diagnostics.json build-summary.txt verification-report.json
 #
 # Inputs:
 #   $1 raw xcodebuild log path, default: build.log
 #   $2 diagnostics output path, default: diagnostics.json
 #   $3 summary output path, default: build-summary.txt
+#   $4 verification report output path, default: verification-report.json
 
 LOG_FILE="${1:-build.log}"
 OUT_JSON="${2:-diagnostics.json}"
 OUT_SUMMARY="${3:-build-summary.txt}"
+OUT_REPORT="${4:-verification-report.json}"
 
 if [[ ! -f "$LOG_FILE" ]]; then
-  mkdir -p "$(dirname "$OUT_JSON")" "$(dirname "$OUT_SUMMARY")"
+  mkdir -p "$(dirname "$OUT_JSON")" "$(dirname "$OUT_SUMMARY")" "$(dirname "$OUT_REPORT")"
   printf '{\n  "status": "error",\n  "summary": "Log file not found",\n  "diagnostics": [],\n  "next_action": "Check the build-queue output path.",\n  "raw_log_policy": "forbidden_by_default"\n}\n' > "$OUT_JSON"
+  printf '{\n  "status": "blocked",\n  "summary": "Log file not found",\n  "artifact_paths": {"diagnostics_json": "%s", "build_summary": "%s", "raw_log": "%s"},\n  "suggested_next_action": "Check the build-queue output path.",\n  "needs_raw_log": false\n}\n' "$OUT_JSON" "$OUT_SUMMARY" "$LOG_FILE" > "$OUT_REPORT"
   printf 'Log file not found: %s\n' "$LOG_FILE" > "$OUT_SUMMARY"
   exit 1
 fi
 
-mkdir -p "$(dirname "$OUT_JSON")" "$(dirname "$OUT_SUMMARY")"
+mkdir -p "$(dirname "$OUT_JSON")" "$(dirname "$OUT_SUMMARY")" "$(dirname "$OUT_REPORT")"
 
 # Keep only a compact set of actionable lines. This summary is intentionally small.
 grep -nE \
@@ -31,7 +35,7 @@ grep -nE \
   "$LOG_FILE" \
   | head -n 200 > "$OUT_SUMMARY" || true
 
-python3 - "$LOG_FILE" "$OUT_JSON" "$OUT_SUMMARY" <<'PY'
+python3 - "$LOG_FILE" "$OUT_JSON" "$OUT_SUMMARY" "$OUT_REPORT" <<'PY'
 import datetime as _dt
 import hashlib
 import json
@@ -43,6 +47,7 @@ from pathlib import Path
 log_path = Path(sys.argv[1])
 out_json = Path(sys.argv[2])
 out_summary = Path(sys.argv[3])
+out_report = Path(sys.argv[4])
 
 text = log_path.read_text(encoding="utf-8", errors="replace")
 lines = text.splitlines()
@@ -89,8 +94,19 @@ def normalize_file(value: str | None) -> str | None:
     return value
 
 items = []
+failed_tests = []
+warning_count = 0
+
+failed_test_pattern = re.compile(r"Test Case ['\"](?P<name>[^'\"]+)['\"] failed|Failing tests?:\s*(?P<tail>.+)", re.I)
 
 for idx, line in enumerate(lines):
+    if " warning: " in f" {line} " or line.strip().startswith("warning:"):
+        warning_count += 1
+    if m := failed_test_pattern.search(line):
+        name = (m.groupdict().get("name") or m.groupdict().get("tail") or line).strip()
+        if name and name not in failed_tests:
+            failed_tests.append(name[:300])
+
     for kind, pattern in patterns:
         m = pattern.search(line)
         if not m:
@@ -160,19 +176,46 @@ payload = {
     "summary": summary,
     "finished_at": _dt.datetime.now(_dt.timezone.utc).isoformat().replace("+00:00", "Z"),
     "diagnostics": items,
+    "first_blocking_error": items[0] if items else None,
+    "failed_tests": failed_tests[:20],
+    "warnings_count": warning_count,
     "artifacts": {
         "diagnostics_json": str(out_json),
         "build_summary": str(out_summary),
+        "verification_report": str(out_report),
         "raw_log": str(log_path),
     },
     "next_action": next_action,
     "raw_log_policy": "forbidden_by_default",
+    "needs_raw_log": False,
 }
 
 out_json.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+report = {
+    "status": "failed" if items else "unknown",
+    "mode": os.environ.get("CODEX_VERIFY_MODE", "auto"),
+    "fingerprint": fingerprint,
+    "cached": False,
+    "summary": summary,
+    "first_blocking_error": items[0] if items else None,
+    "failed_tests": failed_tests[:20],
+    "warnings_count": warning_count,
+    "artifact_paths": {
+        "diagnostics_json": str(out_json),
+        "build_summary": str(out_summary),
+        "verification_report": str(out_report),
+        "raw_log": str(log_path),
+    },
+    "suggested_next_action": next_action,
+    "raw_log_policy": "forbidden_by_default",
+    "needs_raw_log": False,
+    "generated_at": payload["finished_at"],
+}
+out_report.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 if not out_summary.exists() or out_summary.stat().st_size == 0:
     out_summary.write_text(summary + "\n", encoding="utf-8")
 PY
 
-printf 'Wrote %s\nWrote %s\n' "$OUT_JSON" "$OUT_SUMMARY"
+printf 'Wrote %s\nWrote %s\nWrote %s\n' "$OUT_JSON" "$OUT_SUMMARY" "$OUT_REPORT"

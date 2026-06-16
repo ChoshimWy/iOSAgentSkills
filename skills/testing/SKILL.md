@@ -100,7 +100,7 @@ When creating new `.swift`, `.h`, `.m`, or `.mm` files and the project requires 
 - Do not paste full build logs.
 - Do not dump full `.xcresult` JSON.
 - Prefer compact test summaries.
-- Prefer `diagnostics.json`, `test-summary.json`, and `build-summary.txt` when available.
+- Prefer script-generated `verification-report.json`, then `diagnostics.json`, `test-summary.json`, and `build-summary.txt` when available.
 - For failures, report only the first real failure relevant to the current change.
 - Avoid scanning unrelated test suites when affected tests are sufficient.
 
@@ -216,7 +216,7 @@ Escalate to `ios-affected-tests` when:
 
 Escalate to `ios-build-log-digest` when:
 
-- Test/build execution fails and only raw logs are available.
+- Test/build execution fails and compact script evidence is missing or insufficient.
 - Failure attribution needs compact diagnostics.
 
 Escalate to `code-review` when:
@@ -314,7 +314,7 @@ Rules:
 - In a non-orchestrated single-Agent implementation chain, this Skill is the default second step after implementation.
 - After testing or `no_test_reason`, proceed to `code-review`.
 - Use `ios-affected-tests` for affected test selection.
-- Use `ios-build-log-digest` for compact failure attribution.
+- Use `ios-build-log-digest` for compact failure attribution, starting from `verification-report.json`.
 - Use `final-evidence-gate` for optional evidence sufficiency decisions.
 - Use `verify-ios-build` only for explicit or escalated project-environment build verification.
 - Use `debugging` for runtime crashes, leaks, hangs, or behavior investigation.

@@ -23,7 +23,7 @@
 - 本地执行 `xcodebuild`（含 `-list` / `-showdestinations` / build/test）默认都走非沙盒项目环境；同机同仓如果有多个 Codex / Claude CLI 并发处理同一 Xcode 项目，项目环境验证必须统一经 wrapper 入口执行：优先目标项目根目录的 `codex_verify.sh`，若项目未接入则回退到本机 `~/.codex/bin/codex_verify`。可通过 `--queue-status` 查看 daemon 当前 active job 与 pending jobs；旧 `XCODE_DERIVED_DATA_*` / `CODEX_DERIVED_DATA_SLOT` 公开配置不再支持。
 - 主入口 `codex-subagent-orchestration` 负责自适应编排：先按 `lite` / `standard` / `full` 选择角色，再协调编码、调试、性能、测试、审查与按需验证；实现链路的审查角色必须独立启动 reviewer subAgent；构建、测试、自动化、截图与日志优先切 `ios-automation`、`xcode-build`、`testing`，需要补强证据时再切 `final-evidence-gate` 或 `verify-ios-build`。
 - coder / tester 原生 subAgent 仅在用户显式要求 subAgent / parallel agent / delegation、当前 prompt 明确授权或风险需要时才启用；否则默认由主 Agent 串行承担对应逻辑角色。
-- 低 token 验证链路默认优先切 `ios-verification-router` 做验证级别分流；涉及测试选择时切 `ios-affected-tests`；构建失败归因时切 `ios-build-log-digest`，优先消费 `diagnostics.json`，禁止默认读取完整 raw build log。
+- 低 token 验证链路默认优先切 `ios-verification-router` 做验证级别分流；涉及测试选择时切 `ios-affected-tests`；构建失败归因时切 `ios-build-log-digest`。验证执行后必须优先消费脚本生成的 `verification-report.json`，其次才是 `diagnostics.json` / `build-summary.txt`，禁止默认读取完整 raw build log。
 - 多 Agent 编排默认遵守 checkpoint 合同：`CP0` / `CP1` / `CP2` / `CP3`。
 - 多 Agent 编排默认遵守 `fail-fix-report`：先定位失败、修复并重跑，再汇报。
 - 如果当前任务未进入 `codex-subagent-orchestration`，或 coder / tester 只能由主 Agent 串行承担，实现型任务仍必须三步收口：`实现 skill -> testing/定向验证 -> reviewer subAgent(code-review)`；若 reviewer subAgent 不可用，只能报告 blocked / pending review，不能降级为实现者自审。
@@ -67,7 +67,7 @@
 | --- | --- | --- | --- | --- |
 | `code-review` | 静态审查 | review 代码、PR diff、public API 评审；默认由独立 reviewer subAgent 执行 | 直接实现修复、运行时定位 | `debugging`、`ios-performance`、`ios-sdk-architecture` |
 | `debugging` | 运行时排障 | crash、异常、未释放、符号化栈、LLDB 定位 | 纯静态审查、性能分析与 benchmark、构建配置设计 | `code-review`、`ios-performance`、`xcode-build` |
-| `ios-build-log-digest` | 低 token 构建失败归因 | `xcodebuild` / build-queue 失败后读取 `diagnostics.json` / `build-summary.txt`，只定位第一个真实 blocking error | 纯运行时 crash、用户明确要求分析完整 raw log、非构建类业务问题 | `debugging`、`xcode-build`、`ios-verification-router` |
+| `ios-build-log-digest` | 低 token 构建失败归因 | `xcodebuild` / build-queue 失败后读取脚本生成的 `verification-report.json` / `diagnostics.json` / `build-summary.txt`，只定位第一个真实 blocking error | 纯运行时 crash、用户明确要求分析完整 raw log、非构建类业务问题 | `debugging`、`xcode-build`、`ios-verification-router` |
 | `ios-performance` | 性能分析与测试 | 掉帧、启动慢、CPU / 内存异常、性能回归基线、`measure(metrics:)`、`xctrace`、Instruments | 通用业务实现、普通单元/UI 测试补齐、泛化 crash 排查 | `testing`、`debugging`、`swift-expert` |
 | `swift-expert` | 进阶 Swift 设计 | `actor`、`Sendable`、`PAT`、类型擦除、多平台可用性 | 普通 iOS 业务实现、性能 profiling / benchmark、通用页面实现 | `ios-feature-implementation`、`swiftui-feature-implementation`、`uikit-feature-implementation`、`ios-performance` |
 | `ios-sdk-architecture` | iOS SDK / Framework 架构 | SDK 模块边界、Public API、入口类、Configuration、SPM/XCFramework、版本演进 | 普通 App 功能实现、纯测试补写、一次性构建验证 | `swift-expert`、`testing`、`code-review`、`xcode-build` |

@@ -206,6 +206,7 @@
 - 不递归扫描 `DerivedData`。
 - 不粘贴大段 diff。
 - 不粘贴完整控制台日志。
+- 优先读取脚本生成的 `verification-report.json`。
 - 优先读取 `diagnostics.json`。
 - 优先读取 `build-summary.txt` / `test-summary.json`。
 - 优先输出结构化摘要。

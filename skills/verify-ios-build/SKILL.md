@@ -1,6 +1,6 @@
 ---
 name: verify-ios-build
-description: Apple Xcode 工程的按需项目环境构建验证执行器。由用户显式要求或 final-evidence-gate 在现有 xcodebuild test/build 证据不足、高风险场景下调用；通过 codex_verify wrapper 接入 shared build-queue daemon 执行一次项目环境 xcodebuild 验证，并优先输出 diagnostics.json / build-summary.txt 等低 token 证据。
+description: Apple Xcode 工程的按需项目环境构建验证执行器。由用户显式要求或 final-evidence-gate 在现有 xcodebuild test/build 证据不足、高风险场景下调用；通过 codex_verify wrapper 接入 shared build-queue daemon 执行一次项目环境 xcodebuild 验证，并优先输出 verification-report.json / diagnostics.json / build-summary.txt 等低 token 证据。
 ---
 
 # Verify iOS Build（项目环境构建验证执行器）
@@ -111,7 +111,8 @@ UI smoke must be text-first:
 ### Token Budget
 
 - Prefer structured output from wrapper / daemon.
-- Read `diagnostics.json` first.
+- Read `verification-report.json` first.
+- Then read `diagnostics.json`.
 - Then read `build-summary.txt`.
 - Then read `test-summary.json` or `xcresult-summary.json` if available.
 - Do not read full raw `build.log` by default.
@@ -129,9 +130,9 @@ UI smoke must be text-first:
 5. Determine verification mode and baseline: workspace/project, scheme, configuration, destination.
 6. Compute or request verification fingerprint if supported by wrapper / daemon.
 7. If the same fingerprint already has a same-or-stronger successful result, skip duplicate build and report cached evidence.
-8. If the same fingerprint already has a failed result, read cached `diagnostics.json` before requesting another build.
+8. If the same fingerprint already has a failed result, read cached `verification-report.json` before requesting another build.
 9. Submit one verification request through wrapper / daemon.
-10. Read structured result artifacts, starting with `diagnostics.json`.
+10. Read structured result artifacts, starting with `verification-report.json`.
 11. If failed, report first real blocking error and next action.
 12. If succeeded and UI smoke conditions are met, run UI smoke through the supported wrapper path.
 13. Return compact verification evidence and residual risk.
@@ -203,6 +204,7 @@ Return compact output using this contract:
   "configuration": "Debug",
   "destination": "platform=iOS,id=...",
   "selected_device_reason": "connected physical iOS device preferred",
+  "verification_report_path": "build-results/latest/verification-report.json",
   "diagnostics_path": "build-results/latest/diagnostics.json",
   "summary_path": "build-results/latest/build-summary.txt",
   "first_blocking_error": {
@@ -234,7 +236,7 @@ Return `passed` when:
 Return `failed` when:
 
 - `xcodebuild` ran and produced a real project, compile, link, test, signing, destination, or UI smoke failure.
-- The first real blocking error is identified from `diagnostics.json` / summaries.
+- The first real blocking error is identified from `verification-report.json` / summaries.
 - The next action is specific, usually `fix_first_error`.
 
 Return `blocked` when:
@@ -274,7 +276,7 @@ Escalate to `ios-build-log-digest` when:
 
 Escalate to raw log inspection only when:
 
-- `diagnostics.json`, `build-summary.txt`, `test-summary.json`, and compact `.xcresult` summaries are insufficient.
+- `verification-report.json` sets `needs_raw_log=true`, or `diagnostics.json`, `build-summary.txt`, `test-summary.json`, and compact `.xcresult` summaries are insufficient.
 - The inspected section is narrowly targeted.
 - The user explicitly asks for raw log analysis.
 
@@ -323,7 +325,7 @@ Compact failed example:
 Verification failed.
 Baseline: App.xcworkspace / App / Debug / iPhone 16 Simulator.
 First blocking error: App/File.swift:10 cannot find `foo` in scope.
-Evidence: build-results/latest/diagnostics.json.
+Evidence: build-results/latest/verification-report.json.
 Raw log: skipped by policy.
 Next action: fix_first_error.
 ```
@@ -355,6 +357,7 @@ Next action: fix_first_error.
     "line": 82,
     "message": "Cannot find 'productID' in scope"
   },
+  "verification_report_path": "build-results/latest/verification-report.json",
   "diagnostics_path": "build-results/latest/diagnostics.json",
   "next_action": "fix_first_error"
 }
@@ -374,6 +377,7 @@ Next action: fix_first_error.
 
 - `scripts/build-check.sh`
 - `references/override-config.md`
+- `../ios-build-log-digest/references/verification-report-schema.md`
 - `../ios-verification-router/SKILL.md`
 - `../ios-build-log-digest/SKILL.md`
 - `../../daemon/diagnostics.schema.json`

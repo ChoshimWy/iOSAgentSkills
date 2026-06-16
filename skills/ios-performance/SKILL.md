@@ -82,8 +82,14 @@ Analyze and improve iOS performance issues using the smallest credible evidence 
 ## Token Budget
 
 - Do not paste raw `xctrace` dumps or large logs.
+- Prefer local scripts or command-line aggregation to produce compact top stacks, time windows, thread hotspots, allocation deltas, and artifact paths before handing evidence to the Agent.
+- For `.trace` packages, prefer `scripts/summarize-xctrace.py` to export selected `xctrace` tables and consume `trace-summary.json` / `trace-summary.md` instead of raw XML exports.
 - Prefer compact symptom summaries, selected counters, and one clear evidence thread.
 - Avoid mixing unrelated hotspots into the same report.
+
+## Reference Resources
+
+- `scripts/summarize-xctrace.py`: exports high-signal `xctrace` tables and writes compact `trace-summary.json` / `trace-summary.md` evidence, including actionable findings, thread hotspots, stack signatures, and symbolication diagnostics.
 
 ## Relationship to Other Skills
 

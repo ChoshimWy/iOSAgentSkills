@@ -132,6 +132,7 @@ Review iOS/macOS code changes, identify correctness and maintainability risks, e
 - 不读取完整 build.log。
 - 不读取完整 xcresult dump。
 - 不重复输出大段 diff。
+- 优先让本地脚本或窄范围命令生成 review packet（scoped diff、changed files、关键符号、验证摘要），reviewer 只消费必要证据。
 - Findings 优先于代码摘录。
 - 输出应聚焦阻塞项与风险。
 

@@ -8,6 +8,7 @@
 - `AGENTS.md` —— 团队共享规则单一来源（宪法层锚点）
 - `config/codex/codex.shared.toml` —— 可版本化、可跨设备复用的 Codex 共享默认配置
 - `config/codex/templates/codex_verify.example.sh` —— 验证 wrapper 模板；既可复制到目标 Xcode 项目根目录作为 `codex_verify.sh`，也会被安装脚本同步为本机 `~/.codex/bin/codex_verify`
+- `tools/digest-xcodebuild-log.sh` —— 本地验证日志摘要脚本；安装脚本同步为 `~/.codex/bin/digest-xcodebuild-log`，供 wrapper 先生成 `verification-report.json` 再交给 Agent
 - `CLAUDE.md` —— Claude 入口薄包装，导入 `AGENTS.md`
 
 ### Core Implementation
@@ -66,7 +67,7 @@ ln -s iOSAgentSkills/skills .claude/skills
 - 这些模板使用 Codex 当前支持的扁平 custom agent schema：`name` / `description` / `developer_instructions`，以及可选 `nickname_candidates` / `model` / `model_reasoning_effort` / `sandbox_mode` / `mcp_servers` / `skills.config`。
 - 安装脚本会同步到：`~/.codex/agents/`。
 - 角色模板说明见：`config/codex/templates/agents/README.md`。
-- 验证 wrapper 模板：`config/codex/templates/codex_verify.example.sh`；安装脚本会同步到本机 `~/.codex/bin/codex_verify` 作为全局 fallback。若目标项目接入了 repo-tracked `codex_verify.sh`，则项目脚本优先；否则自动回退到全局 wrapper。wrapper 会自动接入 shared build-queue daemon，把验证型 `xcodebuild` 串行排队执行，并统一使用 Xcode 系统 DerivedData（`~/Library/Developer/Xcode/DerivedData`）。
+- 验证 wrapper 模板：`config/codex/templates/codex_verify.example.sh`；安装脚本会同步到本机 `~/.codex/bin/codex_verify` 作为全局 fallback，并同步 `tools/digest-xcodebuild-log.sh` 到 `~/.codex/bin/digest-xcodebuild-log`。若目标项目接入了 repo-tracked `codex_verify.sh`，则项目脚本优先；否则自动回退到全局 wrapper。wrapper 会自动接入 shared build-queue daemon，把验证型 `xcodebuild` 串行排队执行，统一使用 Xcode 系统 DerivedData（`~/Library/Developer/Xcode/DerivedData`），并默认只把 `verification-report.json` 打印给 Agent。
 - 推荐执行顺序：先 `explorer -> builder -> reporter`，再按需激活 `pm` / `tester`。
 - 默认先做任务分型：`doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`，再映射到 `lite` / `standard` / `full`。
 - 配置映射：
@@ -140,6 +141,7 @@ python3 scripts/validate_codex_agent_templates.py config/codex/templates/agents
 - `final-evidence-gate` 与 `verify-ios-build` 不再是所有 Apple Xcode 项目改动的强制收尾，仅作为按需补强验证。
 - 执行可选 `xcodebuild` 验证时，仍必须在目标项目根目录的项目环境执行，不能把 sandbox 结果当作完整项目环境证据。
 - 本地所有 `xcodebuild` 参数探测与验证需求（含 `-list` / `-showdestinations` / build/test）默认都在非沙盒项目环境通过 wrapper 执行：由主 Agent 使用 `functions.exec_command` 启动目标项目根目录的 `codex_verify.sh`，若项目未接入则回退到本机 `~/.codex/bin/codex_verify`。不得直接调用 `xcodebuild` 二进制，也不要让多个 Agent 各自裸跑 `xcodebuild`；wrapper 会自动接入 shared build-queue daemon，把验证型 `xcodebuild` 串行排队执行，并统一使用 Xcode 系统 DerivedData。
+- 验证输出默认遵守 **脚本先裁剪，Agent 后判断**：wrapper / digest 脚本先生成 `verification-report.json`、`diagnostics.json`、`build-summary.txt`，Agent 默认只读取 `verification-report.json`；只有 `needs_raw_log=true` 或用户显式要求时，才读取 raw log 的定向片段。若必须实时查看完整日志，显式设置 `CODEX_VERIFY_STREAM_LOG=1`。
 - 如果 `--queue-status`、wrapper 输出或错误信息表明已有其他 Agent 正在执行验证，当前 Agent 应等待 shared build-queue daemon 完成当前任务，或把本轮标记为 `env_issue` / `blocked`；不要为了绕过同一个 `build.db` 锁而切到单独 `-derivedDataPath` 跑同一组最窄测试。
 - 可选完整验证继续遵守既有 Xcode 约束：优先 `.xcworkspace`，优先绑定了单元测试 `*Tests` target / bundle 的 scheme，iOS 路径默认优先已连接真机。验证链路由 wrapper 提交到 daemon；可通过 `codex_verify.sh --queue-status` 查看当前 active job 与 pending jobs。非验证型构建讨论仍以 Xcode 系统 DerivedData 为基线；旧 `XCODE_DERIVED_DATA_*` / `CODEX_DERIVED_DATA_SLOT` 公开配置不再支持。
 - 实现链路默认三步收口：`实现 skill -> testing/定向验证 -> reviewer subAgent(code-review)`。

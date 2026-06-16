@@ -34,7 +34,7 @@ Do not use this skill to replace `testing`, `final-evidence-gate`, or `verify-io
 - If a previous verification result exists for the same fingerprint, read that cached diagnostics result before requesting another build.
 - If no code or runtime-affecting files changed, do not request `xcodebuild`.
 - If verification fails, fix only the first real blocking error before requesting another verification.
-- Never read full raw build logs by default. Use `diagnostics.json` first.
+- Never read full raw build logs by default. Use script-generated `verification-report.json` first, then `diagnostics.json`.
 
 ## Diff Classification
 
@@ -121,7 +121,7 @@ When reporting verification choices, keep the response short:
 Verification route: affected unit tests + build
 Reason: service and ViewModel changed; no project or dependency config changed.
 Full build: skipped
-Log policy: diagnostics.json only
+Log policy: verification-report.json only
 ```
 
 ## Escalation Rules
@@ -130,7 +130,7 @@ Escalate to stronger verification only when:
 
 - The previous cheaper verification passed and the user requests merge/release confidence.
 - Project or dependency configuration changed.
-- The failure cannot be explained from `diagnostics.json` or `build-summary.txt`.
+- The failure cannot be explained from `verification-report.json`, `diagnostics.json`, or `build-summary.txt`.
 - The changed code affects runtime integration that has no meaningful unit-level coverage.
 
 ## Token Budget
@@ -138,7 +138,7 @@ Escalate to stronger verification only when:
 - Do not paste large logs.
 - Do not recursively inspect `DerivedData`.
 - Do not open full `.xcresult` dumps.
-- Prefer one concise diagnostics object over raw command output.
+- Prefer one concise verification report over raw command output.
 - Summarize only actionable errors and skipped validation reasons.
 
 ## Exit Conditions

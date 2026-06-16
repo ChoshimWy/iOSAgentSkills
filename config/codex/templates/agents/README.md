@@ -12,6 +12,7 @@
 
 以及 1 个本机全局验证入口：
 - `~/.codex/bin/codex_verify` —— 由安装脚本自动同步；当目标项目没有 repo-tracked `codex_verify.sh` 时，`verify-ios-build` 会自动回退到这个全局 wrapper
+- `~/.codex/bin/digest-xcodebuild-log` —— 由安装脚本自动同步；wrapper 用它从 raw `xcodebuild` 日志生成 `verification-report.json` / `diagnostics.json`，默认只把结构化报告交给 Agent
 
 推荐执行顺序：
 `explorer -> builder -> reporter`，按需激活 `pm` 与 `tester`
@@ -25,6 +26,7 @@
 - 安装脚本会把它们同步到 `~/.codex/agents/`。
 - Codex 默认采用 local-only skills mode：`~/.codex/skills` 指向本仓 `skills/`，共享配置会把所有 plugin-contributed skills/tools 设为 `enabled = false`；插件 cache 可保留但不会自动参与 Skill 选择。
 - 安装脚本也会同步 `~/.codex/bin/codex_verify` 作为全局验证入口。
+- 安装脚本也会同步 `~/.codex/bin/digest-xcodebuild-log` 作为全局日志摘要入口。
 - `codex_verify.example.sh` 会同步到 `~/.codex/templates/codex_verify.example.sh`，供目标项目复制落地。
 - 推荐优先级：`<repo-root>/codex_verify.sh` > `~/.codex/bin/codex_verify`。
 - 可通过 `codex_verify.sh --queue-status` 或 `~/.codex/bin/codex_verify --queue-status` 查看 daemon 当前 active job 与 pending jobs。

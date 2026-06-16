@@ -7,7 +7,7 @@
 - 减少不必要的 `xcodebuild` 请求。
 - 避免多 Agent 重复验证同一 diff。
 - 避免 Codex / Claude Code 读取完整构建日志。
-- 让 Agent 优先消费结构化 `diagnostics.json`。
+- 让 Agent 优先消费脚本生成的结构化 `verification-report.json`，再按需读取 `diagnostics.json`。
 - 默认只跑最窄验证面，按需升级 full verification。
 
 ## 推荐链路
@@ -27,7 +27,7 @@ xcodebuild
   ↓
 digest-xcodebuild-log.sh
   ↓
-diagnostics.json / build-summary.txt
+verification-report.json / diagnostics.json / build-summary.txt
   ↓
 ios-build-log-digest
   ↓
@@ -61,12 +61,12 @@ Agent fixes first blocking error only
 
 ### `ios-build-log-digest`
 
-构建失败后只读取摘要，不读取原始日志。
+构建失败后只读取脚本摘要，不读取原始日志。
 
 核心规则：
 
-- 优先读取 `diagnostics.json`。
-- 其次读取 `build-summary.txt`。
+- 优先读取 `verification-report.json`。
+- 其次读取 `diagnostics.json`、`build-summary.txt`。
 - 默认禁止读取完整 `build.log`。
 - 默认禁止读取完整 `.xcresult` dump。
 - 只修第一个真实 blocking error。
@@ -77,12 +77,41 @@ Agent fixes first blocking error only
 
 ```text
 build-results/latest/
+  verification-report.json
   diagnostics.json
   build-summary.txt
   test-summary.json
 ```
 
-`diagnostics.json` 应遵守：
+`verification-report.json` 是 Agent 默认入口，最小字段：
+
+```json
+{
+  "status": "failed",
+  "mode": "unit",
+  "fingerprint": "abc123",
+  "cached": false,
+  "summary": "swift_compile_error: App/File.swift:82 cannot find 'productID' in scope",
+  "first_blocking_error": {
+    "kind": "swift_compile_error",
+    "file": "App/File.swift",
+    "line": 82,
+    "message": "Cannot find 'productID' in scope"
+  },
+  "failed_tests": [],
+  "warnings_count": 0,
+  "artifact_paths": {
+    "diagnostics_json": "build-results/latest/diagnostics.json",
+    "build_summary": "build-results/latest/build-summary.txt",
+    "raw_log": "build-results/latest/build.log"
+  },
+  "suggested_next_action": "Fix the first real blocking error only, then request verification again.",
+  "raw_log_policy": "forbidden_by_default",
+  "needs_raw_log": false
+}
+```
+
+`diagnostics.json` 是二级结构化明细，应遵守：
 
 ```text
 daemon/diagnostics.schema.json
@@ -123,7 +152,7 @@ tools/digest-xcodebuild-log.sh
 用法：
 
 ```bash
-tools/digest-xcodebuild-log.sh build.log diagnostics.json build-summary.txt
+tools/digest-xcodebuild-log.sh build.log diagnostics.json build-summary.txt verification-report.json
 ```
 
 典型集成：
@@ -132,8 +161,21 @@ tools/digest-xcodebuild-log.sh build.log diagnostics.json build-summary.txt
 set -o pipefail
 xcodebuild ... 2>&1 | tee build.log
 status=$?
-tools/digest-xcodebuild-log.sh build.log diagnostics.json build-summary.txt
+tools/digest-xcodebuild-log.sh build.log diagnostics.json build-summary.txt verification-report.json
 exit $status
+```
+
+安装脚本会同步：
+
+```bash
+~/.codex/bin/codex_verify
+~/.codex/bin/digest-xcodebuild-log
+```
+
+`codex_verify` 默认只把 `verification-report.json` 打印回 Agent。若必须观察实时 raw log，显式设置：
+
+```bash
+CODEX_VERIFY_STREAM_LOG=1
 ```
 
 ## Agent 交付格式
@@ -144,7 +186,7 @@ exit $status
 Verification route: affected unit tests + build
 Reason: SubscriptionService and PurchaseViewModel changed.
 Full build: skipped; no project/dependency config changed.
-Log policy: diagnostics.json only.
+Log policy: verification-report.json only.
 ```
 
 失败时：

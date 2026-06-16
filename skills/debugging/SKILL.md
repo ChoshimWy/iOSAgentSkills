@@ -86,6 +86,7 @@ Do not use this Skill when:
 ### Token Budget
 
 - Do not read full raw build logs by default.
+- When logs are large, use local scripts or targeted grep/tail extraction to produce compact stack, exception, thread, and time-window evidence before Agent analysis.
 - Do not dump full crash archives if a stack trace is enough.
 - Do not paste full console logs.
 - Prefer minimal stack, first app frame, exception reason, device/OS/app version, and reproduction steps.

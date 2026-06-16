@@ -11,6 +11,7 @@ Configure local Codex and Claude entrypoints to use this cloned iOSAgentSkills r
   - ~/.codex/skills -> ~/.cc-switch/iOSAgentSkills/skills（当启用 --ccswitch 时）
   - ~/.codex/agents/*.toml -> <repo>/config/codex/templates/agents/*.toml
   - ~/.codex/bin/codex_verify -> <repo>/config/codex/templates/codex_verify.example.sh
+  - ~/.codex/bin/digest-xcodebuild-log -> <repo>/tools/digest-xcodebuild-log.sh
   - ~/.codex/templates/codex_verify.example.sh -> <repo>/config/codex/templates/codex_verify.example.sh
   - ~/.codex/templates/ui-smoke.example.yml -> <repo>/config/codex/templates/ui-smoke.example.yml
   - ~/.copilot/skills -> <repo>/skills (默认)
@@ -87,6 +88,7 @@ REPO_CODEX_TEMPLATES="$REPO_ROOT/config/codex/templates"
 REPO_CODEX_AGENT_TEMPLATES="$REPO_CODEX_TEMPLATES/agents"
 REPO_CODEX_VERIFY_TEMPLATE="$REPO_CODEX_TEMPLATES/codex_verify.example.sh"
 REPO_CODEX_UI_SMOKE_TEMPLATE="$REPO_CODEX_TEMPLATES/ui-smoke.example.yml"
+REPO_XCODEBUILD_DIGEST_SCRIPT="$REPO_ROOT/tools/digest-xcodebuild-log.sh"
 CODEX_SYNC_SCRIPT="$REPO_ROOT/scripts/sync_codex_shared_config.py"
 CODEX_AGENT_VALIDATE_SCRIPT="$REPO_ROOT/scripts/validate_codex_agent_templates.py"
 REPO_CLAUDE_CONFIG="$REPO_ROOT/config/claude-code"
@@ -112,6 +114,7 @@ CODEX_CONFIG="$CODEX_DIR/config.toml"
 CODEX_AGENTS_DIR="$CODEX_DIR/agents"
 CODEX_BIN_DIR="$CODEX_DIR/bin"
 CODEX_VERIFY_WRAPPER="$CODEX_BIN_DIR/codex_verify"
+CODEX_XCODEBUILD_DIGEST="$CODEX_BIN_DIR/digest-xcodebuild-log"
 CODEX_TEMPLATES_DIR="$CODEX_DIR/templates"
 CODEX_VERIFY_TEMPLATE="$CODEX_TEMPLATES_DIR/codex_verify.example.sh"
 CODEX_UI_SMOKE_TEMPLATE="$CODEX_TEMPLATES_DIR/ui-smoke.example.yml"
@@ -552,6 +555,15 @@ sync_codex_verify_wrapper() {
   fi
 }
 
+sync_codex_xcodebuild_digest() {
+  [[ -f "$REPO_XCODEBUILD_DIGEST_SCRIPT" ]] || return 0
+  ensure_directory "$CODEX_BIN_DIR"
+  ensure_file_copied "$CODEX_XCODEBUILD_DIGEST" "$REPO_XCODEBUILD_DIGEST_SCRIPT" "~/.codex/bin/digest-xcodebuild-log"
+  if [[ "$DRY_RUN" == '0' ]]; then
+    chmod +x "$CODEX_XCODEBUILD_DIGEST"
+  fi
+}
+
 GLOBAL_COMMIT_MSG_HOOK_CONTENT=$'#!/usr/bin/env bash\nset -euo pipefail\nexec python3 "$HOME/.config/git/commitlint.py" "$1"'
 
 sync_global_git_hooks() {
@@ -693,6 +705,11 @@ verify_codex_agent_templates() {
     cmp -s "$REPO_CODEX_VERIFY_TEMPLATE" "$CODEX_VERIFY_WRAPPER" || fail "~/.codex/bin/codex_verify does not match repo template"
     [[ -x "$CODEX_VERIFY_WRAPPER" ]] || fail "~/.codex/bin/codex_verify is not executable"
   fi
+  if [[ -f "$REPO_XCODEBUILD_DIGEST_SCRIPT" ]]; then
+    [[ -f "$CODEX_XCODEBUILD_DIGEST" && ! -L "$CODEX_XCODEBUILD_DIGEST" ]] || fail "~/.codex/bin/digest-xcodebuild-log is missing or not a regular file"
+    cmp -s "$REPO_XCODEBUILD_DIGEST_SCRIPT" "$CODEX_XCODEBUILD_DIGEST" || fail "~/.codex/bin/digest-xcodebuild-log does not match repo script"
+    [[ -x "$CODEX_XCODEBUILD_DIGEST" ]] || fail "~/.codex/bin/digest-xcodebuild-log is not executable"
+  fi
 
   if [[ -f "$REPO_CODEX_UI_SMOKE_TEMPLATE" ]]; then
     [[ -f "$CODEX_UI_SMOKE_TEMPLATE" && ! -L "$CODEX_UI_SMOKE_TEMPLATE" ]] || fail "~/.codex/templates/ui-smoke.example.yml is missing or not a regular file"
@@ -750,6 +767,7 @@ if [[ "$CLAUDE_ONLY" == '0' ]]; then
   ensure_codex_config
   sync_codex_agent_templates
   sync_codex_verify_wrapper
+  sync_codex_xcodebuild_digest
   sync_codex_verify_template
   sync_codex_ui_smoke_template
 else

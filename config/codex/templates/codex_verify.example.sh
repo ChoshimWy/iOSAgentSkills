@@ -26,6 +26,8 @@ Notes:
   - Legacy public overrides XCODE_DERIVED_DATA_MODE / XCODE_DERIVED_DATA_SEED_MODE /
     XCODE_DERIVED_DATA_REFRESH / CODEX_DERIVED_DATA_SLOT are no longer supported.
   - The build-queue daemon is started automatically on first use.
+  - The wrapper prints a compact verification-report.json by default. Set
+    CODEX_VERIFY_STREAM_LOG=1 only when raw log streaming is explicitly needed.
 EOF
 }
 
@@ -145,6 +147,126 @@ append_log_line() {
   local target="$1"
   local line="$2"
   printf '%s\n' "$line" >>"$target"
+}
+
+resolve_digest_script() {
+  local candidate
+  for candidate in \
+    "${CODEX_XCODEBUILD_DIGEST_SCRIPT:-}" \
+    "$REPO_ROOT/tools/digest-xcodebuild-log.sh" \
+    "$SCRIPT_DIR/digest-xcodebuild-log" \
+    "$SCRIPT_DIR/digest-xcodebuild-log.sh" \
+    "$HOME/.codex/bin/digest-xcodebuild-log"
+  do
+    [[ -n "$candidate" ]] || continue
+    if [[ -f "$candidate" ]]; then
+      printf '%s' "$candidate"
+      return 0
+    fi
+  done
+  return 1
+}
+
+write_minimal_verification_report() {
+  local job_dir="$1"
+  local status="$2"
+  python3 - "$job_dir" "$status" <<'PY'
+from __future__ import annotations
+
+import datetime as dt
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+job_dir = Path(sys.argv[1])
+status_code = int(sys.argv[2])
+raw_log = job_dir / "job.log"
+diagnostics_path = job_dir / "diagnostics.json"
+summary_path = job_dir / "build-summary.txt"
+report_path = job_dir / "verification-report.json"
+
+text = raw_log.read_text(encoding="utf-8", errors="replace") if raw_log.exists() else ""
+fingerprint = hashlib.sha256(text.encode("utf-8", errors="replace")).hexdigest()[:16]
+state = "passed" if status_code == 0 else "failed"
+summary = "Verification succeeded." if status_code == 0 else "Verification failed; no digest script was available, inspect build-summary.txt before raw logs."
+generated_at = dt.datetime.now(dt.timezone.utc).isoformat().replace("+00:00", "Z")
+
+diagnostics = {
+    "status": state,
+    "mode": (job_dir / "mode").read_text().strip() if (job_dir / "mode").exists() else "auto",
+    "fingerprint": fingerprint,
+    "cached": False,
+    "summary": summary,
+    "finished_at": generated_at,
+    "diagnostics": [],
+    "first_blocking_error": None,
+    "failed_tests": [],
+    "warnings_count": 0,
+    "artifacts": {
+        "diagnostics_json": str(diagnostics_path),
+        "build_summary": str(summary_path),
+        "verification_report": str(report_path),
+        "raw_log": str(raw_log),
+    },
+    "next_action": "Read build-summary.txt. Only inspect the raw log if compact evidence is insufficient.",
+    "raw_log_policy": "forbidden_by_default",
+    "needs_raw_log": status_code != 0,
+}
+diagnostics_path.write_text(json.dumps(diagnostics, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+summary_path.write_text(summary + "\n", encoding="utf-8")
+report = {
+    "status": state,
+    "mode": diagnostics["mode"],
+    "fingerprint": fingerprint,
+    "cached": False,
+    "summary": summary,
+    "first_blocking_error": None,
+    "failed_tests": [],
+    "warnings_count": 0,
+    "artifact_paths": diagnostics["artifacts"],
+    "suggested_next_action": diagnostics["next_action"],
+    "raw_log_policy": "forbidden_by_default",
+    "needs_raw_log": status_code != 0,
+    "generated_at": generated_at,
+}
+report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+PY
+}
+
+generate_verification_artifacts() {
+  local job_dir="$1"
+  local status="$2"
+  local digest_script=''
+  local diagnostics_path="$job_dir/diagnostics.json"
+  local summary_path="$job_dir/build-summary.txt"
+  local report_path="$job_dir/verification-report.json"
+
+  if digest_script="$(resolve_digest_script)"; then
+    CODEX_VERIFY_MODE="$(cat "$job_dir/mode" 2>/dev/null || printf '%s' auto)" \
+      bash "$digest_script" "$job_dir/job.log" "$diagnostics_path" "$summary_path" "$report_path" \
+      >"$job_dir/digest.log" 2>&1 || true
+  fi
+
+  if [[ ! -f "$report_path" ]]; then
+    write_minimal_verification_report "$job_dir" "$status"
+  fi
+
+  write_text_file "$job_dir/diagnostics_path" "$diagnostics_path"
+  write_text_file "$job_dir/build_summary_path" "$summary_path"
+  write_text_file "$job_dir/verification_report_path" "$report_path"
+  write_text_file "$QUEUE_ROOT/latest_job" "$job_dir"
+  write_text_file "$QUEUE_ROOT/latest_verification_report" "$report_path"
+}
+
+print_verification_report() {
+  local job_dir="$1"
+  local report_path="$job_dir/verification-report.json"
+  if [[ -f "$report_path" ]]; then
+    cat "$report_path"
+  else
+    echo "{\"status\":\"blocked\",\"summary\":\"verification-report.json missing\",\"artifact_paths\":{\"raw_log\":\"$job_dir/job.log\"},\"needs_raw_log\":false}"
+  fi
 }
 
 file_mtime_seconds() {
@@ -504,22 +626,24 @@ wait_for_job() {
         sleep 1
         ;;
       running)
-        if [[ -z "$tail_pid" ]]; then
+        if [[ -z "$last_notice" || "$last_notice" != "running" ]]; then
           echo "[codex_verify] running job=$JOB_ID log_file=$JOB_LOG_FILE derived_data_path=$SYSTEM_DERIVED_DATA_HOME" >&2
+          last_notice="running"
+        fi
+        if [[ "${CODEX_VERIFY_STREAM_LOG:-0}" == '1' && -z "$tail_pid" ]]; then
           tail -n +1 -F "$JOB_LOG_FILE" 2>/dev/null &
           tail_pid=$!
         fi
         sleep 1
         ;;
       succeeded|failed)
-        if [[ -z "$tail_pid" ]]; then
-          [[ -f "$JOB_LOG_FILE" ]] && cat "$JOB_LOG_FILE"
-        else
+        if [[ -n "$tail_pid" ]]; then
           kill "$tail_pid" 2>/dev/null || true
           wait "$tail_pid" 2>/dev/null || true
         fi
         exit_code="$(cat "$JOB_DIR/exit_code" 2>/dev/null || printf '%s' '1')"
-        echo "[codex_verify] finished job=$JOB_ID state=$state status=$exit_code log_file=$JOB_LOG_FILE" >&2
+        print_verification_report "$JOB_DIR"
+        echo "[codex_verify] finished job=$JOB_ID state=$state status=$exit_code report=$JOB_DIR/verification-report.json log_file=$JOB_LOG_FILE" >&2
         return "$exit_code"
         ;;
       *)
@@ -595,13 +719,14 @@ run_job() {
 
   write_text_file "$job_dir/exit_code" "$status"
   write_text_file "$job_dir/finished_at" "$(timestamp_now)"
+  append_log_line "$job_dir/job.log" "[codex_verify] finished_at=$(cat "$job_dir/finished_at")"
+  append_log_line "$job_dir/job.log" "[codex_verify] status=$status"
+  generate_verification_artifacts "$job_dir" "$status"
   if [[ $status -eq 0 ]]; then
     set_job_state "$job_dir" 'succeeded'
   else
     set_job_state "$job_dir" 'failed'
   fi
-  append_log_line "$job_dir/job.log" "[codex_verify] finished_at=$(cat "$job_dir/finished_at")"
-  append_log_line "$job_dir/job.log" "[codex_verify] status=$status"
   rm -f "$ACTIVE_JOB_FILE"
 }
 

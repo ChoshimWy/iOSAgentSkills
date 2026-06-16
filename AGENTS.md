@@ -59,6 +59,7 @@ FULL
 - 默认选择能覆盖当前风险的最低验证等级。
 - 涉及代码改动时，优先最窄定向验证：先单个 test case / test class，再最小受影响 test file / bundle。
 - 不默认全量测试、完整 build、Archive 或 FULL verification。
+- 验证链路默认先由本地脚本生成结构化证据（如 `verification-report.json`、`diagnostics.json`、`build-summary.txt`），Agent 只消费摘要并做工程判断；不得默认把完整 raw log / `.xcresult` dump 带入上下文。
 - 如果当前改动不适合运行测试，必须给出 `no_test_reason` 与替代验证依据。
 - 如果当前改动没有低成本单测路径，必须给出 `no_test_reason` 与 `suggested_validation`；不要自动升级到真机 / 模拟器验证。
 - 高风险改动包括：工程配置、依赖基线、签名 / entitlements、plist / capabilities、资源打包、target membership、scheme / xctestplan、私有库集成，以及发布前信心建立。
@@ -91,6 +92,7 @@ FULL
 
 - 修改 `skills/*/SKILL.md` 时，默认遵守 `docs/skills/skill-schema-v1.md`。
 - 如果变更影响 Skill 的职责边界、入口建议或路由关系，同步更新 `skills/TAXONOMY.md`。
+- Skill 中可重复、确定性强、输出量大的本地处理优先沉淀到 `skills/<skill>/scripts/`；`references/` 只放 schema、判读说明和示例报告，不放可执行脚本。
 - 新增或修改 Skill 后，默认运行或建议运行：
 
 ```bash

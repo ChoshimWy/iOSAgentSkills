@@ -74,7 +74,7 @@ Do not use this Skill as the first route when the task is clearly one of these s
 - Do not paste large diffs, full files, full build logs, full `.xcresult` dumps, or recursive `DerivedData` output.
 - Build / test / log output should be summarized as key error sections, filtered summaries, or the last 80-120 relevant lines.
 - Long logs should be written to files and digested before being read by Agents.
-- For build failures, prefer `diagnostics.json` then `build-summary.txt`.
+- For build failures, prefer script-generated `verification-report.json`, then `diagnostics.json`, then `build-summary.txt`.
 - Default raw log policy: forbidden unless summaries are insufficient or the user explicitly asks.
 
 ### Verification Discipline
@@ -86,6 +86,7 @@ Do not use this Skill as the first route when the task is clearly one of these s
 - 真机 / 模拟器验证不属于默认 testing 执行面；只有用户显式要求、发布前自检、高风险或证据不足时才按需升级。
 - For build failure attribution, use `ios-build-log-digest` before reading raw logs.
 - Any local `xcodebuild` verification must go through the target project wrapper `./codex_verify.sh` when available, otherwise `~/.codex/bin/codex_verify`.
+- Verification stdout must stay evidence-first and low-noise: the wrapper should print `verification-report.json` by default; Agents should not stream raw logs unless `CODEX_VERIFY_STREAM_LOG=1` is explicitly justified.
 - Shared build-queue daemon remains the default path for validation-type `xcodebuild`.
 - Reuse the same workspace / scheme / destination baseline when a task already ran targeted build or test validation.
 
@@ -371,7 +372,7 @@ For private library local debugging, add:
   "orchestration_level": "full",
   "roles_used": ["main", "coder", "reviewer", "tester"],
   "validation_route": "affected tests first; real-device verification only if explicitly required",
-  "raw_log_policy": "diagnostics.json first"
+  "raw_log_policy": "verification-report.json first"
 }
 ```
 

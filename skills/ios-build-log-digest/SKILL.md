@@ -1,22 +1,22 @@
 ---
 name: ios-build-log-digest
-description: iOS 构建日志摘要 Skill。用于 xcodebuild build/test 失败后读取 diagnostics.json、build-summary.txt、test-summary.json 或 xcresult 摘要，避免直接读取完整 build.log 或 DerivedData；不负责执行验证、判断最终证据充分性或运行时问题排查。
+description: iOS 构建日志摘要 Skill。用于 xcodebuild build/test 失败后优先读取脚本生成的 verification-report.json，再按需读取 diagnostics.json、build-summary.txt、test-summary.json 或 xcresult 摘要，避免直接读取完整 build.log 或 DerivedData；不负责执行验证、判断最终证据充分性或运行时问题排查。
 ---
 
 # iOS Build Log Digest
 
 ## Purpose
 
-Reduce token usage when analyzing `xcodebuild` failures by forcing Agents to consume structured diagnostics instead of raw build logs.
+Reduce token usage when analyzing `xcodebuild` failures by forcing Agents to consume script-generated verification reports and structured diagnostics instead of raw build logs.
 
-中文说明：该 skill 用于约束 Codex / Claude Code 在 iOS 构建失败后只读取摘要文件，避免把几十 MB 的 `xcodebuild` 日志塞进上下文。
+中文说明：该 skill 用于约束 Codex / Claude Code 在 iOS 构建失败后先读取本地脚本生成的 `verification-report.json`，避免把几十 MB 的 `xcodebuild` 日志塞进上下文。
 
 ## When to Use
 
 Use this skill when:
 
 - A build or test command failed.
-- The build-queue daemon produced `diagnostics.json`, `build-summary.txt`, `test-summary.json`, or an `.xcresult` bundle.
+- The build-queue daemon or digest script produced `verification-report.json`, `diagnostics.json`, `build-summary.txt`, `test-summary.json`, or an `.xcresult` bundle.
 - An Agent is about to inspect a raw `build.log`.
 - The user asks why verification consumes too many tokens.
 
@@ -30,7 +30,8 @@ Use this skill when:
 
 - Never read full raw `xcodebuild` logs by default.
 - Never paste large build logs into the conversation.
-- Prefer `diagnostics.json` first.
+- Prefer `verification-report.json` first.
+- Then read `diagnostics.json`.
 - Then read `build-summary.txt`.
 - Then read `test-summary.json`.
 - Inspect `.xcresult` only through a compact summary command or pre-generated summary file.
@@ -43,16 +44,18 @@ Use this skill when:
 
 Read files in this order:
 
-1. `diagnostics.json`
-2. `build-summary.txt`
-3. `test-summary.json`
-4. `xcresult-summary.json`
-5. Small targeted source file around the reported error location
+1. `verification-report.json`
+2. `diagnostics.json`
+3. `build-summary.txt`
+4. `test-summary.json`
+5. `xcresult-summary.json`
+6. Small targeted source file around the reported error location
 
 ## Inputs
 
 ```json
 {
+  "verification_report_path": "optional",
   "diagnostics_path": "optional",
   "summary_path": "optional",
   "test_summary_path": "optional",
@@ -75,6 +78,34 @@ Do not read these unless explicitly required:
 - unrelated SwiftCompile sections
 
 ## Diagnostics Contract
+
+Expected `verification-report.json` shape:
+
+```json
+{
+  "status": "failed",
+  "mode": "unit",
+  "fingerprint": "abc123",
+  "cached": false,
+  "summary": "swift_compile_error: App/File.swift:82 cannot find 'productID' in scope",
+  "first_blocking_error": {
+    "kind": "swift_compile_error",
+    "file": "App/File.swift",
+    "line": 82,
+    "message": "Cannot find 'productID' in scope"
+  },
+  "failed_tests": [],
+  "warnings_count": 0,
+  "artifact_paths": {
+    "diagnostics_json": "build-results/latest/diagnostics.json",
+    "build_summary": "build-results/latest/build-summary.txt",
+    "raw_log": "build-results/latest/build.log"
+  },
+  "suggested_next_action": "Fix the first real blocking error only, then request verification again.",
+  "raw_log_policy": "forbidden_by_default",
+  "needs_raw_log": false
+}
+```
 
 Expected `diagnostics.json` shape:
 
@@ -125,7 +156,7 @@ When multiple diagnostics exist, handle them in this order:
     "line": 10,
     "message": "..."
   },
-  "evidence_source": "diagnostics.json | build-summary.txt | test-summary.json | xcresult-summary.json",
+  "evidence_source": "verification-report.json | diagnostics.json | build-summary.txt | test-summary.json | xcresult-summary.json",
   "known_risks": [],
   "next_action": "fix_first_error | verify_again | blocked | none"
 }
@@ -165,11 +196,11 @@ Avoid:
 The build-queue daemon should emit compact files:
 
 ```text
-build-results/
-  latest/
-    diagnostics.json
-    build-summary.txt
-    test-summary.json
+build-results/latest/ or build-queue job dir:
+  verification-report.json
+  diagnostics.json
+  build-summary.txt
+  test-summary.json
 ```
 
 Agents should consume only these files unless escalation is justified.
@@ -178,13 +209,17 @@ Agents should consume only these files unless escalation is justified.
 
 - Escalate to `verify-ios-build` when no fresh verification evidence exists yet.
 - Escalate to `debugging` when the first failure is clearly a runtime crash, hang, or behavior issue instead of a build/test failure.
-- Escalate to raw log inspection only when compact summaries are insufficient and the user explicitly asks.
+- Escalate to raw log inspection only when `verification-report.json` sets `needs_raw_log=true` or compact summaries are insufficient and the user explicitly asks.
 
 ## Token Budget
 
 - Never read full raw `xcodebuild` logs by default.
-- Prefer `diagnostics.json`, then `build-summary.txt`, then `test-summary.json`.
+- Prefer `verification-report.json`, then `diagnostics.json`, then `build-summary.txt`, then `test-summary.json`.
 - Report only the first real blocking error relevant to the current change.
+
+## Reference Resources
+
+- `references/verification-report-schema.md`: schema and Agent reading order for script-generated verification evidence.
 
 ## Relationship to Other Skills
 
