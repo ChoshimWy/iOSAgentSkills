@@ -35,7 +35,7 @@ private func setupConstraints() {
         make.top.equalTo(view.safeAreaLayoutGuide).offset(16)
         make.leading.trailing.equalToSuperview().inset(20)
     }
-    
+
     contentView.snp.makeConstraints { make in
         make.top.equalTo(titleLabel.snp.bottom).offset(12)
         make.leading.trailing.equalToSuperview()

@@ -17,6 +17,10 @@ REMOVED_SKILLS = {
     "macos-spm-app-packaging",
     "open-design",
     "sdk-architecture",
+    "refactoring",
+    "swift-expert",
+    "swiftui-feature-implementation",
+    "uikit-feature-implementation",
 }
 CURRENT_REQUIRED_SKILLS = {
     "app-store-changelog",
@@ -36,13 +40,9 @@ CURRENT_REQUIRED_SKILLS = {
     "ios-performance",
     "ios-sdk-architecture",
     "ios-verification-router",
-    "refactoring",
-    "swift-expert",
-    "swiftui-feature-implementation",
     "swiftui-liquid-glass",
     "testing",
     "ui-ux-design-system",
-    "uikit-feature-implementation",
     "verify-ios-build",
     "xcode-build",
 }

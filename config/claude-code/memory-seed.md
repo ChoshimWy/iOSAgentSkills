@@ -31,9 +31,12 @@
 
 | 领域 | Skill |
 |---|---|
-| 通用业务实现 | `ios-feature-implementation` |
-| SwiftUI 页面 | `swiftui-feature-implementation` |
-| UIKit 页面 | `uikit-feature-implementation` |
+| iOS 代码实施统一入口 | `ios-feature-implementation` |
+| SwiftUI 页面 | `ios-feature-implementation` / `swiftui` mode |
+| UIKit 页面 | `ios-feature-implementation` / `uikit` mode |
+| 混合 UI | `ios-feature-implementation` / `mixed-ui` mode |
+| Swift 进阶实施 | `ios-feature-implementation` / `advanced-swift` mode |
+| 行为保持型重构 | `ios-feature-implementation` / `refactor` mode |
 | 测试 | `testing` |
 | 静态审查 | `code-review` |
 | 门禁裁决 | `final-evidence-gate` |

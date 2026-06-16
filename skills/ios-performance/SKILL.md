@@ -95,5 +95,5 @@ Analyze and improve iOS performance issues using the smallest credible evidence 
 
 - Use `debugging` for crash and runtime fault analysis.
 - Use `testing` for test authoring and targeted benchmark execution.
-- Use `swift-expert` when performance work reveals deeper concurrency or abstraction redesign needs.
+- Use `ios-feature-implementation` with `advanced-swift` mode when performance work reveals deeper concurrency or abstraction implementation needs.
 - Use `apple-docs` for official API and Instruments fact lookup.

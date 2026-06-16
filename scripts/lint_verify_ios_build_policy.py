@@ -8,11 +8,7 @@ import sys
 ROOT = Path(__file__).resolve().parent.parent
 FINAL_EVIDENCE_SKILLS = [
     "ios-feature-implementation",
-    "swiftui-feature-implementation",
-    "uikit-feature-implementation",
-    "swift-expert",
     "swiftui-liquid-glass",
-    "refactoring",
     "ios-sdk-architecture",
     "debugging",
     "testing",
@@ -126,7 +122,7 @@ def main() -> int:
         if openai_yaml.exists():
             require_contains(openai_yaml, ["$final-evidence-gate", "$verify-ios-build", "按需"], failures)
 
-    for direct_flow_skill in ("ios-feature-implementation", "swiftui-feature-implementation", "uikit-feature-implementation"):
+    for direct_flow_skill in ("ios-feature-implementation",):
         require_contains(
             ROOT / "skills" / direct_flow_skill / "SKILL.md",
             ["testing", "code-review", "verify-ios-build"],

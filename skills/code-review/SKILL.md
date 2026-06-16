@@ -111,6 +111,11 @@ Review iOS/macOS code changes, identify correctness and maintainability risks, e
 - 实际项目使用本地 `:path` Pod。
 - 验证发生在 vendored snapshot 而非真实源码。
 
+### Coding Standards Reference
+
+- Use `skills/ios-feature-implementation/references/coding-standards.md` as the shared standard when classifying style, documentation, public API, concurrency, UI ownership, or private dependency findings.
+- Apply that reference as review policy; do not turn non-blocking style preferences into blocking findings unless they violate the blocking criteria.
+
 ### Comment Rules
 
 阻塞：
@@ -280,6 +285,10 @@ risk_level:
 next_action:
   complete
 ```
+
+## Reference Resources
+
+- `../ios-feature-implementation/references/coding-standards.md`: shared iOS coding standards for implementation and review classification.
 
 ## Relationship to Other Skills
 

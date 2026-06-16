@@ -49,13 +49,13 @@ Use this Skill when the task involves:
 Do not use this Skill when:
 
 - The task is normal App business implementation; use `ios-feature-implementation`.
-- The task is SwiftUI page implementation; use `swiftui-feature-implementation`.
-- The task is UIKit page implementation; use `uikit-feature-implementation`.
+- The task is SwiftUI page implementation; use `ios-feature-implementation` with `swiftui` mode.
+- The task is UIKit page implementation; use `ios-feature-implementation` with `uikit` mode.
 - The task is writing tests only; use `testing`.
 - The task is build/signing/archive/export/CI only; use `xcode-build`.
 - The task is one-off build verification; use `verify-ios-build`.
 - The task is runtime debugging; use `debugging`.
-- The task is advanced Swift language design only; use `swift-expert`.
+- The task is advanced Swift implementation only; use `ios-feature-implementation` with `advanced-swift` mode.
 
 ## Agent Rules
 
@@ -177,7 +177,7 @@ Return `blocked` when:
 
 ## Escalation Rules
 
-Escalate to `swift-expert` when:
+Escalate to `ios-feature-implementation` with `advanced-swift` mode when:
 
 - The main issue is complex generics, actor isolation, Sendable, type erasure, or availability strategy.
 
@@ -235,7 +235,7 @@ Next: testing -> reviewer subAgent(code-review)
 ## Relationship to Other Skills
 
 - Normal App implementation: `ios-feature-implementation`.
-- Advanced Swift design: `swift-expert`.
+- Advanced Swift implementation: `ios-feature-implementation` with `advanced-swift` mode.
 - Test implementation: `testing`.
 - Static review: `code-review`.
 - Build/distribution mechanics: `xcode-build`.

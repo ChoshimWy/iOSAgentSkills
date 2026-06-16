@@ -77,12 +77,9 @@ def main() -> int:
 
     stale_review_policy_paths = [
         ROOT / "skills" / "ios-feature-implementation" / "SKILL.md",
-        ROOT / "skills" / "uikit-feature-implementation" / "SKILL.md",
-        ROOT / "skills" / "swiftui-feature-implementation" / "SKILL.md",
         ROOT / "skills" / "ios-sdk-architecture" / "SKILL.md",
         ROOT / "skills" / "ios-performance" / "SKILL.md",
         ROOT / "skills" / "swiftui-liquid-glass" / "SKILL.md",
-        ROOT / "skills" / "refactoring" / "SKILL.md",
         ROOT / "skills" / "ios-automation" / "SKILL.md",
         SKILL_ROOT / "references" / "apple-gate-rules.md",
         SKILL_ROOT / "references" / "checkpoint-contract.md",

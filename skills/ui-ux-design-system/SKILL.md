@@ -50,8 +50,8 @@ Use this Skill when the user asks for:
 
 Do not use this Skill when:
 
-- The user needs SwiftUI page code, `NavigationStack`, state ownership, or modifiers; use `swiftui-feature-implementation`.
-- The user needs UIKit ViewController/View/layout implementation; use `uikit-feature-implementation`.
+- The user needs SwiftUI page code, `NavigationStack`, state ownership, or modifiers; use `ios-feature-implementation` with `swiftui` mode.
+- The user needs UIKit ViewController/View/layout implementation; use `ios-feature-implementation` with `uikit` mode.
 - The task is Liquid Glass API implementation; use `swiftui-liquid-glass`.
 - The task is build/signing/archive/CI; use `xcode-build`.
 - The task is device automation or screenshot capture; use `ios-automation`.
@@ -150,7 +150,7 @@ Return compact structured output:
   "interaction_guidelines": [],
   "accessibility_notes": [],
   "prototype_scope": [],
-  "implementation_handoff": "swiftui-feature-implementation | uikit-feature-implementation | html-docs | none",
+  "implementation_handoff": "ios-feature-implementation(swiftui|uikit|mixed-ui) | html-docs | none",
   "known_risks": [],
   "next_action": "prototype | implement | document | review | blocked"
 }
@@ -175,11 +175,11 @@ Return `blocked` when:
 
 ## Escalation Rules
 
-Escalate to `swiftui-feature-implementation` when:
+Escalate to `ios-feature-implementation` with `swiftui` mode when:
 
 - Design direction is ready and SwiftUI implementation is next.
 
-Escalate to `uikit-feature-implementation` when:
+Escalate to `ios-feature-implementation` with `uikit` mode when:
 
 - Design direction is ready and UIKit implementation is next.
 
@@ -216,7 +216,7 @@ Interaction guidelines:
 - ...
 Accessibility notes:
 - ...
-Implementation handoff: swiftui-feature-implementation | uikit-feature-implementation | html-docs | none
+Implementation handoff: ios-feature-implementation(swiftui|uikit|mixed-ui) | html-docs | none
 Next action: prototype | implement | document | review | blocked
 ```
 
@@ -235,8 +235,8 @@ Next action: prototype | implement | document | review | blocked
 ## Relationship to Other Skills
 
 - Visual direction, design exploration, design review, tokens, typography, color, accessibility: use this Skill.
-- SwiftUI implementation: `swiftui-feature-implementation`.
-- UIKit implementation: `uikit-feature-implementation`.
+- SwiftUI implementation: `ios-feature-implementation` with `swiftui` mode.
+- UIKit implementation: `ios-feature-implementation` with `uikit` mode.
 - Liquid Glass: `swiftui-liquid-glass`.
 - Formal HTML design docs: `html-docs`.
 - Screenshots / device UI evidence: `ios-automation`.

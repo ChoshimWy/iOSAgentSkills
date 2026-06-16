@@ -1,6 +1,6 @@
 ---
 name: codex-subagent-orchestration
-description: 默认优先使用的 iOS 主 Skill 入口；先按任务复杂度选择 lite / standard / full 档位，再协调 coder / reviewer / tester / reporter / main agent 分工，并在内部路由到实现、调试、性能、测试、审查与按需验证模块；coder / tester 可按授权与风险决定是否拆成原生 subAgent，但实现后的 code-review 必须由独立 reviewer subAgent 执行，避免同一 Agent 实现后自审。
+description: 默认优先使用的 iOS 主 Skill 入口；先按任务复杂度选择 lite / standard / full 档位，再协调 coder / reviewer / tester / reporter / main agent 分工；所有 iOS 代码实施统一路由到 ios-feature-implementation 的内部模式，调试、性能、测试、审查与按需验证仍路由到专项模块；coder / tester 可按授权与风险决定是否拆成原生 subAgent，但实现后的 code-review 必须由独立 reviewer subAgent 执行，避免同一 Agent 实现后自审。
 ---
 
 # Codex 多 Agent 编排
@@ -16,7 +16,8 @@ Coordinate iOS development tasks through an adaptive orchestration workflow whil
 - 判断任务类型与复杂度。
 - 选择 `lite` / `standard` / `full` 编排档位。
 - 协调 coder / reviewer / tester / reporter / main agent 的职责边界。
-- 决定何时内部路由到实现、调试、性能、测试、审查与按需验证模块。
+- 决定何时把代码实施路由到 `ios-feature-implementation` 的 `business` / `swiftui` / `uikit` / `mixed-ui` / `advanced-swift` / `refactor` / `sdk-contract` 内部模式。
+- 决定何时路由到调试、性能、测试、审查与按需验证模块。
 - 在主 Agent 串行实现或显式授权的多 Agent 场景下保证 checkpoint、fail-fix-report、低 token 验证纪律，以及独立 reviewer subAgent 审查纪律。
 
 默认完成态必须由主 Agent 基于定向测试 / 必要验证与独立 reviewer subAgent 的 `code-review` 结论裁决；任何 subAgent 都不能替代主 Agent 宣告完成。
@@ -66,7 +67,7 @@ Do not use this Skill as the first route when the task is clearly one of these s
 - `testing` owns test code and targeted validation execution; `ios-affected-tests` is only a helper for exact narrow test selection.
 - `ios-verification-router` decides whether and how to verify before any `xcodebuild`; `final-evidence-gate` decides whether existing evidence is enough after testing/review; `verify-ios-build` executes project-environment verification only when escalation is justified.
 - `debugging` owns runtime symptom diagnosis; `ios-build-log-digest` only digests build/test failure artifacts; `ios-performance` only owns performance evidence and benchmark workflows.
-- `swift-expert`, `refactoring`, and `ios-sdk-architecture` are specialist routes, not default first routes for ordinary iOS feature implementation.
+- `ios-feature-implementation` owns all ordinary implementation modes, including business, SwiftUI, UIKit, mixed UI, advanced Swift, and refactor work; `ios-sdk-architecture` remains a specialist route only when architecture/distribution strategy is the main task.
 
 ### Token Budget
 
@@ -153,7 +154,7 @@ Activate additional roles only when justified:
 | Role | Activate When | Default Skill Reuse |
 | --- | --- | --- |
 | `pm` | Requirements are unclear, acceptance criteria are missing, or goals conflict | planning / requirement clarification |
-| `coder worker` | Code or test implementation is needed | `ios-feature-implementation`, `uikit-feature-implementation`, `swiftui-feature-implementation`, `swift-expert` |
+| `coder worker` | Code or test implementation is needed | `ios-feature-implementation` with `business` / `swiftui` / `uikit` / `mixed-ui` / `advanced-swift` / `refactor` / `sdk-contract` mode |
 | `reviewer explorer` | Any implementation task; risky rule changes | `code-review` |
 | `tester explorer` | Test surface exists, failure attribution is needed, or task is `code-risky` | `testing`, `ios-affected-tests`, `ios-build-log-digest` |
 | `tester worker` | Test code must be added or updated | `testing` |
@@ -394,7 +395,7 @@ For private library local debugging, add:
 
 Read these only when needed:
 
-- `references/coding-standards.md`: coder / reviewer / tester / main coding and output rules.
+- `references/coding-standards.md`: role output rules and pointer to shared iOS coding standards.
 - `references/checkpoint-contract.md`: CP0 / CP1 / CP2 / CP3 and fail-fix-report contract.
 - `references/tool-routing.md`: role-to-tool routing matrix.
 - `references/model-selection.md`: role-based model selection and fallback strategy.
@@ -406,7 +407,7 @@ Read these only when needed:
 ## Relationship to Other Skills
 
 - This Skill is the default iOS main entry and decides when to call other Skills.
-- Implementation routes to `ios-feature-implementation`, `swiftui-feature-implementation`, `uikit-feature-implementation`, or `swift-expert`.
+- Implementation routes to `ios-feature-implementation`; select its internal mode instead of switching among separate implementation Skills.
 - Debugging routes to `debugging`.
 - Performance routes to `ios-performance`.
 - Apple documentation routes to `apple-docs`.

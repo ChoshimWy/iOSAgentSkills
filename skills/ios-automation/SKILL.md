@@ -301,7 +301,7 @@ Next action: none | route-xcode-build | route-debugging | blocked
 
 ## Relationship to Other Skills
 
-- Business implementation: `ios-feature-implementation`, `swiftui-feature-implementation`, `uikit-feature-implementation`.
+- Business, SwiftUI, UIKit, mixed UI, advanced Swift, and refactor implementation: `ios-feature-implementation` with the matching internal mode.
 - Build Settings, signing, Archive/Export, CI/CD: `xcode-build`.
 - Final build verification: `verify-ios-build`.
 - Test writing and affected tests: `testing`, `ios-affected-tests`.

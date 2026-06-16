@@ -12,9 +12,7 @@
 - `CLAUDE.md` —— Claude 入口薄包装，导入 `AGENTS.md`
 
 ### Core Implementation
-- `ios-feature-implementation/`
-- `swiftui-feature-implementation/`
-- `uikit-feature-implementation/`
+- `ios-feature-implementation/` —— 唯一 iOS 代码实施入口；内部按 `business` / `swiftui` / `uikit` / `mixed-ui` / `advanced-swift` / `refactor` / `sdk-contract` 模式细分
 
 ### Automation / Build / Validation
 - `ios-automation/`
@@ -32,7 +30,7 @@
 ### Skill Profile
 - `skills/` 是本仓库唯一的 Skill 根目录；安装脚本与本机软链统一只暴露这一套目录。
 - 默认用户入口只有一个：`codex-subagent-orchestration`。
-- 其它 iOS skills 主要作为主 Skill 的内部执行模块 / 高级手动入口。
+- 其它 iOS skills 主要作为主 Skill 的内部执行模块 / 高级手动入口；iOS 代码实施统一落到 `ios-feature-implementation`。
 - 低频技能也直接保存在 `skills/` 下，由路由规则决定何时按需触发，而不是再走额外目录。
 - Codex 默认采用 **local-only skills mode**：`~/.codex/skills` 指向本仓 `skills/`，同时通过 `~/.codex/config.toml` 将所有 plugin-contributed skills/tools 设为 `enabled = false`。这不会删除 `~/.codex/plugins/cache`，但可防止账号/marketplace 同步回来的插件 Skill 自动生效。
 
@@ -149,7 +147,7 @@ python3 scripts/validate_codex_agent_templates.py config/codex/templates/agents
 
 ## 多 Agent 编排锚点
 
-- `codex-subagent-orchestration` 是默认的 iOS 主 Skill 入口；实现、调试、性能、测试、Apple 文档与可选证据验证都应先经过它，再内部路由到对应模块。
+- `codex-subagent-orchestration` 是默认的 iOS 主 Skill 入口；实现、调试、性能、测试、Apple 文档与可选证据验证都应先经过它，再内部路由到对应模块。所有代码实施统一转入 `ios-feature-implementation` 的内部模式，不再要求用户手动选择 SwiftUI / UIKit / Swift Expert 实施 Skill。
 - 编排默认按 `lite` / `standard` / `full` 三档选择角色。
 - 默认先按任务分型器分类，再决定角色激活矩阵（最小集合：`explorer + builder + reporter`）。
 - 默认进入编排入口不等于默认实际 spawn coder / tester subAgent；只有用户显式要求 subAgent / parallel agent / delegation、当前 prompt 明确授权或风险需要时，主 Agent 才可按 `lite` / `standard` / `full` 调用 coder / tester 原生 subAgent 工具。未显式授权时 coder / tester 可由主 Agent 串行承担，但实现链路的 `code-review` 必须交给独立 reviewer subAgent。

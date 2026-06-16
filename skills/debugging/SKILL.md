@@ -208,7 +208,7 @@ Escalate to `verify-ios-build` only when:
 - The user explicitly asks for project-environment verification.
 - `final-evidence-gate` determines the debugging fix needs full build evidence.
 
-Escalate to implementation/refactoring Skills when:
+Escalate to unified implementation when:
 
 - Root cause is clear and code changes are needed.
 
@@ -272,4 +272,4 @@ Allocations instrument
 - Build/test log attribution: use `ios-build-log-digest`.
 - Test writing: use `testing`.
 - Build/signing/archive/CI: use `xcode-build`.
-- Code implementation after diagnosis: use `refactoring`, `ios-feature-implementation`, `swiftui-feature-implementation`, or `uikit-feature-implementation`.
+- Code implementation after diagnosis: use `ios-feature-implementation` with the matching internal mode (`business`, `swiftui`, `uikit`, `mixed-ui`, `advanced-swift`, or `refactor`).

@@ -1,6 +1,6 @@
 # Skill 重构审计报告
 
-更新日期：2026-06-13
+更新日期：2026-06-16
 
 ## 目标
 
@@ -27,7 +27,8 @@
 | `ios-build-log-digest` | ✅ 已完成 | 已补齐摘要分析输出合同、升级规则和低 token 约束。 |
 | `gh-pr-flow` | ✅ 已完成 | 已从执行清单式文档统一为正式发布交付 Skill。 |
 | `ios-performance` | ✅ 已完成 | 已补齐结构化性能分析合同和升级边界。 |
-| `refactoring` | ✅ 已完成 | 已补齐通用重构合同、退出条件和交接关系。 |
+| `ios-feature-implementation` | ✅ 已完成 | 已整合为唯一 iOS 代码实施入口，内部覆盖 business / swiftui / uikit / mixed-ui / advanced-swift / refactor / sdk-contract 模式，并统一输出与验证交接。 |
+| 旧 iOS 实施专项 Skills | ✅ 已移除 | SwiftUI、UIKit、Swift 进阶与重构的 standalone Skill 已物理删除，参考资料已迁入 `ios-feature-implementation/references/` 下对应子目录。 |
 | `swiftui-liquid-glass` | ✅ 已完成 | 已补齐 Liquid Glass 专项实现 / 审查结构。 |
 | `app-store-changelog` | ✅ 已完成 | 已补齐轻量发布文案 Skill 结构与输出合同。 |
 | `app-store-opportunity-research` | ✅ 已完成 | 已补齐研究型 Skill 结构与输出合同。 |
@@ -41,15 +42,6 @@
 | `xcode-build` | P1 | 直接影响 Build Settings、签名、Archive、Export、CI、destination 策略，需与 `verify-ios-build` 边界明确。 |
 | `ios-automation` | P1 | 直接影响 simulator / 真机自动化、安装、启动、截图和 accessibility tree，需要与 `testing`、`verify-ios-build` 分离。 |
 | `final-evidence-gate` | P1 | 证据裁决节点，需统一 verification_story 与升级条件。 |
-
-## P2 待重构
-
-| Skill | 优先级 | 原因 |
-| --- | --- | --- |
-| `ios-feature-implementation` | P2 | 业务实现主 Skill，需统一实现输出与验证交接。 |
-| `swiftui-feature-implementation` | P2 | SwiftUI 专项实现，需统一与性能 / review / testing 的交接。 |
-| `uikit-feature-implementation` | P2 | UIKit 专项实现，需统一页面实现输出合同。 |
-| `swift-expert` | P2 | 进阶 Swift 设计 Skill，需明确何时转实现 / review / performance。 |
 
 ## P3 待重构
 

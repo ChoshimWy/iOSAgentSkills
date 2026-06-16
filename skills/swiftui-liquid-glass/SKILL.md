@@ -24,7 +24,7 @@ Implement, review, or refine SwiftUI Liquid Glass usage on iOS 26+ with explicit
 
 ## When Not to Use
 
-- 问题只是普通 SwiftUI 页面结构、导航模式或组件组织；使用 `swiftui-feature-implementation`。
+- 问题只是普通 SwiftUI 页面结构、导航模式或组件组织；使用 `ios-feature-implementation` 的 `swiftui` 模式。
 - 问题核心是品牌气质、色板、排版和设计系统方向；使用 `ui-ux-design-system`。
 - 问题核心是运行时性能取证；使用 `ios-performance`。
 
@@ -60,7 +60,7 @@ Implement, review, or refine SwiftUI Liquid Glass usage on iOS 26+ with explicit
   "fallback_strategy": [],
   "review_findings": [],
   "known_risks": [],
-  "next_action": "swiftui-feature-implementation | code-review | apple-docs | blocked"
+  "next_action": "ios-feature-implementation | code-review | apple-docs | blocked"
 }
 ```
 
@@ -72,7 +72,7 @@ Implement, review, or refine SwiftUI Liquid Glass usage on iOS 26+ with explicit
 
 ## Escalation Rules
 
-- Escalate to `swiftui-feature-implementation` for general SwiftUI implementation.
+- Escalate to `ios-feature-implementation` with `swiftui` mode for general SwiftUI implementation.
 - Escalate to `ui-ux-design-system` for broader visual direction and design language work.
 - Escalate to `apple-docs` when official API facts or availability rules must be confirmed.
 
@@ -84,7 +84,7 @@ Implement, review, or refine SwiftUI Liquid Glass usage on iOS 26+ with explicit
 
 ## Relationship to Other Skills
 
-- Use `swiftui-feature-implementation` for normal SwiftUI pages and layout work.
+- Use `ios-feature-implementation` with `swiftui` mode for normal SwiftUI pages and layout work.
 - Use `ui-ux-design-system` for broader design-system direction.
 - Use `ios-performance` for runtime performance diagnosis.
 - Use `apple-docs` for official API fact lookup.

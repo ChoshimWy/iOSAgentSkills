@@ -56,3 +56,7 @@
 - build/test/log 默认只回传关键错误段、过滤摘要或最后 80~120 行。
 - 长日志写入 `/tmp/*.log`，回复只给路径和必要 excerpt。
 - 长任务按“排查 / 实现 / 验证 / 提交”分会话，新会话只带目标、关键路径、验证基线和上一轮结论。
+
+## 共享 iOS 代码规范
+- 实现与审查中涉及 public API、注释、并发、UI ownership、可复用组件或风格敏感重构时，读取 `skills/ios-feature-implementation/references/coding-standards.md`。
+- 本文件只保留多 Agent 输出合同与角色纪律；具体 Swift/iOS 代码规范以共享 reference 为准。

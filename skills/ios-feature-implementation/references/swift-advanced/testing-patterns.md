@@ -221,7 +221,7 @@ class FakeDatabase: Database {
 ## Performance Testing
 
 - Dedicated benchmark cases, `measure(metrics:)`, `xctrace`, and Instruments evidence collection are handled by `ios-performance`.
-- This reference stays focused on functional and async testing patterns used by `swift-expert`.
+- This reference stays focused on functional and async testing patterns used by `advanced-swift` mode.
 
 ## UI Testing
 

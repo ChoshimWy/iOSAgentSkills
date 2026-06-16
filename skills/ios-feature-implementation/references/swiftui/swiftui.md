@@ -75,7 +75,7 @@ struct MyView: View {
 // ✅ 正确 - 子视图需要修改
 struct ToggleView: View {
     @Binding var isOn: Bool
-    
+
     var body: some View {
         Button("Toggle") {
             isOn.toggle()  // 修改父状态
@@ -86,7 +86,7 @@ struct ToggleView: View {
 // ❌ 错误 - 只读不需要 @Binding
 struct DisplayView: View {
     @Binding var text: String  // 浪费！应该用 let
-    
+
     var body: some View {
         Text(text)  // 只读
     }
@@ -95,7 +95,7 @@ struct DisplayView: View {
 // ✅ 正确 - 只读用 let
 struct DisplayView: View {
     let text: String
-    
+
     var body: some View {
         Text(text)
     }
@@ -116,7 +116,7 @@ final class Settings {
 
 struct SettingsView: View {
     @Bindable var settings: Settings  // 注入的对象
-    
+
     var body: some View {
         Form {
             TextField("Username", text: $settings.username)  // 需要 $
@@ -291,7 +291,7 @@ if isSelected {
 // ✅ 正确 - 逻辑在 ViewModel
 struct LoginView: View {
     @State private var viewModel = LoginViewModel()
-    
+
     var body: some View {
         Button("Login") {
             viewModel.login()  // 调用方法
@@ -398,11 +398,11 @@ ForEach(users) { user in
 @MainActor
 final class Router {
     var path = NavigationPath()
-    
+
     func navigate(to destination: Destination) {
         path.append(destination)
     }
-    
+
     func popToRoot() {
         path = NavigationPath()
     }
@@ -434,7 +434,7 @@ NavigationStack(path: $router.path) {
 // ✅ 正确 - Sheet 内部处理 dismiss
 struct AddItemSheet: View {
     @Environment(\.dismiss) var dismiss
-    
+
     var body: some View {
         NavigationStack {
             Form { /* ... */ }
