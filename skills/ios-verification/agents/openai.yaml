@@ -1,0 +1,5 @@
+interface:
+  display_name: "iOS 统一验证"
+  short_description: "统一处理 iOS 定向测试、构建验证与证据裁决"
+  default_prompt: >-
+    使用 $ios-verification 统一处理 iOS 验证链路：先按 diff 选择最低 verification_level，必要时推导最窄 -only-testing，再通过目标项目 ./codex_verify.sh 或 ~/.codex/bin/codex_verify 接入 shared build-queue daemon 执行项目环境验证；失败时优先读取 verification-report.json / diagnostics.json / build-summary.txt，只报告第一个 blocking error；最终只在定向验证/no_test_reason 与独立 $code-review 后按需裁决证据是否足够。不要在该 Skill 中编写生产或测试代码，测试代码实现转交 $ios-feature-implementation 的 test-implementation mode。

@@ -2,7 +2,7 @@
 
 当自动发现的 workspace、project、scheme 或 destination 不正确时，在仓库根目录创建配置文件（Codex 使用 `.codex/xcodebuild.env`；CC 用户可直接在项目根目录设置环境变量）。
 
-如果同机同仓会有多个 Codex / Claude CLI 并发处理同一 Xcode 项目，本机安装脚本会先同步全局 wrapper 到 `~/.codex/bin/codex_verify`。若目标项目再把 `config/codex/templates/codex_verify.example.sh` 复制到项目根目录并重命名为 `codex_verify.sh`，则项目脚本优先；否则 `verify-ios-build` 自动回退到全局 wrapper。wrapper 会自动接入 shared build-queue daemon，把验证型 `xcodebuild` 串行排队执行，并统一使用 Xcode 系统 DerivedData（`~/Library/Developer/Xcode/DerivedData`）。
+如果同机同仓会有多个 Codex / Claude CLI 并发处理同一 Xcode 项目，本机安装脚本会先同步全局 wrapper 到 `~/.codex/bin/codex_verify`。若目标项目再把 `config/codex/templates/codex_verify.example.sh` 复制到项目根目录并重命名为 `codex_verify.sh`，则项目脚本优先；否则 `ios-verification` 自动回退到全局 wrapper。wrapper 会自动接入 shared build-queue daemon，把验证型 `xcodebuild` 串行排队执行，并统一使用 Xcode 系统 DerivedData（`~/Library/Developer/Xcode/DerivedData`）。
 
 ## 支持的变量
 
@@ -60,7 +60,7 @@ CODEX_VERIFY_TOOL_INSTALL="auto"
 - `CODEX_VERIFY_TOOL_INSTALL` 控制脚本是否自动安装缺失 formatter：`auto`（默认，失败后回退内建解析）、`off`（不安装）、`required`（无法安装即 blocked）
 - 如需指定非默认安装命令，可在项目环境中设置 `CODEX_VERIFY_INSTALL_XCBEAUTIFY`、`CODEX_VERIFY_INSTALL_XCPRETTY`、`CODEX_VERIFY_INSTALL_XCPRINT`；值会由脚本解析并执行，Agent 不需要判断安装方式
 - formatter 安装、选择、解析和脱敏都由 wrapper / 脚本负责；Agent 只读取 `verification-report.json`、`diagnostics.json`、`build-summary.txt` 等 artifact
-- 这些覆盖配置只影响 `xcodebuild` 参数，不会跳过固定链路里的前置 `testing` / `code-review`，也不会改变“`.xcworkspace` 优先于 `.xcodeproj`”的默认规则
+- 这些覆盖配置只影响 `xcodebuild` 参数，不会跳过固定链路里的定向验证 / `code-review`，也不会改变“`.xcworkspace` 优先于 `.xcodeproj`”的默认规则
 - 如需查看当前队列状态，使用 `codex_verify.sh --queue-status` 或 `~/.codex/bin/codex_verify --queue-status`
 
 ## 示例

@@ -41,10 +41,10 @@ Claude Code 的 `Agent` 工具支持以下 `subagent_type`：
 ### lite（doc-only / rule-only）
 - 单 Agent 执行
 - 若任务实际产生实现链路改动，仍必须启动独立 reviewer 子 Agent 执行 code-review，主 Agent 不得自审
-- 涉及 Apple Xcode 项目改动时可按需执行 final-evidence-gate
+- 涉及 Apple Xcode 项目改动时可按需执行 ios-verification
 
 ### standard（code-small / code-medium）
-- 顺序执行：实现 Skill → 测试 Skill/定向验证 → `Agent:Explore` 独立审查
+- 顺序执行：实现 Skill → ios-verification / 定向验证 → `Agent:Explore` 独立审查
 - 审查必须由未参与实现的 reviewer 子 Agent 执行；若不可用则 blocked / pending review
 - 主 Agent 聚合结果，必要时回写修正（最多 2 轮）
 
@@ -53,7 +53,7 @@ Claude Code 的 `Agent` 工具支持以下 `subagent_type`：
 - `Agent:Explore` 收集上下文、梳理依赖与风险
 - `Agent:general-purpose` 执行实现
 - 并行启动：`Agent:Explore`（审查）∥ `Agent:general-purpose`（测试）
-- 主 Agent 聚合测试与审查结论；按需执行 `final-evidence-gate` / `verify-ios-build`
+- 主 Agent 聚合验证与审查结论；按需执行 `ios-verification`
 
 ## 三步收口工作流 (对应 AGENTS.md "默认工作流" → 三步收口)
 
@@ -61,7 +61,7 @@ Claude Code 的 `Agent` 工具支持以下 `subagent_type`：
 
 - Step 2 默认只执行最窄定向单测：优先 `-only-testing` 到单个 test case / test class，其次最小受影响 test file / bundle。
 - 若没有可低成本执行的单测路径，则记录 `no_test_reason` 与 `suggested_validation`，不自动升级到真机 / 模拟器验证。
-- 真机 / 模拟器验证仅在用户显式要求、发布前自检、高风险或证据不足时，按需进入 `final-evidence-gate` / `verify-ios-build`。
+- 真机 / 模拟器验证仅在用户显式要求、发布前自检、高风险或证据不足时，按需进入 `ios-verification`。
 
 循环控制（源自 AGENTS.md "Checkpoint 与 Fail-Fix-Report"）：
 - 同类问题最多回写实现步骤 2 次

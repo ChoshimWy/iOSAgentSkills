@@ -22,7 +22,7 @@
 - `Agent(subagent_type="Explore", prompt=<reviewer.md>)` 独立静态审查（未参与实现）
 
 按需启动：
-- `Agent(subagent_type="general-purpose", prompt=<tester.md>)` 测试验证（或 `Skill("testing")`）
+- `Agent(subagent_type="general-purpose", prompt=<tester.md>)` 验证（或 `Skill("ios-verification")`）
 
 CP2 Validation Baseline Freeze：锁定验证命令、workspace、scheme、destination。
 
@@ -33,9 +33,9 @@ CP2 Validation Baseline Freeze：锁定验证命令、workspace、scheme、desti
 - 超限未收敛 → next_action = blocked
 
 ### Phase 6: 默认收口（CP3）
-主 Agent 基于定向测试/必要验证与独立 reviewer subAgent `code-review` 结论裁决默认收口；用户显式要求、发布前自检或高风险时，再按需执行 `Skill("final-evidence-gate")` / `Skill("verify-ios-build")`。
+主 Agent 基于定向验证/必要验证与独立 reviewer subAgent `code-review` 结论裁决默认收口；用户显式要求、发布前自检或高风险时，再按需执行 `Skill("ios-verification")`。
 
-testing 默认边界：
+验证默认边界：
 - 默认只执行最窄定向单测：优先 `-only-testing` 到单个 test case / test class，其次最小受影响 test file / bundle
 - 若没有可低成本执行的单测路径，则输出 `no_test_reason` 与 `suggested_validation`
 - 不自动升级到真机 / 模拟器验证
@@ -57,4 +57,4 @@ testing 默认边界：
 ## lite / standard 简化
 
 - lite：doc-only / rule-only 可跳过实现类子 Agent；若产生实现链路改动，CP3 仍必须有独立 reviewer 子 Agent 审查
-- standard：顺序 Skill 链（实现 → 测试/定向验证 → 独立 reviewer Explore 审查）
+- standard：顺序 Skill 链（实现 → 定向验证 / no_test_reason → 独立 reviewer Explore 审查）

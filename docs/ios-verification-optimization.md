@@ -15,9 +15,7 @@
 ```text
 Agent
   ↓
-ios-verification-router
-  ↓
-ios-affected-tests
+ios-verification(route / affected-tests)
   ↓
 codex_verify.sh / ~/.codex/bin/codex_verify
   ↓
@@ -25,51 +23,34 @@ build-queue daemon
   ↓
 xcodebuild
   ↓
-digest-xcodebuild-log.sh
-  ↓
 verification-report.json / diagnostics.json / build-summary.txt
   ↓
-ios-build-log-digest
+ios-verification(digest / final-gate)
   ↓
-Agent fixes first blocking error only
+Agent fixes first blocking error only or accepts evidence
 ```
 
-## 新增 Skills
+## 统一 Skill
 
-### `ios-verification-router`
+### `ios-verification`
 
-验证请求前置路由：根据 diff 类型选择 `none` / `lint` / `typecheck` / `build` / `unit` / `ui` / `full`。
+`ios-verification` 统一承接原先分散的验证前路由、受影响测试选择、项目环境执行、失败摘要和最终证据裁决。内部模式：
+
+- `route`：根据 diff 类型选择 `none` / `lint` / `typecheck` / `build` / `unit` / `ui` / `full`。
+- `affected-tests`：根据变更文件推导最小 `-only-testing` 集合。
+- `execute`：通过 `codex_verify.sh` / `~/.codex/bin/codex_verify` 接入 build-queue daemon 执行验证。
+- `digest`：优先读取 `verification-report.json`，其次读取 `diagnostics.json`、`build-summary.txt`，只定位第一个真实 blocking error。
+- `final-gate`：在定向验证 / `no_test_reason` 与独立 `code-review` 后判断证据是否足够。
 
 核心规则：
 
-- 不直接运行 `xcodebuild`。
+- 不直接运行裸 `xcodebuild`。
 - 默认不请求 full verification。
 - 优先使用目标项目 `./codex_verify.sh`。
 - 无项目 wrapper 时回退 `~/.codex/bin/codex_verify`。
 - 同一 fingerprint 已失败时优先读取缓存诊断。
-
-### `ios-affected-tests`
-
-根据变更文件推导最小 `-only-testing` 集合。
-
-核心规则：
-
-- ViewModel 改动优先找 `*ViewModelTests`。
-- Service 改动优先找 `*ServiceTests`。
-- StoreKit / Subscription 改动优先找购买、订阅、receipt 相关测试。
 - 无低成本测试时输出 `no_test_reason`，不要自动升级到 full test。
-
-### `ios-build-log-digest`
-
-构建失败后只读取脚本摘要，不读取原始日志。
-
-核心规则：
-
-- 优先读取 `verification-report.json`。
-- 其次读取 `diagnostics.json`、`build-summary.txt`。
-- 默认禁止读取完整 `build.log`。
-- 默认禁止读取完整 `.xcresult` dump。
-- 只修第一个真实 blocking error。
+- 默认禁止读取完整 `build.log` 和完整 `.xcresult` dump。
 
 ## Daemon 输出规范
 

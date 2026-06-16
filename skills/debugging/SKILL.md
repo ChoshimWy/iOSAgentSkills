@@ -48,11 +48,11 @@ Use this Skill when at least one runtime signal exists:
 Do not use this Skill when:
 
 - Only static diff exists and no runtime symptom is known; use `code-review`.
-- The request is final compile/build verification; use `final-evidence-gate` / `verify-ios-build`.
+- The request is final compile/build verification; use `ios-verification` / `ios-verification`.
 - The request is benchmark, dropped frames, startup time, CPU trace, `xctrace`, or Instruments workflow; use `ios-performance`.
 - The request is signing, Archive, Export, CI, build settings, destination policy; use `xcode-build`.
-- The request is writing tests; use `testing`.
-- The request is compact attribution of a build/test failure artifact rather than runtime diagnosis; use `ios-build-log-digest`.
+- The request is writing tests; use `ios-feature-implementation(test-implementation)`.
+- The request is compact attribution of a build/test failure artifact rather than runtime diagnosis; use `ios-verification`.
 - The request is implementing a feature without runtime failure; use an implementation Skill.
 
 ## Agent Rules
@@ -80,7 +80,7 @@ Do not use this Skill when:
 
 - After proposing a fix, include the narrowest validation path.
 - If code changes are made, default closure still requires targeted validation / necessary verification and `code-review`.
-- `final-evidence-gate` / `verify-ios-build` are optional strengthening steps only when explicitly requested or risk requires it.
+- `ios-verification` / `ios-verification` are optional strengthening steps only when explicitly requested or risk requires it.
 - Do not auto-upgrade to full build, simulator, or real-device validation for every debugging task.
 
 ### Token Budget
@@ -90,7 +90,7 @@ Do not use this Skill when:
 - Do not dump full crash archives if a stack trace is enough.
 - Do not paste full console logs.
 - Prefer minimal stack, first app frame, exception reason, device/OS/app version, and reproduction steps.
-- For build/test failure logs encountered during debugging, use `ios-build-log-digest`.
+- For build/test failure logs encountered during debugging, use `ios-verification`.
 
 ## Symptom Classification
 
@@ -194,19 +194,19 @@ Escalate to `ios-performance` when:
 
 - The issue is primarily frame drops, startup time, CPU/memory benchmark, energy, `xctrace`, or Instruments evidence.
 
-Escalate to `testing` when:
+Escalate to `ios-feature-implementation(test-implementation)` when test code is needed; escalate to `ios-verification` when targeted validation is needed:
 
 - A regression test should be added after identifying the root cause.
 - A deterministic unit/UI test can reproduce the bug.
 
-Escalate to `ios-build-log-digest` when:
+Escalate to `ios-verification` when:
 
 - The failure is actually a build/test log issue and compact log attribution is needed.
 
-Escalate to `verify-ios-build` only when:
+Escalate to `ios-verification` only when:
 
 - The user explicitly asks for project-environment verification.
-- `final-evidence-gate` determines the debugging fix needs full build evidence.
+- `ios-verification` determines the debugging fix needs full build evidence.
 
 Escalate to unified implementation when:
 
@@ -268,8 +268,8 @@ Allocations instrument
 
 - Static review only: use `code-review`.
 - Performance profiling or benchmark: use `ios-performance`.
-- Build verification: use `verify-ios-build`.
-- Build/test log attribution: use `ios-build-log-digest`.
-- Test writing: use `testing`.
+- Build verification: use `ios-verification`.
+- Build/test log attribution: use `ios-verification`.
+- Test writing: use `ios-feature-implementation(test-implementation)`; targeted validation: use `ios-verification`.
 - Build/signing/archive/CI: use `xcode-build`.
 - Code implementation after diagnosis: use `ios-feature-implementation` with the matching internal mode (`business`, `swiftui`, `uikit`, `mixed-ui`, `advanced-swift`, or `refactor`).

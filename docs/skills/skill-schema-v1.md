@@ -147,7 +147,7 @@
   "first_failure": null,
   "needs_test_code": "yes | no",
   "no_test_reason": null,
-  "next_action": "code-review | ios-affected-tests | verify | blocked"
+  "next_action": "code-review | ios-verification | blocked"
 }
 ```
 
@@ -160,7 +160,7 @@
   "review_scope": "...",
   "impact_scope": "...",
   "unreviewed_changes": "none",
-  "verification_story": "accepted | needs-final-evidence-gate | needs-verify-ios-build | insufficient",
+  "verification_story": "accepted | needs-ios-verification | insufficient",
   "risk_level": "low | medium | high",
   "next_action": "complete | fix-and-rerun | blocked"
 }
@@ -186,14 +186,14 @@
 ```json
 {
   "status": "accepted | escalated | blocked",
-  "final_evidence_gate": "accepted_existing_evidence | needs_verify_ios_build | blocked_insufficient_evidence",
-  "verification_story": "accepted | needs-verify-ios-build | insufficient",
+  "final_evidence_gate": "accepted_existing_evidence | needs_project_environment_verification | blocked_insufficient_evidence",
+  "verification_story": "accepted | needs-ios-verification | insufficient",
   "accepted_evidence": [],
   "rejected_evidence": [],
   "escalation_reason": null,
-  "required_next_skill": "none | verify-ios-build | testing | code-review | xcode-build",
+  "required_next_skill": "none | ios-verification | code-review | xcode-build",
   "residual_risk": [],
-  "next_action": "complete | run-verify-ios-build | collect-evidence | blocked"
+  "next_action": "complete | run-ios-verification | collect-evidence | blocked"
 }
 ```
 
@@ -216,19 +216,19 @@
 默认实现链路：
 
 ```text
-implementation -> testing / targeted validation -> code-review
+implementation -> targeted validation / no_test_reason -> code-review
 ```
 
 按需增强链路：
 
 ```text
-code-review -> final-evidence-gate -> verify-ios-build
+code-review -> ios-verification(final-gate) -> ios-verification(execute)
 ```
 
 构建失败归因：
 
 ```text
-verify-ios-build -> ios-build-log-digest
+ios-verification(execute) -> ios-verification(digest)
 ```
 
 ## Commit Message 规范

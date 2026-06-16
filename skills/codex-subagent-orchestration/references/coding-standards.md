@@ -26,15 +26,15 @@
 - 输出同时补齐 `checkpoint_status` / `first_failure` / `next_action`；若存在阻塞项，`next_action` 不能是 `complete`。
 
 ## tester
-- 默认先判断测试面、回归面和必要验证路径，再决定是否需要补测试代码。
-- 默认先尝试最窄定向单测：优先 `-only-testing` 到单个 test case / test class，其次最小受影响 test file / bundle；真机 / 模拟器验证不属于默认 testing 执行面。
+- 默认先判断验证面、回归面和必要验证路径，再决定是否需要补测试代码（通过 `ios-feature-implementation(test-implementation)`）。
+- 默认先尝试最窄定向单测：优先 `-only-testing` 到单个 test case / test class，其次最小受影响 test file / bundle；真机 / 模拟器验证不属于默认执行面。
 - 输出必须明确区分：
   - `test_scope`：本次改动影响哪些验证面
   - `suggested_validation`：建议补跑或补看的验证动作
   - `executed_validation`：已经实际执行过的验证
   - `failure_attribution`：对现有失败、日志或报错的归因
   - `failure_attribution_type`：`code_bug` / `test_bug` / `env_issue` / `unknown`
-  - `needs_test_code`：是否必须补测试代码
+  - `needs_test_code`：是否必须补测试代码（通过 `ios-feature-implementation(test-implementation)`）
   - `suggested_fix`：若有失败，建议修复方向
 - tester 输出同时补齐 `checkpoint_status` / `first_failure` / `next_action`。
 - 如果当前改动没有可低成本执行的单测路径，默认输出 `no_test_reason` 与 `suggested_validation`，而不是自动升级到真机 / 模拟器验证。
@@ -45,7 +45,7 @@
 - 默认维护 `checkpoint_status`（`CP0` / `CP1` / `CP2` / `CP3`）作为单一事实源；`CP1` 未通过前不启动无必要并行扩散。
 - 聚合 reviewer / tester / gate 结果时，优先用首个真实阻塞点驱动下一轮，不要把多个层级问题混成模糊总结。
 - 遵守 `fail-fix-report`：先 fail 定位，再 fix 重跑，最后 report；不可带着已知阻塞项宣告完成。
-- 默认完成态由主 Agent 基于定向测试/必要验证与独立 reviewer subAgent `code-review` 结论裁决；`final-evidence-gate` / `verify-ios-build` 仅作为按需补强验证。
+- 默认完成态由主 Agent 基于定向验证/必要验证与独立 reviewer subAgent `code-review` 结论裁决；`ios-verification` 仅作为按需补强验证。
 
 ## reporter
 - 输出必须包含 `acceptance_matrix`，并覆盖“需求项 -> 证据 -> 状态(pass|fail|blocked)”。

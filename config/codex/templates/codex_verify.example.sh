@@ -19,7 +19,7 @@ Recommended:
   - Preferred: keep this script in the target Xcode project root as ./codex_verify.sh
   - Fallback: install it globally as ~/.codex/bin/codex_verify
   - Ask all agents to use one of the two entrypoints instead of裸跑 xcodebuild
-  - Let iOSAgentSkills verify-ios-build delegate into the project wrapper first,
+  - Let iOSAgentSkills ios-verification delegate into the project wrapper first,
     then fall back to the global wrapper automatically
 
 Notes:

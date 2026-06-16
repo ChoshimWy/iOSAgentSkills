@@ -5,13 +5,13 @@
 2. coder 先完成首个关键切片，通过 `CP1 Anchor Slice` 后再按需扩展
 3. tester / reviewer 在冻结基线下工作，推进 `CP2 Validation Baseline Freeze`
 4. 主 Agent 聚合后决定是否回写 coder
-5. 代码收敛后，主 Agent 基于定向测试/必要验证与独立 reviewer subAgent `code-review` 推进 `CP3 Final Gate`
-6. 用户显式要求、发布前自检或高风险时，主 Agent 再按需执行 `final-evidence-gate` / `verify-ios-build` 补强证据
+5. 代码收敛后，主 Agent 基于定向验证/必要验证与独立 reviewer subAgent `code-review` 推进 `CP3 Final Gate`
+6. 用户显式要求、发布前自检或高风险时，主 Agent 再按需执行 `ios-verification` 补强证据
 
-## testing 默认边界
-- 默认 testing 先收敛到最窄定向单测：优先 `-only-testing` 到单个 test case / test class，其次最小受影响 test file / bundle。
+## 验证默认边界
+- 默认验证先收敛到最窄定向单测：优先 `-only-testing` 到单个 test case / test class，其次最小受影响 test file / bundle。
 - 若没有可低成本执行的单测路径，tester / 主 Agent 输出 `no_test_reason` 与 `suggested_validation`，不要自动升级到真机 / 模拟器验证。
-- 真机 / 模拟器验证仅在用户显式要求、发布前自检、高风险或 `final-evidence-gate` 判定证据不足时执行。
+- 真机 / 模拟器验证仅在用户显式要求、发布前自检、高风险或 `ios-verification` 判定证据不足时执行。
 
 ## wait 与聚合策略
 - `wait_agent(...)` 只在主 Agent 需要当前结果推进下一步时使用，不要为轮询而频繁等待。
@@ -55,4 +55,4 @@
 ## 会话切分
 - 长任务默认按“排查 / 实现 / 验证 / 提交”切分会话。
 - 新会话只携带目标、关键路径、验证基线和上一轮结论，不复制完整历史。
-- Apple/Xcode 项目改动的默认完成态以定向测试/必要验证通过且独立 reviewer subAgent `code-review` 无阻塞为准；`final-evidence-gate` / `verify-ios-build` 仅在用户显式要求、发布前自检或高风险时按需补强证据。
+- Apple/Xcode 项目改动的默认完成态以定向验证/必要验证通过且独立 reviewer subAgent `code-review` 无阻塞为准；`ios-verification` 仅在用户显式要求、发布前自检或高风险时按需补强证据。

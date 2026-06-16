@@ -20,11 +20,11 @@
 ## 实现链路（硬约束）
 
 ```
-实现 skill -> testing -> reviewer subAgent(code-review)
+实现 skill -> 定向验证 / no_test_reason -> reviewer subAgent(code-review)
 ```
 
-默认三步收口：实现 -> testing/定向验证 -> reviewer subAgent(code-review)；CP3 以定向验证与审查收口为准，final-evidence-gate / verify-ios-build 仅按需补强。
-- `testing` 默认只执行最窄定向单测：优先 `-only-testing` 到单个 test case / test class，其次最小受影响 test file / bundle。
+默认三步收口：实现 -> 定向验证 / no_test_reason -> reviewer subAgent(code-review)；CP3 以定向验证与审查收口为准，ios-verification 仅按需补强。
+- `ios-verification` 默认只执行最窄定向单测：优先 `-only-testing` 到单个 test case / test class，其次最小受影响 test file / bundle。
 - 若没有可低成本执行的单测路径，则记录 `no_test_reason` 与 `suggested_validation`，不自动升级到真机 / 模拟器验证。
 
 ## Skill 路由速查
@@ -39,10 +39,10 @@
 | Swift 进阶实施 | `ios-feature-implementation` / `advanced-swift` mode |
 | 行为保持型重构 | `ios-feature-implementation` / `refactor` mode |
 | SDK 架构 / Public API 契约 | `ios-feature-implementation` / `sdk-contract` mode |
-| 测试 | `testing` |
+| 验证 | `ios-verification` |
 | 静态审查 | `code-review` |
-| 门禁裁决 | `final-evidence-gate` |
-| 构建验证 | `verify-ios-build` |
+| 证据裁决 | `ios-verification` |
+| 构建验证 | `ios-verification` |
 | Apple 文档 | `apple-docs` |
 | 调试 | `debugging` |
 | 性能 | `ios-performance` |
@@ -73,7 +73,7 @@
 - CP0 Intent Lock — Plan Mode 输出目标 / 范围 / 成功标准 / 档位
 - CP1 Anchor Slice — 首个关键切片验收
 - CP2 Validation Baseline Freeze — 锁定 workspace / scheme / destination
-- CP3 Final Gate — 定向测试/必要验证 + 独立 reviewer subAgent `code-review` 收口；必要时再按需进入 `final-evidence-gate`
+- CP3 Final Gate — 定向测试/必要验证 + 独立 reviewer subAgent `code-review` 收口；必要时再按需进入 `ios-verification`
 
 ## Fail-Fix-Report
 

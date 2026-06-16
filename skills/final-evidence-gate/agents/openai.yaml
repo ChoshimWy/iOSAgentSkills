@@ -1,5 +1,0 @@
-interface:
-  display_name: "可选证据验证"
-  short_description: "Apple Xcode 项目改动后的按需证据裁决"
-  default_prompt: >-
-    使用 $final-evidence-gate 对 Apple Xcode 项目改动做按需证据裁决。优先复用最后一次代码变更之后已成功的最窄定向单测或目标项目环境 xcodebuild test/build 证据；若 `testing` 已执行最窄定向单测且未命中工程/依赖/签名/资源/设备能力高风险条件，可直接接受现有证据。只有在证据不足、高风险或命中工程/依赖/签名/资源打包类改动时，才升级到 $verify-ios-build。该 skill 为按需补强验证；未被显式调用时不阻塞默认收口。

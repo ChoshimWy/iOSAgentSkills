@@ -11,7 +11,7 @@
 - `../codex_verify.example.sh` —— 复制到目标 Xcode 项目根目录并重命名为 `codex_verify.sh`，作为多 Codex CLI 本地 `xcodebuild` / `build-check` 的统一验证入口；wrapper 会自动接入 shared build-queue daemon，把验证型 `xcodebuild` 串行排队执行，并统一使用 Xcode 系统 DerivedData
 
 以及 1 个本机全局验证入口：
-- `~/.codex/bin/codex_verify` —— 由安装脚本自动同步；当目标项目没有 repo-tracked `codex_verify.sh` 时，`verify-ios-build` 会自动回退到这个全局 wrapper
+- `~/.codex/bin/codex_verify` —— 由安装脚本自动同步；当目标项目没有 repo-tracked `codex_verify.sh` 时，`ios-verification` 会自动回退到这个全局 wrapper
 - `~/.codex/bin/digest-xcodebuild-log` —— 由安装脚本自动同步；wrapper 用它从 raw `xcodebuild` 日志生成 `verification-report.json` / `diagnostics.json`，默认只把结构化报告交给 Agent
 
 推荐执行顺序：
@@ -31,8 +31,8 @@
 - 推荐优先级：`<repo-root>/codex_verify.sh` > `~/.codex/bin/codex_verify`。
 - 可通过 `codex_verify.sh --queue-status` 或 `~/.codex/bin/codex_verify --queue-status` 查看 daemon 当前 active job 与 pending jobs。
 - 全局硬约束仍以仓库根 `AGENTS.md` 与 `skills/codex-subagent-orchestration/` 合同为准。
-- Apple Xcode 项目改动默认以定向验证与独立 reviewer subAgent code-review 收口；`final-evidence-gate` / `verify-ios-build` 仅按需补强。
-- `testing` 默认只执行最窄定向单测；真机 / 模拟器验证不属于默认收口执行面。
+- Apple Xcode 项目改动默认以定向验证与独立 reviewer subAgent code-review 收口；`ios-verification` 仅按需补强。
+- `ios-verification` 默认只执行最窄定向单测；真机 / 模拟器验证不属于默认收口执行面。
 - 默认先做任务分型：`doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`。
 - 默认最小逻辑角色集合：`explorer + builder + reporter`；命中风险条件再激活 `pm` 与 `tester`。coder / tester 默认可由主 Agent 串行承担，但实现链路 reviewer subAgent 是强制独立收口角色。
 - 统一字段：每个角色输出都需包含 `checkpoint_status`、`first_failure`、`next_action`（无阻塞时 `first_failure: none`）。

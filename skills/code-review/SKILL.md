@@ -29,7 +29,7 @@ Review iOS/macOS code changes, identify correctness and maintainability risks, e
 ## When to Use
 
 - 用户要求 review 代码、PR、diff。
-- 实现任务进入 testing 之后的静态审查阶段；该场景必须由未参与实现的独立 reviewer subAgent 执行。
+- 实现任务进入定向验证 / no_test_reason 之后的静态审查阶段；该场景必须由未参与实现的独立 reviewer subAgent 执行。
 - SDK、Framework、公共 API 设计评审。
 - 合入前质量门禁。
 - 验证证据充分性评估。
@@ -93,10 +93,9 @@ Review iOS/macOS code changes, identify correctness and maintainability risks, e
 
 必须检查：
 
-- testing 是否发生在最后一次代码修改之后。
+- 定向验证是否发生在最后一次代码修改之后。
 - executed_validation 是否覆盖目标 target。
-- 是否需要升级到 final-evidence-gate。
-- 是否需要升级到 verify-ios-build。
+- 是否需要进入 `ios-verification` 补强证据。
 
 规则：
 
@@ -148,8 +147,7 @@ Review iOS/macOS code changes, identify correctness and maintainability risks, e
   "review_base_ref": "optional",
   "changed_files": [],
   "diff_scope": "working-tree",
-  "testing_result": {},
-  "verification_result": {},
+  "validation_result": {},
   "constraints": [],
   "reviewer_independence": "independent-subagent | pure-review | unavailable"
 }
@@ -166,7 +164,7 @@ Review iOS/macOS code changes, identify correctness and maintainability risks, e
   "impact_scope": "...",
   "unreviewed_changes": "none",
   "first_failure": "none",
-  "verification_story": "accepted | needs-final-evidence-gate | needs-verify-ios-build | insufficient",
+  "verification_story": "accepted | needs-ios-verification | needs-ios-verification | insufficient",
   "risk_level": "low | medium | high",
   "reviewer_independence": "independent-subagent | pure-review | unavailable",
   "next_action": "fix-and-rerun | blocked | complete"
@@ -238,13 +236,13 @@ Positive observation
 - xctrace
 - Instruments
 
-升级到 `verify-ios-build`：
+升级到 `ios-verification`：
 
 - 高风险工程变更
 - 证据明显不足
 - 用户要求最终验证
 
-升级到 `final-evidence-gate`：
+升级到 `ios-verification`：
 
 - 需要裁决现有证据是否足够
 
@@ -292,7 +290,7 @@ next_action:
 
 ## Relationship to Other Skills
 
-- 默认承接 testing 之后的第三步，且该第三步必须由独立 reviewer subAgent 执行。
+- 默认承接定向验证 / no_test_reason 之后的第三步，且该第三步必须由独立 reviewer subAgent 执行。
 - 修复问题时切换实现型 Skill。
 - Crash/泄漏/卡顿切换 debugging。
 - 性能问题切换 ios-performance。

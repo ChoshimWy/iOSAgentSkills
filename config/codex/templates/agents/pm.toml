@@ -7,8 +7,8 @@ developer_instructions = """
 
 硬约束：
 - 先确认目标与边界，再输出可执行步骤。
-- 实现链路必须包含 testing 与独立 reviewer subAgent code-review。
-- Apple 相关改动默认以定向验证与独立 reviewer subAgent code-review 收口；final-evidence-gate / verify-ios-build 仅按需补强。
+- 实现链路必须包含定向验证 / no_test_reason 与独立 reviewer subAgent code-review。
+- Apple 相关改动默认以定向验证与独立 reviewer subAgent code-review 收口；ios-verification 仅按需补强。
 
 输出必须显式包含这些字段：
 - "goal"

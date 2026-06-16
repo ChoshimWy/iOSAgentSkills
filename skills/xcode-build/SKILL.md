@@ -50,12 +50,12 @@ Use this Skill when the user asks about:
 
 Do not use this Skill when:
 
-- 用户只是要求“最后编译验证一下”或“跑一次 xcodebuild”；使用 `verify-ios-build`。
+- 用户只是要求“最后编译验证一下”或“跑一次 xcodebuild”；使用 `ios-verification`。
 - 用户主要在问在哪个 Simulator / 真机上安装、启动、截图、导航；使用 `ios-automation`。
-- 用户需要编写或执行最窄测试；使用 `testing`。
+- 用户需要编写或执行最窄测试；使用 `ios-feature-implementation(test-implementation)`；执行最窄验证使用 `ios-verification`。
 - 用户需要代码质量审查；使用 `code-review`。
 - 用户需要分析 crash、泄漏、卡顿；使用 `debugging` / `ios-performance`。
-- 用户需要判断现有验证证据是否足够；使用 `final-evidence-gate`。
+- 用户需要判断现有验证证据是否足够；使用 `ios-verification`。
 
 ## Agent Rules
 
@@ -63,9 +63,9 @@ Do not use this Skill when:
 
 - Treat this Skill as build configuration / delivery design, not default final verification.
 - Do not run validation-type `xcodebuild` as the main purpose of this Skill.
-- If actual project-environment verification is required, hand off to `verify-ios-build`.
+- If actual project-environment verification is required, hand off to `ios-verification`.
 - If device / simulator automation is required, hand off to `ios-automation`.
-- If a build error log must be analyzed, prefer `ios-build-log-digest` first.
+- If a build error log must be analyzed, prefer `ios-verification` first.
 
 ### Build Configuration Rules
 
@@ -115,7 +115,7 @@ For Archive / Export work, specify:
 - Default local builds should use Xcode system DerivedData: `~/Library/Developer/Xcode/DerivedData`.
 - Do not introduce temporary public `-derivedDataPath` strategies as default.
 - Do not reintroduce old public `XCODE_DERIVED_DATA_*` or `CODEX_DERIVED_DATA_SLOT` configuration.
-- For validation-type builds, delegate to wrapper / build-queue policy through `verify-ios-build`.
+- For validation-type builds, delegate to wrapper / build-queue policy through `ios-verification`.
 
 ### File Header Rules
 
@@ -142,7 +142,7 @@ When adding `.swift`, `.h`, `.m`, `.mm` files and headers are required:
 4. Define the desired configuration state.
 5. Propose or apply minimal scoped changes.
 6. Document CI/local impact.
-7. If evidence is required, hand off to `final-evidence-gate` or `verify-ios-build` rather than running ad-hoc verification inside this Skill.
+7. If evidence is required, hand off to `ios-verification` or `ios-verification` rather than running ad-hoc verification inside this Skill.
 8. Report residual risk and next action.
 
 ## Inputs
@@ -190,7 +190,7 @@ Return compact structured output:
   "export_strategy": "...",
   "ci_changes": [],
   "changed_files": [],
-  "validation_handoff": "none | final-evidence-gate | verify-ios-build",
+  "validation_handoff": "none | ios-verification | ios-verification",
   "known_risks": [],
   "next_action": "none | review | verify | provide_signing_assets | blocked"
 }
@@ -221,31 +221,24 @@ Return `blocked` when:
 
 ## Escalation Rules
 
-Escalate to `verify-ios-build` when:
+Escalate to `ios-verification` when:
 
 - The user explicitly asks to run real project-environment build verification.
 - Build configuration changes need actual final evidence.
-- `final-evidence-gate` decides evidence is insufficient.
-
-Escalate to `final-evidence-gate` when:
-
-- There is a question whether current testing/review/build evidence is enough.
+- Current validation/review/build evidence may be insufficient.
+- Targeted validation, affected test selection, or compact build failure attribution is needed.
 
 Escalate to `ios-automation` when:
 
 - The task becomes install, launch, simulator lifecycle, real-device workflow, screenshot, or accessibility verification.
 
-Escalate to `testing` when:
+Escalate to `ios-feature-implementation(test-implementation)` when:
 
-- The task becomes test writing or affected test selection.
+- The task becomes test writing or testability seam implementation.
 
 Escalate to `code-review` when:
 
 - Configuration changes need static review and risk assessment.
-
-Escalate to `ios-build-log-digest` when:
-
-- A raw build log needs compact failure attribution.
 
 Escalate to `ios-feature-implementation` with `sdk-contract` mode when:
 
@@ -273,7 +266,7 @@ CI impact:
 - ...
 
 Validation handoff:
-- none | final-evidence-gate | verify-ios-build
+- none | ios-verification
 
 Known risks:
 - ...
@@ -290,9 +283,9 @@ Next action:
 ## Relationship to Other Skills
 
 - Use this Skill for Build Settings, signing, Archive/Export, CI/CD, XCFramework, and build scripts.
-- Use `verify-ios-build` for one-off project-environment build verification.
+- Use `ios-verification` for one-off project-environment build verification.
 - Use `ios-automation` for simulator/device execution and app lifecycle automation.
-- Use `testing` for unit/UI test writing and targeted test scope.
+- Use `ios-feature-implementation(test-implementation)` for unit/UI test writing and `ios-verification` for targeted validation.
 - Use `code-review` for static review of configuration changes.
-- Use `ios-build-log-digest` for compact build failure attribution.
+- Use `ios-verification` for compact build failure attribution.
 - Use `ios-feature-implementation` with `sdk-contract` mode for SDK distribution and module boundary strategy; keep concrete build/signing/archive mechanics in this Skill.

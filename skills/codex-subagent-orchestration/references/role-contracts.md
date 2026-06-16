@@ -27,7 +27,7 @@
 
 ### 不负责
 - 最终完成态裁决
-- 默认收口为定向验证 + 独立 reviewer subAgent `code-review`；`final-evidence-gate` / `verify-ios-build` 按需升级
+- 默认收口为定向验证 + 独立 reviewer subAgent `code-review`；`ios-verification` 按需升级
 - 静态代码审查结论
 
 ## reviewer explorer
@@ -129,7 +129,7 @@
 - 显式授权时才启动与回收 coder / tester subAgent；未显式授权、工具不可用、策略禁止或写集不适合并行时 coder / tester 按单 Agent 执行并说明原因；reviewer subAgent 不可用时不得降级自审，必须报告 blocked / pending review
 - 聚合 coder / reviewer / tester 输出
 - 精确回写 coder
-- 执行默认收口为定向验证 + 独立 reviewer subAgent `code-review`；`final-evidence-gate` / `verify-ios-build` 按需升级
+- 执行默认收口为定向验证 + 独立 reviewer subAgent `code-review`；`ios-verification` 按需升级
 - 判定任务完成 / 未完成 / 阻塞
 
 ### 固定输出（汇总态）

@@ -31,19 +31,14 @@ CURRENT_REQUIRED_SKILLS = {
     "code-review",
     "codex-subagent-orchestration",
     "debugging",
-    "final-evidence-gate",
     "gh-pr-flow",
     "git-workflow",
     "html-docs",
-    "ios-affected-tests",
+    "ios-verification",
     "ios-automation",
-    "ios-build-log-digest",
     "ios-feature-implementation",
     "ios-performance",
-    "ios-verification-router",
-    "testing",
     "ui-ux-design-system",
-    "verify-ios-build",
     "xcode-build",
 }
 
@@ -270,8 +265,8 @@ def main() -> int:
         failures,
     )
     require_contains(
-        ROOT / "skills" / "testing" / "SKILL.md",
-        ["`suggested_validation`", "`executed_validation`", "`failure_attribution`", "`needs_test_code`", "`first_failure`", "`no_test_reason`"],
+        ROOT / "skills" / "ios-verification" / "SKILL.md",
+        ["`suggested_validation`", "`executed_validation`", "`failure_attribution`", "`first_blocking_error`", "`no_test_reason`"],
         failures,
     )
 

@@ -29,7 +29,7 @@
 ### CP3：Final Gate（定向验证与审查收口）
 - 责任人：main agent
 - 进入条件：CP2 通过，修复轮次收敛
-- 通过标准：定向测试或必要验证通过，且独立 reviewer subAgent 执行的 `code-review` 无 blocking findings；reviewer subAgent 不可用时只能 blocked / pending review；`final-evidence-gate` / `verify-ios-build` 仅在用户显式要求或高风险时按需补强
+- 通过标准：定向验证或必要验证通过，且独立 reviewer subAgent 执行的 `code-review` 无 blocking findings；reviewer subAgent 不可用时只能 blocked / pending review；`ios-verification` 仅在用户显式要求或高风险时按需补强
 - 失败处理：按首个真实失败点回写 coder，进入下一轮；若环境阻塞则标记 blocked
 
 ## Fail-Fix-Report 纪律

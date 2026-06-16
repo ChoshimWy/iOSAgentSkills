@@ -79,11 +79,11 @@ coder / tester 只有在用户显式要求 subAgent / parallel agent / delegatio
 请完成：
 - 给出定向验证建议
 - 如果已有失败信息，做失败归因
-- 判断是否必须补测试代码
+- 判断是否必须补测试代码（通过 `ios-feature-implementation(test-implementation)`）
 
 默认执行边界：
 - 先尝试最窄定向单测：优先 `-only-testing` 到单个 test case / test class，其次最小受影响 test file / bundle
-- 真机 / 模拟器验证不属于默认 testing 执行面；只有用户显式要求或主 Agent 判定证据不足 / 高风险时才升级
+- 真机 / 模拟器验证不属于默认执行面；只有用户显式要求或主 Agent 判定证据不足 / 高风险时才升级
 - 若没有可低成本执行的单测路径，输出 `no_test_reason` 与 `suggested_validation`
 
 默认输出：
@@ -104,7 +104,7 @@ coder / tester 只有在用户显式要求 subAgent / parallel agent / delegatio
 ## tester worker
 
 ```text
-你是 tester worker。仅在主 Agent 明确要求补测试代码时工作。
+你是 tester worker。仅在主 Agent 明确要求补测试代码（通过 `ios-feature-implementation(test-implementation)`）时工作。
 
 要求：
 - 只修改测试相关文件
@@ -139,11 +139,11 @@ coder / tester 只有在用户显式要求 subAgent / parallel agent / delegatio
 1. 主 Agent：任务边界、成功标准、所选 lite / standard / full 档位、基线（workspace / scheme / destination）
    同时先给任务分型：`doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`
 2. coder worker（按需）：实现任务与 ownership
-3. testing（实现链路必选；可由 tester explorer 或主 Agent 承担）：suggested_validation / executed_validation / failure_attribution / needs_test_code
+3. ios-verification（实现链路必选；可由 tester explorer 或主 Agent 承担）：suggested_validation / executed_validation / failure_attribution / no_test_reason
 4. code-review 审查（实现链路必选；必须由未参与实现的 reviewer explorer subAgent 执行，主 Agent 不得自审）：blocking_findings / non_blocking_findings
 5. reporter（按需）：acceptance_matrix（需求项/证据/状态）
 6. 主 Agent 聚合：回写规则、回环（默认最多 2 轮）、何时 blocked
-7. 可选补强验证：用户显式要求或高风险时，按需执行 `final-evidence-gate` / `verify-ios-build`
+7. 可选补强验证：用户显式要求或高风险时，按需执行 `ios-verification`
 8. `checkpoint_status`：显式汇报 `CP0` / `CP1` / `CP2` / `CP3` 的 pass|fail|blocked
 
 私有库链路补充：

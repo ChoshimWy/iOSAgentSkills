@@ -17,7 +17,7 @@ Covers:
 Does not cover:
 - Xcode signing, archive/export, build-script, or CI mechanics; route those to `xcode-build`.
 - Runtime crash/leak/hang diagnosis; route those to `debugging`.
-- Pure test implementation; route that to `testing`.
+- Pure test implementation; use `test-implementation` mode in `ios-feature-implementation`.
 
 ## Architecture Rules
 
@@ -74,6 +74,6 @@ When this reference is active, include only applicable fields in the Skill outpu
 ## Escalation Notes
 
 - Use `advanced-swift` as a secondary mode when complex generics, actor isolation, `Sendable`, type erasure, or availability strategy drives implementation details.
-- Escalate to `testing` when test seams, mocks, integration tests, or coverage strategy need implementation.
+- Use `test-implementation` mode when test seams, mocks, integration tests, or coverage strategy need implementation.
 - Escalate to `xcode-build` when SPM/XCFramework/build/signing/archive/export/CI mechanics become the main task.
 - Escalate to `apple-docs` when official availability or API behavior must be verified.

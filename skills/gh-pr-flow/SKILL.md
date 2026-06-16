@@ -75,7 +75,7 @@ Execute a GitHub CLI based delivery flow that stages, commits, pushes, and opens
 
 - Escalate to `git-workflow` when commit subject, branch naming, or PR template needs to be defined first.
 - Escalate to `code-review` when review blockers or missing verification story prevent safe PR creation.
-- Escalate to `xcode-build` / `verify-ios-build` only when the user explicitly asks to strengthen build confidence before opening the PR.
+- Escalate to `xcode-build` / `ios-verification` only when the user explicitly asks to strengthen build confidence before opening the PR.
 
 ## Token Budget
 

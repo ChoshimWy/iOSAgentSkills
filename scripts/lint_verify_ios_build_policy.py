@@ -6,10 +6,9 @@ import sys
 
 
 ROOT = Path(__file__).resolve().parent.parent
-FINAL_EVIDENCE_SKILLS = [
+POLICY_SKILLS = [
     "ios-feature-implementation",
     "debugging",
-    "testing",
     "ios-performance",
     "xcode-build",
     "ios-automation",
@@ -54,13 +53,14 @@ def main() -> int:
         require_not_contains(
             path,
             [
-                "最终都必须进入 `final-evidence-gate`",
-                "`实现 skill -> testing -> reviewer subAgent(code-review) -> final-evidence-gate`",
+                "最终都必须进入 `ios-verification`",
                 "任务都不算完成",
                 "四步收口",
                 "固定四步",
                 "未通过 CP3 不得宣告完成",
-                "Apple 相关改动必须进入 final-evidence-gate",
+                "Apple 相关改动必须进入 ios-verification",
+                "ios-verification / ios-verification",
+                "testing/定向验证",
             ],
             failures,
         )
@@ -75,7 +75,6 @@ def main() -> int:
             "shared build-queue daemon",
             "--queue-status",
             "最窄定向验证",
-            "独立 reviewer subAgent 执行的 `code-review` 无 blocking findings",
             "不得直接调用 `xcodebuild` 二进制",
             "不得为了绕过同一个 `build.db` 锁而切到单独 `-derivedDataPath`",
         ],
@@ -90,7 +89,7 @@ def main() -> int:
             "shared build-queue daemon",
             "--queue-status",
             "最窄定向单测",
-            "`实现 skill -> testing/定向验证 -> reviewer subAgent(code-review)`",
+            "`实现 skill -> 定向验证 / no_test_reason -> reviewer subAgent(code-review)`",
             "python3 scripts/lint_verify_ios_build_policy.py",
             "不得直接调用 `xcodebuild` 二进制",
             "不要为了绕过同一个 `build.db` 锁而切到单独 `-derivedDataPath`",
@@ -106,56 +105,54 @@ def main() -> int:
             "`.xcworkspace` 优先",
             "shared build-queue daemon",
             "--queue-status",
-            "`实现 skill -> testing/定向验证 -> reviewer subAgent(code-review)`",
-            "`final-evidence-gate` 与 `verify-ios-build` 不再是所有 Apple Xcode 项目改动的强制收尾",
+            "`实现 skill -> 定向验证 / no_test_reason -> reviewer subAgent(code-review)`",
+            "`ios-verification` 统一负责验证前路由",
         ],
         failures,
     )
 
-    for skill in FINAL_EVIDENCE_SKILLS:
+    for skill in POLICY_SKILLS:
         skill_md = ROOT / "skills" / skill / "SKILL.md"
-        require_contains(skill_md, ["final-evidence-gate", "verify-ios-build"], failures)
+        require_contains(skill_md, ["ios-verification"], failures)
 
         openai_yaml = ROOT / "skills" / skill / "agents" / "openai.yaml"
         if openai_yaml.exists():
-            require_contains(openai_yaml, ["$final-evidence-gate", "$verify-ios-build", "按需"], failures)
-
-    for direct_flow_skill in ("ios-feature-implementation",):
-        require_contains(
-            ROOT / "skills" / direct_flow_skill / "SKILL.md",
-            ["testing", "code-review", "verify-ios-build"],
-            failures,
-        )
-        require_contains(
-            ROOT / "skills" / direct_flow_skill / "agents" / "openai.yaml",
-            ["$testing", "$code-review", "$verify-ios-build", "no_test_reason"],
-            failures,
-        )
-
-    require_contains(ROOT / "skills" / "testing" / "SKILL.md", ["定向测试", "no_test_reason", "suggested_validation"], failures)
-    require_contains(ROOT / "skills" / "ios-automation" / "SKILL.md", ["Simulator", "真机"], failures)
-    require_contains(ROOT / "skills" / "xcode-build" / "SKILL.md", ["verify-ios-build", "final-evidence-gate"], failures)
+            require_contains(openai_yaml, ["$ios-verification", "按需"], failures)
 
     require_contains(
-        ROOT / "skills" / "verify-ios-build" / "SKILL.md",
+        ROOT / "skills" / "ios-feature-implementation" / "SKILL.md",
+        ["test-implementation", "ios-verification", "code-review", "no_test_reason"],
+        failures,
+    )
+    require_contains(
+        ROOT / "skills" / "ios-feature-implementation" / "agents" / "openai.yaml",
+        ["test-implementation", "$code-review", "$ios-verification", "no_test_reason"],
+        failures,
+    )
+    require_contains(ROOT / "skills" / "ios-automation" / "SKILL.md", ["Simulator", "真机", "ios-verification"], failures)
+    require_contains(ROOT / "skills" / "xcode-build" / "SKILL.md", ["ios-verification", "Build Settings"], failures)
+
+    ios_verification = ROOT / "skills" / "ios-verification" / "SKILL.md"
+    require_contains(
+        ios_verification,
         [
-            "按需项目环境构建验证执行器",
+            "统一验证入口",
+            "verification_mode",
+            "route",
+            "affected-tests",
+            "execute",
+            "digest",
+            "final-gate",
             "项目环境",
             "codex_verify.sh",
             "~/.codex/bin/codex_verify",
             "shared build-queue daemon",
             "Xcode 系统 DerivedData",
-            "final-evidence-gate",
         ],
         failures,
     )
     require_contains(
-        ROOT / "skills" / "final-evidence-gate" / "SKILL.md",
-        ["codex_verify.sh", "~/.codex/bin/codex_verify", "项目环境", "verify-ios-build"],
-        failures,
-    )
-    require_contains(
-        ROOT / "skills" / "verify-ios-build" / "references" / "override-config.md",
+        ROOT / "skills" / "ios-verification" / "references" / "override-config.md",
         [
             "项目环境",
             "shared build-queue daemon",
@@ -169,7 +166,7 @@ def main() -> int:
         failures,
     )
     require_contains(
-        ROOT / "skills" / "verify-ios-build" / "scripts" / "build-check.sh",
+        ROOT / "skills" / "ios-verification" / "scripts" / "build-check.sh",
         ["CODEX_VERIFY_BYPASS_WRAPPER", "TARGET_VERIFY_SCRIPT", "GLOBAL_VERIFY_SCRIPT", "--build-check"],
         failures,
     )
@@ -190,7 +187,7 @@ def main() -> int:
         failures,
     )
     require_contains(
-        ROOT / "skills" / "verify-ios-build" / "scripts" / "build_check.py",
+        ROOT / "skills" / "ios-verification" / "scripts" / "build_check.py",
         ["is_unit_test_preferred_scheme", "scheme_has_unit_test_binding", "BuildableName", "Library/Developer/Xcode/DerivedData"],
         failures,
     )
@@ -206,12 +203,12 @@ def main() -> int:
     )
 
     if failures:
-        print("final-evidence-gate policy lint failed:", file=sys.stderr)
+        print("ios-verification policy lint failed:", file=sys.stderr)
         for failure in failures:
             print(f"- {failure}", file=sys.stderr)
         return 1
 
-    print("final-evidence-gate policy lint passed")
+    print("ios-verification policy lint passed")
     return 0
 
 

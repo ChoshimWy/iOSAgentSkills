@@ -17,38 +17,20 @@
 
 | Skill | 状态 | 说明 |
 | --- | --- | --- |
-| `codex-subagent-orchestration` | ✅ 已完成 | 已统一主编排结构，补齐 Outputs / Exit Conditions / Escalation Rules，并接入低 token 验证链路。 |
-| `verify-ios-build` | ✅ 已完成 | 已统一项目环境构建验证结构，补齐 fingerprint、diagnostics、低 token 输出合同。 |
-| `testing` | ✅ 已完成 | 已统一测试结构，补齐 affected tests、no_test_reason、failure_attribution。 |
+| `codex-subagent-orchestration` | ✅ 已完成 | 已统一主编排结构，并将验证相关路由收敛到 `ios-verification`。 |
+| `ios-feature-implementation` | ✅ 已完成 | 已整合为唯一 iOS 生产代码与测试代码实施入口，内部覆盖 business / swiftui / liquid-glass / uikit / mixed-ui / advanced-swift / refactor / sdk-contract / test-implementation。 |
+| `ios-verification` | ✅ 已完成 | 已整合验证前路由、受影响测试选择、定向验证执行、项目环境验证、构建失败摘要和最终证据裁决。 |
 | `code-review` | ✅ 已完成 | 已统一审查结构，补齐 review_scope、impact_scope、verification_story。 |
 | `debugging` | ✅ 已完成 | 已统一运行时排障结构，补齐 symptom、evidence、confidence、validation_plan。 |
-| `ios-verification-router` | ✅ 已完成 | 已补齐 Inputs / Outputs / Exit Conditions，并保持低 token 验证前置路由职责。 |
-| `ios-affected-tests` | ✅ 已完成 | 已补齐结构化输出合同、退出条件和关系说明。 |
-| `ios-build-log-digest` | ✅ 已完成 | 已补齐摘要分析输出合同、升级规则和低 token 约束。 |
-| `gh-pr-flow` | ✅ 已完成 | 已从执行清单式文档统一为正式发布交付 Skill。 |
 | `ios-performance` | ✅ 已完成 | 已补齐结构化性能分析合同和升级边界。 |
-| `ios-feature-implementation` | ✅ 已完成 | 已整合为唯一 iOS 代码实施入口，内部覆盖 business / swiftui / liquid-glass / uikit / mixed-ui / advanced-swift / refactor / sdk-contract 模式，并统一输出与验证交接。 |
-| 旧 iOS 实施专项 Skills | ✅ 已移除 | SwiftUI、UIKit、Swift 进阶、重构、SDK 架构与 Liquid Glass 的 standalone Skill 已物理删除，参考资料已迁入 `ios-feature-implementation/references/` 下对应子目录。 |
+| `xcode-build` | ✅ 已完成 | 已明确 Build Settings / 签名 / Archive / CI 与 `ios-verification` 的边界。 |
+| `ios-automation` | ✅ 已完成 | 已明确设备自动化与默认验证收口的边界。 |
+| 旧 iOS 实施专项 Skills | ✅ 已移除 | SwiftUI、UIKit、Swift 进阶、重构、SDK 架构与 Liquid Glass 的 standalone Skill 已物理删除。 |
+| 旧验证专项 Skills | ✅ 已移除 | 原分散验证 Skill 已并入 `ios-verification`，脚本与 references 已迁移。 |
 | `app-store-changelog` | ✅ 已完成 | 已补齐轻量发布文案 Skill 结构与输出合同。 |
 | `app-store-opportunity-research` | ✅ 已完成 | 已补齐研究型 Skill 结构与输出合同。 |
 | `apple-docs` | ✅ 已完成 | 已补齐官方文档检索 Skill 结构与事实边界。 |
 | `git-workflow` | ✅ 已完成 | 已补齐 Git 辅助 Skill 结构与输出合同。 |
-
-## P1 待重构
-
-| Skill | 优先级 | 原因 |
-| --- | --- | --- |
-| `xcode-build` | P1 | 直接影响 Build Settings、签名、Archive、Export、CI、destination 策略，需与 `verify-ios-build` 边界明确。 |
-| `ios-automation` | P1 | 直接影响 simulator / 真机自动化、安装、启动、截图和 accessibility tree，需要与 `testing`、`verify-ios-build` 分离。 |
-| `final-evidence-gate` | P1 | 证据裁决节点，需统一 verification_story 与升级条件。 |
-
-## P3 待重构
-
-| Skill | 优先级 | 原因 |
-| --- | --- | --- |
-| `app-store-changelog` | P3 | 非 iOS 主链路辅助 Skill，后续只需按需精简文风。 |
-| `app-store-opportunity-research` | P3 | 研究型辅助 Skill，后续只需按需压缩上下文负担。 |
-| `git-workflow` | P3 | 辅助型 Git Skill，后续可再细化与 `gh-pr-flow` 的边界。 |
 
 ## 统一 Contract 基线
 
@@ -73,7 +55,7 @@
   "non_blocking_findings": [],
   "review_scope": "...",
   "impact_scope": "...",
-  "verification_story": "accepted | needs-final-evidence-gate | needs-verify-ios-build | insufficient",
+  "verification_story": "accepted | needs-ios-verification | needs-ios-verification | insufficient",
   "next_action": "complete | fix-and-rerun | blocked"
 }
 ```

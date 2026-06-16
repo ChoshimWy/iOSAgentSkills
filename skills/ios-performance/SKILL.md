@@ -1,6 +1,6 @@
 ---
 name: ios-performance
-description: iOS 性能分析与测试技能。只在需要处理 UIKit / SwiftUI 的掉帧、启动慢、CPU / 内存压力、性能回归基线、`measure(metrics:)`、`xctrace` 或 Instruments 取证时使用；如果问题核心是 crash、异常、对象未释放根因、纯静态审查或普通单元/UI 测试补齐，不要把它当作主 skill；若任务产出修改了 Apple Xcode 项目相关内容，默认以定向测试/必要验证与独立 reviewer subAgent `code-review` 放行为收口；`final-evidence-gate` / `verify-ios-build` 仅在用户显式要求或需要补强完整项目环境证据时按需使用。
+description: iOS 性能分析与测试技能。只在需要处理 UIKit / SwiftUI 的掉帧、启动慢、CPU / 内存压力、性能回归基线、`measure(metrics:)`、`xctrace` 或 Instruments 取证时使用；如果问题核心是 crash、异常、对象未释放根因、纯静态审查或普通单元/UI 测试补齐，不要把它当作主 skill；若任务产出修改了 Apple Xcode 项目相关内容，默认以定向测试/必要验证与独立 reviewer subAgent `code-review` 放行为收口；`ios-verification` / `ios-verification` 仅在用户显式要求或需要补强完整项目环境证据时按需使用。
 ---
 
 # iOS 性能分析与测试
@@ -26,7 +26,7 @@ Analyze and improve iOS performance issues using the smallest credible evidence 
 ## When Not to Use
 
 - 问题核心是 crash、异常、野指针、对象未释放根因；使用 `debugging`。
-- 只是补业务单元测试、UI 测试或测试替身；使用 `testing`。
+- 只是补业务单元测试、UI 测试或测试替身；使用 `ios-feature-implementation(test-implementation)`。
 - 只是普通 SwiftUI/UIKit 功能实现；使用对应实现型 Skill。
 
 ## Agent Rules
@@ -63,7 +63,7 @@ Analyze and improve iOS performance issues using the smallest credible evidence 
   "optimization_directions": [],
   "validation_plan": [],
   "known_risks": [],
-  "next_action": "testing | code-review | debugging | ask-user | blocked"
+  "next_action": "ios-verification | code-review | debugging | ask-user | blocked"
 }
 ```
 
@@ -76,7 +76,7 @@ Analyze and improve iOS performance issues using the smallest credible evidence 
 ## Escalation Rules
 
 - Escalate to `debugging` when the issue is primarily crash, hang, leak root cause, or runtime behavior diagnosis.
-- Escalate to `testing` when the next step is benchmark code, deterministic regression tests, or low-cost targeted validation.
+- Escalate to `ios-feature-implementation(test-implementation)` when benchmark/regression test code is needed; escalate to `ios-verification` for low-cost targeted validation.
 - Escalate to `apple-docs` when official API or Instruments behavior must be confirmed.
 
 ## Token Budget
@@ -94,6 +94,6 @@ Analyze and improve iOS performance issues using the smallest credible evidence 
 ## Relationship to Other Skills
 
 - Use `debugging` for crash and runtime fault analysis.
-- Use `testing` for test authoring and targeted benchmark execution.
+- Use `ios-feature-implementation(test-implementation)` for test authoring and `ios-verification` for targeted validation execution.
 - Use `ios-feature-implementation` with `advanced-swift` mode when performance work reveals deeper concurrency or abstraction implementation needs.
 - Use `apple-docs` for official API and Instruments fact lookup.
