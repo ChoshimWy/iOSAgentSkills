@@ -319,4 +319,4 @@ Rules:
 - Use `verify-ios-build` only for explicit or escalated project-environment build verification.
 - Use `debugging` for runtime crashes, leaks, hangs, or behavior investigation.
 - Use `ios-performance` for benchmarks and Instruments workflows.
-- Use `ios-sdk-architecture` when testability requires SDK-level boundary design.
+- Use `ios-feature-implementation` with `sdk-contract` mode when testability requires SDK-level boundary design.

@@ -8,8 +8,6 @@ import sys
 ROOT = Path(__file__).resolve().parent.parent
 FINAL_EVIDENCE_SKILLS = [
     "ios-feature-implementation",
-    "swiftui-liquid-glass",
-    "ios-sdk-architecture",
     "debugging",
     "testing",
     "ios-performance",

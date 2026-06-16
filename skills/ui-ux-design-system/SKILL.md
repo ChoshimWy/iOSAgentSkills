@@ -25,7 +25,7 @@ Guide UI/UX direction, design systems, design exploration, accessibility, protot
 
 不负责：
 - SwiftUI / UIKit API 级代码实现。
-- Liquid Glass API 级实现。
+- Liquid Glass API 级实现；交给 `ios-feature-implementation` 的 `liquid-glass` 模式。
 - 构建配置、签名、Archive、CI。
 - 性能 profiling / benchmark。
 - 外部 Open Design 工具安装和运行维护。
@@ -52,7 +52,7 @@ Do not use this Skill when:
 
 - The user needs SwiftUI page code, `NavigationStack`, state ownership, or modifiers; use `ios-feature-implementation` with `swiftui` mode.
 - The user needs UIKit ViewController/View/layout implementation; use `ios-feature-implementation` with `uikit` mode.
-- The task is Liquid Glass API implementation; use `swiftui-liquid-glass`.
+- The task is Liquid Glass API implementation; use `ios-feature-implementation` with `liquid-glass` mode.
 - The task is build/signing/archive/CI; use `xcode-build`.
 - The task is device automation or screenshot capture; use `ios-automation`.
 - The task is runtime debugging or performance profiling.
@@ -183,7 +183,7 @@ Escalate to `ios-feature-implementation` with `uikit` mode when:
 
 - Design direction is ready and UIKit implementation is next.
 
-Escalate to `swiftui-liquid-glass` when:
+Escalate to `ios-feature-implementation` with `liquid-glass` mode when:
 
 - The task specifically needs Liquid Glass design and implementation details.
 
@@ -237,7 +237,7 @@ Next action: prototype | implement | document | review | blocked
 - Visual direction, design exploration, design review, tokens, typography, color, accessibility: use this Skill.
 - SwiftUI implementation: `ios-feature-implementation` with `swiftui` mode.
 - UIKit implementation: `ios-feature-implementation` with `uikit` mode.
-- Liquid Glass: `swiftui-liquid-glass`.
+- Liquid Glass API implementation: `ios-feature-implementation` with `liquid-glass` mode.
 - Formal HTML design docs: `html-docs`.
 - Screenshots / device UI evidence: `ios-automation`.
 - Rendering and animation performance: `ios-performance`.

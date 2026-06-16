@@ -16,7 +16,7 @@ Coordinate iOS development tasks through an adaptive orchestration workflow whil
 - 判断任务类型与复杂度。
 - 选择 `lite` / `standard` / `full` 编排档位。
 - 协调 coder / reviewer / tester / reporter / main agent 的职责边界。
-- 决定何时把代码实施路由到 `ios-feature-implementation` 的 `business` / `swiftui` / `uikit` / `mixed-ui` / `advanced-swift` / `refactor` / `sdk-contract` 内部模式。
+- 决定何时把代码实施路由到 `ios-feature-implementation` 的 `business` / `swiftui` / `liquid-glass` / `uikit` / `mixed-ui` / `advanced-swift` / `refactor` / `sdk-contract` 内部模式。
 - 决定何时路由到调试、性能、测试、审查与按需验证模块。
 - 在主 Agent 串行实现或显式授权的多 Agent 场景下保证 checkpoint、fail-fix-report、低 token 验证纪律，以及独立 reviewer subAgent 审查纪律。
 
@@ -67,7 +67,7 @@ Do not use this Skill as the first route when the task is clearly one of these s
 - `testing` owns test code and targeted validation execution; `ios-affected-tests` is only a helper for exact narrow test selection.
 - `ios-verification-router` decides whether and how to verify before any `xcodebuild`; `final-evidence-gate` decides whether existing evidence is enough after testing/review; `verify-ios-build` executes project-environment verification only when escalation is justified.
 - `debugging` owns runtime symptom diagnosis; `ios-build-log-digest` only digests build/test failure artifacts; `ios-performance` only owns performance evidence and benchmark workflows.
-- `ios-feature-implementation` owns all ordinary implementation modes, including business, SwiftUI, UIKit, mixed UI, advanced Swift, and refactor work; `ios-sdk-architecture` remains a specialist route only when architecture/distribution strategy is the main task.
+- `ios-feature-implementation` owns all ordinary implementation modes, including business, SwiftUI, Liquid Glass, UIKit, mixed UI, advanced Swift, refactor, and SDK contract / architecture work.
 
 ### Token Budget
 
@@ -154,7 +154,7 @@ Activate additional roles only when justified:
 | Role | Activate When | Default Skill Reuse |
 | --- | --- | --- |
 | `pm` | Requirements are unclear, acceptance criteria are missing, or goals conflict | planning / requirement clarification |
-| `coder worker` | Code or test implementation is needed | `ios-feature-implementation` with `business` / `swiftui` / `uikit` / `mixed-ui` / `advanced-swift` / `refactor` / `sdk-contract` mode |
+| `coder worker` | Code or test implementation is needed | `ios-feature-implementation` with `business` / `swiftui` / `liquid-glass` / `uikit` / `mixed-ui` / `advanced-swift` / `refactor` / `sdk-contract` mode |
 | `reviewer explorer` | Any implementation task; risky rule changes | `code-review` |
 | `tester explorer` | Test surface exists, failure attribution is needed, or task is `code-risky` | `testing`, `ios-affected-tests`, `ios-build-log-digest` |
 | `tester worker` | Test code must be added or updated | `testing` |

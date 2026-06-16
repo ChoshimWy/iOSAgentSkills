@@ -27,9 +27,8 @@
 | `ios-build-log-digest` | ✅ 已完成 | 已补齐摘要分析输出合同、升级规则和低 token 约束。 |
 | `gh-pr-flow` | ✅ 已完成 | 已从执行清单式文档统一为正式发布交付 Skill。 |
 | `ios-performance` | ✅ 已完成 | 已补齐结构化性能分析合同和升级边界。 |
-| `ios-feature-implementation` | ✅ 已完成 | 已整合为唯一 iOS 代码实施入口，内部覆盖 business / swiftui / uikit / mixed-ui / advanced-swift / refactor / sdk-contract 模式，并统一输出与验证交接。 |
-| 旧 iOS 实施专项 Skills | ✅ 已移除 | SwiftUI、UIKit、Swift 进阶与重构的 standalone Skill 已物理删除，参考资料已迁入 `ios-feature-implementation/references/` 下对应子目录。 |
-| `swiftui-liquid-glass` | ✅ 已完成 | 已补齐 Liquid Glass 专项实现 / 审查结构。 |
+| `ios-feature-implementation` | ✅ 已完成 | 已整合为唯一 iOS 代码实施入口，内部覆盖 business / swiftui / liquid-glass / uikit / mixed-ui / advanced-swift / refactor / sdk-contract 模式，并统一输出与验证交接。 |
+| 旧 iOS 实施专项 Skills | ✅ 已移除 | SwiftUI、UIKit、Swift 进阶、重构、SDK 架构与 Liquid Glass 的 standalone Skill 已物理删除，参考资料已迁入 `ios-feature-implementation/references/` 下对应子目录。 |
 | `app-store-changelog` | ✅ 已完成 | 已补齐轻量发布文案 Skill 结构与输出合同。 |
 | `app-store-opportunity-research` | ✅ 已完成 | 已补齐研究型 Skill 结构与输出合同。 |
 | `apple-docs` | ✅ 已完成 | 已补齐官方文档检索 Skill 结构与事实边界。 |
@@ -96,6 +95,6 @@
 ## 下一步顺序
 
 1. 继续轻量复审已通过的主链路 Skill，重点看主流程一致性而不是重写结构。
-2. 清理冗余残留，如已被 `ios-sdk-architecture` 取代的 `sdk-architecture` 孤儿目录与旧引用。
+2. 持续清理冗余残留，避免已整合进 `ios-feature-implementation` 的旧实现入口重新出现。
 3. 执行 `scripts/lint_skill_schema.py` 与 `--strict` 做全量结构检查。
 4. 若后续需要，再针对非主链路辅助 Skill 做进一步减重。

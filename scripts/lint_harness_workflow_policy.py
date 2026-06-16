@@ -21,6 +21,8 @@ REMOVED_SKILLS = {
     "swift-expert",
     "swiftui-feature-implementation",
     "uikit-feature-implementation",
+    "ios-sdk-architecture",
+    "swiftui-liquid-glass",
 }
 CURRENT_REQUIRED_SKILLS = {
     "app-store-changelog",
@@ -38,9 +40,7 @@ CURRENT_REQUIRED_SKILLS = {
     "ios-build-log-digest",
     "ios-feature-implementation",
     "ios-performance",
-    "ios-sdk-architecture",
     "ios-verification-router",
-    "swiftui-liquid-glass",
     "testing",
     "ui-ux-design-system",
     "verify-ios-build",

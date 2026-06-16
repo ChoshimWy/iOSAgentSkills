@@ -15,7 +15,7 @@
 `Agent(subagent_type="Explore", prompt=<explorer.md>)` 收集上下文、文件范围、依赖、风险。CP1 未通过不扩散到实现。
 
 ### Phase 3: 实现
-`Agent(subagent_type="general-purpose", prompt=<builder.md>)` 执行最小可验证实现。或直接通过 `Skill` 工具调用 `ios-feature-implementation`，并在内部选择 business / swiftui / uikit / mixed-ui / advanced-swift / refactor / sdk-contract 模式。
+`Agent(subagent_type="general-purpose", prompt=<builder.md>)` 执行最小可验证实现。或直接通过 `Skill` 工具调用 `ios-feature-implementation`，并在内部选择 business / swiftui / liquid-glass / uikit / mixed-ui / advanced-swift / refactor / sdk-contract 模式。
 
 ### Phase 4: 验证与独立审查
 必须启动：

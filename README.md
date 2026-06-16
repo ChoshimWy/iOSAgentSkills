@@ -12,7 +12,7 @@
 - `CLAUDE.md` —— Claude 入口薄包装，导入 `AGENTS.md`
 
 ### Core Implementation
-- `ios-feature-implementation/` —— 唯一 iOS 代码实施入口；内部按 `business` / `swiftui` / `uikit` / `mixed-ui` / `advanced-swift` / `refactor` / `sdk-contract` 模式细分
+- `ios-feature-implementation/` —— 唯一 iOS 代码实施入口；内部按 `business` / `swiftui` / `liquid-glass` / `uikit` / `mixed-ui` / `advanced-swift` / `refactor` / `sdk-contract` 模式细分
 
 ### Automation / Build / Validation
 - `ios-automation/`

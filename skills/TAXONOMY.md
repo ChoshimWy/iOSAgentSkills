@@ -5,7 +5,7 @@
 
 ## 分类原则
 
-- `Core Implementation`：只有一个真正的 iOS 代码实施 Skill：`ios-feature-implementation`。它内部再按模式细分业务、SwiftUI、UIKit、混合 UI、高级 Swift、重构和 SDK 契约。
+- `Core Implementation`：只有一个真正的 iOS 代码实施 Skill：`ios-feature-implementation`。它内部再按模式细分业务、SwiftUI、Liquid Glass、UIKit、混合 UI、高级 Swift、重构和 SDK 契约 / 架构。
 - `Automation / Build / Validation`：自动化执行、构建配置与收尾验收技能。
 - `Diagnostics`：发现问题、分析风险、定位根因的技能。
 - `Additional Skills`：按需触发的低频技能；与 core skills 共用同一目录，只通过路由策略区分。
@@ -32,18 +32,18 @@
 
 ## 边界优先级
 
-- 实现链路：`ios-feature-implementation` 是唯一真正实施入口；先在内部选择 `business` / `swiftui` / `uikit` / `mixed-ui` / `advanced-swift` / `refactor` / `sdk-contract`，不要把普通页面、业务、高级 Swift 或重构实施拆到独立 Skill。
+- 实现链路：`ios-feature-implementation` 是唯一真正实施入口；先在内部选择 `business` / `swiftui` / `liquid-glass` / `uikit` / `mixed-ui` / `advanced-swift` / `refactor` / `sdk-contract`，不要把普通页面、业务、高级 Swift、SDK 架构、Liquid Glass 或重构实施拆到独立 Skill。
 - 测试链路：`testing` 负责测试代码与定向验证执行；`ios-affected-tests` 只负责在测试面不明显时推导最窄 `-only-testing` 候选，不替代 `testing`。
 - 验证链路：`ios-verification-router` 负责执行前的验证模式选择；`final-evidence-gate` 负责 testing + review 之后的证据是否足够判断；`verify-ios-build` 只负责真正执行项目环境验证。
 - 诊断链路：`debugging` 只处理运行时症状；`ios-build-log-digest` 只处理 build/test 失败摘要归因；`ios-performance` 只处理性能证据与基线，不接泛化 crash 或普通测试补写。
-- SDK 架构：`ios-sdk-architecture` 只在模块边界、Public API、分发、版本演进成为主问题时使用；普通 SDK-facing 代码接线先由 `ios-feature-implementation` 的 `sdk-contract` 模式处理。
+- SDK 架构与 Liquid Glass：均归入 `ios-feature-implementation` 内部模式；SDK 模块边界 / Public API / 分发 / 版本演进使用 `sdk-contract`，iOS 26+ 玻璃 API / 回退 / 审查使用 `liquid-glass`。
 
 ## Core Implementation
 
 | Skill | 角色 | 主触发场景 | 不要触发的场景 | 切换到 |
 | --- | --- | --- | --- | --- |
 | `codex-subagent-orchestration` | 默认 iOS 主 Skill 入口 | 所有 iOS 开发任务的统一入口；先按 `lite` / `standard` / `full` 做编排决策，再内部路由到统一实施 / 调试 / 性能 / 测试 / 审查 / 按需验证模块；coder / tester 仅在显式授权或明确需要时才实际调用原生 subAgent，但实现后的 reviewer subAgent 是强制收口角色 | 只做一次纯文档型低频任务；或运行时工具不可用、策略禁止导致 reviewer subAgent 无法启动时，需要报告 blocked / pending review | `ios-feature-implementation`、`debugging`、`ios-performance`、`code-review`、`testing`、`final-evidence-gate`、`verify-ios-build` |
-| `ios-feature-implementation` | 唯一 iOS 代码实施 Skill | service / repository / use case / view model / 导航接线 / SwiftUI / UIKit / mixed UI / advanced Swift / refactor / SDK contract | 构建配置、设备自动化、性能 profiling、运行时诊断、官方文档事实检索、纯测试补写、纯静态审查 | `testing`、`code-review`、`debugging`、`ios-performance`、`xcode-build`、`apple-docs`、`ios-sdk-architecture` |
+| `ios-feature-implementation` | 唯一 iOS 代码实施 Skill | service / repository / use case / view model / 导航接线 / SwiftUI / Liquid Glass / UIKit / mixed UI / advanced Swift / refactor / SDK contract / SDK architecture | 构建配置、设备自动化、性能 profiling、运行时诊断、官方文档事实检索、纯测试补写、纯静态审查、纯视觉方向探索 | `testing`、`code-review`、`debugging`、`ios-performance`、`xcode-build`、`apple-docs`、`ui-ux-design-system` |
 
 ## Automation / Build / Validation
 
@@ -61,18 +61,15 @@
 
 | Skill | 角色 | 主触发场景 | 不要触发的场景 | 切换到 |
 | --- | --- | --- | --- | --- |
-| `code-review` | 静态审查 | review 代码、PR diff、public API 评审；默认由独立 reviewer subAgent 执行 | 直接实现修复、运行时定位 | `debugging`、`ios-performance`、`ios-sdk-architecture` |
+| `code-review` | 静态审查 | review 代码、PR diff、public API 评审；默认由独立 reviewer subAgent 执行 | 直接实现修复、运行时定位 | `debugging`、`ios-performance`、`ios-feature-implementation` |
 | `debugging` | 运行时排障 | crash、异常、未释放、符号化栈、LLDB 定位 | 纯静态审查、性能分析与 benchmark、构建配置设计 | `code-review`、`ios-performance`、`xcode-build`、`ios-feature-implementation` |
 | `ios-build-log-digest` | 低 token 构建失败归因 | `xcodebuild` / build-queue 失败后读取脚本生成的 `verification-report.json` / `diagnostics.json` / `build-summary.txt`，只定位第一个真实 blocking error | 纯运行时 crash、用户明确要求分析完整 raw log、非构建类业务问题 | `debugging`、`xcode-build`、`ios-verification-router` |
 | `ios-performance` | 性能分析与测试 | 掉帧、启动慢、CPU / 内存异常、性能回归基线、`measure(metrics:)`、`xctrace`、Instruments | 通用业务实现、普通单元/UI 测试补齐、泛化 crash 排查 | `testing`、`debugging`、`ios-feature-implementation` |
-| `ios-sdk-architecture` | iOS SDK / Framework 架构 | SDK 模块边界、Public API、入口类、Configuration、SPM/XCFramework、版本演进 | 普通 App 功能实现、纯测试补写、一次性构建验证 | `ios-feature-implementation`、`testing`、`code-review`、`xcode-build` |
 
 ## Internal Modules
 
 这些 skills 保留在 core 中，主要供主 Skill 内部路由使用；只有高级场景才建议手动直达：
 - `apple-docs`
-- `swiftui-liquid-glass`
-- `ios-sdk-architecture`
 
 ## Additional Skills
 

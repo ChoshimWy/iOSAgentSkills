@@ -296,5 +296,5 @@ next_action:
 - 修复问题时切换实现型 Skill。
 - Crash/泄漏/卡顿切换 debugging。
 - 性能问题切换 ios-performance。
-- SDK 边界设计可联动 ios-sdk-architecture。
+- SDK 边界设计可联动 `ios-feature-implementation` 的 `sdk-contract` 模式。
 - 本 Skill 只负责审查与结论，不负责实现；实现者自审不得作为实现任务完成条件。
