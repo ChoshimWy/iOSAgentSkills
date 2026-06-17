@@ -119,11 +119,11 @@ Review iOS/macOS code changes, identify correctness and maintainability risks, e
 
 阻塞：
 
-- public/open API 缺少必要文档注释。
+- public/open API 缺少必要中文文档注释。
 - 并发边界语义缺失。
 - 副作用语义缺失。
 - 失败路径语义缺失。
-- 注释与实现不一致。
+- 注释未默认使用中文，或注释与实现不一致。
 
 非阻塞：
 

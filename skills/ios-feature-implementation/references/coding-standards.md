@@ -24,14 +24,14 @@ Prefer existing project conventions over introducing a new style unless the exis
 
 ## Public API and Documentation
 
-Add `///` documentation for:
+Add Chinese `///` documentation for:
 
 - `public` / `open` declarations.
 - Cross-module reusable types, protocols, and configuration objects.
 - SDK-facing models, entry points, delegates, and callbacks.
 - Non-obvious concurrency or lifecycle boundaries.
 
-Public documentation should state:
+Public documentation and inline comments must use Chinese by default, while keeping API names, type names, error codes, keywords, and log/error literals in their original spelling. Public documentation should state:
 
 - Inputs and outputs.
 - Throws / error codes / fallback behavior.
@@ -39,7 +39,7 @@ Public documentation should state:
 - Actor, main-thread, callback queue, and cancellation assumptions.
 - Availability or platform restrictions when relevant.
 
-Do not add comments that only restate syntax. Add `why` comments for compatibility branches, degraded fallbacks, concurrency invariants, and business rules that are not obvious from code.
+Do not add comments that only restate syntax. Add Chinese `why` comments for compatibility branches, degraded fallbacks, concurrency invariants, and business rules that are not obvious from code.
 
 ## Concurrency and Lifecycle
 
@@ -97,8 +97,8 @@ Blocking findings include:
 - Correctness regression, data loss, or broken user-visible behavior.
 - Unsafe concurrency, missing actor/main-thread boundary, or unsound `Sendable` handling.
 - Retain cycle or lifecycle leak with credible ownership evidence.
-- Public/open API missing required semantics documentation.
-- Missing failure/side-effect/cancellation documentation where callers depend on it.
+- Public/open API missing required Chinese semantics documentation.
+- Missing Chinese failure/side-effect/cancellation documentation where callers depend on it.
 - Changes in vendored `Pods/` snapshots when the real source repo should be edited.
 
 Non-blocking findings include:

@@ -186,9 +186,10 @@ Do not use this Skill as the main route when:
 
 ### Documentation / Comment Rules
 
-- Add `///` documentation for public/open APIs, cross-module reusable types, reusable protocols, and SDK-facing abstractions.
+- Add Chinese `///` documentation for public/open APIs, cross-module reusable types, reusable protocols, and SDK-facing abstractions.
+- Public API documentation and inline comments must use Chinese by default, while keeping API names, type names, error codes, keywords, and log/error literals in their original spelling.
 - Public API documentation must describe input, output, failure semantics, important side effects, and concurrency/actor assumptions when relevant.
-- Add `why` comments for complex business branches, compatibility logic, concurrency invariants, side effects, or fallback paths.
+- Add Chinese `why` comments for complex business branches, compatibility logic, concurrency invariants, side effects, or fallback paths.
 - Update stale comments when behavior changes; remove misleading comments.
 - Do not add comments that merely restate Swift / UIKit / SwiftUI syntax.
 

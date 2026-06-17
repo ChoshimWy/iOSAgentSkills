@@ -32,7 +32,7 @@ Does not cover:
 
 ## API Design Rules
 
-- Public/open APIs must include `///` documentation.
+- Public/open APIs must include Chinese `///` documentation.
 - Public APIs must define input, output, error, concurrency, side-effect, and availability semantics.
 - Breaking changes must be explicit and paired with a version strategy.
 - Avoid leaking implementation types through public signatures.

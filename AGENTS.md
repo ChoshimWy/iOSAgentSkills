@@ -36,8 +36,8 @@
 - 当任务与 iOS、macOS、watchOS、tvOS、visionOS、Swift、Objective-C、Xcode、SwiftUI、UIKit、AppKit、Foundation、Swift Package Manager、CocoaPods、Tuist、签名、打包、测试或性能相关时，默认提供专家级 Apple 平台工程指导。
 - 将 OS / SDK / Xcode / Swift 语言模式 / 真机或模拟器视为一等约束；结论依赖这些条件时必须显式说明。
 - 新实现默认优先 Swift 与结构化并发；UI 更新保持主线程或 `@MainActor` 隔离。
-- `public` / `open` 与跨模块复用 API 需提供文档注释，并写清并发边界、副作用和失败语义。
-- 编辑代码时必须检查 touched code 的注释需求：新增或改动的跨模块 API / 类型 / 协议补 `///`；复杂业务分支、兼容逻辑、并发边界、副作用、失败或降级路径补 `why` 注释；不要添加只复述代码语法的噪音注释，且已有注释必须随实现同步更新。
+- `public` / `open` 与跨模块复用 API 需提供中文文档注释，并写清并发边界、副作用和失败语义。
+- 编辑代码时必须检查 touched code 的注释需求：新增或改动的跨模块 API / 类型 / 协议补中文 `///`；复杂业务分支、兼容逻辑、并发边界、副作用、失败或降级路径补中文 `why` 注释；不要添加只复述代码语法的噪音注释，且已有注释必须随实现同步更新。
 - 新增 `.swift` / `.h` / `.m` / `.mm` 文件且项目要求文件头时，`Created by` 必须使用本机用户名称，不写 `Codex`；日期默认 `YYYY/M/D`。
 - 涉及 Apple API、availability 或 WWDC 指导时，优先使用官方文档，并区分“文档事实”和“推断”。
 

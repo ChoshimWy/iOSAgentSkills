@@ -35,8 +35,8 @@ Analyze and improve iOS performance issues using the smallest credible evidence 
 - Distinguish baseline design from runtime evidence collection.
 - Prefer Release configuration and stable device / OS baselines for comparison.
 - Output should include symptom, evidence, hypothesis, optimization direction, and validation method.
-- When performance fixes edit code, document non-obvious performance invariants, caching/lifecycle side effects, concurrency boundaries, and fallback behavior in touched code.
-- Update stale comments and avoid adding comments that merely restate optimization syntax.
+- When performance fixes edit code, document non-obvious performance invariants, caching/lifecycle side effects, concurrency boundaries, and fallback behavior in Chinese in touched code.
+- Update stale comments, keep code comments Chinese by default, and avoid adding comments that merely restate optimization syntax.
 - If code changes are produced, final closure still follows targeted validation / necessary verification plus independent reviewer subAgent `code-review`; the implementation Agent must not self-review.
 
 ## Inputs

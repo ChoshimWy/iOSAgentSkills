@@ -13,7 +13,7 @@ Use this reference when `ios-feature-implementation` selects `refactor` mode.
 - Preserve behavior by default; do not mix unrelated feature work into a refactor.
 - Move in small steps and keep rollback scope obvious.
 - Prefer seams that improve ownership, testability, and readability without over-abstracting.
-- Keep public API documentation, concurrency notes, side-effect comments, and failure semantics current on touched code.
+- Keep Chinese public API documentation, concurrency notes, side-effect comments, and failure semantics current on touched code.
 - If behavior changes become necessary, reclassify the work as feature implementation and report the contract change explicitly.
 
 ## Output Focus
