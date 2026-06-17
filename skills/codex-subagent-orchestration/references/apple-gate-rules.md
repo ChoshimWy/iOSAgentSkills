@@ -6,7 +6,7 @@
 - `ios-verification` 仅作为按需补强验证，由主 Agent 在用户显式要求、发布前自检或高风险时执行。
 - 如果可选证据验证或升级验证需要越过 sandbox，由主 Agent 使用 `functions.exec_command` 并按需设置 `sandbox_permissions="require_escalated"`。
 - 执行可选完整验证时，证据必须来自目标项目环境，不能把 sandbox 结果当完整项目环境结论。
-- 私有库 / 私有组件改动默认使用主项目本地 `:path` 私有库依赖作为验证基线；修改真实私有库源码仓后，必须回主项目基于本地 `:path` 依赖验证。未收到明确指令前，不切到线上版本化依赖或 `Pods/` vendored snapshot 验证，验证通过后也默认保持当前本地 `:path` 状态。
+- 私有库 / 私有组件改动默认使用主项目本地 `:path` 私有库依赖作为验证与独立 `code-review` 基线；修改真实私有库源码仓后，必须回主项目基于本地 `:path` 依赖验证与 review。未收到明确指令前，不切到线上版本化依赖或 `Pods/` vendored snapshot 验证 / review，验证通过后也默认保持当前本地 `:path` 状态。
 - 可选完整验证继续遵守 `.xcworkspace` 优先、单元测试 scheme 优先与 iOS 真机优先约束；验证链路默认由 wrapper 接入 shared build-queue daemon，统一串行执行验证型 `xcodebuild`，并使用 Xcode 系统 DerivedData。
 
 ## 基线复用

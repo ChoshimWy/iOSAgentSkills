@@ -1,4 +1,4 @@
 interface:
   display_name: "Xcode 构建配置"
   short_description: "处理 Build Settings、签名、Archive 与 CI/CD 并保留按需验证"
-  default_prompt: "使用 $xcode-build 处理当前 Xcode 工程的 Build Settings、签名、Archive/Export、CI/CD 或构建脚本；若本次修改涉及私有库 / 私有组件，主项目默认切回或保持本地 `:path` 私有库依赖进行开发与验证，修改真实私有库源码仓后回主项目本地依赖验证；验证通过后默认保持当前本地 `:path` 状态，除非用户明确要求或提交主项目依赖文件，不回切线上版本化依赖验证；实现完成后默认以定向验证/必要验证与独立 reviewer subAgent 执行的 $code-review 放行为收口；$ios-verification 仅在用户显式要求或需要补强完整项目环境证据时按需使用。"
+  default_prompt: "使用 $xcode-build 处理当前 Xcode 工程的 Build Settings、签名、Archive/Export、CI/CD 或构建脚本；若本次修改涉及私有库 / 私有组件，主项目默认保持本地 `:path` 私有库依赖进行开发、验证与独立 `code-review`，仅在尚未指向本地源码时才切到本地 `:path`；修改真实私有库源码仓后回主项目本地依赖验证与 review；验证通过后默认保持当前本地 `:path` 状态，除非用户明确要求或提交主项目依赖文件，不回切线上版本化依赖验证；实现完成后默认以定向验证/必要验证与独立 reviewer subAgent 执行的 $code-review 放行为收口；$ios-verification 仅在用户显式要求或需要补强完整项目环境证据时按需使用。"

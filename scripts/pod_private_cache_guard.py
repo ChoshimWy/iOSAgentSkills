@@ -128,7 +128,7 @@ def main() -> int:
             print(f"  - {display_path}: {pod_list}")
         print("\n请改为严格流程：")
         print("1) 本地联调时可临时把主工程私有库切为本地 :path 依赖")
-        print("2) 使用本地 :path 依赖完成开发与验证，但不要把该依赖形态提交到项目仓库")
+        print("2) 使用本地 :path 依赖完成开发、验证与独立 review，但不要把该依赖形态提交到项目仓库")
         print("3) 验证通过后可继续保持当前本地 :path 状态，不需要为了收口自动回切线上")
         print("4) 只有用户明确要求回切线上，或准备提交主项目依赖文件时，才恢复 Podfile / Podfile.lock / Pods/Manifest.lock 到可提交状态")
         print("5) 如需保留本地联调配置，请仅保留在未提交工作区，不要进入 git commit")

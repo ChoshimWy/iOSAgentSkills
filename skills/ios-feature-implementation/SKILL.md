@@ -176,8 +176,8 @@ Do not use this Skill as the main route when:
 - If the target project uses CocoaPods and the task involves private components or local integration, inspect `Podfile`, `Podfile.lock`, and `Pods/Manifest.lock`.
 - If a local `:path` Pod is active, modify the real component repository, not `Pods/<LibraryName>`.
 - Treat `Pods/<LibraryName>` as forbidden write scope when it is a vendored snapshot.
-- For private library/component implementation, keep or switch the main project to local `:path` dependency for development and validation unless the user explicitly asks otherwise; after modifying the real private library repository, validate through the main project using the local dependency.
-- After validation passes, keep the current local `:path` state by default; switch back to an online versioned dependency only when the user explicitly asks or when preparing main-project dependency files for commit.
+- For private library/component implementation, keep the main project on local `:path` dependency for development, validation, and independent `code-review` unless the user explicitly asks otherwise; switch to local `:path` only when the project is not already pointing at the local source and the private-library source change must be validated. After modifying the real private library repository, validate and review through the main project using the local dependency.
+- After validation passes, keep the current local `:path` state by default for review and reporting; switch back to an online versioned dependency only when the user explicitly asks or when preparing main-project dependency files for commit.
 
 ### Coding Standards
 

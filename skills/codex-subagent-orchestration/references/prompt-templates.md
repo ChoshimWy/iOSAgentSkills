@@ -27,7 +27,7 @@ coder / tester 只有在用户显式要求 subAgent / parallel agent / delegatio
 - 只改 ownership 内文件
 - 不要回滚他人改动
 - 不做无关重构
-- 若目标工程使用 CocoaPods 且涉及私有组件/本地联调，先查 `Podfile` / `Podfile.lock` / `Pods/Manifest.lock`；如需修改私有库，主项目默认切回或保持本地 `:path` 私有库依赖进行开发与验证，修改真实私有库源码仓后回主项目本地依赖验证；命中本地 `:path` Pod 时，禁止把 `Pods/<LibraryName>` 作为 ownership
+- 若目标工程使用 CocoaPods 且涉及私有组件/本地联调，先查 `Podfile` / `Podfile.lock` / `Pods/Manifest.lock`；如需修改私有库，主项目默认保持本地 `:path` 私有库依赖进行开发、验证与独立 `code-review`，仅在尚未指向本地源码时才切到本地 `:path`；修改真实私有库源码仓后回主项目本地依赖验证与 review；命中本地 `:path` Pod 时，禁止把 `Pods/<LibraryName>` 作为 ownership
 - 如果改动了公共接口、配置前提或调用契约，必须显式说明影响面
 - 输出 changed_files / summary / known_risks / test_impact 或 no_test_reason
 - 输出 change_intent / rollback_hint / checkpoint_status / first_failure / next_action
@@ -149,7 +149,7 @@ coder / tester 只有在用户显式要求 subAgent / parallel agent / delegatio
 私有库链路补充：
 - SLSyncLib 等依赖先本地 path 验证
 - 命中本地 `:path` Pod 时，明确把 `Pods/` 副本列入禁止改动范围
-- 主项目保持本地 `:path` 私有库依赖验证；验证通过后默认保持当前本地 `:path` 状态，回线上版本化引用与复测仅在用户明确要求或提交主项目依赖文件时执行
+- 主项目保持本地 `:path` 私有库依赖作为验证与独立 `code-review` 基线；验证通过后默认保持当前本地 `:path` 状态，回线上版本化引用与复测仅在用户明确要求或提交主项目依赖文件时执行
 ```
 
 ## Fail-Fix-Report 汇报模板
