@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: bash install-local-agent-config.sh [--dry-run] [--ccswitch] [--claude-only] [--init-memory <path>]
+Usage: bash install-local-agent-config.sh [--dry-run] [--ccswitch] [--claude-only] [--init-project <path>] [--init-memory <path>]
 
 Configure local Codex and Claude entrypoints to use this cloned iOSAgentSkills repo:
   - ~/.codex/AGENTS.md -> <repo>/AGENTS.md
@@ -36,6 +36,11 @@ from deleting files in the current checked-out repository.
 When --claude-only is specified, all Codex-specific steps (~/.codex/*, ~/.copilot/*) are skipped.
 Claude Code setup and global Git commitlint hook synchronization still run.
 
+When --init-project <path> is specified, the script initializes or updates:
+  <path>/.codex/xcodebuild.env
+with detected workspace/project, scheme, Debug configuration, and device fallback defaults.
+The generated file is project-local; device IDs remain commented because they are machine-specific.
+
 When --init-memory <path> is specified, the script prints a memory-seeding prompt to use as
 the first message when starting Claude Code in the given project directory.
 
@@ -47,7 +52,18 @@ EOF
 DRY_RUN='0'
 CCSWITCH_MODE='0'
 CLAUDE_ONLY='0'
+INIT_PROJECT_PATH=''
 INIT_MEMORY_PATH=''
+
+require_option_value() {
+  local option="$1"
+  local value="${2:-}"
+  if [[ -z "$value" || "$value" == --* ]]; then
+    echo "Error: $option requires a path argument" >&2
+    usage >&2
+    exit 1
+  fi
+}
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -63,7 +79,13 @@ while [[ $# -gt 0 ]]; do
       CLAUDE_ONLY='1'
       shift
       ;;
+    --init-project)
+      require_option_value "$1" "${2:-}"
+      INIT_PROJECT_PATH="$2"
+      shift 2
+      ;;
     --init-memory)
+      require_option_value "$1" "${2:-}"
       INIT_MEMORY_PATH="$2"
       shift 2
       ;;
@@ -383,6 +405,184 @@ seed_claude_memory() {
   cat "$REPO_CLAUDE_MEMORY_SEED"
   log "---"
   log "After this session, Claude Code will remember the project context automatically."
+}
+
+build_project_xcode_env_content() {
+  local project_path="$1"
+
+  python3 - "$project_path" <<'PY'
+from __future__ import annotations
+
+import re
+import shlex
+import sys
+import xml.etree.ElementTree as ET
+from pathlib import Path
+
+root = Path(sys.argv[1]).expanduser().resolve()
+if not root.exists() or not root.is_dir():
+    raise SystemExit(f"project path is not a directory: {root}")
+
+
+def rel(path: Path) -> str:
+    return str(path.relative_to(root))
+
+
+def shell_quote(value: str) -> str:
+    return shlex.quote(value)
+
+
+def env_assignment(key: str, value: str) -> str:
+    return f"{key}={shell_quote(value)}"
+
+
+def commented_env_assignment(key: str, value: str) -> str:
+    return f"# {key}={shell_quote(value)}"
+
+
+def comment_list(label: str, values: list[str]) -> str:
+    return "# " + label + ": " + ", ".join(value.replace("\n", " ") for value in values)
+
+
+def workspace_candidates() -> list[Path]:
+    return sorted(
+        path
+        for path in root.rglob("*.xcworkspace")
+        if "Pods" not in path.parts
+        and "project.xcworkspace" not in str(path)
+        and len(path.relative_to(root).parts) <= 3
+    )
+
+
+def project_candidates() -> list[Path]:
+    return sorted(
+        path
+        for path in root.rglob("*.xcodeproj")
+        if "Pods" not in path.parts and len(path.relative_to(root).parts) <= 3
+    )
+
+
+def scheme_paths() -> dict[str, Path]:
+    paths: dict[str, Path] = {}
+    for path in sorted(root.rglob("*.xcscheme")):
+        if "Pods" in path.parts:
+            continue
+        paths.setdefault(path.stem, path)
+    return paths
+
+
+def is_ui_test_name(name: str) -> bool:
+    return bool(re.search(r"(?:^|[_-])UITESTS?$", name, re.IGNORECASE) or re.search(r"UITests?$", name, re.IGNORECASE))
+
+
+def is_unit_test_name(name: str) -> bool:
+    return bool(
+        (re.search(r"(?:^|[_-])TESTS$", name, re.IGNORECASE) or re.search(r"(?<!UI)Tests$", name, re.IGNORECASE))
+        and not is_ui_test_name(name)
+    )
+
+
+def is_generic_test_scheme(name: str) -> bool:
+    return bool(re.search(r"(?:^|[_-])TEST$", name, re.IGNORECASE) and not is_ui_test_name(name))
+
+
+def iter_scheme_testables(path: Path | None) -> list[str]:
+    if path is None:
+        return []
+    try:
+        scheme_root = ET.parse(path).getroot()
+    except (ET.ParseError, OSError):
+        return []
+    names: list[str] = []
+    for reference in scheme_root.findall(".//TestAction//TestableReference//BuildableReference"):
+        for key in ("BuildableName", "BlueprintName"):
+            value = reference.get(key)
+            if value:
+                name = Path(value).stem
+                if name not in names:
+                    names.append(name)
+    return names
+
+
+def scheme_sort_key(name: str, path: Path | None) -> tuple[int, str]:
+    testables = iter_scheme_testables(path)
+    if any(is_unit_test_name(item) for item in testables):
+        return (0, name.lower())
+    if is_unit_test_name(name):
+        return (1, name.lower())
+    if is_generic_test_scheme(name):
+        return (2, name.lower())
+    if any(is_ui_test_name(item) for item in testables):
+        return (3, name.lower())
+    if is_ui_test_name(name):
+        return (4, name.lower())
+    if not re.search(r"(^|[_-])(DEV|TEST|UAT|STAGING)$", name, re.IGNORECASE):
+        return (5, name.lower())
+    return (6, name.lower())
+
+
+workspaces = workspace_candidates()
+projects = project_candidates()
+schemes = scheme_paths()
+selected_workspace = rel(workspaces[0]) if workspaces else ""
+selected_project = rel(projects[0]) if projects else ""
+selected_scheme = ""
+selected_testables: list[str] = []
+if schemes:
+    selected_scheme = sorted(schemes, key=lambda item: scheme_sort_key(item, schemes.get(item)))[0]
+    selected_testables = iter_scheme_testables(schemes.get(selected_scheme))
+
+if not selected_workspace and not selected_project:
+    raise SystemExit(f"no .xcworkspace or .xcodeproj found under: {root}")
+
+lines = [
+    "# Generated by iOSAgentSkills install-local-agent-config.sh --init-project",
+    "# Project-local Xcode verification defaults consumed by codex_verify / ios-verification.",
+    "# Keep device-specific values commented unless this project must pin a local device.",
+]
+if selected_workspace:
+    lines.append(env_assignment("XCODE_WORKSPACE", selected_workspace))
+    lines.append(commented_env_assignment("XCODE_PROJECT", selected_project) if selected_project else commented_env_assignment("XCODE_PROJECT", "App.xcodeproj"))
+else:
+    lines.append(env_assignment("XCODE_PROJECT", selected_project))
+if selected_scheme:
+    lines.append(env_assignment("XCODE_SCHEME", selected_scheme))
+else:
+    lines.append(commented_env_assignment("XCODE_SCHEME", "App"))
+lines.extend(
+    [
+        env_assignment("XCODE_CONFIGURATION", "Debug"),
+        "# Default action remains build; Agents can inject test / -only-testing for targeted XCTest.",
+        env_assignment("XCODE_ACTION", "build"),
+        env_assignment("XCODE_DEVICE_FALLBACK", "1"),
+        commented_env_assignment("XCODE_DESTINATION", "generic/platform=iOS Simulator"),
+        commented_env_assignment("XCODE_DEVICE_ID", "00008110-001234567890001E"),
+        commented_env_assignment("XCODE_DEVICE_NAME", "Your iPhone"),
+        env_assignment("CODEX_VERIFY_ARTIFACT_DIR", ".codex/build-results/latest"),
+    ]
+)
+if selected_testables:
+    lines.append(comment_list("Detected testables", selected_testables))
+if workspaces:
+    lines.append(comment_list("Workspace candidates", [rel(path) for path in workspaces]))
+if projects:
+    lines.append(comment_list("Project candidates", [rel(path) for path in projects]))
+if schemes:
+    lines.append(comment_list("Scheme candidates", sorted(schemes)))
+print("\n".join(lines))
+PY
+}
+
+init_project_xcode_env() {
+  local project_path="$1"
+  local resolved_project_path
+  local env_path
+  local content
+
+  resolved_project_path="$(resolve_physical_path "$project_path")"
+  env_path="$resolved_project_path/.codex/xcodebuild.env"
+  content="$(build_project_xcode_env_content "$resolved_project_path")"
+  ensure_text_file "$env_path" "$content" "$resolved_project_path/.codex/xcodebuild.env"
 }
 
 ensure_file_copied() {
@@ -782,6 +982,10 @@ ensure_symlink "$CCSWITCH_PUBLIC_SKILLS" "$REPO_SKILLS" "~/.cc-switch/skills"
 ensure_claude_settings
 ensure_claude_agents
 sync_global_git_hooks
+
+if [[ -n "$INIT_PROJECT_PATH" ]]; then
+  init_project_xcode_env "$INIT_PROJECT_PATH"
+fi
 
 if [[ -n "$INIT_MEMORY_PATH" ]]; then
   seed_claude_memory "$INIT_MEMORY_PATH"

@@ -232,7 +232,11 @@ def load_env(root: Path) -> dict[str, str]:
             if not line or line.startswith("#") or "=" not in line:
                 continue
             key, value = line.split("=", 1)
-            values[key.strip()] = value.strip().strip('"').strip("'")
+            try:
+                parsed = shlex.split(value, comments=False, posix=True)
+            except ValueError:
+                parsed = []
+            values[key.strip()] = parsed[0] if parsed else value.strip().strip('"').strip("'")
 
     for key in OVERRIDABLE_ENV_KEYS:
         if key in os.environ:
