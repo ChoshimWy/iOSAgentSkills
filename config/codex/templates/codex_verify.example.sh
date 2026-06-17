@@ -26,7 +26,7 @@ Notes:
   - Legacy public overrides XCODE_DERIVED_DATA_MODE / XCODE_DERIVED_DATA_SEED_MODE /
     XCODE_DERIVED_DATA_REFRESH / CODEX_DERIVED_DATA_SLOT are no longer supported.
   - The build-queue daemon is started automatically on first use.
-  - The wrapper prints a compact verification-report.json by default. Set
+  - The wrapper prints a compact agent-summary.json by default. Set
     CODEX_VERIFY_STREAM_LOG=1 only when raw log streaming is explicitly needed.
 EOF
 }
@@ -234,6 +234,316 @@ report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", 
 PY
 }
 
+write_agent_summary() {
+  local job_dir="$1"
+  python3 - "$job_dir" <<'PY'
+from __future__ import annotations
+
+import json
+import re
+import shlex
+import sys
+import xml.etree.ElementTree as ET
+from pathlib import Path
+
+job_dir = Path(sys.argv[1])
+report_path = job_dir / "verification-report.json"
+summary_path = job_dir / "agent-summary.json"
+
+
+def read_text(name: str) -> str:
+    path = job_dir / name
+    return path.read_text(encoding="utf-8", errors="replace").strip() if path.exists() else ""
+
+
+def load_report() -> dict:
+    if not report_path.exists():
+        return {
+            "status": "blocked",
+            "summary": "verification-report.json missing",
+            "artifact_paths": {"raw_log": str(job_dir / "job.log")},
+            "needs_raw_log": False,
+        }
+    try:
+        return json.loads(report_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        return {
+            "status": "blocked",
+            "summary": f"verification-report.json unreadable: {exc}",
+            "artifact_paths": {"verification_report": str(report_path), "raw_log": str(job_dir / "job.log")},
+            "needs_raw_log": False,
+        }
+
+
+def extract_only_testing(command_preview: str) -> list[str]:
+    try:
+        parts = shlex.split(command_preview)
+    except ValueError:
+        parts = command_preview.split()
+    selectors: list[str] = []
+    index = 0
+    while index < len(parts):
+        part = parts[index]
+        if part.startswith("-only-testing:"):
+            selector = part.split(":", 1)[1]
+            if selector:
+                selectors.append(selector)
+        elif part == "-only-testing" and index + 1 < len(parts):
+            selectors.append(parts[index + 1])
+            index += 1
+        index += 1
+    return selectors
+
+
+def destination_type(destination: str) -> str:
+    normalized = destination.lower()
+    if not normalized:
+        return "unknown"
+    if "simulator" in normalized:
+        return "simulator"
+    if "generic/platform=ios" in normalized:
+        return "generic_ios"
+    if normalized.startswith("id="):
+        return "physical_device"
+    if "macos" in normalized:
+        return "macos"
+    return "unknown"
+
+
+def verification_level(action: str, only_testing: list[str], report: dict) -> str:
+    ui_smoke = report.get("ui_smoke")
+    if isinstance(ui_smoke, dict) and ui_smoke.get("executed"):
+        return "ui"
+    if only_testing:
+        return "unit"
+    normalized = action.lower()
+    if normalized in {"test", "test-without-building"}:
+        return "unit"
+    if normalized in {"archive", "exportarchive"}:
+        return "full"
+    return "build"
+
+
+def non_auto(value: object) -> str:
+    text = str(value or "").strip()
+    return "" if text in {"", "auto", "Debug(auto)", "build(auto)"} else text
+
+
+def workspace_candidates(repo_root: Path) -> list[Path]:
+    return sorted(
+        path
+        for path in repo_root.rglob("*.xcworkspace")
+        if "Pods" not in path.parts
+        and "project.xcworkspace" not in str(path)
+        and len(path.relative_to(repo_root).parts) <= 3
+    )
+
+
+def project_candidates(repo_root: Path) -> list[Path]:
+    return sorted(
+        path
+        for path in repo_root.rglob("*.xcodeproj")
+        if "Pods" not in path.parts and len(path.relative_to(repo_root).parts) <= 3
+    )
+
+
+def scheme_paths(repo_root: Path) -> dict[str, Path]:
+    paths: dict[str, Path] = {}
+    for path in sorted(repo_root.rglob("*.xcscheme")):
+        if "Pods" in path.parts:
+            continue
+        paths.setdefault(path.stem, path)
+    return paths
+
+
+def is_ui_test_name(name: str) -> bool:
+    return bool(re.search(r"(?:^|[_-])UITESTS?$", name, re.IGNORECASE) or re.search(r"UITests?$", name, re.IGNORECASE))
+
+
+def is_unit_test_name(name: str) -> bool:
+    return bool(
+        (re.search(r"(?:^|[_-])TESTS$", name, re.IGNORECASE) or re.search(r"(?<!UI)Tests$", name, re.IGNORECASE))
+        and not is_ui_test_name(name)
+    )
+
+
+def is_generic_test_scheme(name: str) -> bool:
+    return bool(re.search(r"(?:^|[_-])TEST$", name, re.IGNORECASE) and not is_ui_test_name(name))
+
+
+def iter_scheme_testables(path: Path | None) -> list[str]:
+    if path is None:
+        return []
+    try:
+        root = ET.parse(path).getroot()
+    except (ET.ParseError, OSError):
+        return []
+    names: list[str] = []
+    for reference in root.findall(".//TestAction//TestableReference//BuildableReference"):
+        for key in ("BuildableName", "BlueprintName"):
+            value = reference.get(key)
+            if value:
+                name = Path(value).stem
+                if name not in names:
+                    names.append(name)
+    return names
+
+
+def scheme_has_unit_tests(path: Path | None) -> bool:
+    return any(is_unit_test_name(name) for name in iter_scheme_testables(path))
+
+
+def scheme_has_ui_tests(path: Path | None) -> bool:
+    return any(is_ui_test_name(name) for name in iter_scheme_testables(path))
+
+
+def scheme_reason(name: str, path: Path | None, source: str) -> str:
+    if source == "xcodebuild-args-or-env":
+        return "metadata captured by codex_verify wrapper"
+    if scheme_has_unit_tests(path):
+        return "scheme has unit test binding"
+    if is_unit_test_name(name):
+        return "scheme name matches unit test pattern"
+    if is_generic_test_scheme(name):
+        return "scheme name matches generic test pattern"
+    if scheme_has_ui_tests(path):
+        return "scheme has UI test binding"
+    if is_ui_test_name(name):
+        return "scheme name matches UI test pattern"
+    return "fallback shared scheme"
+
+
+def scheme_sort_key(name: str, path: Path | None) -> tuple[int, str]:
+    if scheme_has_unit_tests(path):
+        return (0, name.lower())
+    if is_unit_test_name(name):
+        return (1, name.lower())
+    if is_generic_test_scheme(name):
+        return (2, name.lower())
+    if scheme_has_ui_tests(path):
+        return (3, name.lower())
+    if is_ui_test_name(name):
+        return (4, name.lower())
+    return (5, name.lower())
+
+
+def fallback_project_selection(repo_root: Path, workspace: str, project: str) -> dict:
+    workspaces = workspace_candidates(repo_root)
+    projects = project_candidates(repo_root)
+    if workspace:
+        value = workspace
+        source = "xcodebuild-args-or-env"
+        reason = "metadata captured by codex_verify wrapper"
+    elif workspaces:
+        value = str(workspaces[0].relative_to(repo_root))
+        source = "auto_discovered"
+        reason = ".xcworkspace preferred over .xcodeproj" if projects else ".xcworkspace auto discovered"
+    else:
+        value = project or (str(projects[0].relative_to(repo_root)) if projects else None)
+        source = "xcodebuild-args-or-env" if project else "auto_discovered"
+        reason = "metadata captured by codex_verify wrapper" if project else "no .xcworkspace found; using .xcodeproj"
+    return {
+        "type": "workspace" if value and str(value).endswith(".xcworkspace") else "project",
+        "value": value,
+        "source": source,
+        "reason": reason,
+        "workspace_candidates": [str(path.relative_to(repo_root)) for path in workspaces],
+        "project_candidates": [str(path.relative_to(repo_root)) for path in projects],
+    }
+
+
+def fallback_scheme_selection(repo_root: Path, scheme: str) -> dict:
+    paths = scheme_paths(repo_root)
+    selected = scheme
+    source = "xcodebuild-args-or-env" if selected else "auto_discovered"
+    if not selected and paths:
+        selected = sorted(paths.keys(), key=lambda name: scheme_sort_key(name, paths.get(name)))[0]
+    selected_path = paths.get(selected)
+    testables = iter_scheme_testables(selected_path)
+    return {
+        "scheme": selected,
+        "source": source,
+        "reason": scheme_reason(selected, selected_path, source) if selected else "no shared scheme metadata available",
+        "testables": testables,
+        "has_unit_tests": any(is_unit_test_name(name) for name in testables),
+        "has_ui_tests": any(is_ui_test_name(name) for name in testables),
+        "scheme_path": str(selected_path.relative_to(repo_root)) if selected_path else None,
+        "candidate_schemes": sorted(paths.keys()),
+    }
+
+
+report = load_report()
+command_preview = read_text("command_preview")
+only_testing = report.get("only_testing") or extract_only_testing(command_preview)
+destination = read_text("destination")
+baseline = report.get("baseline") if isinstance(report.get("baseline"), dict) else {}
+project_selection = report.get("project_selection") if isinstance(report.get("project_selection"), dict) else None
+scheme_selection = report.get("scheme_selection") if isinstance(report.get("scheme_selection"), dict) else None
+repo_root = Path(non_auto(read_text("repo_root")) or ".").resolve()
+metadata_workspace = non_auto(read_text("workspace"))
+metadata_project = non_auto(read_text("project"))
+metadata_scheme = non_auto(read_text("scheme"))
+workspace_or_project = metadata_workspace or metadata_project or non_auto(baseline.get("workspace_or_project")) or (
+    project_selection.get("value") if project_selection else None
+)
+scheme = metadata_scheme or non_auto(baseline.get("scheme")) or (
+    scheme_selection.get("scheme") if scheme_selection else None
+)
+effective_project_selection = project_selection or fallback_project_selection(repo_root, metadata_workspace, metadata_project)
+effective_scheme_selection = scheme_selection or fallback_scheme_selection(repo_root, metadata_scheme)
+workspace_or_project = workspace_or_project or effective_project_selection.get("value")
+scheme = scheme or effective_scheme_selection.get("scheme")
+configuration = non_auto(read_text("configuration")) or non_auto(baseline.get("configuration")) or "Debug"
+action = non_auto(read_text("action")) or non_auto(baseline.get("action")) or str(report.get("mode") or "build")
+artifact_paths = report.get("artifact_paths") if isinstance(report.get("artifact_paths"), dict) else {}
+artifact_paths = {
+    **artifact_paths,
+    "agent_summary": str(summary_path),
+    "verification_report": str(report_path),
+    "diagnostics_json": str(job_dir / "diagnostics.json"),
+    "build_summary": str(job_dir / "build-summary.txt"),
+    "raw_log": str(job_dir / "job.log"),
+}
+
+summary = {
+    "schema_version": 1,
+    "producer": "codex_verify_agent_summary",
+    "status": report.get("status", "unknown"),
+    "verification_level": verification_level(read_text("action") or str(report.get("mode", "")), list(only_testing), report),
+    "route": "codex_verify -> build-queue daemon -> xcodebuild",
+    "repo_root": str(repo_root),
+    "workspace_or_project": workspace_or_project,
+    "project_selection": effective_project_selection,
+    "scheme": scheme,
+    "scheme_selection": effective_scheme_selection,
+    "configuration": configuration,
+    "action": action,
+    "destination": {
+        "type": baseline.get("destination_type") or destination_type(destination or str(baseline.get("destination", ""))),
+        "value": destination or baseline.get("destination"),
+        "selected_device_reason": baseline.get("selected_device_reason"),
+    },
+    "only_testing": list(only_testing),
+    "executed_command": command_preview,
+    "executed_commands": [command_preview] if command_preview else [],
+    "queue_job_id": job_dir.name,
+    "queue_job_dir": str(job_dir),
+    "fingerprint": report.get("fingerprint"),
+    "cached": report.get("cached", False),
+    "summary": report.get("summary"),
+    "first_blocking_error": report.get("first_blocking_error"),
+    "failed_tests": report.get("failed_tests", []),
+    "warnings_count": report.get("warnings_count", 0),
+    "ui_smoke": report.get("ui_smoke"),
+    "artifact_paths": artifact_paths,
+    "raw_log_policy": report.get("raw_log_policy", "forbidden_by_default"),
+    "needs_raw_log": report.get("needs_raw_log", False),
+    "next_action": report.get("suggested_next_action") or report.get("next_action"),
+}
+summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+PY
+}
+
 generate_verification_artifacts() {
   local job_dir="$1"
   local status="$2"
@@ -251,21 +561,24 @@ generate_verification_artifacts() {
   if [[ ! -f "$report_path" ]]; then
     write_minimal_verification_report "$job_dir" "$status"
   fi
+  write_agent_summary "$job_dir"
 
   write_text_file "$job_dir/diagnostics_path" "$diagnostics_path"
   write_text_file "$job_dir/build_summary_path" "$summary_path"
   write_text_file "$job_dir/verification_report_path" "$report_path"
+  write_text_file "$job_dir/agent_summary_path" "$job_dir/agent-summary.json"
   write_text_file "$QUEUE_ROOT/latest_job" "$job_dir"
   write_text_file "$QUEUE_ROOT/latest_verification_report" "$report_path"
+  write_text_file "$QUEUE_ROOT/latest_agent_summary" "$job_dir/agent-summary.json"
 }
 
 print_verification_report() {
   local job_dir="$1"
-  local report_path="$job_dir/verification-report.json"
-  if [[ -f "$report_path" ]]; then
-    cat "$report_path"
+  local summary_path="$job_dir/agent-summary.json"
+  if [[ -f "$summary_path" ]]; then
+    cat "$summary_path"
   else
-    echo "{\"status\":\"blocked\",\"summary\":\"verification-report.json missing\",\"artifact_paths\":{\"raw_log\":\"$job_dir/job.log\"},\"needs_raw_log\":false}"
+    echo "{\"status\":\"blocked\",\"summary\":\"agent-summary.json missing\",\"artifact_paths\":{\"raw_log\":\"$job_dir/job.log\"},\"needs_raw_log\":false}"
   fi
 }
 
@@ -643,7 +956,7 @@ wait_for_job() {
         fi
         exit_code="$(cat "$JOB_DIR/exit_code" 2>/dev/null || printf '%s' '1')"
         print_verification_report "$JOB_DIR"
-        echo "[codex_verify] finished job=$JOB_ID state=$state status=$exit_code report=$JOB_DIR/verification-report.json log_file=$JOB_LOG_FILE" >&2
+        echo "[codex_verify] finished job=$JOB_ID state=$state status=$exit_code agent_summary=$JOB_DIR/agent-summary.json report=$JOB_DIR/verification-report.json log_file=$JOB_LOG_FILE" >&2
         return "$exit_code"
         ;;
       *)
@@ -711,6 +1024,8 @@ run_job() {
     fi
     export CODEX_VERIFY_BYPASS_WRAPPER=1
     export CODEX_VERIFY_QUEUE_ROOT="$QUEUE_ROOT"
+    export CODEX_VERIFY_JOB_ID="$job_id"
+    export CODEX_VERIFY_JOB_DIR="$job_dir"
     unset XCODE_DERIVED_DATA
     "${READ_ARGS_RESULT[@]}"
   ) 2>&1 | tee -a "$job_dir/job.log"

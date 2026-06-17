@@ -1,6 +1,6 @@
 ---
 name: ios-verification
-description: iOS / Apple Xcode 项目统一验证 Skill。用于验证前路由、最窄 XCTest / -only-testing 选择、通过 codex_verify wrapper 接入 shared build-queue daemon 执行项目环境 build/test、读取 verification-report.json / diagnostics.json / build-summary.txt 做低 token 失败归因，以及在定向验证和独立 code-review 后裁决最终证据是否足够；替代原先分散的验证路由、受影响测试选择、定向验证执行、构建日志摘要、最终证据裁决与项目环境构建验证入口。
+description: iOS / Apple Xcode 项目统一验证 Skill。用于验证前路由、最窄 XCTest / -only-testing 选择、通过 codex_verify wrapper 接入 shared build-queue daemon 执行项目环境 build/test、读取 agent-summary.json / verification-report.json / diagnostics.json 做低 token 失败归因，以及在定向验证和独立 code-review 后裁决最终证据是否足够；替代原先分散的验证路由、受影响测试选择、定向验证执行、构建日志摘要、最终证据裁决与项目环境构建验证入口。
 ---
 
 # iOS Verification（统一验证入口）
@@ -32,7 +32,7 @@ Use this Skill when:
 - Swift / Objective-C / test / UI / resource / project / dependency files changed and verification routing is needed.
 - Matching XCTest / `-only-testing` candidates must be selected.
 - The user explicitly asks to run build verification, compile check, `xcodebuild`, or project-environment verification.
-- A build/test command failed and compact artifacts such as `verification-report.json` or `diagnostics.json` exist.
+- A build/test command failed and compact artifacts such as `agent-summary.json`, `verification-report.json`, or `diagnostics.json` exist.
 - The user asks whether existing evidence is enough for merge/release/final confidence.
 - Multiple Agents share the build-queue daemon and duplicate verification must be suppressed.
 
@@ -121,6 +121,7 @@ Use the smallest sufficient level:
 - If `.codex/xcodebuild.env` sets workspace/project/scheme/configuration/destination, respect it.
 - If both `.xcworkspace` and `.xcodeproj` exist, prefer `.xcworkspace`.
 - Prefer schemes bound to unit test targets / bundles such as `*Tests`; otherwise consider `*UITests` or `*_TEST`.
+- Workspace/project priority and scheme test binding selection are script-owned decisions; Agents should read `project_selection` and `scheme_selection` from `agent-summary.json` instead of re-deriving them from the file tree.
 - Reuse earlier workspace / scheme / destination in the same task unless a clear reason exists.
 - For private Pod / component changes, validate through the main project using local `:path` dependency when that is the development baseline.
 - Do not switch to online versioned dependency or `Pods/` vendored snapshot unless explicitly requested.
@@ -131,7 +132,7 @@ Use the smallest sufficient level:
 
 - Prefer wrapper `--mode auto` unless a narrower/stronger mode is justified.
 - If the same fingerprint has successful same-or-stronger evidence after the latest change, skip duplicate verification and report cached evidence.
-- If the same fingerprint failed, read cached `verification-report.json` before another run.
+- If the same fingerprint failed, read cached `agent-summary.json` / `verification-report.json` before another run.
 - Change code, config, destination, scheme, or mode before rerunning a failed fingerprint.
 - Fingerprint should include diff + workspace/project + scheme + configuration + destination + mode + Xcode version when supported.
 - If wrapper fingerprinting is unavailable, do not fake success.
@@ -139,12 +140,13 @@ Use the smallest sufficient level:
 ### Digest Rules
 
 - Read artifacts in this order:
-  1. `verification-report.json`
-  2. `diagnostics.json`
-  3. `build-summary.txt`
-  4. `test-summary.json`
-  5. `xcresult-summary.json`
-  6. Small targeted source section around the reported location
+  1. `agent-summary.json`
+  2. `verification-report.json`
+  3. `diagnostics.json`
+  4. `build-summary.txt`
+  5. `test-summary.json`
+  6. `xcresult-summary.json`
+  7. Small targeted source section around the reported location
 - Do not read `build.log`, raw `xcodebuild.log`, full `.xcresult` JSON, recursive `DerivedData`, all warnings, or unrelated SwiftCompile sections by default.
 - Inspect raw logs only when compact artifacts set `needs_raw_log=true`, summaries are insufficient, or the user explicitly asks.
 - Report only the first real blocking error.
@@ -200,6 +202,7 @@ Escalate to `execute` / stronger verification when any are true:
     "code_review_blocking_findings": []
   },
   "artifact_paths": {
+    "agent_summary": "optional",
     "verification_report": "optional",
     "diagnostics": "optional",
     "build_summary": "optional",
@@ -233,6 +236,7 @@ Escalate to `execute` / stronger verification when any are true:
   "rejected_evidence": [],
   "final_evidence_gate": "accepted_existing_evidence | needs_project_environment_verification | blocked_insufficient_evidence | null",
   "verification_story": "accepted | needs-project-environment-verification | insufficient | null",
+  "agent_summary_path": null,
   "verification_report_path": null,
   "diagnostics_path": null,
   "summary_path": null,
@@ -298,6 +302,7 @@ Affected tests:
 Executed validation:
 - ...
 Evidence:
+- agent-summary.json: ...
 - verification-report.json: ...
 First blocking error: none | file:line message
 Final gate: accepted_existing_evidence | needs_project_environment_verification | blocked_insufficient_evidence
@@ -312,7 +317,7 @@ Next: none | run-targeted-validation | run-project-verification | fix_first_erro
 - `scripts/build-check.sh`: project-environment verification wrapper helper used by `codex_verify --build-check`.
 - `scripts/build_check.py`: structured artifact generator / digest parser for Xcode build/test output.
 - `references/override-config.md`: supported `.codex/xcodebuild.env` controls and forbidden deprecated variables.
-- `references/verification-report-schema.md`: `verification-report.json` and `diagnostics.json` schema and reading order.
+- `references/verification-report-schema.md`: `agent-summary.json`, `verification-report.json`, and `diagnostics.json` schema and reading order.
 
 ## Relationship to Other Skills
 

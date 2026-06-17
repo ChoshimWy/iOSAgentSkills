@@ -205,6 +205,7 @@ class ToolBootstrapResult:
 
 @dataclass
 class VerificationArtifacts:
+    agent_summary: Path
     verification_report: Path
     diagnostics_json: Path
     build_summary: Path
@@ -286,22 +287,30 @@ def pick_workspace(root: Path, env: dict[str, str]) -> str | None:
     if env.get("XCODE_WORKSPACE"):
         return env["XCODE_WORKSPACE"]
 
+    candidates = workspace_candidates(root)
+    return str(candidates[0].relative_to(root)) if candidates else None
+
+
+def workspace_candidates(root: Path) -> list[Path]:
     candidates = [
         path
         for path in root.rglob("*.xcworkspace")
         if "Pods" not in path.parts and "project.xcworkspace" not in str(path)
     ]
-    candidates = [path for path in candidates if len(path.relative_to(root).parts) <= 3]
-    return str(sorted(candidates)[0].relative_to(root)) if candidates else None
+    return sorted(path for path in candidates if len(path.relative_to(root).parts) <= 3)
 
 
 def pick_project(root: Path, env: dict[str, str]) -> str | None:
     if env.get("XCODE_PROJECT"):
         return env["XCODE_PROJECT"]
 
+    candidates = project_candidates(root)
+    return str(candidates[0].relative_to(root)) if candidates else None
+
+
+def project_candidates(root: Path) -> list[Path]:
     candidates = [path for path in root.rglob("*.xcodeproj") if "Pods" not in path.parts]
-    candidates = [path for path in candidates if len(path.relative_to(root).parts) <= 3]
-    return str(sorted(candidates)[0].relative_to(root)) if candidates else None
+    return sorted(path for path in candidates if len(path.relative_to(root).parts) <= 3)
 
 
 def is_ui_test_preferred_scheme(name: str) -> bool:
@@ -342,8 +351,19 @@ def iter_scheme_testable_names(path: Path | None) -> list[str]:
         for key in ("BuildableName", "BlueprintName"):
             value = reference.get(key)
             if value:
-                names.append(Path(value).stem)
+                name = Path(value).stem
+                if name not in names:
+                    names.append(name)
     return names
+
+
+def scheme_paths(root: Path) -> dict[str, Path]:
+    paths: dict[str, Path] = {}
+    for path in sorted(root.rglob("*.xcscheme")):
+        if "Pods" in path.parts:
+            continue
+        paths.setdefault(path.stem, path)
+    return paths
 
 
 def scheme_has_unit_test_binding(path: Path | None) -> bool:
@@ -376,17 +396,13 @@ def pick_scheme(root: Path, env: dict[str, str]) -> str:
     if env.get("XCODE_SCHEME"):
         return env["XCODE_SCHEME"]
 
-    scheme_paths: dict[str, Path] = {}
-    for path in sorted(root.rglob("*.xcscheme")):
-        if "Pods" in path.parts:
-            continue
-        scheme_paths.setdefault(path.stem, path)
+    paths = scheme_paths(root)
 
-    schemes = list(scheme_paths.keys())
+    schemes = list(paths.keys())
     if not schemes:
         raise RuntimeError("No shared scheme found")
 
-    return sorted(schemes, key=lambda name: scheme_sort_key(name, scheme_paths.get(name)))[0]
+    return sorted(schemes, key=lambda name: scheme_sort_key(name, paths.get(name)))[0]
 
 
 def resolve_build_config(root: Path) -> BuildConfig:
@@ -1142,6 +1158,7 @@ def describe_issue(issue: BuildIssue | None, config: BuildConfig, changed_files:
 
 def artifact_paths(artifacts_dir: Path) -> VerificationArtifacts:
     return VerificationArtifacts(
+        agent_summary=artifacts_dir / "agent-summary.json",
         verification_report=artifacts_dir / "verification-report.json",
         diagnostics_json=artifacts_dir / "diagnostics.json",
         build_summary=artifacts_dir / "build-summary.txt",
@@ -1252,6 +1269,124 @@ def compute_verification_fingerprint(
     return short_sha(json.dumps(baseline, sort_keys=True, ensure_ascii=False))
 
 
+def extract_only_testing(command: list[str]) -> list[str]:
+    selectors: list[str] = []
+    index = 0
+    while index < len(command):
+        part = command[index]
+        if part.startswith("-only-testing:"):
+            selector = part.split(":", 1)[1]
+            if selector:
+                selectors.append(selector)
+        elif part == "-only-testing" and index + 1 < len(command):
+            selectors.append(command[index + 1])
+            index += 1
+        index += 1
+    return selectors
+
+
+def destination_type(destination: str | None, config: BuildConfig) -> str:
+    if config.validation_platform == "macos":
+        return "macos"
+    if not destination:
+        return "macos" if config.validation_platform == "macos" else "unknown"
+    normalized = destination.lower()
+    if "simulator" in normalized:
+        return "simulator"
+    if "generic/platform=ios" in normalized:
+        return "generic_ios"
+    if normalized.startswith("id="):
+        return "physical_device"
+    return "unknown"
+
+
+def verification_level(
+    config: BuildConfig,
+    only_testing: list[str],
+    ui_smoke_result: UISmokeResult | None = None,
+) -> str:
+    if ui_smoke_result and ui_smoke_result.should_run:
+        return "ui"
+    if only_testing:
+        return "unit"
+    action = config.action.lower()
+    if action in {"test", "test-without-building"}:
+        return "unit"
+    if action in {"archive", "exportarchive"}:
+        return "full"
+    return "build"
+
+
+def project_selection_payload(config: BuildConfig, env: dict[str, str]) -> dict[str, object]:
+    workspace = config.workspace
+    project = config.project
+    if workspace:
+        source = ".codex/xcodebuild.env" if env.get("XCODE_WORKSPACE") else "auto_discovered"
+        reason = (
+            "XCODE_WORKSPACE explicitly configured"
+            if env.get("XCODE_WORKSPACE")
+            else ".xcworkspace preferred over .xcodeproj"
+            if project
+            else ".xcworkspace auto discovered"
+        )
+        return {
+            "type": "workspace",
+            "value": workspace,
+            "source": source,
+            "reason": reason,
+            "workspace_candidates": [str(path.relative_to(config.root)) for path in workspace_candidates(config.root)],
+            "project_candidates": [str(path.relative_to(config.root)) for path in project_candidates(config.root)],
+        }
+
+    return {
+        "type": "project",
+        "value": project,
+        "source": ".codex/xcodebuild.env" if env.get("XCODE_PROJECT") else "auto_discovered",
+        "reason": (
+            "XCODE_PROJECT explicitly configured"
+            if env.get("XCODE_PROJECT")
+            else "no .xcworkspace found; using .xcodeproj"
+        ),
+        "workspace_candidates": [],
+        "project_candidates": [str(path.relative_to(config.root)) for path in project_candidates(config.root)],
+    }
+
+
+def scheme_selection_reason(name: str, path: Path | None, source: str) -> str:
+    if source == ".codex/xcodebuild.env":
+        return "XCODE_SCHEME explicitly configured"
+    if scheme_has_unit_test_binding(path):
+        return "scheme has unit test binding"
+    if is_unit_test_preferred_scheme(name):
+        return "scheme name matches unit test pattern"
+    if is_generic_test_scheme(name):
+        return "scheme name matches generic test pattern"
+    if scheme_has_ui_test_binding(path):
+        return "scheme has UI test binding"
+    if is_ui_test_preferred_scheme(name):
+        return "scheme name matches UI test pattern"
+    if not NON_PRODUCTION_SCHEME_PATTERN.search(name):
+        return "non-production scheme suffix not detected"
+    return "fallback shared scheme"
+
+
+def scheme_selection_payload(config: BuildConfig, env: dict[str, str]) -> dict[str, object]:
+    paths = scheme_paths(config.root)
+    selected_path = paths.get(config.scheme)
+    source = ".codex/xcodebuild.env" if env.get("XCODE_SCHEME") else "auto_discovered"
+    testables = iter_scheme_testable_names(selected_path)
+    return {
+        "scheme": config.scheme,
+        "source": source,
+        "reason": scheme_selection_reason(config.scheme, selected_path, source),
+        "testables": testables,
+        "has_unit_tests": any(is_unit_test_preferred_scheme(name) for name in testables),
+        "has_ui_tests": any(is_ui_test_preferred_scheme(name) for name in testables),
+        "scheme_path": str(selected_path.relative_to(config.root)) if selected_path else None,
+        "candidate_schemes": sorted(paths.keys()),
+    }
+
+
 def write_verification_artifacts(
     config: BuildConfig,
     attempts: list[BuildAttempt],
@@ -1330,6 +1465,7 @@ def write_verification_artifacts(
         summary = f"{first_error.get('kind')}: {where} {first_error.get('message')}".strip()
 
     artifact_payload = {
+        "agent_summary": str(paths.agent_summary),
         "verification_report": str(paths.verification_report),
         "diagnostics_json": str(paths.diagnostics_json),
         "build_summary": str(paths.build_summary),
@@ -1340,6 +1476,15 @@ def write_verification_artifacts(
     }
     if source_context_path:
         artifact_payload["source_context"] = source_context_path
+
+    executed_commands = [attempt.command_string for attempt in attempts]
+    only_testing: list[str] = []
+    for attempt in attempts:
+        only_testing.extend(extract_only_testing(attempt.command))
+    final_destination = attempts[-1].destination if attempts else config.destination
+    env = load_env(config.root)
+    project_selection = project_selection_payload(config, env)
+    scheme_selection = scheme_selection_payload(config, env)
 
     report = {
         "schema_version": 1,
@@ -1368,10 +1513,15 @@ def write_verification_artifacts(
             "scheme": config.scheme,
             "configuration": config.configuration,
             "action": config.action,
-            "destination": attempts[-1].destination if attempts else config.destination,
+            "destination": final_destination,
+            "destination_type": destination_type(final_destination, config),
             "selected_device_reason": selected_device_reason,
             "derived_data": config.derived_data_path or "Xcode default",
         },
+        "project_selection": project_selection,
+        "scheme_selection": scheme_selection,
+        "only_testing": only_testing,
+        "executed_commands": executed_commands,
         "ui_smoke": {
             "executed": bool(ui_smoke_result and ui_smoke_result.should_run),
             "result": (
@@ -1386,6 +1536,43 @@ def write_verification_artifacts(
         "suggested_next_action": suggested_next_action,
         "raw_log_policy": "forbidden_by_default",
         "needs_raw_log": needs_raw_log,
+    }
+    agent_summary = {
+        "schema_version": 1,
+        "producer": "codex_verify_agent_summary",
+        "status": final_status,
+        "verification_level": verification_level(config, only_testing, ui_smoke_result),
+        "route": "codex_verify -> build-queue daemon -> xcodebuild"
+        if os.environ.get("CODEX_VERIFY_QUEUE_ROOT")
+        else "build-check.py -> xcodebuild",
+        "repo_root": str(config.root),
+        "workspace_or_project": workspace_or_project,
+        "project_selection": project_selection,
+        "scheme": config.scheme,
+        "scheme_selection": scheme_selection,
+        "configuration": config.configuration,
+        "action": config.action,
+        "destination": {
+            "type": destination_type(final_destination, config),
+            "value": final_destination,
+            "selected_device_reason": selected_device_reason,
+        },
+        "only_testing": only_testing,
+        "executed_command": executed_commands[-1] if executed_commands else None,
+        "executed_commands": executed_commands,
+        "queue_job_id": os.environ.get("CODEX_VERIFY_JOB_ID"),
+        "queue_job_dir": os.environ.get("CODEX_VERIFY_JOB_DIR"),
+        "fingerprint": fingerprint,
+        "cached": False,
+        "summary": report["summary"],
+        "first_blocking_error": first_error,
+        "failed_tests": failed_tests,
+        "warnings_count": report["warnings_count"],
+        "ui_smoke": report["ui_smoke"],
+        "artifact_paths": artifact_payload,
+        "raw_log_policy": "forbidden_by_default",
+        "needs_raw_log": needs_raw_log,
+        "next_action": suggested_next_action,
     }
 
     diagnostics_payload = {
@@ -1416,18 +1603,23 @@ def write_verification_artifacts(
         f"configuration: {config.configuration}",
         f"action: {config.action}",
         f"destination: {attempts[-1].destination if attempts else config.destination}",
+        f"destination_type: {destination_type(final_destination, config)}",
+        f"only_testing: {', '.join(only_testing) if only_testing else 'none'}",
         f"fingerprint: {fingerprint}",
         f"formatter: {tool_bootstrap.formatter or 'builtin-digest-parser'} ({tool_bootstrap.status})",
         f"summary: {report['summary']}",
+        f"agent_summary: {paths.agent_summary}",
         f"raw_log_policy: forbidden_by_default",
     ]
 
     paths.verification_report.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    paths.agent_summary.write_text(json.dumps(agent_summary, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     paths.diagnostics_json.write_text(json.dumps(diagnostics_payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     paths.test_summary.write_text(json.dumps(test_payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     paths.xcresult_summary.write_text(json.dumps(xcresult_payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     paths.build_summary.write_text("\n".join(summary_lines) + "\n", encoding="utf-8")
 
+    print(f"Agent summary: {paths.agent_summary}")
     print(f"Evidence: {paths.verification_report}")
     print(f"Diagnostics: {paths.diagnostics_json}")
     print("Raw log: skipped by policy")
