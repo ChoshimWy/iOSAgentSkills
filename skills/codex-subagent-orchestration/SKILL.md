@@ -92,8 +92,8 @@ Do not use this Skill as the first route when the task is clearly one of these s
 
 - If the target project uses CocoaPods and the task touches private components or dependency integration, inspect `Podfile`, `Podfile.lock`, and `Pods/Manifest.lock` before implementation.
 - If a local `:path` private Pod is active, modify the real component repository, not the `Pods/<LibraryName>` vendored copy.
-- During local integration, keep or switch the main project to local `:path` dependency when required for development and verification.
-- Do not commit local `:path` dependency references unless the user explicitly asks.
+- During local integration, keep or switch the main project to local `:path` dependency when required for development and verification; after modifying the real private library repository, validate through the main project with that local dependency.
+- After validation passes, keep the local `:path` dependency state by default; do not switch back to a versioned dependency or commit local `:path` dependency references unless the user explicitly asks or a main-project dependency-file commit requires it.
 
 ## Task Classification
 

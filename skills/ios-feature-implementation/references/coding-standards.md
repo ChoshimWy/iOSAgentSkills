@@ -80,7 +80,7 @@ Do not add comments that only restate syntax. Add `why` comments for compatibili
 - If CocoaPods/private components are involved, inspect `Podfile`, `Podfile.lock`, and `Pods/Manifest.lock` first.
 - If a dependency is a local `:path` Pod, modify the real component repository, not `Pods/<LibraryName>`.
 - Treat vendored `Pods/` snapshots, generated files, and build artifacts as forbidden ownership unless the user explicitly scopes them in.
-- Do not commit local `:path` dependency references unless explicitly requested.
+- After private-library validation passes, keep the local `:path` dependency state by default; do not commit local `:path` dependency references unless explicitly requested or required by an authorized main-project dependency-file commit.
 
 ## File Headers
 

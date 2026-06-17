@@ -123,8 +123,8 @@ Use the smallest sufficient level:
 - Prefer schemes bound to unit test targets / bundles such as `*Tests`; otherwise consider `*UITests` or `*_TEST`.
 - Workspace/project priority and scheme test binding selection are script-owned decisions; Agents should read `project_selection` and `scheme_selection` from `agent-summary.json` instead of re-deriving them from the file tree.
 - Reuse earlier workspace / scheme / destination in the same task unless a clear reason exists.
-- For private Pod / component changes, validate through the main project using local `:path` dependency when that is the development baseline.
-- Do not switch to online versioned dependency or `Pods/` vendored snapshot unless explicitly requested.
+- For private Pod / component changes, validate through the main project using local `:path` dependency after modifying the real private library repository when that is the development baseline.
+- After validation passes, keep the current local `:path` state by default; do not switch to online versioned dependency or `Pods/` vendored snapshot unless explicitly requested or required for an authorized main-project dependency-file commit.
 - For iOS with no explicit destination, prefer connected physical iOS device; if none exists, fall back to simulator; for macOS use host build.
 - Do not treat paired but disconnected devices as default final verification targets.
 

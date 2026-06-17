@@ -129,8 +129,9 @@ def main() -> int:
         print("\n请改为严格流程：")
         print("1) 本地联调时可临时把主工程私有库切为本地 :path 依赖")
         print("2) 使用本地 :path 依赖完成开发与验证，但不要把该依赖形态提交到项目仓库")
-        print("3) 提交前将 Podfile / Podfile.lock / Pods/Manifest.lock 恢复到可提交的远端/版本化依赖状态")
-        print("4) 如需保留本地联调配置，请仅保留在未提交工作区，不要进入 git commit")
+        print("3) 验证通过后可继续保持当前本地 :path 状态，不需要为了收口自动回切线上")
+        print("4) 只有用户明确要求回切线上，或准备提交主项目依赖文件时，才恢复 Podfile / Podfile.lock / Pods/Manifest.lock 到可提交状态")
+        print("5) 如需保留本地联调配置，请仅保留在未提交工作区，不要进入 git commit")
         return 1
 
     if touched_pods:
@@ -144,7 +145,7 @@ def main() -> int:
         print("2) pod install")
         print("3) 到本机私有库源码仓库修改并提交（不要改 Pods/ 副本）")
         print("4) 回主工程继续使用本地 :path 私有库依赖联调验证")
-        print("5) 回线上版本化依赖仅在用户明确要求时执行，并需单独验证/提交")
+        print("5) 验证通过后默认保持当前本地 :path 状态；回线上版本化依赖仅在用户明确要求或提交主项目依赖文件时执行，并需单独验证/提交")
         print("\n如确认临时放行，可使用: ALLOW_PODS_CACHE_EDIT=1 git commit ...")
         return 1
 

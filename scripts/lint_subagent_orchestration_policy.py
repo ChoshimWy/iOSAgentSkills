@@ -140,6 +140,7 @@ def main() -> int:
             "reviewer subAgent 是强制收口角色",
             "验证相关动作统一切到 `ios-verification`",
             "保持本地 `:path` 私有库依赖",
+            "验证通过后默认保持当前本地",
         ],
         failures,
     )
@@ -217,7 +218,7 @@ def main() -> int:
             "实现链路 reviewer subAgent 始终独立启动",
             "最窄定向单测",
             "code-review 审查（实现链路必选",
-            "回线上版本化引用与复测仅在用户明确要求时执行",
+            "验证通过后默认保持当前本地 `:path` 状态",
         ],
         failures,
     )

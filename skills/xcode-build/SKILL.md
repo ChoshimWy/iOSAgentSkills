@@ -107,8 +107,8 @@ For Archive / Export work, specify:
 
 - If build configuration involves private Pods or local components, inspect `Podfile`, `Podfile.lock`, and `Pods/Manifest.lock`.
 - If a local `:path` Pod is active, modify the real component repository, not `Pods/<LibraryName>`.
-- For private library / component changes, keep or switch the main project to local `:path` dependency for development and validation unless the user explicitly asks to restore versioned dependency.
-- Do not commit local `:path` dependency references unless explicitly requested.
+- For private library / component changes, keep or switch the main project to local `:path` dependency for development and validation unless the user explicitly asks to restore versioned dependency; after modifying the real private library repository, validate through the main project using that local dependency.
+- After validation passes, keep the local `:path` dependency state by default; do not commit local `:path` dependency references unless explicitly requested or required by an authorized main-project dependency-file commit.
 
 ### DerivedData Rules
 

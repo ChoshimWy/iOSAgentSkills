@@ -118,7 +118,7 @@ def main() -> int:
             "本地 `:path` Pod",
             "主项目默认必须切回或保持本地 `:path` 私有库依赖",
             "私有库仓内自测不能替代主项目验证",
-            "`git commit` 前也必须恢复到可提交的远端",
+            "验证通过后默认先保持当前本地 `:path` 私有库依赖状态",
             "默认进入编排入口不等于默认实际 spawn subAgent",
         ],
         failures,
@@ -143,7 +143,7 @@ def main() -> int:
             "路径示例默认以 skill 相对路径为准",
             "主项目默认必须切回或保持本地 `:path` 私有库依赖",
             "私有库仓内自测不能替代主项目验证",
-            "禁止把包含本地 `:path` 私有库引用的 `Podfile` / `Podfile.lock` / `Pods/Manifest.lock` 提交进仓库",
+            "禁止在未获明确授权时把包含本地 `:path` 私有库引用的 `Podfile` / `Podfile.lock` / `Pods/Manifest.lock` 提交进仓库",
         ],
         failures,
     )
@@ -216,7 +216,7 @@ def main() -> int:
             "next_action: <fix-and-rerun|blocked|complete>",
             "`checkpoint_status`：显式汇报 `CP0` / `CP1` / `CP2` / `CP3` 的 pass|fail|blocked",
             "禁止把 `Pods/<LibraryName>` 作为 ownership",
-            "回线上版本化引用与复测仅在用户明确要求时执行",
+            "验证通过后默认保持当前本地 `:path` 状态",
         ],
         failures,
     )
