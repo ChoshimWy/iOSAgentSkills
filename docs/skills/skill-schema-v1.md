@@ -12,6 +12,7 @@
 - 诊断型 Skill
 - 验证型 Skill
 - 自动化 Skill
+- 项目固化 Skill（用于记录某个目标项目的功能关联与当前实现方式）
 
 ## 标准章节
 
@@ -59,6 +60,14 @@
 - `## Inputs`
 - `## Escalation Rules`
 - `## Relationship to Other Skills`
+
+项目固化 Skill 不承担流程编排职责，不要求写入通用执行流程、checkpoint、fail-fix-report、验证升级链路或多 Agent 分工。它只需要固化：
+
+- 目标项目内的功能模块、页面、服务、脚本、配置与资源之间的关联。
+- 当前已采用的实现方式、关键入口、依赖边界、数据流 / 状态流和不可破坏的兼容约束。
+- 与本仓通用 Skill 的关系：需要实现、验证、审查、构建、调试或性能分析时，回到对应通用 Skill 承接流程。
+
+项目固化 Skill 的正文应避免复制 `AGENTS.md`、`TAXONOMY.md` 或主链路 Skill 的流程规则；流程规则只保留在最接近约束来源的通用规则 / 通用 Skill 中。
 
 ## 状态枚举
 

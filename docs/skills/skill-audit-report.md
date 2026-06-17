@@ -10,6 +10,7 @@
 
 - 所有 Skill 至少包含 `Purpose`、`Agent Rules`、`Outputs`、`Exit Conditions`。
 - 主链路 Skill 需要补齐 `Inputs`、`Escalation Rules`、`Relationship to Other Skills`。
+- 项目固化 Skill 不写流程编排，只固化目标项目内的功能关联、当前实现方式、依赖边界与维护约束；流程继续由通用规则和通用 Skill 承接。
 - 输出合同尽量结构化，便于 Codex / Claude Code / 多 Agent / build-queue daemon 复用。
 - 默认遵守低 token 规则：摘要优先、diagnostics 优先、禁止默认读取大日志。
 
@@ -79,4 +80,4 @@
 1. 继续轻量复审已通过的主链路 Skill，重点看主流程一致性而不是重写结构。
 2. 持续清理冗余残留，避免已整合进 `ios-feature-implementation` 的旧实现入口重新出现。
 3. 执行 `scripts/lint_skill_schema.py` 与 `--strict` 做全量结构检查。
-4. 若后续需要，再针对非主链路辅助 Skill 做进一步减重。
+4. 若后续需要，再针对非主链路辅助 Skill 做进一步减重；项目固化 Skill 只保留功能关联和当前实现方式，不引入流程规则副本。
