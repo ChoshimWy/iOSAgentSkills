@@ -45,7 +45,7 @@
 
 ## 权限与升级
 - 普通仓库读取、静态审查与文档比对默认留在 sandbox 内完成。
-- 一旦可选证据验证或目标项目环境验证需要越过 sandbox，主 Agent 使用 `functions.exec_command` 并按需设置 `sandbox_permissions=\"require_escalated\"`，不要通过其它绕路方式规避升级。
+- 一旦涉及 iOS/Xcode 项目环境验证（含 `-list` / `-showdestinations` / build/test），主 Agent 必须使用 `functions.exec_command` 并设置 `sandbox_permissions=\"require_escalated\"`，以非沙盒环境启动 `codex_verify.sh` / `~/.codex/bin/codex_verify`；不要通过其它绕路方式规避升级。
 
 ## 何时升级 tester 为 worker
 - tester explorer 明确判断“缺少必要测试代码”

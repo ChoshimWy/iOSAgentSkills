@@ -110,8 +110,8 @@ Use the smallest sufficient level:
 - Always prefer target project `./codex_verify.sh`.
 - If absent, use `~/.codex/bin/codex_verify`.
 - The wrapper must submit validation-type `xcodebuild` to shared build-queue daemon.
-- Project-environment verification must run from the target project root.
-- For Codex, use `functions.exec_command`; when target-project execution requires non-sandbox access, request escalation rather than running a sandbox copy.
+- Project-environment verification must run from the target project root in the non-sandbox host environment.
+- For Codex, every validation-type `xcodebuild` probe or run (`-list`, `-showdestinations`, build, test) must start the wrapper through `functions.exec_command` with `sandbox_permissions="require_escalated"`; do not run sandboxed `codex_verify` / `xcodebuild` as final evidence.
 - The wrapper / script owns formatter selection, tool bootstrap, parsing, redaction, artifact generation, and preserving the real `xcodebuild` exit code.
 - Agents must not manually install or invoke `xcbeautify`, `xcpretty`, `xcprint`, `xcresulttool`, or equivalent parser tools.
 - Reuse Xcode 系统 DerivedData (`~/Library/Developer/Xcode/DerivedData`) via daemon; do not reintroduce `XCODE_DERIVED_DATA_*` or `CODEX_DERIVED_DATA_SLOT` public configuration.
@@ -157,7 +157,7 @@ Use the smallest sufficient level:
 Accept existing evidence only when all are true:
 
 1. Evidence happened after the latest code/config/resource/dependency change.
-2. Evidence came from the target project root when project-environment evidence is claimed.
+2. Evidence came from the target project root in the non-sandbox host environment when project-environment evidence is claimed.
 3. Baseline matches final delivery target or is clearly stronger.
 4. Targeted validation executed, or `no_test_reason` plus `suggested_validation` is explicit.
 5. Independent `code-review` has no blocking findings and reviewed the verification story.

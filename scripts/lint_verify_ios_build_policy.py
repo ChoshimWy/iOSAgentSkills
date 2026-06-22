@@ -70,6 +70,8 @@ def main() -> int:
         [
             "独立 reviewer subAgent 执行 `code-review`",
             "目标项目根目录的项目环境",
+            "非沙盒",
+            "sandbox_permissions=\"require_escalated\"",
             "完整项目环境证据",
             "Xcode 系统 DerivedData",
             "shared build-queue daemon",
@@ -93,6 +95,7 @@ def main() -> int:
             "python3 scripts/lint_verify_ios_build_policy.py",
             "不得直接调用 `xcodebuild` 二进制",
             "不要为了绕过同一个 `build.db` 锁而切到单独 `-derivedDataPath`",
+            "非沙盒项目环境",
         ],
         failures,
     )
@@ -102,6 +105,7 @@ def main() -> int:
             "默认完成标准：定向测试或必要验证通过",
             "最窄定向单测",
             "sandbox 结果",
+            "sandbox_permissions=\"require_escalated\"",
             "`.xcworkspace` 优先",
             "shared build-queue daemon",
             "--queue-status",
