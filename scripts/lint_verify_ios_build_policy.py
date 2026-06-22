@@ -173,7 +173,18 @@ def main() -> int:
     verify_template = ROOT / "config" / "codex" / "templates" / "codex_verify.example.sh"
     require_contains(
         verify_template,
-        ["--repo-root", "--build-check", "--queue-status", "xcodebuild", "shared build-queue daemon", "CODEX_VERIFY_BYPASS_WRAPPER"],
+        ["--repo-root", "--build-check", "--queue-status", "xcodebuild", "shared build-queue daemon", "CODEX_VERIFY_BYPASS_WRAPPER", "CODEX_VERIFY_EXIT_CODE"],
+        failures,
+    )
+    require_contains(
+        ROOT / "tools" / "digest-xcodebuild-log.sh",
+        [
+            "CODEX_VERIFY_EXIT_CODE",
+            "non_blocking_noise_patterns",
+            "Profile is missing the required UUID property",
+            "xcodebuild_exit_code == 0",
+            '"status": status',
+        ],
         failures,
     )
     require_contains(

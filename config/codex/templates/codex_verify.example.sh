@@ -554,6 +554,7 @@ generate_verification_artifacts() {
 
   if digest_script="$(resolve_digest_script)"; then
     CODEX_VERIFY_MODE="$(cat "$job_dir/mode" 2>/dev/null || printf '%s' auto)" \
+      CODEX_VERIFY_EXIT_CODE="$status" \
       bash "$digest_script" "$job_dir/job.log" "$diagnostics_path" "$summary_path" "$report_path" \
       >"$job_dir/digest.log" 2>&1 || true
   fi

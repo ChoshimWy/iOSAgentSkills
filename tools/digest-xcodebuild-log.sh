@@ -52,6 +52,12 @@ out_report = Path(sys.argv[4])
 text = log_path.read_text(encoding="utf-8", errors="replace")
 lines = text.splitlines()
 
+raw_exit_code = os.environ.get("CODEX_VERIFY_EXIT_CODE") or os.environ.get("CODEX_VERIFY_STATUS")
+try:
+    xcodebuild_exit_code = int(raw_exit_code) if raw_exit_code not in (None, "") else None
+except ValueError:
+    xcodebuild_exit_code = None
+
 patterns = [
     ("project_config_error", re.compile(r"xcodebuild: error:|The project .* cannot be opened|Unable to open project", re.I)),
     ("missing_module", re.compile(r"No such module '([^']+)'|failed to build module '([^']+)'", re.I)),
@@ -80,6 +86,20 @@ priority = {
     "unknown": 99,
 }
 
+non_blocking_noise_patterns = [
+    # Xcode CLI may scan stale/corrupt local provisioning profile cache even when
+    # actions like `-showdestinations` or `-list` complete successfully. These
+    # DVTProvisioningProfileManager lines are environment noise unless the
+    # underlying xcodebuild command exits non-zero with a real signing blocker.
+    re.compile(
+        r"DVTProvisioningProfileManager: Failed to load profile .*Profile is missing the required UUID property",
+        re.I,
+    ),
+]
+
+def is_non_blocking_noise(line: str) -> bool:
+    return any(pattern.search(line) for pattern in non_blocking_noise_patterns)
+
 def compact_excerpt(index: int, radius: int = 1) -> str:
     start = max(index - radius, 0)
     end = min(index + radius + 1, len(lines))
@@ -100,6 +120,9 @@ warning_count = 0
 failed_test_pattern = re.compile(r"Test Case ['\"](?P<name>[^'\"]+)['\"] failed|Failing tests?:\s*(?P<tail>.+)", re.I)
 
 for idx, line in enumerate(lines):
+    if is_non_blocking_noise(line):
+        continue
+
     if " warning: " in f" {line} " or line.strip().startswith("warning:"):
         warning_count += 1
     if m := failed_test_pattern.search(line):
@@ -146,12 +169,24 @@ if not items:
             })
             break
 
-items.sort(key=lambda d: priority.get(d.get("kind", "unknown"), 99))
-items = items[:10]
+if xcodebuild_exit_code == 0:
+    items = []
+else:
+    items.sort(key=lambda d: priority.get(d.get("kind", "unknown"), 99))
+    items = items[:10]
 
 status = "failed" if items else "unknown"
 summary = "No actionable compiler/test error pattern found. Inspect build-summary.txt before raw logs."
 next_action = "Read build-summary.txt. Only inspect raw build log if summaries are insufficient."
+
+if xcodebuild_exit_code == 0:
+    status = "passed"
+    summary = "Verification succeeded."
+    next_action = "none"
+elif xcodebuild_exit_code is not None and not items:
+    status = "failed"
+    summary = "Verification failed; digest could not classify the first blocking error."
+    next_action = "Read build-summary.txt. Only inspect raw build log if summaries are insufficient."
 
 if items:
     first = items[0]
@@ -193,7 +228,7 @@ payload = {
 out_json.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 report = {
-    "status": "failed" if items else "unknown",
+    "status": status,
     "mode": os.environ.get("CODEX_VERIFY_MODE", "auto"),
     "fingerprint": fingerprint,
     "cached": False,
