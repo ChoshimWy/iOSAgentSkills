@@ -1,7 +1,7 @@
 # 失败回环规则
 
 ## 总流程
-1. 主 Agent 先用任务分型器判定 `doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`，再选择 `lite` / `standard` / `full` 档位并完成 `CP0 Intent Lock`
+1. 主 Agent 先做最小只读定位，再用任务分型器判定 `doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`，选择 `lite` / `standard` / `full` 档位，并在任何写入前完成 `CP0 Intent Lock` 最小计划；该计划不依赖手动 Plan 模式
 2. coder 先完成首个关键切片，通过 `CP1 Anchor Slice` 后再按需扩展
 3. tester / reviewer 在冻结基线下工作，推进 `CP2 Validation Baseline Freeze`
 4. 主 Agent 聚合后决定是否回写 coder

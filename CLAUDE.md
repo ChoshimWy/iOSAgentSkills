@@ -6,15 +6,19 @@
 
 本段是 Claude Code 特有的运行时编排指令，位于共享规则 AGENTS.md 之上。Codex 用户不受本段影响。
 
-## Plan Mode 作为 CP0 Intent Lock (对应 AGENTS.md "默认工作流" → 编排入口)
+## CP0 Intent Lock 不依赖手动 Plan Mode (对应 AGENTS.md "默认工作流" → 编排入口)
 
-当任务涉及实现且边界不明确时，先使用 `EnterPlanMode` 进入计划模式：
+当任务涉及修复 / 实现时，允许先做最小只读定位，但在首次写文件或应用 patch 前必须完成 CP0 最小计划；这不依赖用户手动切换 Plan Mode：
 - 输出任务目标、成功标准、边界范围
 - 判定任务分型：doc-only / rule-only / code-small / code-medium / code-risky
 - 选择编排档位：lite / standard / full
 - 确定 workspace / scheme / destination 基线
 
-退出条件：目标与边界已明确，主 Agent 确认可进入实现阶段。
+执行方式：
+- 未进入 Plan Mode：用 `TaskCreate("CP0 Intent Lock — 目标与边界确认")` 或简短计划输出完成 CP0，再进入实现。
+- 边界不清、需求冲突或高风险：再使用 `EnterPlanMode` 或 `Agent(subagent_type="Plan")` 补强计划。
+
+退出条件：目标与边界已明确，CP0 最小计划已完成，主 Agent 确认可进入实现阶段。
 
 ## Agent 工具角色映射 (对应 AGENTS.md "默认工作流" → 多角色协作)
 

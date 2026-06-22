@@ -13,6 +13,7 @@
 ## 严格路由总则
 
 - iOS 开发任务默认先进入 `codex-subagent-orchestration`；由主入口决定单 Agent 还是 `lite` / `standard` / `full` 编排，再按需路由到统一实施、统一验证、审查、调试、性能与构建模块。
+- 修复 / 实现任务即使未手动进入 Plan 模式，也必须在写入前完成 CP0 最小计划；允许先做只读定位，但禁止从代码查找直接进入实现。
 - 默认完成标准：定向测试或必要验证通过，且独立 reviewer subAgent 执行的 `code-review` 无 blocking findings。
 - 测试代码编写、Mock / Stub / Spy / Fake、fixture、Page Object 与最小 testability seam 默认归入 `ios-feature-implementation` 的 `test-implementation` mode。
 - 涉及代码改动时，验证阶段默认只执行**最窄定向单测**：优先 `-only-testing` 到单个 test case / test class，其次最小受影响 test file / bundle；真机 / 模拟器验证不属于默认验证执行面。

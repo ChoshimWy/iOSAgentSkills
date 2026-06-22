@@ -18,7 +18,7 @@ Coordinate iOS development tasks through an adaptive orchestration workflow whil
 - 协调 coder / reviewer / tester / reporter / main agent 的职责边界。
 - 决定何时把代码实施路由到 `ios-feature-implementation` 的 `business` / `swiftui` / `liquid-glass` / `uikit` / `mixed-ui` / `advanced-swift` / `refactor` / `sdk-contract` 内部模式。
 - 决定何时路由到验证、调试、性能、审查与构建模块。
-- 在主 Agent 串行实现或显式授权的多 Agent 场景下保证 checkpoint、fail-fix-report、低 token 验证纪律，以及独立 reviewer subAgent 审查纪律。
+- 在主 Agent 串行实现或显式授权的多 Agent 场景下保证写入前 CP0 最小计划、checkpoint、fail-fix-report、低 token 验证纪律，以及独立 reviewer subAgent 审查纪律。
 
 默认完成态必须由主 Agent 基于定向测试 / 必要验证与独立 reviewer subAgent 的 `code-review` 结论裁决；任何 subAgent 都不能替代主 Agent 宣告完成。
 只有定向测试 / 必要验证已完成，且独立 reviewer subAgent 执行的 `code-review` 无 blocking findings 时，主 Agent 才能宣告实现任务完成。
@@ -52,6 +52,7 @@ Do not use this Skill as the first route when the task is clearly one of these s
 
 - For iOS development tasks, this Skill is the default first route unless the task is clearly a doc-only / rule-only change or clearly belongs to one single-purpose Skill.
 - Always classify task type before selecting `lite` / `standard` / `full`.
+- Repair or implementation tasks do not depend on a manual Plan mode. The Main Agent may do minimal read-only discovery first, but before the first file write or patch it must publish or maintain a concise CP0 plan covering goal, impact scope, implementation steps, and validation / review path. Do not jump directly from code search to implementation.
 - Do not upgrade all tasks to full multi-agent execution.
 - Use Codex native subAgent tools for coder / tester only when the user explicitly asks for subAgent / parallel agent / delegation, when the current prompt clearly authorizes native subAgent spawning, or when risk justifies it; always use an independent reviewer subAgent for implementation-chain `code-review`.
 - Default coder / tester work to the main Agent when native subAgent use is not explicitly authorized, when runtime tools are unavailable, when policy forbids spawning, or when the current write set is unsafe to split.
@@ -160,17 +161,18 @@ Activate additional roles only when justified:
 
 ## Workflow
 
-1. Main Agent determines intent, ownership, success criteria, risk level, and task type.
-2. Main Agent freezes relevant workspace / scheme / destination baseline when verification may be needed.
-3. Main Agent checks private Pod / local `:path` ownership if dependencies are involved.
-4. Main Agent selects `lite` / `standard` / `full`.
-5. Main Agent spawns coder / tester subAgents only when explicitly authorized, and then only the minimum required subAgents; otherwise it performs those roles itself. For implementation-chain closure, Main Agent must spawn an independent reviewer subAgent for `code-review`; if unavailable, stop with blocked / pending review.
-6. Use `spawn_agent` / `send_input` / `wait_agent` / `close_agent` sparingly; `wait_agent(...)` is used only when the result is needed to advance the next step. Reviewer subAgent receives only the frozen diff, validation story, and review contract, not implementation rationale that would bias review.
-7. If reviewer or tester finds a blocking issue, Main Agent fixes it locally in single-Agent mode; when native subAgents are explicitly authorized, use `send_input(..., interrupt=true)` to route the precise issue back to coder.
-8. If tester determines test code is required, handle test edits in the main Agent by default; when native subAgents are explicitly authorized, start `tester worker` with ownership limited to test files.
-9. Main Agent applies fail-fix-report discipline until resolved or blocked.
-10. Main Agent performs final closure only when targeted validation / necessary verification is current and independent reviewer subAgent `code-review` has no blocking findings.
-11. Only if requested or high-risk, Main Agent routes to `ios-verification` for stronger evidence.
+1. Main Agent performs only the minimum read-only discovery needed to avoid guessing.
+2. Main Agent determines intent, ownership, success criteria, risk level, and task type, then completes CP0 with a concise pre-implementation plan even when the runtime is not in Plan mode.
+3. Main Agent freezes relevant workspace / scheme / destination baseline when verification may be needed.
+4. Main Agent checks private Pod / local `:path` ownership if dependencies are involved.
+5. Main Agent selects `lite` / `standard` / `full`.
+6. Main Agent spawns coder / tester subAgents only when explicitly authorized, and then only the minimum required subAgents; otherwise it performs those roles itself. For implementation-chain closure, Main Agent must spawn an independent reviewer subAgent for `code-review`; if unavailable, stop with blocked / pending review.
+7. Use `spawn_agent` / `send_input` / `wait_agent` / `close_agent` sparingly; `wait_agent(...)` is used only when the result is needed to advance the next step. Reviewer subAgent receives only the frozen diff, validation story, and review contract, not implementation rationale that would bias review.
+8. If reviewer or tester finds a blocking issue, Main Agent fixes it locally in single-Agent mode; when native subAgents are explicitly authorized, use `send_input(..., interrupt=true)` to route the precise issue back to coder.
+9. If tester determines test code is required, handle test edits in the main Agent by default; when native subAgents are explicitly authorized, start `tester worker` with ownership limited to test files.
+10. Main Agent applies fail-fix-report discipline until resolved or blocked.
+11. Main Agent performs final closure only when targeted validation / necessary verification is current and independent reviewer subAgent `code-review` has no blocking findings.
+12. Only if requested or high-risk, Main Agent routes to `ios-verification` for stronger evidence.
 
 ## Checkpoints
 
@@ -178,7 +180,7 @@ Default checkpoints:
 
 | Checkpoint | Meaning |
 | --- | --- |
-| `CP0 Intent Lock` | Confirm intent, constraints, success criteria, and non-goals. |
+| `CP0 Intent Lock` | Confirm intent, constraints, success criteria, non-goals, and a pre-implementation plan before any write. |
 | `CP1 Anchor Slice` | Complete and inspect the first meaningful slice before expanding parallel work. |
 | `CP2 Validation Baseline Freeze` | Freeze validation baseline, affected tests, wrapper path, and log policy. |
 | `CP3 Final Gate` | Decide completion based on evidence and blocking findings. |
@@ -330,7 +332,7 @@ Do not hardcode other model names in this Skill. Available model names depend on
 
 ## Plan Output Template
 
-When the user asks for a plan and the task includes implementation / verification:
+For every repair or implementation task, complete a compact CP0 plan before the first write even when the user did not manually enter Plan mode. If the user explicitly asks for a plan, use the same structure with more detail:
 
 ```text
 Step 1 Main Agent: intent, boundaries, success criteria, level, baseline, fallback conditions.

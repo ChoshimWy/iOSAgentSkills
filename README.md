@@ -84,6 +84,7 @@ ln -s iOSAgentSkills/skills .claude/skills
 目标：<需求>
 上下文：<目录/文件/报错>
 约束：最小改动；先探索再实施；失败先修复再汇报。
+非 Plan 模式也必须在首次写入前自动给出 CP0 最小计划。
 完成标准：列出 changed_files、验证结果、残余风险；若有阻塞项禁止宣告完成。
 ```
 
@@ -148,9 +149,10 @@ python3 scripts/validate_codex_agent_templates.py config/codex/templates/agents
 - `codex-subagent-orchestration` 是默认的 iOS 主 Skill 入口；实现、调试、性能、验证、Apple 文档与可选证据验证都应先经过它，再内部路由到对应模块。所有代码实施统一转入 `ios-feature-implementation` 的内部模式，不再要求用户手动选择 SwiftUI / UIKit / Swift Expert 实施 Skill。
 - 编排默认按 `lite` / `standard` / `full` 三档选择角色。
 - 默认先按任务分型器分类，再决定角色激活矩阵（最小集合：`explorer + builder + reporter`）。
+- 修复 / 实现任务不依赖手动 Plan 模式；允许先做最小只读定位，但首次写入前必须自动给出 CP0 最小计划，禁止从代码查找直接跳到实现。
 - 默认进入编排入口不等于默认实际 spawn coder / tester subAgent；只有用户显式要求 subAgent / parallel agent / delegation、当前 prompt 明确授权或风险需要时，主 Agent 才可按 `lite` / `standard` / `full` 调用 coder / tester 原生 subAgent 工具。未显式授权时 coder / tester 可由主 Agent 串行承担，但实现链路的 `code-review` 必须交给独立 reviewer subAgent。
 - 即使 coder / tester 未使用原生 subAgent 或因工具/策略/写集限制回到主 Agent 串行执行，实现链路仍必须保留 `ios-verification` 与独立 reviewer subAgent `code-review`；reviewer subAgent 不可用时只能报告 blocked / pending review。
-- 计划模式（`proposed_plan`）输出，只要是实现链路也必须显式包含独立 reviewer subAgent 执行的 `code-review` 审查步骤。
+- CP0 最小计划（`proposed_plan`）输出只要是实现链路，就必须显式包含独立 reviewer subAgent 执行的 `code-review` 审查步骤。
 - 日志输出默认低 token：只回传关键错误段或最后 80~120 行；长日志写入 `/tmp/*.log`。
 
 ## Harness Workflow 合同（新增）

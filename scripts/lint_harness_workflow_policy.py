@@ -120,6 +120,7 @@ def main() -> int:
             "私有库仓内自测不能替代主项目验证",
             "验证通过后默认先保持当前本地 `:path` 私有库依赖状态",
             "默认进入编排入口不等于默认实际 spawn subAgent",
+            "修复 / 实现类任务不依赖手动 Plan 模式",
         ],
         failures,
     )
@@ -144,6 +145,7 @@ def main() -> int:
             "主项目默认必须保持本地 `:path` 私有库依赖",
             "私有库仓内自测不能替代主项目验证",
             "禁止在未获明确授权时把包含本地 `:path` 私有库引用的 `Podfile` / `Podfile.lock` / `Pods/Manifest.lock` 提交进仓库",
+            "非 Plan 模式也必须在首次写入前自动给出 CP0 最小计划",
         ],
         failures,
     )
@@ -175,6 +177,7 @@ def main() -> int:
             "fail-fix-report discipline",
             "references/checkpoint-contract.md",
             "Default maximum loop count for the same issue class: 2",
+            "pre-implementation plan before any write",
         ],
         failures,
     )
@@ -190,6 +193,7 @@ def main() -> int:
                 "CP2：Validation Baseline Freeze（验证基线冻结）",
                 "CP3：Final Gate（定向验证与审查收口）",
                 "Fail-Fix-Report 纪律",
+                "CP0 不依赖手动 Plan 模式",
             ],
             failures,
         )
@@ -205,6 +209,7 @@ def main() -> int:
             "## Fail-Fix-Report",
             "定向验证失败或 `code-review` 存在 blocking findings 时，不得宣告默认收口完成",
             "默认进入 `codex-subagent-orchestration` 不等于默认实际 spawn subAgent",
+            "该计划不依赖手动 Plan 模式",
         ],
         failures,
     )
@@ -217,6 +222,7 @@ def main() -> int:
             "`checkpoint_status`：显式汇报 `CP0` / `CP1` / `CP2` / `CP3` 的 pass|fail|blocked",
             "禁止把 `Pods/<LibraryName>` 作为 ownership",
             "验证通过后默认保持当前本地 `:path` 状态",
+            "默认写入前输出",
         ],
         failures,
     )
@@ -250,6 +256,7 @@ def main() -> int:
             "默认最小逻辑角色集合：`explorer + builder + reporter`",
             "只有用户显式要求 subAgent / parallel agent / delegation",
             "统一字段",
+            "非 Plan 模式也必须在首次写入前自动给出 CP0 最小计划",
         ],
         failures,
     )

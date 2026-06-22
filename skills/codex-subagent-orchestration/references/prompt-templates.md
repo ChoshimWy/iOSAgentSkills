@@ -131,10 +131,10 @@ coder / tester 只有在用户显式要求 subAgent / parallel agent / delegatio
 - 无阻塞项时，first_failure 写 none
 ```
 
-## 主 Agent Plan 模板（计划输出）
+## 主 Agent CP0 最小计划模板（默认写入前输出）
 
 ```text
-当任务涉及实现并要求给出 plan 时，先输出 `proposed_plan`：
+当任务涉及修复 / 实现时，即使用户没有手动进入 Plan 模式，也先输出或维护 `proposed_plan`；允许先做最小只读定位，但禁止从代码查找直接跳到写入：
 
 1. 主 Agent：任务边界、成功标准、所选 lite / standard / full 档位、基线（workspace / scheme / destination）
    同时先给任务分型：`doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`

@@ -70,7 +70,7 @@
 
 ## Checkpoint 合同
 
-- CP0 Intent Lock — Plan Mode 输出目标 / 范围 / 成功标准 / 档位
+- CP0 Intent Lock — 不依赖手动 Plan Mode；修复 / 实现任务在首次写入前必须输出目标 / 范围 / 成功标准 / 档位 / 最小计划
 - CP1 Anchor Slice — 首个关键切片验收
 - CP2 Validation Baseline Freeze — 锁定 workspace / scheme / destination
 - CP3 Final Gate — 定向测试/必要验证 + 独立 reviewer subAgent `code-review` 收口；必要时再按需进入 `ios-verification`

@@ -109,6 +109,7 @@ def main() -> int:
             "`explorer + builder + reporter`",
             "独立 reviewer subAgent 执行 `code-review`",
             "最窄定向验证",
+            "修复 / 实现类任务不依赖手动 Plan 模式",
         ],
         failures,
     )
@@ -126,6 +127,7 @@ def main() -> int:
             "model = \"gpt-5.5\"",
             "model_reasoning_effort = \"medium\"",
             "python3 scripts/lint_subagent_orchestration_policy.py",
+            "非 Plan 模式也必须在首次写入前自动给出 CP0 最小计划",
         ],
         failures,
     )
@@ -141,6 +143,7 @@ def main() -> int:
             "验证相关动作统一切到 `ios-verification`",
             "保持本地 `:path` 私有库依赖",
             "验证通过后默认保持当前本地",
+            "写入前完成 CP0 最小计划",
         ],
         failures,
     )
@@ -165,6 +168,7 @@ def main() -> int:
             "80-120 relevant lines",
             "references/coding-standards.md",
             "references/tool-routing.md",
+            "Do not jump directly from code search to implementation",
         ],
         failures,
     )
@@ -195,6 +199,7 @@ def main() -> int:
                 "lite / standard / full",
                 "coder / tester 只有在用户显式要求 subAgent / parallel agent / delegation",
                 "实现后的 $code-review 必须交给独立 reviewer subAgent",
+                "首次写入前完成 CP0 最小计划",
             ],
             failures,
         )
@@ -219,6 +224,7 @@ def main() -> int:
             "最窄定向单测",
             "code-review 审查（实现链路必选",
             "验证通过后默认保持当前本地 `:path` 状态",
+            "默认写入前输出",
         ],
         failures,
     )
@@ -251,6 +257,7 @@ def main() -> int:
             "coder / tester 本轮按单 Agent 执行",
             "同一类问题最多回写 coder 2 次",
             "不切到单独 `-derivedDataPath` 绕开同一个 `build.db`",
+            "该计划不依赖手动 Plan 模式",
         ],
         failures,
     )

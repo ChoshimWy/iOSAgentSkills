@@ -135,6 +135,7 @@ def main() -> int:
             "`doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`",
             "`explorer + builder + reporter`",
             "默认进入编排入口不等于默认实际 spawn subAgent",
+            "修复 / 实现类任务不依赖手动 Plan 模式",
         ],
         failures,
     )
@@ -156,6 +157,7 @@ def main() -> int:
             "~/.codex/agents/",
             "local-only skills mode",
             "plugin-contributed skills/tools",
+            "非 Plan 模式也必须在首次写入前自动给出 CP0 最小计划",
         ],
         failures,
     )
@@ -235,6 +237,7 @@ def main() -> int:
             "Default maximum loop count for the same issue class: 2",
             "`failure_attribution_type`",
             "`acceptance_matrix`",
+            "Do not jump directly from code search to implementation",
         ],
         failures,
     )
@@ -263,6 +266,7 @@ def main() -> int:
             "acceptance_matrix",
             "默认进入 `codex-subagent-orchestration` 不等于默认实际 spawn coder / tester subAgent",
             "next_action 不能是 complete",
+            "默认写入前输出",
         ],
         failures,
     )
@@ -274,6 +278,7 @@ def main() -> int:
             "`CP1` 未通过前禁止无必要并行扩散",
             "默认进入 `codex-subagent-orchestration` 不等于默认实际 spawn coder / tester subAgent",
             "next_action` 只能是 `blocked`",
+            "该计划不依赖手动 Plan 模式",
         ],
         failures,
     )
@@ -313,6 +318,7 @@ def main() -> int:
             "reviewer subAgent 是强制收口角色",
             "实现链路收口必须启动独立 reviewer subAgent 执行 code-review",
             "统一字段",
+            "非 Plan 模式也必须在首次写入前自动给出 CP0 最小计划",
         ],
         failures,
     )
