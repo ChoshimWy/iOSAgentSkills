@@ -57,6 +57,19 @@ print(Path(sys.argv[1]).resolve())
 PY
 }
 
+resolve_repo_entry_path() {
+  python3 - "$REPO_ROOT" "$1" <<'PY'
+from pathlib import Path
+import sys
+
+root = Path(sys.argv[1]).resolve()
+value = Path(sys.argv[2]).expanduser()
+if not value.is_absolute():
+    value = root / value
+print(value.resolve())
+PY
+}
+
 read_env_file_value() {
   local key="$1"
   [[ -f "$XCODE_ENV_FILE" ]] || return 0
@@ -131,6 +144,76 @@ write_args_file() {
     printf '%s\0' "$1" >>"$target"
     shift
   done
+}
+
+write_xcode_entry_sanity() {
+  local job_dir="$1"
+  python3 - "$job_dir" "$REPO_ROOT" "$META_WORKSPACE" "$META_PROJECT" <<'PY'
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+job_dir = Path(sys.argv[1])
+repo_root = Path(sys.argv[2]).resolve()
+workspace = sys.argv[3].strip()
+project = sys.argv[4].strip()
+
+
+def non_auto(value: str) -> str:
+    return "" if value in {"", "auto", "Debug(auto)", "build(auto)"} else value
+
+
+def normalize(value: str) -> Path:
+    path = Path(value).expanduser()
+    if not path.is_absolute():
+        path = repo_root / path
+    return path.resolve()
+
+
+def rel(path: Path) -> str | None:
+    try:
+        return path.relative_to(repo_root).as_posix()
+    except ValueError:
+        return None
+
+
+def entry_payload(value: str, kind: str) -> dict[str, object] | None:
+    value = non_auto(value)
+    if not value:
+        return None
+    path = normalize(value)
+    payload: dict[str, object] = {
+        "kind": kind,
+        "configured_value": value,
+        "absolute_path": str(path),
+        "relative_path": rel(path),
+        "cwd": str(repo_root),
+        "exists": path.exists(),
+        "is_dir": path.is_dir(),
+    }
+    if kind == "workspace":
+        contents = path / "contents.xcworkspacedata"
+        payload["contents_xcworkspacedata_exists"] = contents.exists()
+        payload["usable_by_cli_sanity"] = path.is_dir() and contents.exists()
+    elif kind == "project":
+        project_file = path / "project.pbxproj"
+        payload["project_pbxproj_exists"] = project_file.exists()
+        payload["usable_by_cli_sanity"] = path.is_dir() and project_file.exists()
+    return payload
+
+
+payload = {
+    "cwd": str(repo_root),
+    "workspace": entry_payload(workspace, "workspace"),
+    "project": entry_payload(project, "project"),
+}
+(job_dir / "xcode-entry-sanity.json").write_text(
+    json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+    encoding="utf-8",
+)
+PY
 }
 
 READ_ARGS_RESULT=()
@@ -273,6 +356,17 @@ def load_report() -> dict:
             "artifact_paths": {"verification_report": str(report_path), "raw_log": str(job_dir / "job.log")},
             "needs_raw_log": False,
         }
+
+
+def load_json_file(name: str) -> dict:
+    path = job_dir / name
+    if not path.exists():
+        return {}
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    return value if isinstance(value, dict) else {}
 
 
 def extract_only_testing(command_preview: str) -> list[str]:
@@ -502,8 +596,10 @@ artifact_paths = {
     "verification_report": str(report_path),
     "diagnostics_json": str(job_dir / "diagnostics.json"),
     "build_summary": str(job_dir / "build-summary.txt"),
+    "environment_sanity": str(job_dir / "xcode-entry-sanity.json"),
     "raw_log": str(job_dir / "job.log"),
 }
+environment_sanity = report.get("environment_sanity") if isinstance(report.get("environment_sanity"), dict) else load_json_file("xcode-entry-sanity.json")
 
 summary = {
     "schema_version": 1,
@@ -516,6 +612,7 @@ summary = {
     "project_selection": effective_project_selection,
     "scheme": scheme,
     "scheme_selection": effective_scheme_selection,
+    "environment_sanity": environment_sanity,
     "configuration": configuration,
     "action": action,
     "destination": {
@@ -635,6 +732,33 @@ load_metadata_from_xcode_args() {
     esac
     ((index += 1))
   done
+}
+
+normalize_xcodebuild_entry_args() {
+  [[ "$MODE" == 'xcodebuild' ]] || return 0
+  local normalized=("${COMMAND[@]}")
+  local index=0 arg value absolute
+  while [[ $index -lt ${#normalized[@]} ]]; do
+    arg="${normalized[$index]}"
+    case "$arg" in
+      -workspace|-project)
+        if [[ $((index + 1)) -lt ${#normalized[@]} ]]; then
+          value="${normalized[$((index + 1))]}"
+          absolute="$(resolve_repo_entry_path "$value")"
+          if [[ -d "$absolute" ]]; then
+            normalized[$((index + 1))]="$absolute"
+            if [[ "$arg" == '-workspace' ]]; then
+              META_WORKSPACE="$absolute"
+            else
+              META_PROJECT="$absolute"
+            fi
+          fi
+        fi
+        ;;
+    esac
+    ((index += 1))
+  done
+  COMMAND=("${normalized[@]}")
 }
 
 load_metadata_defaults() {
@@ -828,6 +952,7 @@ queue_job() {
   write_text_file "$job_dir/log_path" "$job_dir/job.log"
   write_env_snapshot "$job_dir/env.sh"
   write_args_file "$job_dir/command.args0" "${COMMAND[@]}"
+  write_xcode_entry_sanity "$job_dir"
 
   JOB_ID="$job_id"
   JOB_DIR="$job_dir"
@@ -1176,6 +1301,7 @@ if [[ "$MODE" == 'xcodebuild' ]]; then
   load_metadata_from_xcode_args "${COMMAND[@]:1}"
 fi
 load_metadata_defaults
+normalize_xcodebuild_entry_args
 
 if [[ "$MODE" == 'daemon' ]]; then
   daemon_main

@@ -216,7 +216,10 @@ xcode_showdestinations() {
   fi
   command+=( -scheme "$scheme" -showdestinations )
 
-  "${command[@]}"
+  (
+    cd "$root"
+    "${command[@]}"
+  )
 }
 
 list_xcode_physical_destinations_tsv() {
@@ -225,7 +228,7 @@ list_xcode_physical_destinations_tsv() {
   local project="$3"
   local scheme="$4"
 
-  xcode_showdestinations "$root" "$workspace" "$project" "$scheme" | sed -nE 's/.*\{ platform:iOS,([^}]*) id:([^,]+), name:([^}]+) \}.*/\3\t\2/p' | while IFS=$'\t' read -r name identifier; do
+  xcode_showdestinations "$root" "$workspace" "$project" "$scheme" | sed -nE 's/.*\{ platform:iOS,.* id:([^,}]+),.* name:([^,}]+).*/\2\t\1/p' | while IFS=$'\t' read -r name identifier; do
     name="$(trim_device_value "$name")"
     identifier="$(trim_device_value "$identifier")"
     [[ -n "$name" && -n "$identifier" ]] || continue
@@ -240,13 +243,115 @@ list_xcode_simulator_destinations_tsv() {
   local project="$3"
   local scheme="$4"
 
-  xcode_showdestinations "$root" "$workspace" "$project" "$scheme" | sed -nE 's/.*\{ platform:iOS Simulator,([^}]*) id:([^,]+), name:([^}]+) \}.*/\3\t\2/p' | while IFS=$'\t' read -r name identifier; do
+  xcode_showdestinations "$root" "$workspace" "$project" "$scheme" | sed -nE 's/.*\{ platform:iOS Simulator,.* id:([^,}]+),.* name:([^,}]+).*/\2\t\1/p' | while IFS=$'\t' read -r name identifier; do
     name="$(trim_device_value "$name")"
     identifier="$(trim_device_value "$identifier")"
     [[ -n "$name" && -n "$identifier" ]] || continue
     [[ "$identifier" == dvtdevice-* || "$identifier" == *placeholder* ]] && continue
     printf '%s\t%s\n' "$name" "$identifier"
   done
+}
+
+select_xcode_simulator_destination() {
+  local root="$1"
+  local workspace="$2"
+  local project="$3"
+  local scheme="$4"
+  local explicit_name="$5"
+  local explicit_id="$6"
+  local prefer_model="$7"
+  clear_selected_device
+
+  if [[ -n "$explicit_id" && -z "$explicit_name" && -z "$prefer_model" ]]; then
+    set_selected_device "$explicit_id" "$explicit_id" 'explicit' '' 'using explicit simulator identifier'
+    return 0
+  fi
+
+  if [[ -z "$workspace" ]]; then
+    workspace="$(pick_workspace "$root" || true)"
+  fi
+  if [[ -z "$project" ]]; then
+    project="$(pick_project "$root" || true)"
+  fi
+  if [[ -z "$workspace" && -z "$project" ]]; then
+    SELECT_DEVICE_ERROR="No .xcworkspace or .xcodeproj found in $root"
+    return 1
+  fi
+  if [[ -z "$scheme" ]]; then
+    scheme="$(pick_scheme "$root" || true)"
+  fi
+  if [[ -z "$scheme" ]]; then
+    SELECT_DEVICE_ERROR='No shared scheme found'
+    return 1
+  fi
+
+  local temp_file
+  temp_file="$(mktemp)"
+  if ! list_xcode_simulator_destinations_tsv "$root" "$workspace" "$project" "$scheme" > "$temp_file"; then
+    rm -f "$temp_file"
+    SELECT_DEVICE_ERROR="xcodebuild -showdestinations failed while listing iOS Simulator destinations for scheme '$scheme'"
+    return 1
+  fi
+
+  if [[ ! -s "$temp_file" ]]; then
+    rm -f "$temp_file"
+    SELECT_DEVICE_ERROR="no iOS Simulator destinations available for scheme '$scheme'"
+    return 1
+  fi
+
+  local first_name=""
+  local first_id=""
+  local preferred_name=""
+  local preferred_id=""
+  local matched_explicit_name=""
+  local matched_explicit_id=""
+  local prefer_lower current_name current_id current_haystack
+  prefer_lower="$(to_lower "$prefer_model")"
+
+  while IFS=$'\t' read -r current_name current_id; do
+    current_name="$(trim_device_value "$current_name")"
+    current_id="$(trim_device_value "$current_id")"
+    [[ -n "$current_name" && -n "$current_id" ]] || continue
+    [[ -n "$first_id" ]] || {
+      first_name="$current_name"
+      first_id="$current_id"
+    }
+    if [[ -n "$explicit_name" && "$current_name" == "$explicit_name" ]]; then
+      matched_explicit_name="$current_name"
+      matched_explicit_id="$current_id"
+      break
+    fi
+    if [[ -n "$prefer_lower" ]]; then
+      current_haystack="$(to_lower "$current_name")"
+      if [[ "$current_haystack" == *"$prefer_lower"* ]]; then
+        preferred_name="$current_name"
+        preferred_id="$current_id"
+      fi
+    fi
+  done < "$temp_file"
+  rm -f "$temp_file"
+
+  if [[ -n "$matched_explicit_id" ]]; then
+    set_selected_device "$matched_explicit_name" "$matched_explicit_id" 'simulator' '' 'matched explicit simulator name'
+    return 0
+  fi
+
+  if [[ -n "$preferred_id" ]]; then
+    set_selected_device "$preferred_name" "$preferred_id" 'simulator' '' 'selected first matching iOS Simulator destination'
+    return 0
+  fi
+
+  if [[ -n "$first_id" ]]; then
+    if [[ -n "$explicit_name" ]]; then
+      set_selected_device "$first_name" "$first_id" 'simulator' '' "explicit simulator '$explicit_name' unavailable; selected first available iOS Simulator destination"
+    else
+      set_selected_device "$first_name" "$first_id" 'simulator' '' 'selected first available iOS Simulator destination'
+    fi
+    return 0
+  fi
+
+  SELECT_DEVICE_ERROR="no iOS Simulator destinations available for scheme '$scheme'"
+  return 1
 }
 
 supports_xcode_platform() {

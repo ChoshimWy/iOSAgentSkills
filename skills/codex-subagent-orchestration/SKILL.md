@@ -220,7 +220,7 @@ Optional runtime inputs:
 {
   "workspace": "App.xcworkspace",
   "scheme": "App",
-  "destination": "platform=iOS Simulator,name=iPhone 16",
+  "destination": "platform=iOS Simulator,id=<selected-simulator-id>",
   "changed_files": [],
   "available_subagents": ["worker", "explorer"],
   "build_wrapper": "./codex_verify.sh"

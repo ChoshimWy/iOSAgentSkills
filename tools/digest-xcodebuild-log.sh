@@ -59,31 +59,81 @@ except ValueError:
     xcodebuild_exit_code = None
 
 patterns = [
-    ("project_config_error", re.compile(r"xcodebuild: error:|The project .* cannot be opened|Unable to open project", re.I)),
+    (
+        "workspace_path_error",
+        re.compile(
+            r"is not a workspace file|contents\.xcworkspacedata|Unable to open workspace|workspace .* cannot be opened",
+            re.I,
+        ),
+    ),
+    (
+        "simulator_service_unavailable",
+        re.compile(
+            r"CoreSimulator|simdiskimaged|CoreDeviceService|Failed to boot simulator|Unable to boot.*Simulator",
+            re.I,
+        ),
+    ),
+    (
+        "destination_unavailable",
+        re.compile(
+            r"Unable to find a destination|destination specifier|No available destinations|Unable to locate a destination",
+            re.I,
+        ),
+    ),
+    ("project_config_error", re.compile(r"The project .* cannot be opened|Unable to open project|scheme .* is not currently configured|does not contain a scheme", re.I)),
     ("missing_module", re.compile(r"No such module '([^']+)'|failed to build module '([^']+)'", re.I)),
     ("missing_dependency", re.compile(r"package .* is required|Could not resolve package dependencies|Unable to find a specification", re.I)),
     ("swift_compile_error", re.compile(r"(?P<file>[^:\n]+\.swift):(?P<line>\d+):(?P<column>\d+):\s*error:\s*(?P<msg>.*)")),
     ("objc_compile_error", re.compile(r"(?P<file>[^:\n]+\.(?:m|mm|h|hpp|cpp|c)):?(?P<line>\d+)?:?(?P<column>\d+)?:?\s*error:\s*(?P<msg>.*)")),
     ("linker_error", re.compile(r"Undefined symbol|duplicate symbol|ld: .*error|clang: error: linker command failed", re.I)),
     ("signing_error", re.compile(r"Provisioning profile|CodeSign|Signing for .* requires a development team|No profiles for", re.I)),
-    ("destination_error", re.compile(r"Unable to find a destination|destination specifier|No available destinations", re.I)),
+    ("destination_error", re.compile(r"destination specifier|destination .*not|device .*not|No devices are available", re.I)),
     ("test_failure", re.compile(r"Test Case .* failed|XCTAssert|Testing failed", re.I)),
+    ("xcodebuild_error", re.compile(r"xcodebuild: error:", re.I)),
 ]
 
 # Fallback generic error patterns are intentionally later so structured compiler errors win.
 generic_error = re.compile(r"\berror:\s*(?P<msg>.*)", re.I)
 
 priority = {
-    "project_config_error": 0,
-    "missing_dependency": 1,
-    "missing_module": 2,
-    "swift_compile_error": 3,
-    "objc_compile_error": 4,
-    "linker_error": 5,
-    "signing_error": 6,
-    "destination_error": 7,
-    "test_failure": 8,
+    "workspace_path_error": 0,
+    "simulator_service_unavailable": 1,
+    "destination_unavailable": 2,
+    "project_config_error": 3,
+    "missing_dependency": 4,
+    "missing_module": 5,
+    "swift_compile_error": 6,
+    "objc_compile_error": 7,
+    "linker_error": 8,
+    "signing_error": 9,
+    "destination_error": 10,
+    "test_failure": 11,
+    "xcodebuild_error": 12,
     "unknown": 99,
+}
+
+failure_domain = {
+    "workspace_path_error": "env_issue",
+    "simulator_service_unavailable": "env_issue",
+    "destination_unavailable": "env_issue",
+    "destination_error": "env_issue",
+    "xcodebuild_error": "env_issue",
+    "project_config_error": "project_config",
+    "missing_dependency": "dependency",
+    "missing_module": "dependency",
+    "swift_compile_error": "code",
+    "objc_compile_error": "code",
+    "linker_error": "code",
+    "signing_error": "signing",
+    "test_failure": "test",
+    "unknown": "unknown",
+}
+
+env_issue_kinds = {
+    "workspace_path_error",
+    "simulator_service_unavailable",
+    "destination_unavailable",
+    "destination_error",
 }
 
 non_blocking_noise_patterns = [
@@ -142,6 +192,8 @@ for idx, line in enumerate(lines):
             "message": msg.strip()[:1000],
             "raw_excerpt": compact_excerpt(idx),
         }
+        item["failure_domain"] = failure_domain.get(kind, "unknown")
+        item["retryable"] = item["failure_domain"] == "env_issue"
         if gd.get("file"):
             item["file"] = normalize_file(gd.get("file"))
         if gd.get("line"):
@@ -166,6 +218,8 @@ if not items:
                 "severity": "error",
                 "message": m.group("msg").strip()[:1000] or line.strip()[:1000],
                 "raw_excerpt": compact_excerpt(idx),
+                "failure_domain": "unknown",
+                "retryable": False,
             })
             break
 
@@ -190,6 +244,8 @@ elif xcodebuild_exit_code is not None and not items:
 
 if items:
     first = items[0]
+    if first.get("kind") in env_issue_kinds or first.get("failure_domain") == "env_issue":
+        status = "blocked"
     loc = ""
     if first.get("file"):
         loc = first["file"]
@@ -199,7 +255,10 @@ if items:
             loc += f":{first['column']}"
     prefix = f"{first['kind']}"
     summary = f"{prefix}: {loc + ' ' if loc else ''}{first.get('message', '').strip()}"[:1200]
-    next_action = "Fix the first real blocking error only, then request verification again. Do not read the raw build log by default."
+    if status == "blocked":
+        next_action = "Inspect the local Xcode workspace/destination/Simulator environment, then rerun verification. Do not treat this as XCTest failure."
+    else:
+        next_action = "Fix the first real blocking error only, then request verification again. Do not read the raw build log by default."
 
 fingerprint = hashlib.sha256(text.encode("utf-8", errors="replace")).hexdigest()[:16]
 

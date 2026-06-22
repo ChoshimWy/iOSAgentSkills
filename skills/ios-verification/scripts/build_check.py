@@ -30,6 +30,18 @@ UI_TEST_SCHEME_NAME_PATTERN = re.compile(r"(?:^|[_-])UITESTS?$", re.IGNORECASE)
 UNIT_TEST_SCHEME_TOKEN_PATTERN = re.compile(r"(?:^|[_-])TESTS$", re.IGNORECASE)
 GENERIC_TEST_SCHEME_NAME_PATTERN = re.compile(r"(?:^|[_-])TEST$", re.IGNORECASE)
 NON_PRODUCTION_SCHEME_PATTERN = re.compile(r"(^|[_-])(DEV|TEST|UAT|STAGING)$", re.IGNORECASE)
+WORKSPACE_PATH_ERROR_PATTERN = re.compile(
+    r"is not a workspace file|contents\.xcworkspacedata|Unable to open workspace|workspace .* cannot be opened",
+    re.IGNORECASE,
+)
+SIMULATOR_SERVICE_ERROR_PATTERN = re.compile(
+    r"CoreSimulator|simdiskimaged|CoreDeviceService|Failed to boot simulator|Unable to boot.*Simulator",
+    re.IGNORECASE,
+)
+DESTINATION_UNAVAILABLE_PATTERN = re.compile(
+    r"Unable to find a destination|destination specifier|No available destinations|Unable to locate a destination",
+    re.IGNORECASE,
+)
 UI_SENSITIVE_FILE_PATTERNS = (
     re.compile(r".*ViewController.*\.swift$", re.IGNORECASE),
     re.compile(r".*View.*\.swift$", re.IGNORECASE),
@@ -287,12 +299,19 @@ def resolve_artifacts_dir(root: Path, env: dict[str, str]) -> Path:
     return (root / DEFAULT_ARTIFACT_SUBDIR).resolve()
 
 
+def resolve_project_entry_path(root: Path, value: str) -> str:
+    path = Path(value).expanduser()
+    if not path.is_absolute():
+        path = root / path
+    return str(path.resolve())
+
+
 def pick_workspace(root: Path, env: dict[str, str]) -> str | None:
     if env.get("XCODE_WORKSPACE"):
-        return env["XCODE_WORKSPACE"]
+        return resolve_project_entry_path(root, env["XCODE_WORKSPACE"])
 
     candidates = workspace_candidates(root)
-    return str(candidates[0].relative_to(root)) if candidates else None
+    return str(candidates[0].resolve()) if candidates else None
 
 
 def workspace_candidates(root: Path) -> list[Path]:
@@ -306,10 +325,10 @@ def workspace_candidates(root: Path) -> list[Path]:
 
 def pick_project(root: Path, env: dict[str, str]) -> str | None:
     if env.get("XCODE_PROJECT"):
-        return env["XCODE_PROJECT"]
+        return resolve_project_entry_path(root, env["XCODE_PROJECT"])
 
     candidates = project_candidates(root)
-    return str(candidates[0].relative_to(root)) if candidates else None
+    return str(candidates[0].resolve()) if candidates else None
 
 
 def project_candidates(root: Path) -> list[Path]:
@@ -768,6 +787,39 @@ def relative_to_root(path: str, root: Path) -> str | None:
         return None
 
 
+def entry_sanity_payload(root: Path, value: str | None, kind: str) -> dict[str, object] | None:
+    if not value:
+        return None
+
+    path = normalize_path(value, root)
+    payload: dict[str, object] = {
+        "kind": kind,
+        "configured_value": value,
+        "absolute_path": str(path),
+        "relative_path": relative_to_root(str(path), root),
+        "cwd": str(root),
+        "exists": path.exists(),
+        "is_dir": path.is_dir(),
+    }
+    if kind == "workspace":
+        contents = path / "contents.xcworkspacedata"
+        payload["contents_xcworkspacedata_exists"] = contents.exists()
+        payload["usable_by_cli_sanity"] = path.is_dir() and contents.exists()
+    elif kind == "project":
+        project_file = path / "project.pbxproj"
+        payload["project_pbxproj_exists"] = project_file.exists()
+        payload["usable_by_cli_sanity"] = path.is_dir() and project_file.exists()
+    return payload
+
+
+def environment_sanity_payload(config: BuildConfig) -> dict[str, object]:
+    return {
+        "cwd": str(config.root),
+        "workspace": entry_sanity_payload(config.root, config.workspace, "workspace"),
+        "project": entry_sanity_payload(config.root, config.project, "project"),
+    }
+
+
 def path_has_third_party_marker(path: str) -> bool:
     text = path.replace("\\", "/")
     return any(f"/{marker}/" in text or text.startswith(f"{marker}/") for marker in THIRD_PARTY_MARKERS)
@@ -839,6 +891,36 @@ def parse_build_issues(output: str, root: Path) -> list[BuildIssue]:
     for index, raw_line in enumerate(lines):
         line = raw_line.rstrip()
         if not line:
+            continue
+
+        if WORKSPACE_PATH_ERROR_PATTERN.search(line):
+            issues.append(
+                BuildIssue(
+                    order=index,
+                    kind="workspace_path_error",
+                    message=line.strip(),
+                )
+            )
+            continue
+
+        if SIMULATOR_SERVICE_ERROR_PATTERN.search(line):
+            issues.append(
+                BuildIssue(
+                    order=index,
+                    kind="simulator_service_unavailable",
+                    message=line.strip(),
+                )
+            )
+            continue
+
+        if DESTINATION_UNAVAILABLE_PATTERN.search(line):
+            issues.append(
+                BuildIssue(
+                    order=index,
+                    kind="destination_unavailable",
+                    message=line.strip(),
+                )
+            )
             continue
 
         if match := COMPILATION_ERROR_PATTERN.match(line):
@@ -945,10 +1027,16 @@ def parse_build_issues(output: str, root: Path) -> list[BuildIssue]:
 
 
 def failure_domain_for_issue(issue: BuildIssue) -> str:
+    if issue.kind in {
+        "workspace_path_error",
+        "simulator_service_unavailable",
+        "destination_unavailable",
+    }:
+        return "env_issue"
     if issue.kind == "xcodebuild_error":
         message = issue.message.lower()
         if "destination" in message or "device" in message:
-            return "destination"
+            return "env_issue"
         if "provision" in message or "signing" in message or "certificate" in message:
             return "signing"
         if "workspace" in message or "project" in message or "scheme" in message:
@@ -967,19 +1055,20 @@ def failure_domain_for_issue(issue: BuildIssue) -> str:
     if issue.kind == "ui_smoke_failure":
         return "test"
     if issue.kind == "destination_unavailable":
-        return "destination"
+        return "env_issue"
     return "code"
 
 
 def issue_priority(issue: BuildIssue) -> tuple[int, int]:
     priority_by_domain = {
-        "project_config": 0,
-        "dependency": 1,
-        "code": 2,
-        "signing": 3,
-        "destination": 4,
-        "test": 5,
-        "infra": 6,
+        "env_issue": 0,
+        "project_config": 1,
+        "dependency": 2,
+        "code": 3,
+        "signing": 4,
+        "destination": 5,
+        "test": 6,
+        "infra": 7,
     }
     return (priority_by_domain.get(failure_domain_for_issue(issue), 10), issue.order)
 
@@ -1182,7 +1271,7 @@ def issue_to_dict(issue: BuildIssue | None, config: BuildConfig) -> dict[str, ob
         "severity": issue.severity,
         "message": redact_sensitive(issue.message),
         "failure_domain": failure_domain_for_issue(issue),
-        "retryable": failure_domain_for_issue(issue) in {"destination", "infra"},
+        "retryable": failure_domain_for_issue(issue) in {"env_issue", "destination", "infra"},
     }
     if issue.file:
         relative = relative_to_root(issue.file, config.root)
@@ -1437,6 +1526,7 @@ def write_verification_artifacts(
 
     workspace_or_project = config.workspace or config.project
     first_error = issue_to_dict(primary_issue, config)
+    environment_sanity = environment_sanity_payload(config)
     formatter_blocked = (
         final_status == "blocked"
         and tool_bootstrap.status == "required_formatter_unavailable"
@@ -1449,12 +1539,20 @@ def write_verification_artifacts(
             "failure_domain": "infra",
             "retryable": True,
         }
+    if final_status != "passed" and first_error and first_error.get("failure_domain") == "env_issue":
+        final_status = "blocked"
 
-    summary = "verification passed" if final_status == "passed" else "verification failed"
+    summary = (
+        "verification passed"
+        if final_status == "passed"
+        else "verification blocked"
+        if final_status == "blocked"
+        else "verification failed"
+    )
     suggested_next_action = "none" if final_status == "passed" else "fix_first_error"
     needs_raw_log = False
     if final_status == "blocked":
-        suggested_next_action = "blocked"
+        suggested_next_action = "inspect_environment" if first_error and first_error.get("failure_domain") == "env_issue" else "blocked"
         needs_raw_log = False
     if formatter_blocked:
         summary = f"formatter bootstrap blocked: {first_error['message']}"
@@ -1524,6 +1622,7 @@ def write_verification_artifacts(
         },
         "project_selection": project_selection,
         "scheme_selection": scheme_selection,
+        "environment_sanity": environment_sanity,
         "only_testing": only_testing,
         "executed_commands": executed_commands,
         "ui_smoke": {
@@ -1554,6 +1653,7 @@ def write_verification_artifacts(
         "project_selection": project_selection,
         "scheme": config.scheme,
         "scheme_selection": scheme_selection,
+        "environment_sanity": environment_sanity,
         "configuration": config.configuration,
         "action": config.action,
         "destination": {
@@ -1608,6 +1708,7 @@ def write_verification_artifacts(
         f"action: {config.action}",
         f"destination: {attempts[-1].destination if attempts else config.destination}",
         f"destination_type: {destination_type(final_destination, config)}",
+        f"workspace_sanity: {json.dumps(environment_sanity.get('workspace'), ensure_ascii=False, sort_keys=True)}",
         f"only_testing: {', '.join(only_testing) if only_testing else 'none'}",
         f"fingerprint: {fingerprint}",
         f"formatter: {tool_bootstrap.formatter or 'builtin-digest-parser'} ({tool_bootstrap.status})",

@@ -167,13 +167,32 @@ def main() -> int:
     )
     require_contains(
         ROOT / "skills" / "ios-verification" / "scripts" / "build-check.sh",
-        ["CODEX_VERIFY_BYPASS_WRAPPER", "TARGET_VERIFY_SCRIPT", "GLOBAL_VERIFY_SCRIPT", "--build-check"],
+        [
+            "CODEX_VERIFY_BYPASS_WRAPPER",
+            "TARGET_VERIFY_SCRIPT",
+            "GLOBAL_VERIFY_SCRIPT",
+            "--build-check",
+            "fallback_to_available_simulator_or_macos",
+            "xcrun devicectl list devices failed",
+            "platform=iOS Simulator,id=",
+        ],
         failures,
     )
     verify_template = ROOT / "config" / "codex" / "templates" / "codex_verify.example.sh"
     require_contains(
         verify_template,
-        ["--repo-root", "--build-check", "--queue-status", "xcodebuild", "shared build-queue daemon", "CODEX_VERIFY_BYPASS_WRAPPER", "CODEX_VERIFY_EXIT_CODE"],
+        [
+            "--repo-root",
+            "--build-check",
+            "--queue-status",
+            "xcodebuild",
+            "shared build-queue daemon",
+            "CODEX_VERIFY_BYPASS_WRAPPER",
+            "CODEX_VERIFY_EXIT_CODE",
+            "write_xcode_entry_sanity",
+            "normalize_xcodebuild_entry_args",
+            "environment_sanity",
+        ],
         failures,
     )
     require_contains(
@@ -183,6 +202,10 @@ def main() -> int:
             "non_blocking_noise_patterns",
             "Profile is missing the required UUID property",
             "xcodebuild_exit_code == 0",
+            "workspace_path_error",
+            "simulator_service_unavailable",
+            "env_issue",
+            "Inspect the local Xcode workspace/destination/Simulator environment",
             '"status": status',
         ],
         failures,
@@ -199,12 +222,27 @@ def main() -> int:
     )
     require_contains(
         ROOT / "skills" / "ios-verification" / "scripts" / "build_check.py",
-        ["is_unit_test_preferred_scheme", "scheme_has_unit_test_binding", "BuildableName", "Library/Developer/Xcode/DerivedData"],
+        [
+            "is_unit_test_preferred_scheme",
+            "scheme_has_unit_test_binding",
+            "BuildableName",
+            "Library/Developer/Xcode/DerivedData",
+            "WORKSPACE_PATH_ERROR_PATTERN",
+            "SIMULATOR_SERVICE_ERROR_PATTERN",
+            "environment_sanity_payload",
+            '"env_issue"',
+        ],
         failures,
     )
     require_contains(
         ROOT / "skills" / "ios-automation" / "scripts" / "device" / "device_helpers.sh",
-        ["BuildableName", "TestableReference", "select_connected_xcode_destination"],
+        [
+            "BuildableName",
+            "TestableReference",
+            "select_connected_xcode_destination",
+            "select_xcode_simulator_destination",
+            "cd \"$root\"",
+        ],
         failures,
     )
     require_contains(

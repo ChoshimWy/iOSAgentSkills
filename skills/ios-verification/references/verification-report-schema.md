@@ -22,7 +22,7 @@
     "project_candidates": ["App.xcodeproj"]
   },
   "scheme": "App",
-  "scheme_selection": {
+	  "scheme_selection": {
     "scheme": "App",
     "source": ".codex/xcodebuild.env | auto_discovered | xcodebuild-args-or-env",
     "reason": "scheme has unit test binding",
@@ -30,9 +30,19 @@
     "has_unit_tests": true,
     "has_ui_tests": false,
     "scheme_path": "App.xcodeproj/xcshareddata/xcschemes/App.xcscheme",
-    "candidate_schemes": ["App"]
-  },
-  "configuration": "Debug",
+	    "candidate_schemes": ["App"]
+	  },
+	  "environment_sanity": {
+	    "cwd": "/path/to/repo",
+	    "workspace": {
+	      "configured_value": "App.xcworkspace",
+	      "absolute_path": "/path/to/repo/App.xcworkspace",
+	      "contents_xcworkspacedata_exists": true,
+	      "usable_by_cli_sanity": true
+	    },
+	    "project": null
+	  },
+	  "configuration": "Debug",
   "action": "test",
   "destination": {
     "type": "physical_device | simulator | generic_ios | macos | unknown",
@@ -114,7 +124,7 @@
     "scheme": "App",
     "configuration": "Debug",
     "action": "build",
-    "destination": "platform=iOS Simulator,name=iPhone 16",
+	    "destination": "platform=iOS Simulator,id=<selected-simulator-id>",
     "destination_type": "simulator",
     "derived_data": "Xcode default"
   },
@@ -124,15 +134,23 @@
     "source": "auto_discovered",
     "reason": ".xcworkspace preferred over .xcodeproj"
   },
-  "scheme_selection": {
+	  "scheme_selection": {
     "scheme": "App",
     "source": "auto_discovered",
     "reason": "scheme has unit test binding",
     "testables": ["AppTests"],
     "has_unit_tests": true,
-    "has_ui_tests": false
-  },
-  "only_testing": [],
+	    "has_ui_tests": false
+	  },
+	  "environment_sanity": {
+	    "cwd": "/path/to/repo",
+	    "workspace": {
+	      "absolute_path": "/path/to/repo/App.xcworkspace",
+	      "contents_xcworkspacedata_exists": true,
+	      "usable_by_cli_sanity": true
+	    }
+	  },
+	  "only_testing": [],
   "executed_commands": [],
   "suggested_next_action": "fix_first_error | inspect_environment | blocked | none",
   "raw_log_policy": "forbidden_by_default",
@@ -157,3 +175,4 @@
 - Agents must not run package-manager installs or formatter commands manually.
 - Formatter output is intermediate evidence; `parser` identifies the digest parser and `formatter` records the optional external formatter used before digesting. `agent-summary.json` is the Agent contract; `verification-report.json` remains the detailed verification report.
 - The real `xcodebuild` exit code must be preserved even when formatter parsing succeeds.
+- Workspace path, unavailable destination, `CoreSimulator`, `simdiskimaged`, and `CoreDeviceService` blockers should be reported as `status=blocked`, `failure_domain=env_issue`, and `suggested_next_action=inspect_environment` rather than as XCTest failures.

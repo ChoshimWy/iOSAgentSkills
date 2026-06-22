@@ -53,6 +53,44 @@ set_selected_target_env() {
   export XCODE_SELECTED_DEVICE_REASON="$5"
 }
 
+destination_field() {
+  local destination="$1"
+  local key="$2"
+  printf '%s\n' "$destination" | tr ',' '\n' | awk -F= -v target="$key" '
+    {
+      field=$1
+      value=substr($0, index($0, "=") + 1)
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "", field)
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "", value)
+      if (field == target) {
+        print value
+        exit
+      }
+    }
+  '
+}
+
+set_simulator_target_env() {
+  export XCODE_DESTINATION="platform=iOS Simulator,id=$SELECTED_DEVICE_IDENTIFIER"
+  export XCODE_VALIDATION_PLATFORM='ios-simulator'
+  set_selected_target_env "$SELECTED_DEVICE_NAME" "$SELECTED_DEVICE_IDENTIFIER" "$SELECTED_DEVICE_STATE" "$SELECTED_DEVICE_MODEL" "$SELECTED_DEVICE_REASON"
+}
+
+fallback_to_available_simulator_or_macos() {
+  local fallback_context="$1"
+  if select_xcode_simulator_destination "$ROOT" "$XCODE_WORKSPACE_VALUE" "$XCODE_PROJECT_VALUE" "$XCODE_SCHEME_VALUE" "" "" "$XCODE_PREFER_MODEL_VALUE"; then
+    SELECTED_DEVICE_REASON="$fallback_context; $SELECTED_DEVICE_REASON"
+    set_simulator_target_env
+    return 0
+  fi
+  if supports_xcode_platform "$ROOT" "$XCODE_WORKSPACE_VALUE" "$XCODE_PROJECT_VALUE" "$XCODE_SCHEME_VALUE" 'macOS'; then
+    export XCODE_VALIDATION_PLATFORM='macos'
+    set_selected_target_env 'macOS Host' 'macOS' 'macos' '' "$fallback_context; no iOS Simulator destination available; using macOS host build"
+    return 0
+  fi
+  return 1
+}
+
 unset XCODE_SELECTED_DEVICE_NAME XCODE_SELECTED_DEVICE_ID XCODE_SELECTED_DEVICE_STATE XCODE_SELECTED_DEVICE_MODEL XCODE_SELECTED_DEVICE_REASON || true
 unset XCODE_FALLBACK_DEVICE_NAME XCODE_FALLBACK_DEVICE_ID XCODE_FALLBACK_DEVICE_STATE XCODE_FALLBACK_DEVICE_MODEL XCODE_FALLBACK_DEVICE_REASON XCODE_FALLBACK_DEVICE_ERROR || true
 unset XCODE_VALIDATION_PLATFORM || true
@@ -73,16 +111,9 @@ if [[ -z "$XCODE_DESTINATION_VALUE" ]]; then
       set_selected_target_env "$SELECTED_DEVICE_NAME" "$SELECTED_DEVICE_IDENTIFIER" "$SELECTED_DEVICE_STATE" "$SELECTED_DEVICE_MODEL" "$SELECTED_DEVICE_REASON"
     else
       case "$SELECT_DEVICE_ERROR" in
-        "no connected physical iOS destinations available"*|"no physical iOS destinations available"*)
-          if supports_xcode_platform "$ROOT" "$XCODE_WORKSPACE_VALUE" "$XCODE_PROJECT_VALUE" "$XCODE_SCHEME_VALUE" 'iOS Simulator'; then
-            export XCODE_DESTINATION='generic/platform=iOS Simulator'
-            export XCODE_VALIDATION_PLATFORM='ios-simulator'
-            set_selected_target_env 'iOS Simulator' 'generic/platform=iOS Simulator' 'simulator' '' 'no connected physical iOS destination available; using simulator'
-          elif supports_xcode_platform "$ROOT" "$XCODE_WORKSPACE_VALUE" "$XCODE_PROJECT_VALUE" "$XCODE_SCHEME_VALUE" 'macOS'; then
-            export XCODE_VALIDATION_PLATFORM='macos'
-            set_selected_target_env 'macOS Host' 'macOS' 'macos' '' 'no iOS destination available; using macOS host build'
-          else
-            echo "Initial validation blocked: no connected physical iOS destination, no iOS Simulator destination, and no macOS destination available" >&2
+        "no connected physical iOS destinations available"*|"no physical iOS destinations available"*|"xcrun devicectl list devices failed"*)
+          if ! fallback_to_available_simulator_or_macos 'no connected physical iOS destination available'; then
+            echo "Initial validation blocked: no connected physical iOS destination, no iOS Simulator destination, and no macOS destination available ($SELECT_DEVICE_ERROR)" >&2
             exit 1
           fi
           ;;
@@ -96,7 +127,14 @@ if [[ -z "$XCODE_DESTINATION_VALUE" ]]; then
 else
   export XCODE_DESTINATION="$XCODE_DESTINATION_VALUE"
   if is_simulator_destination_text "$XCODE_DESTINATION_VALUE"; then
-    export XCODE_VALIDATION_PLATFORM='ios-simulator'
+    simulator_name="$(destination_field "$XCODE_DESTINATION_VALUE" name || true)"
+    simulator_id="$(destination_field "$XCODE_DESTINATION_VALUE" id || true)"
+    if select_xcode_simulator_destination "$ROOT" "$XCODE_WORKSPACE_VALUE" "$XCODE_PROJECT_VALUE" "$XCODE_SCHEME_VALUE" "$simulator_name" "$simulator_id" "$XCODE_PREFER_MODEL_VALUE"; then
+      set_simulator_target_env
+    else
+      echo "Initial simulator validation blocked: $SELECT_DEVICE_ERROR" >&2
+      exit 1
+    fi
   fi
 fi
 
