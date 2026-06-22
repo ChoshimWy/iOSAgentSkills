@@ -43,9 +43,10 @@ CODEX_VERIFY_TOOL_INSTALL="auto"
 - `codex_verify.sh` / `~/.codex/bin/codex_verify` 负责接入 shared build-queue daemon 与验证入口控制；workspace / scheme / destination 仍由本文件与脚本默认策略决定
 - 本地需要执行 `xcodebuild` 参数探测或验证（含 `-list` / `-showdestinations` / build/test）时，默认在项目环境由主 Agent 通过 wrapper 执行（CC 使用 `Bash` 工具启动 `codex_verify.sh` / `~/.codex/bin/codex_verify`；Codex 使用 `functions.exec_command` + `require_escalated` 启动同一 wrapper）；不得直接调用 `xcodebuild` 二进制
 - 如果 `--queue-status`、wrapper 输出或 `build.db is locked` 表明已有其他 Agent 正在执行验证，当前 Agent 默认应等待 shared build-queue daemon，或把本轮标记为 `env_issue` / `blocked`；不要切到单独 `-derivedDataPath` 跑同一组验证来绕过锁
-- iOS 工程默认优先真机校验；如果未设置 `XCODE_DESTINATION`，脚本会先尝试“已连接真机”，找不到连接中的真机时自动回退到 `generic/platform=iOS Simulator`
+- iOS 工程默认优先真机校验；如果未设置 `XCODE_DESTINATION`，脚本会先尝试“已连接真机”，找不到连接中的真机时自动回退到可用 iOS Simulator
+- 如果未设置 `XCODE_DESTINATION`、`XCODE_DEVICE_ID`、`XCODE_DEVICE_NAME`、`XCODE_PREFER_MODEL`，且项目 `TARGETED_DEVICE_FAMILY` 可推断默认机型，脚本会按设备族选择验证基线：支持 iPhone（`1`，包括 iPhone+iPad 通用）时优先 iPhone；不支持 iPhone 但支持 iPad（`2`）时优先 iPad，避免 iPad-only 工程误落到列表中的第一个 iPhone simulator；显式 `XCODE_DESTINATION` 仍按显式配置执行
 - macOS Xcode 工程在未显式指定 destination 时走宿主机 `xcodebuild build`
-- `XCODE_DEVICE_ID`、`XCODE_DEVICE_NAME`、`XCODE_PREFER_MODEL` 只影响“已连接真机”的自动选择与 simulator → 真机回退阶段
+- `XCODE_DEVICE_ID`、`XCODE_DEVICE_NAME`、`XCODE_PREFER_MODEL` 会影响“已连接真机”的自动选择与 simulator → 真机回退阶段；未显式设置 `XCODE_DESTINATION` 时，`XCODE_PREFER_MODEL` 也会影响 simulator fallback 的自动选择
 - `XCODE_DEVICE_ID` 必须填写 `xcodebuild` 的 destination id；不要填写 `devicectl` device identifier
 - `XCODE_DERIVED_DATA_*` 与 `CODEX_DERIVED_DATA_SLOT` 公开配置已移除；如果仍在环境变量或 `.codex/xcodebuild.env` 中设置，wrapper 会 fail-fast 并要求删除
 - 只有 simulator destination 会关闭签名，适用于需要显式保留 simulator 构建校验的场景
@@ -61,6 +62,7 @@ CODEX_VERIFY_TOOL_INSTALL="auto"
 - 如需指定非默认安装命令，可在项目环境中设置 `CODEX_VERIFY_INSTALL_XCBEAUTIFY`、`CODEX_VERIFY_INSTALL_XCPRETTY`、`CODEX_VERIFY_INSTALL_XCPRINT`；值会由脚本解析并执行，Agent 不需要判断安装方式
 - formatter 安装、选择、解析和脱敏都由 wrapper / 脚本负责；Agent 默认只读取合并了 job metadata 与最终结果的 `agent-summary.json`，仅在摘要不足时再读取 `verification-report.json`、`diagnostics.json`、`build-summary.txt` 等 artifact
 - `agent-summary.json` 会输出 `project_selection` 与 `scheme_selection`，包括 `.xcworkspace` / `.xcodeproj` 选择来源、`.xcworkspace` 优先原因、scheme 是否绑定 `*Tests` / `*UITests`、testables 与候选 schemes；Agent 不需要重复扫描文件树判断这些基线
+- 在 `ios-verification` 的 build/test destination 选择场景中，查找当前连接真机、匹配 `xcodebuild` destination、过滤 paired/disconnected 设备、按 `TARGETED_DEVICE_FAMILY` 推断 iPhone/iPad 验证基线、以及 simulator fallback 都属于脚本职责；Agent 不应绕过 wrapper 手动执行 `xcrun devicectl list devices` / `xcodebuild -showdestinations` 后自行选择验证设备
 - 这些覆盖配置只影响 `xcodebuild` 参数，不会跳过固定链路里的定向验证 / `code-review`，也不会改变“`.xcworkspace` 优先于 `.xcodeproj`”的默认规则
 - 如需查看当前队列状态，使用 `codex_verify.sh --queue-status` 或 `~/.codex/bin/codex_verify --queue-status`
 

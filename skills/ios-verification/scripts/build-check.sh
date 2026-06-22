@@ -45,6 +45,13 @@ XCODE_SCHEME_VALUE="$(env_or_file_value XCODE_SCHEME)"
 
 XCODE_DEVICE_FALLBACK_VALUE="${XCODE_DEVICE_FALLBACK_VALUE:-1}"
 
+if [[ -z "$XCODE_DESTINATION_VALUE" && -z "$XCODE_PREFER_MODEL_VALUE" && -z "$XCODE_DEVICE_ID_VALUE" && -z "$XCODE_DEVICE_NAME_VALUE" ]]; then
+  if inferred_prefer_model="$(infer_preferred_model_from_targeted_device_family "$ROOT" "$XCODE_PROJECT_VALUE" || true)"; [[ -n "$inferred_prefer_model" ]]; then
+    XCODE_PREFER_MODEL_VALUE="$inferred_prefer_model"
+    export XCODE_PREFER_MODEL="$inferred_prefer_model"
+  fi
+fi
+
 set_selected_target_env() {
   export XCODE_SELECTED_DEVICE_NAME="$1"
   export XCODE_SELECTED_DEVICE_ID="$2"

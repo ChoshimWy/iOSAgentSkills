@@ -116,6 +116,20 @@ Use the smallest sufficient level:
 - Agents must not manually install or invoke `xcbeautify`, `xcpretty`, `xcprint`, `xcresulttool`, or equivalent parser tools.
 - Reuse Xcode 系统 DerivedData (`~/Library/Developer/Xcode/DerivedData`) via daemon; do not reintroduce `XCODE_DERIVED_DATA_*` or `CODEX_DERIVED_DATA_SLOT` public configuration.
 
+### Script-Owned Validation Decisions
+
+The following deterministic steps are script-owned; Agents should invoke the wrapper and read structured artifacts instead of manually probing and deciding:
+
+- Workspace / project discovery and `.xcworkspace` vs `.xcodeproj` priority.
+- Scheme selection, including `*Tests` / `*UITests` / `*_TEST` preference and reporting via `project_selection` / `scheme_selection`.
+- Connected physical-device discovery: scripts combine `xcodebuild -showdestinations` with `xcrun devicectl list devices`, select only `connected` devices by default, and do not treat paired but disconnected devices as final verification targets.
+- Simulator fallback selection, including `TARGETED_DEVICE_FAMILY` model preference: if iPhone is supported, prefer iPhone; otherwise prefer iPad when iPad is supported.
+- Explicit destination / device override handling: `XCODE_DESTINATION`, `XCODE_DEVICE_ID`, `XCODE_DEVICE_NAME`, and `XCODE_PREFER_MODEL` take precedence over automatic inference.
+- Formatter bootstrap, missing-tool handling, command redaction, compact artifact generation, and first blocking error classification.
+- Build-queue submission, destination locking, fingerprint reuse, and simulator-to-device fallback when script policy allows it.
+
+Agents may set explicit inputs when the user or project config requires a non-default baseline, but should not reimplement these decisions by running ad-hoc `xcodebuild -showdestinations`, `xcrun devicectl`, or formatter commands outside the wrapper.
+
 ### Baseline Rules
 
 - If `.codex/xcodebuild.env` sets workspace/project/scheme/configuration/destination, respect it.
@@ -126,6 +140,7 @@ Use the smallest sufficient level:
 - For private Pod / component changes, keep the main project on local `:path` dependency as the validation and review baseline after modifying the real private library repository; switch to local `:path` only when the project is not already pointing at the local source and the private-library source change must be validated.
 - After validation passes, keep the current local `:path` state by default for independent `code-review`; do not switch to online versioned dependency or `Pods/` vendored snapshot unless explicitly requested or required for an authorized main-project dependency-file commit.
 - For iOS with no explicit destination, prefer connected physical iOS device; if none exists, fall back to simulator; for macOS use host build.
+- When `TARGETED_DEVICE_FAMILY` implies a default iOS validation model, prefer iPhone if iPhone is supported; otherwise prefer iPad when iPad is supported. This prevents iPad-only projects from falling back to the first listed iPhone simulator while keeping universal iPhone+iPad projects on the iPhone validation baseline unless `XCODE_DESTINATION` explicitly overrides it.
 - Do not treat paired but disconnected devices as default final verification targets.
 
 ### Execution and Fingerprint Rules

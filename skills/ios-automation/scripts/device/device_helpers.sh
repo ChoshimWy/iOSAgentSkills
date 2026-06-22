@@ -89,6 +89,38 @@ pick_project() {
   return 1
 }
 
+infer_preferred_model_from_targeted_device_family() {
+  local root="$1"
+  local project="$2"
+
+  if [[ -z "$project" ]]; then
+    project="$(pick_project "$root" || true)"
+  fi
+  [[ -n "$project" ]] || return 1
+
+  local pbxproj="$root/$project/project.pbxproj"
+  [[ -f "$pbxproj" ]] || return 1
+
+  awk '
+    /TARGETED_DEVICE_FAMILY[[:space:]]*=/ {
+      value=$0
+      sub(/.*TARGETED_DEVICE_FAMILY[[:space:]]*=[[:space:]]*/, "", value)
+      sub(/;.*/, "", value)
+      gsub(/[()"\047[:space:]]/, "", value)
+      split(value, parts, ",")
+      for (idx in parts) {
+        if (parts[idx] == "1") { has_iphone = 1 }
+        if (parts[idx] == "2") { has_ipad = 1 }
+      }
+    }
+    END {
+      if (has_iphone) { print "iPhone"; exit 0 }
+      if (has_ipad) { print "iPad"; exit 0 }
+      exit 1
+    }
+  ' "$pbxproj"
+}
+
 pick_scheme() {
   local root="$1"
   local explicit_scheme
@@ -262,8 +294,8 @@ select_xcode_simulator_destination() {
   local prefer_model="$7"
   clear_selected_device
 
-  if [[ -n "$explicit_id" && -z "$explicit_name" && -z "$prefer_model" ]]; then
-    set_selected_device "$explicit_id" "$explicit_id" 'explicit' '' 'using explicit simulator identifier'
+  if [[ -n "$explicit_id" ]]; then
+    set_selected_device "${explicit_name:-$explicit_id}" "$explicit_id" 'explicit' '' 'using explicit simulator identifier'
     return 0
   fi
 
