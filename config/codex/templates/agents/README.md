@@ -19,8 +19,8 @@
 
 说明：
 - 这些 `.toml` 是 Codex custom agent 文件，使用当前支持的扁平 schema：`name` / `description` / `developer_instructions`，以及可选 `nickname_candidates` / `model` / `model_reasoning_effort` / `sandbox_mode` / `mcp_servers` / `skills.config`。
-- 截至 2026-06-15 的共享 Codex 基线使用 `model = "gpt-5.5"`、`image_model = "gpt-image-2"`、`features.multi_agent = true` 与 `[agents] max_threads/max_depth`；默认 reasoning effort 为 `medium`，高难任务可通过 profile 或临时配置升到 `xhigh`。默认进入 `codex-subagent-orchestration` 只表示先做编排决策；coder / tester 只有在用户显式要求 subAgent / parallel agent / delegation、当前 prompt 明确授权或风险需要时，主 Agent 才可按 `lite` / `standard` / `full` 调用原生 subAgent 工具；实现链路的 reviewer subAgent 是强制收口角色。
-- 只有用户显式要求 subAgent / parallel agent / delegation、当前 prompt 明确授权或风险需要时，主 Agent 才应真正拉起 coder / tester 原生 subAgent；否则默认按单 Agent 方式串行承担这些逻辑角色。
+- 截至 2026-06-15 的共享 Codex 基线使用 `model = "gpt-5.5"`、`image_model = "gpt-image-2"`、`features.multi_agent = true` 与 `[agents] max_threads/max_depth`；默认 reasoning effort 为 `medium`，高难任务可通过 profile 或临时配置升到 `xhigh`。默认进入 `codex-subagent-orchestration` 只表示先做编排决策；coder / tester 可在运行时工具可用、写集安全且拆分有质量/效率收益时，由主 Agent 按 `lite` / `standard` / `full` 自主调用最少必要的原生 subAgent 工具；实现链路的 reviewer subAgent 是强制收口角色。
+- 主 Agent 可自主拉起 coder / tester 原生 subAgent，但必须先确认运行时工具可用、当前工具策略允许、写集 ownership 安全且拆分收益明确；否则默认按单 Agent 方式串行承担这些逻辑角色。
 - 模型默认继承主 Agent；只有用户明确要求、任务风险需要或预算/吞吐目标明确时才在 `spawn_agent` 中覆盖 `model` / `reasoning_effort`。
 - 工作流合同字段不再放单独 TOML table，而是内嵌在 `developer_instructions` 中约束输出与职责边界。
 - 安装脚本会把它们同步到 `~/.codex/agents/`。
@@ -41,7 +41,7 @@
 ```text
 请按 explorer -> builder -> reporter 逻辑角色执行，coder / tester 默认由主 Agent 串行承担；
 实现链路收口必须启动独立 reviewer subAgent 执行 code-review，不能由实现 Agent 自审；
-仅当我显式要求 subAgent / parallel agent / delegation、prompt 明确授权或风险需要时，才为 coder / tester 调用 ~/.codex/agents 原生 subAgent；
+当运行时工具可用、写集安全且拆分能提升质量/效率时，可由主 Agent 自主为 coder / tester 调用 ~/.codex/agents 原生 subAgent；
 若边界不清激活 pm，若需要测试面或失败归因激活 tester。
 目标：<需求>
 上下文：<目录/文件/报错>

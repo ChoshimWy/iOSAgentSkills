@@ -26,7 +26,7 @@
 - 执行可选 `xcodebuild` 验证时，证据必须来自目标项目根目录的非沙盒项目环境，而不是 sandbox 结果；继续遵守 `.xcworkspace` 优先、优先选择绑定了单元测试 `*Tests` target / bundle 的 scheme、iOS 默认优先已连接真机约束。
 - 本地执行 `xcodebuild`（含 `-list` / `-showdestinations` / build/test）必须由主 Agent 以非沙盒环境（Codex 使用 `functions.exec_command` + `sandbox_permissions="require_escalated"`）启动目标项目根目录 `codex_verify.sh` 或本机 `~/.codex/bin/codex_verify`，并接入 shared build-queue daemon；可用 `--queue-status` 查看队列；不得直接调用 `xcodebuild`，也不要让多个 Agent 各自裸跑。
 - 主入口 `codex-subagent-orchestration` 负责自适应编排：所有生产代码和测试代码实施统一切到 `ios-feature-implementation` 的内部模式，验证相关动作统一切到 `ios-verification`。
-- coder / tester 原生 subAgent 仅在用户显式要求 subAgent / parallel agent / delegation、当前 prompt 明确授权或风险需要时才启用；否则默认由主 Agent 串行承担对应逻辑角色。实现链路的 reviewer subAgent 是强制收口角色。
+- coder / tester 原生 subAgent 不再以“用户显式要求 / prompt 授权”为硬门槛；主 Agent 可在运行时工具可用、写集安全、任务风险或吞吐收益明确时自主拉起最少必要角色。工具不可用、上层策略禁止或写集不适合拆分时，由主 Agent 串行承担对应逻辑角色；实现链路的 reviewer subAgent 是强制收口角色。
 - 多 Agent 编排默认遵守 checkpoint 合同：`CP0` / `CP1` / `CP2` / `CP3`。
 - 多 Agent 编排默认遵守 `fail-fix-report`：先定位失败、修复并重跑，再汇报。
 - 如果当前任务未进入 `codex-subagent-orchestration`，或 coder / tester 只能由主 Agent 串行承担，实现型任务仍必须三步收口：`实现 skill -> 定向验证 / no_test_reason -> reviewer subAgent(code-review)`；若 reviewer subAgent 不可用，只能报告 blocked / pending review，不能降级为实现者自审。
@@ -44,7 +44,7 @@
 
 | Skill | 角色 | 主触发场景 | 不要触发的场景 | 切换到 |
 | --- | --- | --- | --- | --- |
-| `codex-subagent-orchestration` | 默认 iOS 主 Skill 入口 | 所有 iOS 开发任务的统一入口；先按 `lite` / `standard` / `full` 做编排决策，再内部路由到统一实施 / 验证 / 调试 / 性能 / 审查 / 按需补强模块；coder / tester 仅在显式授权或明确需要时才实际调用原生 subAgent，但实现后的 reviewer subAgent 是强制收口角色 | 只做一次纯文档型低频任务；或运行时工具不可用、策略禁止导致 reviewer subAgent 无法启动时，需要报告 blocked / pending review | `ios-feature-implementation`、`ios-verification`、`debugging`、`ios-performance`、`code-review` |
+| `codex-subagent-orchestration` | 默认 iOS 主 Skill 入口 | 所有 iOS 开发任务的统一入口；先按 `lite` / `standard` / `full` 做编排决策，再内部路由到统一实施 / 验证 / 调试 / 性能 / 审查 / 按需补强模块；coder / tester 可在运行时允许且拆分有收益时由主 Agent 自主拉起，reviewer subAgent 是强制收口角色 | 只做一次纯文档型低频任务；或运行时工具不可用、策略禁止导致 reviewer subAgent 无法启动时，需要报告 blocked / pending review | `ios-feature-implementation`、`ios-verification`、`debugging`、`ios-performance`、`code-review` |
 | `ios-feature-implementation` | 唯一 iOS 代码实施 Skill | service / repository / use case / view model / 导航接线 / SwiftUI / Liquid Glass / UIKit / mixed UI / advanced Swift / refactor / SDK contract / SDK architecture / XCTest / XCUITest / Mock / Stub / Spy / Fake / fixture / Page Object | 构建配置、设备自动化、性能 profiling、运行时诊断、官方文档事实检索、纯验证执行、纯静态审查、纯视觉方向探索 | `ios-verification`、`code-review`、`debugging`、`ios-performance`、`xcode-build`、`apple-docs`、`ui-ux-design-system` |
 
 ## Automation / Build / Validation

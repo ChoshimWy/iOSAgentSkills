@@ -104,7 +104,7 @@ def main() -> int:
             "使用任何 Skill 前，必须先输出 `>>> Skill: <skill-name>`",
             "iOS 开发任务默认先进入 `codex-subagent-orchestration`",
             "`doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`",
-            "默认进入编排入口不等于默认实际 spawn subAgent",
+            "默认进入编排入口不等于必须 spawn 全部 subAgent",
             "独立 reviewer subAgent",
             "`explorer + builder + reporter`",
             "独立 reviewer subAgent 执行 `code-review`",
@@ -117,8 +117,8 @@ def main() -> int:
         ROOT / "README.md",
         [
             "`codex-subagent-orchestration/` —— 默认优先的自适应编排入口",
-            "只有用户显式要求 subAgent / parallel agent / delegation",
-            "默认进入编排入口不等于默认实际 spawn coder / tester subAgent",
+            "支持在运行时允许且收益明确时由主 Agent 自主拉起 coder / tester subAgent",
+            "默认进入编排入口不等于必须 spawn 全部 coder / tester subAgent",
             "`实现 skill -> 定向验证 / no_test_reason -> reviewer subAgent(code-review)`",
             "独立 reviewer subAgent 执行的 `code-review` 无 blocking findings",
             "最窄定向单测",
@@ -153,7 +153,7 @@ def main() -> int:
         skill_md,
         [
             "默认优先使用的 iOS 主 Skill 入口",
-            "Coder and tester subAgents are used only when explicitly requested",
+            "Coder and tester subAgents may be self-started by the Main Agent",
             "always use an independent reviewer subAgent",
             "Default coder / tester work to the main Agent",
             "hand off `code-review` to an independent reviewer subAgent",
@@ -197,7 +197,7 @@ def main() -> int:
                 "iOS 主 Skill 入口",
                 "$codex-subagent-orchestration",
                 "lite / standard / full",
-                "coder / tester 只有在用户显式要求 subAgent / parallel agent / delegation",
+                "coder / tester 不再以用户显式要求为硬门槛",
                 "实现后的 $code-review 必须交给独立 reviewer subAgent",
                 "首次写入前完成 CP0 最小计划",
             ],
@@ -211,7 +211,7 @@ def main() -> int:
             "reviewer subAgent 是强制独立审查角色",
             "截至 2026-06-15",
             "默认 reasoning effort 为 `medium`",
-            "不为 coder / tester 调用 `spawn_agent`",
+            "未命中“运行时工具可用 / 工具策略允许 / 写集安全 / 拆分有质量或效率收益”",
             "继承主 Agent 默认模型",
         ],
         failures,
@@ -219,7 +219,7 @@ def main() -> int:
     require_contains(
         SKILL_ROOT / "references" / "prompt-templates.md",
         [
-            "默认进入 `codex-subagent-orchestration` 不等于默认实际 spawn coder / tester subAgent",
+            "默认进入 `codex-subagent-orchestration` 不等于必须 spawn 全部 coder / tester subAgent",
             "实现链路 reviewer subAgent 始终独立启动",
             "最窄定向单测",
             "code-review 审查（实现链路必选",
@@ -241,9 +241,9 @@ def main() -> int:
     require_contains(
         SKILL_ROOT / "references" / "role-contracts.md",
         [
-            "默认进入编排入口只做决策",
+            "默认进入编排入口先做决策",
             "reviewer subAgent 必须独立启动",
-            "未显式授权",
+            "工具策略允许",
             "coder / tester 按单 Agent 执行",
             "`blocking_findings: []`",
         ],
@@ -252,7 +252,7 @@ def main() -> int:
     require_contains(
         SKILL_ROOT / "references" / "handoff-loop.md",
         [
-            "默认进入 `codex-subagent-orchestration` 不等于默认实际 spawn coder / tester subAgent",
+            "默认进入 `codex-subagent-orchestration` 不等于必须 spawn 全部 coder / tester subAgent",
             "reviewer subAgent 必须独立启动",
             "coder / tester 本轮按单 Agent 执行",
             "同一类问题最多回写 coder 2 次",

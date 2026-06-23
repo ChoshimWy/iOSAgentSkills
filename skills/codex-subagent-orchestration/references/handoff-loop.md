@@ -16,8 +16,8 @@
 ## wait 与聚合策略
 - `wait_agent(...)` 只在主 Agent 需要当前结果推进下一步时使用，不要为轮询而频繁等待。
 - reviewer / tester 的结论优先按“首个真实阻塞点 -> 影响范围 -> 下一轮成功标准”聚合，再回写 coder。
-- 默认进入 `codex-subagent-orchestration` 不等于默认实际 spawn subAgent。
-- 默认进入 `codex-subagent-orchestration` 不等于默认实际 spawn coder / tester subAgent；只有用户显式要求 subAgent / parallel agent / delegation、当前 prompt 明确授权或风险需要时才真正拉起 coder / tester subAgent。未显式授权、工具不可用、上层策略禁止或写集不适合并行时，主 Agent 必须显式说明 coder / tester 本轮按单 Agent 执行。实现链路 reviewer subAgent 必须独立启动；不可用时报告 blocked / pending review。
+- 默认进入 `codex-subagent-orchestration` 不等于必须 spawn 全部 subAgent。
+- 默认进入 `codex-subagent-orchestration` 不等于必须 spawn 全部 coder / tester subAgent；主 Agent 可在运行时工具可用、上层策略允许、写集安全且拆分有质量/效率收益时自主拉起最少必要的 coder / tester subAgent。工具不可用、上层策略禁止、收益不足或写集不适合并行时，主 Agent 必须显式说明 coder / tester 本轮按单 Agent 执行。实现链路 reviewer subAgent 必须独立启动；不可用时报告 blocked / pending review。
 - 如果当前验证链路发现已有其他 Agent 正在执行同仓验证，主 Agent 应等待 shared build-queue daemon 当前任务完成后再继续；若环境长时间未释放，则按 `env_issue` / `blocked` 收口，不切到单独 `-derivedDataPath` 绕开同一个 `build.db`。
 - `CP1` 未通过前禁止无必要并行扩散；先收敛首个关键切片再扩展后续角色或任务面。
 
