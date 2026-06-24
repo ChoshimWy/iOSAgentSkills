@@ -89,6 +89,16 @@ Review iOS/macOS code changes, identify correctness and maintainability risks, e
   - 验证故事
 - 未覆盖部分必须写入 `unreviewed_changes`。
 
+### Business Invariant Review Rules
+
+- 审查正确性前，先从调用方、状态写入点、持久化 / 缓存 / 输出路径中提取本次改动依赖的业务不变量；不要只根据字段名推断语义。
+- 对表示业务状态的布尔字段，要检查是否存在组合口径、别名或派生状态，例如 `selected`、`inStage`、`inGroup`、`running`、`dirty`、`snapshot`、`promoted` 等；若代码只检查其中一个字段，必须回到真实消费链路确认是否漏判。
+- 当最新提交是 test-only、comment-only 或只补验证，但 review 结论涉及生产行为时，必须把审查范围扩展到同一任务 / PR / `review_base_ref..HEAD` 的相关实现提交，并在 `review_scope` 写明累计 diff，而不是只审最新提交。
+- 对自动入队、自动恢复、fallback、snapshot hydrate、cache reuse、merge gate、权限绕过、Stage / selection / ownership 这类“只应在特定状态触发”的逻辑，必须同时审正向触发条件与负向保护条件。
+- 测试充分性不能只看 happy path：若修复是“off-state 时应执行恢复 / fallback”，也要检查“already-in-state / owned-by-group / excluded / locked / dirty”等负向用例是否防止误恢复或误覆盖。
+- 示例：在 Stage membership 类业务中，`fixtureListSelected` 不应被默认视为唯一 Stage 真源；需要继续搜索是否存在 group membership / collection membership / virtual membership 等等价入 Stage 口径，如 `isInFixtureListGroup`。
+- 若发现测试只覆盖正向路径、缺少负向业务不变量，应至少输出 non-blocking finding；若缺失的负向路径可能导致数据覆盖、设备误发码、权限绕过或持久化污染，应升级为 blocking finding。
+
 ### Validation Story Rules
 
 必须检查：
