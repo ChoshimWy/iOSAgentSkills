@@ -1,6 +1,6 @@
 ---
 name: ios-automation
-description: iOS 设备自动化 Skill，覆盖 Simulator 与真机两种目标，用于设备发现、模拟器生命周期、安装启动、语义导航、accessibility tree、UI smoke、截图取证与常见设备诊断；不要把 Build Settings、签名、Archive/Export、普通业务实现、测试编写或一次性构建验收误判到本 Skill。
+description: iOS 设备自动化 Skill，覆盖 Simulator 与真机两种目标，用于设备发现、模拟器生命周期、安装启动、语义 snapshot、snapshot-local 元素 refs、accessibility tree、UI smoke、replay 取证、截图取证与常见设备诊断；不要把 Build Settings、签名、Archive/Export、普通业务实现、测试编写或一次性构建验收误判到本 Skill。
 ---
 
 # iOS 设备自动化
@@ -25,8 +25,10 @@ Use this Skill when the task needs:
 - Simulator boot / shutdown / create / erase / delete。
 - App install / launch / terminate on Simulator or device。
 - UI navigation by text / accessibility。
+- Semantic UI snapshot with snapshot-local element refs such as `@e1`。
 - Accessibility tree inspection。
 - UI smoke execution。
+- Replayable exploratory UI flow capture。
 - Screenshot or visual evidence capture。
 - Device discovery and connected-device diagnosis。
 - Simulator status bar, clipboard, privacy permission, push notification setup。
@@ -56,9 +58,13 @@ Do not use this Skill when:
 ### Simulator Rules
 
 - Prefer structured UI data over pixels: `screen_mapper.py` + `navigator.py`.
+- Start UI navigation from semantic snapshots: run `screen_mapper.py --refs` before tapping by ref.
+- Treat `@e1` / `@e2` refs as snapshot-local only; refresh refs after navigation, scrolling, alerts, keyboard changes, or any state-changing action.
+- Use refs for same-screen actions (`navigator.py --ref @e1 --tap`) and text / accessibility identifiers for durable UI smoke specs.
 - Use text-before-pixels.
 - Use screenshots as evidence, not as the only state assertion.
 - Prefer accessibility tree and text assertions for UI smoke.
+- Convert useful exploratory flows into replayable UI smoke specs or recorder artifacts when the flow may need rerun / CI handoff.
 - Explicit `--udid` should override auto-selection.
 - Without `--udid`, prefer an already booted Simulator when appropriate.
 
@@ -81,9 +87,12 @@ Do not use this Skill when:
 
 ### Evidence Rules
 
-- Capture structured state when possible.
+- Capture structured state first: semantic refs, accessibility summary, app state, then screenshot / logs only when needed.
+- For successful same-screen navigation, prefer concise refs / assertions over screenshots.
+- On failure, capture the minimum useful bundle: first failing step, current semantic snapshot, accessibility excerpt, screenshot path, app state path, and relevant logs.
+- Store replay artifacts when the task is exploratory but likely reusable; do not paste full replay scripts if a path is enough.
 - Report device/simulator identifier, OS/runtime, bundle id, and command path.
-- Record evidence path for screenshots, accessibility dumps, app state, or logs.
+- Record evidence path for semantic snapshot, replay script, screenshots, accessibility dumps, app state, or logs.
 - Do not paste huge logs.
 - Do not claim UI state from screenshots alone if accessibility/text state contradicts it.
 
@@ -118,10 +127,12 @@ Do not use this Skill when:
 1. Classify target mode: simulator or physical device.
 2. Resolve target identifier and verify availability.
 3. Identify app bundle id, app path, workspace/scheme if needed.
-4. Run the narrowest automation task: install, launch, navigate, inspect, screenshot, diagnose, or UI smoke.
-5. Capture structured evidence.
-6. Report result and next action.
-7. If the issue is build/signing/configuration, route to the correct Skill.
+4. Capture semantic snapshot before UI actions when navigation is needed.
+5. Run the narrowest automation task: install, launch, navigate, inspect, screenshot, diagnose, or UI smoke.
+6. Capture structured evidence; escalate to screenshots/logs only when useful.
+7. Persist replay / UI smoke artifacts if the flow should be rerunnable.
+8. Report result and next action.
+9. If the issue is build/signing/configuration, route to the correct Skill.
 
 ## Simulator Workflow
 
@@ -131,8 +142,9 @@ Do not use this Skill when:
    - `python3 scripts/simulator/simctl_shutdown.py --all`
 3. Launch and state:
    - `python3 scripts/simulator/app_launcher.py --launch <bundle_id>`
-   - `python3 scripts/simulator/screen_mapper.py`
+   - `python3 scripts/simulator/screen_mapper.py --refs`
 4. Semantic interaction:
+   - `python3 scripts/simulator/navigator.py --ref @e1 --tap`
    - `python3 scripts/simulator/navigator.py --find-text "Login" --tap`
 5. Validation and diagnostics:
    - `python3 scripts/simulator/accessibility_audit.py`
@@ -180,6 +192,8 @@ Expected input contract:
   "workspace": "optional",
   "scheme": "optional",
   "ui_smoke_spec": ".codex/ui-smoke.yml",
+  "semantic_ref": "@e1",
+  "replay_output": ".codex/ui-smoke-artifacts/",
   "constraints": []
 }
 ```
@@ -203,6 +217,8 @@ Return compact structured output:
   "bundle_id": "com.example.app",
   "executed_commands": [],
   "evidence": {
+    "semantic_snapshot": "path-or-summary",
+    "replay": "path-or-none",
     "accessibility_tree": "path-or-summary",
     "screenshot": "path",
     "app_state": "path-or-summary",
@@ -275,6 +291,8 @@ Task: launch | navigate | inspect | ui-smoke | diagnose
 Target: <name / udid / device id>
 Bundle ID: <bundle id>
 Evidence:
+- semantic_snapshot: <path or summary>
+- replay: <path or none>
 - accessibility: <path or summary>
 - screenshot: <path or none>
 - app_state: <path or summary>
@@ -292,6 +310,7 @@ Next action: none | route-xcode-build | route-debugging | blocked
 
 ## Reference Resources
 
+- `references/semantic-snapshot-and-replay.md`
 - `references/accessibility_checklist.md`
 - `references/test_patterns.md`
 - `references/simctl_quick.md`

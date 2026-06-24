@@ -175,7 +175,7 @@ Accept existing evidence only when all are true:
 2. Evidence came from the target project root in the non-sandbox host environment when project-environment evidence is claimed.
 3. Baseline matches final delivery target or is clearly stronger.
 4. Targeted validation executed, or `no_test_reason` plus `suggested_validation` is explicit.
-5. Independent `code-review` has no blocking findings and reviewed the verification story.
+5. Independent `code-review` has no `阻塞问题` and reviewed the verification story.
 6. No project/dependency/signing/resource/device high-risk trigger requires stronger evidence.
 
 Escalate to `execute` / stronger verification when any are true:

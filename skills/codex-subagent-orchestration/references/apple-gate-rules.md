@@ -1,7 +1,7 @@
 # Apple/Xcode 项目可选证据验证规则
 
 ## 固定原则
-- 默认完成标准是定向验证或必要验证通过，且独立 reviewer subAgent 执行的 `code-review` 无 blocking findings；reviewer subAgent 不可用时只能 blocked / pending review。
+- 默认完成标准是定向验证或必要验证通过，且独立 reviewer subAgent 执行的 `code-review` 无 `阻塞问题`；reviewer subAgent 不可用时只能 blocked / pending review。
 - 涉及代码改动时，`ios-verification` 默认只执行最窄定向单测；真机 / 模拟器验证不属于默认执行面。
 - `ios-verification` 仅作为按需补强验证，由主 Agent 在用户显式要求、发布前自检或高风险时执行。
 - 凡是 iOS/Xcode 项目环境验证或升级验证需要执行 `xcodebuild` 参数探测 / build / test，都必须由主 Agent 使用 `functions.exec_command` 并设置 `sandbox_permissions="require_escalated"`，以非沙盒环境启动 `codex_verify.sh` / `~/.codex/bin/codex_verify`。

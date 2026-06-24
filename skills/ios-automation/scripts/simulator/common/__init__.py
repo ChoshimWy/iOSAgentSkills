@@ -22,9 +22,12 @@ from .device_utils import (
 )
 from .idb_utils import (
     count_elements,
+    element_center,
     flatten_tree,
     get_accessibility_tree,
     get_screen_size,
+    is_semantic_ref_node,
+    SEMANTIC_REF_TYPES,
 )
 from .screenshot_utils import (
     capture_screenshot,
@@ -44,6 +47,7 @@ __all__ = [
     "capture_screenshot",
     # idb_utils
     "count_elements",
+    "element_center",
     "flatten_tree",
     "format_screenshot_result",
     "generate_screenshot_name",
@@ -53,7 +57,9 @@ __all__ = [
     "get_device_screen_size",
     "get_screen_size",
     "get_size_preset",
+    "is_semantic_ref_node",
     "resize_screenshot",
     "resolve_udid",
+    "SEMANTIC_REF_TYPES",
     "transform_screenshot_coords",
 ]

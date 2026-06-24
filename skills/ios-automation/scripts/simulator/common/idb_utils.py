@@ -18,6 +18,21 @@ import json
 import subprocess
 import sys
 
+SEMANTIC_REF_TYPES = {
+    "Button",
+    "Link",
+    "TextField",
+    "SecureTextField",
+    "Cell",
+    "Switch",
+    "Slider",
+    "Stepper",
+    "SegmentedControl",
+    "TabBar",
+    "NavigationBar",
+    "Toolbar",
+}
+
 
 def get_accessibility_tree(udid: str | None = None, nested: bool = True) -> dict:
     """
@@ -141,6 +156,36 @@ def count_elements(node: dict) -> int:
     for child in node.get("children", []):
         count += count_elements(child)
     return count
+
+
+def element_center(node: dict) -> tuple[int, int] | None:
+    """
+    Return integer center point for a node frame when all frame fields exist.
+
+    Used by semantic ref producers and consumers so `@e` numbering stays
+    consistent across scripts.
+    """
+    frame = node.get("frame") or {}
+    try:
+        x = int(float(frame["x"]) + float(frame["width"]) / 2)
+        y = int(float(frame["y"]) + float(frame["height"]) / 2)
+        return (x, y)
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
+def is_semantic_ref_node(node: dict) -> bool:
+    """
+    Return true when a node should receive a snapshot-local `@e` ref.
+
+    Keep this predicate strict and shared: the producer (`screen_mapper.py`) and
+    consumer (`navigator.py`) must assign refs to the exact same node sequence.
+    """
+    return (
+        node.get("enabled", False) is True
+        and node.get("type") in SEMANTIC_REF_TYPES
+        and element_center(node) is not None
+    )
 
 
 def get_screen_size(udid: str | None = None) -> tuple[int, int]:

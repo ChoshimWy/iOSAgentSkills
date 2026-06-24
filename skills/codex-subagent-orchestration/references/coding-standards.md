@@ -18,12 +18,13 @@
 
 ## reviewer explorer
 - 只基于当前代码与 diff 做静态读审，不把“可能有问题”包装成已复现事实。
-- `blocking_findings` 只放真实阻塞项，例如正确性错误、并发隔离缺口、availability 缺口、明显回归风险或公共契约破坏。
+- 可见回复必须使用中文 Markdown 表格，字段写 `阻塞问题` / `非阻塞建议`，不要裸露英文审查字段。
+- `阻塞问题` 只放真实阻塞项，例如正确性错误、并发隔离缺口、availability 缺口、明显回归风险或公共契约破坏。
 - 若变更误落在 `Pods/<LibraryName>`，且上下文显示该库来自本地 `:path` Pod / 私有组件联调，默认判定为真实阻塞项。
-- 风格、命名、可读性或可延后优化统一归入 `non_blocking_findings`。
-- findings 默认按严重度降序输出，优先指出首个真实阻塞点。
-- 若无阻塞项，写 `blocking_findings: []`，不要展开长解释。
-- 输出同时补齐 `checkpoint_status` / `first_failure` / `next_action`；若存在阻塞项，`next_action` 不能是 `complete`。
+- 风格、命名、可读性或可延后优化统一归入 `非阻塞建议`。
+- 审查问题默认按严重度降序输出，优先指出首个真实阻塞点。
+- 若无阻塞项，写 `阻塞问题：无`，不要展开长解释。
+- 输出同时补齐 `checkpoint_status` / `首个失败` / `下一步`；若存在阻塞项，`下一步` 不能是 `complete`。
 
 ## tester
 - 默认先判断验证面、回归面和必要验证路径，再决定是否需要补测试代码（通过 `ios-feature-implementation(test-implementation)`）。

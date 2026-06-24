@@ -4,8 +4,19 @@
 ```bash
 xcrun simctl boot <udid>
 xcrun simctl launch booted <bundle-id>
-python scripts/accessibility_audit.py
+python3 scripts/simulator/screen_mapper.py --refs --udid <udid>
+python3 scripts/simulator/accessibility_audit.py
 xcrun simctl io booted screenshot smoke.png
+```
+
+## Semantic Snapshot Navigation
+```bash
+# Capture low-token actionable refs.
+python3 scripts/simulator/screen_mapper.py --refs --max-refs 8 --udid <udid>
+
+# Use a ref only for the current screen; refresh after the action.
+python3 scripts/simulator/navigator.py --ref @e1 --tap --udid <udid>
+python3 scripts/simulator/screen_mapper.py --refs --max-refs 8 --udid <udid>
 ```
 
 ## Visual Regression
@@ -63,10 +74,10 @@ from scripts.test_recorder import TestRecorder
 
 rec = TestRecorder("Login Test")
 rec.step("Launch app")
-# idb ui tap 200 400  # Login button
+# python3 scripts/simulator/navigator.py --find-text "Login" --tap
 rec.step("Enter credentials")
 # idb ui text "user@example.com"
 rec.step("Submit")
-# idb ui tap 200 500
+# python3 scripts/simulator/navigator.py --find-text "Submit" --tap
 rec.generate_report()
 ```

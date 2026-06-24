@@ -33,15 +33,15 @@
 - 同一类问题最多回写 coder 2 次
 - 如果问题仍未收敛，主 Agent 直接收口为 blocked
 - 如果定向验证、审查或按需完整验证被环境阻塞，主 Agent 明确报告阻塞点，不继续盲目循环
-- 定向验证失败或 `code-review` 存在 blocking findings 时，不得宣告默认收口完成
-- 定向验证失败、独立 reviewer subAgent 未执行、或 `code-review` 存在 blocking findings 时，不得宣告默认收口完成
+- 定向验证失败或 `code-review` 存在 `阻塞问题` 时，不得宣告默认收口完成
+- 定向验证失败、独立 reviewer subAgent 未执行、或 `code-review` 存在 `阻塞问题` 时，不得宣告默认收口完成
 - 已达到同类问题回环上限时，`next_action` 只能是 `blocked`，不能标记为 `complete`
 
 ## Fail-Fix-Report
 - `fail`：发现阻塞项时，先锁定首个真实失败点，不并发追加噪声问题。
 - `fix`：可修复则先修复，并在同一基线重跑必要验证。
 - `report`：仅报告“已修复并重跑”或“blocked 原因明确”两类状态。
-- 禁止带着已知 blocking finding 直接汇报完成。
+- 禁止带着已知 `阻塞问题` 直接汇报完成。
 
 ## 权限与升级
 - 普通仓库读取、静态审查与文档比对默认留在 sandbox 内完成。

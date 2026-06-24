@@ -135,7 +135,7 @@ def main() -> int:
                 "-> code-review",
                 "then `code-review`",
                 "plus `code-review`",
-                "且 `code-review` 无 blocking findings",
+                "且 `code-review` 无 `阻塞问题`",
                 "定向验证与 code-review 收口",
                 "只有显式授权原生 subAgent 时才拆成独立 subAgent",
                 "只有我显式要求 subAgent / parallel agent / delegation 时才调用",

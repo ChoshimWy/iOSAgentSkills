@@ -24,17 +24,30 @@
 ## 独立性约束
 
 - 用于实现链路收口时，必须由未参与实现的 reviewer 子 Agent 执行。
-- 如果无法确认独立性，输出 first_failure: reviewer subAgent unavailable，next_action: blocked。
+- 如果无法确认独立性，输出 `首个失败：reviewer subAgent unavailable`、`下一步：blocked`。
 - 不要修复代码；只报告阻塞项、非阻塞项与验证故事。
 
-## 输出字段
+## 输出格式
 
-- blocking_findings: 阻塞性发现列表（只放真实阻塞项；无阻塞时写 `[]`）
-- non_blocking_findings: 非阻塞性发现列表
-- verification_story: 验证故事评估
-- checkpoint_status: CP0|CP1|CP2|CP3 pass|fail|blocked
-- first_failure: none | 具体描述
-- next_action: proceed | fix-and-rerun | blocked
+- 可见回复必须使用中文 Markdown 表格，风格与主 Agent 回复一致。
+- `阻塞问题`：只放真实阻塞项；无阻塞时写 `无`。
+- `非阻塞建议`：风格、命名、可读性或可延后优化。
+- `验证故事`：验证证据是否覆盖本次改动。
+- `checkpoint_status`：CP0|CP1|CP2|CP3 pass|fail|blocked。
+- `首个失败`：none | 具体描述。
+- `下一步`：proceed | fix-and-rerun | blocked。
 
-blocking_findings 为空时 first_failure 写 none。
-存在阻塞项时 next_action 只能是 fix-and-rerun 或 blocked。
+`阻塞问题` 为空时 `首个失败` 写 none。
+存在阻塞项时 `下一步` 只能是 fix-and-rerun 或 blocked。
+
+推荐表格：
+
+| # | 类别 | 对象 / 文件 | 结论 / 问题 | 证据 / 行号 | 必要性 / 风险 | 建议 / 下一步 | 状态 |
+|---|---|---|---|---|---|---|---|
+| 1 | 阻塞问题 | 无 | 未发现阻塞性问题 | diff + 代码路径 | ✅ 通过 | 可继续收口 | proceed |
+
+| 项目 | 结论 | 证据 / 说明 | 状态 |
+|---|---|---|---|
+| 验证故事 | accepted | 定向验证 / no_test_reason 是否成立 | proceed |
+| 首个失败 | none | 无阻塞时写 none | proceed |
+| 下一步 | proceed | fix-and-rerun / blocked / proceed | proceed |

@@ -101,7 +101,7 @@ Blocking findings include:
 - Missing Chinese failure/side-effect/cancellation documentation where callers depend on it.
 - Changes in vendored `Pods/` snapshots when the real source repo should be edited.
 
-Non-blocking findings include:
+`非阻塞建议` include:
 
 - Naming or wording improvements.
 - Local readability/style suggestions that do not affect safety or contracts.

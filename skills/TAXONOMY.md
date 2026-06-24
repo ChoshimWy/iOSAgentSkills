@@ -14,7 +14,7 @@
 
 - iOS 开发任务默认先进入 `codex-subagent-orchestration`；由主入口决定单 Agent 还是 `lite` / `standard` / `full` 编排，再按需路由到统一实施、统一验证、审查、调试、性能与构建模块。
 - 修复 / 实现任务即使未手动进入 Plan 模式，也必须在写入前完成 CP0 最小计划；允许先做只读定位，但禁止从代码查找直接进入实现。
-- 默认完成标准：定向测试或必要验证通过，且独立 reviewer subAgent 执行的 `code-review` 无 blocking findings。
+- 默认完成标准：定向测试或必要验证通过，且独立 reviewer subAgent 执行的 `code-review` 无 `阻塞问题`。
 - 测试代码编写、Mock / Stub / Spy / Fake、fixture、Page Object 与最小 testability seam 默认归入 `ios-feature-implementation` 的 `test-implementation` mode。
 - 涉及代码改动时，验证阶段默认只执行**最窄定向单测**：优先 `-only-testing` 到单个 test case / test class，其次最小受影响 test file / bundle；真机 / 模拟器验证不属于默认验证执行面。
 - 如果当前改动不适合运行测试，验证阶段必须给出 `no_test_reason` 与替代验证依据，然后交给独立 reviewer subAgent 执行 `code-review`。
@@ -51,7 +51,7 @@
 
 | Skill | 角色 | 主触发场景 | 不要触发的场景 | 切换到 |
 | --- | --- | --- | --- | --- |
-| `ios-automation` | 设备自动化（Simulator + 真机统一入口） | 模拟器生命周期、安装启动、导航、无障碍、截图、真机诊断 | Build Settings / 签名策略设计、普通业务实现、默认验证收口 | `xcode-build`、`ios-feature-implementation`、`ios-verification` |
+| `ios-automation` | 设备自动化（Simulator + 真机统一入口） | 模拟器生命周期、安装启动、语义 snapshot、snapshot-local 元素 refs、UI smoke、replay 取证、无障碍、截图、真机诊断 | Build Settings / 签名策略设计、普通业务实现、默认验证收口 | `xcode-build`、`ios-feature-implementation`、`ios-verification` |
 | `xcode-build` | 构建配置与交付链路 | Build Settings、签名、Archive、导出 IPA、CI/CD、scheme、xcconfig、build script、XCFramework | 一次性 build/test 验证、默认收口审查、测试代码编写 | `ios-verification`、`code-review`、`ios-feature-implementation` |
 | `ios-verification` | 统一验证入口 | 验证前路由、受影响测试选择、定向 XCTest、项目环境 build/test、失败摘要、final evidence gate、重复验证抑制 | 测试代码编写、构建配置设计、运行时调试、性能 profiling、设备导航自动化 | `ios-feature-implementation`、`code-review`、`xcode-build`、`ios-automation`、`debugging`、`ios-performance` |
 

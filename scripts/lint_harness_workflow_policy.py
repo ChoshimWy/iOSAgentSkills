@@ -237,7 +237,7 @@ def main() -> int:
             "`CP2 Validation Baseline Freeze`",
             "`CP3 Final Gate`",
             "## Fail-Fix-Report",
-            "定向验证失败或 `code-review` 存在 blocking findings 时，不得宣告默认收口完成",
+            "定向验证失败或 `code-review` 存在 `阻塞问题` 时，不得宣告默认收口完成",
             "除实现链路 reviewer subAgent 必须独立启动外",
             "该计划不依赖手动 Plan 模式",
         ],
@@ -246,7 +246,7 @@ def main() -> int:
     require_contains(
         SKILL_ROOT / "references" / "prompt-templates.md",
         [
-            "first_failure（仅当存在阻塞项时填写）",
+            "first_failure（仅当调用方要求机器字段时填写）",
             "first_failure: <none|首个真实失败点>",
             "next_action: <fix-and-rerun|blocked|complete>",
             "`checkpoint_status`：显式汇报 `CP0` / `CP1` / `CP2` / `CP3` 的 pass|fail|blocked",
@@ -298,7 +298,7 @@ def main() -> int:
     )
     require_contains(
         ROOT / "skills" / "code-review" / "SKILL.md",
-        ["blocking_findings", "non_blocking_findings", "first_failure", "next_action", "blocking_findings: []"],
+        ["阻塞问题", "非阻塞建议", "首个失败", "下一步", "阻塞问题：无"],
         failures,
     )
     require_contains(

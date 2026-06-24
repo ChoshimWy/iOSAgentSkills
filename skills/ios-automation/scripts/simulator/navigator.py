@@ -20,19 +20,22 @@ Key Features:
 
 Usage Examples:
     # Find and tap a button by text
-    python scripts/navigator.py --find-text "Login" --tap --udid <device-id>
+    python3 scripts/simulator/navigator.py --find-text "Login" --tap --udid <device-id>
 
     # Enter text into first text field
-    python scripts/navigator.py --find-type TextField --index 0 --enter-text "username" --udid <device-id>
+    python3 scripts/simulator/navigator.py --find-type TextField --index 0 --enter-text "username" --udid <device-id>
 
     # Tap element by accessibility ID
-    python scripts/navigator.py --find-id "submitButton" --tap --udid <device-id>
+    python3 scripts/simulator/navigator.py --find-id "submitButton" --tap --udid <device-id>
 
     # List all interactive elements
-    python scripts/navigator.py --list --udid <device-id>
+    python3 scripts/simulator/navigator.py --list --udid <device-id>
 
     # Tap at specific coordinates (fallback)
-    python scripts/navigator.py --tap-at 200,400 --udid <device-id>
+    python3 scripts/simulator/navigator.py --tap-at 200,400 --udid <device-id>
+
+    # Tap semantic ref from screen_mapper.py --refs
+    python3 scripts/simulator/navigator.py --ref @e1 --tap --udid <device-id>
 
 Output Format:
     Tapped: Button "Login" at (320, 450)
@@ -56,6 +59,7 @@ Technical Details:
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 import time
@@ -65,6 +69,7 @@ from common import (
     flatten_tree,
     get_accessibility_tree,
     get_device_screen_size,
+    is_semantic_ref_node,
     resolve_udid,
     transform_screenshot_coords,
 )
@@ -81,6 +86,7 @@ class Element:
     frame: dict[str, float]
     traits: list[str]
     enabled: bool = True
+    ref: str | None = None
 
     @property
     def center(self) -> tuple[int, int]:
@@ -93,7 +99,8 @@ class Element:
     def description(self) -> str:
         """Human-readable description."""
         label = self.label or self.value or self.identifier or "Unnamed"
-        return f'{self.type} "{label}"'
+        prefix = f"{self.ref} " if self.ref else ""
+        return f'{prefix}{self.type} "{label}"'
 
 
 class Navigator:
@@ -129,6 +136,8 @@ class Navigator:
                 traits=node.get("traits", []),
                 enabled=node.get("enabled", True),
             )
+            if is_semantic_ref_node(node):
+                element.ref = f"@e{sum(1 for item in elements if item.ref) + 1}"
             elements.append(element)
 
         # Process children
@@ -136,6 +145,23 @@ class Navigator:
             self._flatten_tree(child, elements)
 
         return elements
+
+    def find_element_by_ref(self, element_ref: str) -> Element | None:
+        """
+        Find an element by semantic ref from the current accessibility snapshot.
+
+        Refs are snapshot-local and should be refreshed after any UI state change.
+        """
+        normalized_ref = element_ref.strip()
+        if re.fullmatch(r"e\d+", normalized_ref):
+            normalized_ref = f"@{normalized_ref}"
+        if not re.fullmatch(r"@e\d+", normalized_ref):
+            return None
+
+        for element in self.list_elements(force_refresh=True):
+            if element.ref == normalized_ref:
+                return element
+        return None
 
     def list_elements(self, force_refresh: bool = False) -> list[Element]:
         """Get flat list of all UI elements on current screen."""
@@ -342,6 +368,7 @@ class Navigator:
         text: str | None = None,
         element_type: str | None = None,
         identifier: str | None = None,
+        element_ref: str | None = None,
         index: int = 0,
     ) -> tuple[bool, str]:
         """
@@ -350,10 +377,16 @@ class Navigator:
         Returns:
             (success, message) tuple
         """
-        element = self.find_element(text, element_type, identifier, index)
+        element = (
+            self.find_element_by_ref(element_ref)
+            if element_ref
+            else self.find_element(text, element_type, identifier, index)
+        )
 
         if not element:
             criteria = []
+            if element_ref:
+                criteria.append(f"ref='{element_ref}'")
             if text:
                 criteria.append(f"text='{text}'")
             if element_type:
@@ -372,6 +405,7 @@ class Navigator:
         find_text: str | None = None,
         element_type: str | None = "TextField",
         identifier: str | None = None,
+        element_ref: str | None = None,
         index: int = 0,
     ) -> tuple[bool, str]:
         """
@@ -380,10 +414,17 @@ class Navigator:
         Returns:
             (success, message) tuple
         """
-        element = self.find_element(find_text, element_type, identifier, index)
+        element = (
+            self.find_element_by_ref(element_ref)
+            if element_ref
+            else self.find_element(find_text, element_type, identifier, index)
+        )
 
         if not element:
             return (False, "TextField not found")
+
+        if element_ref and element.type not in ("TextField", "SecureTextField"):
+            return (False, f"Ref {element_ref} is {element.type}, not a text input")
 
         if self.enter_text(text_to_enter, element):
             return (True, f"Entered text in: {element.description}")
@@ -399,6 +440,10 @@ def main():
     parser.add_argument("--find-exact", help="Find element by exact text")
     parser.add_argument("--find-type", help="Element type (Button, TextField, etc.)")
     parser.add_argument("--find-id", help="Accessibility identifier")
+    parser.add_argument(
+        "--ref",
+        help="Semantic ref from screen_mapper.py --refs, e.g. @e1. Valid only for current screen",
+    )
     parser.add_argument("--index", type=int, default=0, help="Which match to use (0-based)")
 
     # Action options
@@ -484,7 +529,8 @@ def main():
 
         print(f"Tappable elements ({len(tappable)}):")
         for elem in tappable[:10]:  # Limit output for tokens
-            print(f"  {elem.type}: \"{elem.label or elem.value or 'Unnamed'}\" {elem.center}")
+            ref = f"{elem.ref} " if elem.ref else ""
+            print(f"  {ref}{elem.type}: \"{elem.label or elem.value or 'Unnamed'}\" {elem.center}")
 
         if len(tappable) > 10:
             print(f"  ... and {len(tappable) - 10} more")
@@ -533,7 +579,11 @@ def main():
         fuzzy = args.find_text is not None
 
         success, message = navigator.find_and_tap(
-            text=text, element_type=args.find_type, identifier=args.find_id, index=args.index
+            text=text,
+            element_type=args.find_type,
+            identifier=args.find_id,
+            element_ref=args.ref,
+            index=args.index,
         )
 
         print(message)
@@ -549,6 +599,7 @@ def main():
             find_text=text,
             element_type=args.find_type or "TextField",
             identifier=args.find_id,
+            element_ref=args.ref,
             index=args.index,
         )
 
@@ -561,12 +612,16 @@ def main():
         text = args.find_text or args.find_exact
         fuzzy = args.find_text is not None
 
-        element = navigator.find_element(
-            text=text,
-            element_type=args.find_type,
-            identifier=args.find_id,
-            index=args.index,
-            fuzzy=fuzzy,
+        element = (
+            navigator.find_element_by_ref(args.ref)
+            if args.ref
+            else navigator.find_element(
+                text=text,
+                element_type=args.find_type,
+                identifier=args.find_id,
+                index=args.index,
+                fuzzy=fuzzy,
+            )
         )
 
         if element:

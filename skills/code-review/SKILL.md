@@ -7,7 +7,7 @@ description: iOS/Swift 静态代码审查 Skill。用于 review diff、PR、SDK 
 
 ## Purpose
 
-Review iOS/macOS code changes, identify correctness and maintainability risks, evaluate verification sufficiency, and produce structured review findings with clear severity and ownership.
+Review iOS/macOS code changes, identify correctness and maintainability risks, evaluate verification sufficiency, and produce structured review results with clear severity and ownership.
 
 ## 中文说明
 
@@ -18,7 +18,7 @@ Review iOS/macOS code changes, identify correctness and maintainability risks, e
 - 发现正确性、安全性、内存、并发、性能与可维护性问题。
 - 审查 public/open API、SDK 接口与调用契约。
 - 审查测试与验证故事是否成立。
-- 输出结构化 Findings 和风险结论。
+- 输出结构化审查发现和风险结论。
 
 不负责：
 - 直接修复代码。
@@ -61,14 +61,15 @@ Review iOS/macOS code changes, identify correctness and maintainability risks, e
 
 - 用于实现链路收口时，必须由未参与本轮实现的独立 reviewer subAgent 执行。
 - 同一 Agent 先实现再执行本 Skill 的审查结论无效，不能作为完成条件。
-- 如果无法确认 reviewer 独立性或无法启动 reviewer subAgent，输出 `status: blocked`、`first_failure: reviewer subAgent unavailable`、`next_action: blocked`。
+- 如果无法确认 reviewer 独立性或无法启动 reviewer subAgent，可见回复写 `status: blocked` / `首个失败：reviewer subAgent unavailable` / `下一步：blocked`，并用中文表格呈现。
 - 纯 review 请求也应由独立 reviewer subAgent 执行；如果平台无法启动 reviewer subAgent，必须说明审查独立性缺口。
 
 ### Evidence Rules
 
-- Findings 必须优先输出。
-- Findings 按严重等级排序。
-- 无阻塞项时必须显式输出 `blocking_findings: []`。
+- 审查发现必须优先输出，并使用与主回复一致的紧凑 Markdown 表格。
+- 审查发现按严重等级排序。
+- 可见回复字段默认中文化：`阻塞问题`、`非阻塞建议`、`审查范围`、`影响面`、`未审查变更`、`首个失败`、`验证故事`、`审查独立性`、`风险等级`、`下一步`。
+- 无阻塞项时必须显式输出 `阻塞问题：无`；不要在可见回复中裸露 `blocking_findings: []`，除非调用方明确要求机器可读 JSON。
 - 必须尽量绑定文件和行号。
 - 不得伪造运行时证据。
 - 缺少证据时必须明确说明限制。
@@ -97,7 +98,7 @@ Review iOS/macOS code changes, identify correctness and maintainability risks, e
 - 对自动入队、自动恢复、fallback、snapshot hydrate、cache reuse、merge gate、权限绕过、Stage / selection / ownership 这类“只应在特定状态触发”的逻辑，必须同时审正向触发条件与负向保护条件。
 - 测试充分性不能只看 happy path：若修复是“off-state 时应执行恢复 / fallback”，也要检查“already-in-state / owned-by-group / excluded / locked / dirty”等负向用例是否防止误恢复或误覆盖。
 - 示例：在 Stage membership 类业务中，`fixtureListSelected` 不应被默认视为唯一 Stage 真源；需要继续搜索是否存在 group membership / collection membership / virtual membership 等等价入 Stage 口径，如 `isInFixtureListGroup`。
-- 若发现测试只覆盖正向路径、缺少负向业务不变量，应至少输出 non-blocking finding；若缺失的负向路径可能导致数据覆盖、设备误发码、权限绕过或持久化污染，应升级为 blocking finding。
+- 若发现测试只覆盖正向路径、缺少负向业务不变量，应至少输出为 `非阻塞建议`；若缺失的负向路径可能导致数据覆盖、设备误发码、权限绕过或持久化污染，应升级为 `阻塞问题`。
 
 ### Validation Story Rules
 
@@ -122,8 +123,8 @@ Review iOS/macOS code changes, identify correctness and maintainability risks, e
 
 ### Coding Standards Reference
 
-- Use `skills/ios-feature-implementation/references/coding-standards.md` as the shared standard when classifying style, documentation, public API, concurrency, UI ownership, or private dependency findings.
-- Apply that reference as review policy; do not turn non-blocking style preferences into blocking findings unless they violate the blocking criteria.
+- Use `skills/ios-feature-implementation/references/coding-standards.md` as the shared standard when classifying style, documentation, public API, concurrency, UI ownership, or private dependency review results.
+- Apply that reference as review policy; do not turn `非阻塞建议` style preferences into `阻塞问题` unless they violate the blocking criteria.
 
 ### Comment Rules
 
@@ -147,7 +148,7 @@ Review iOS/macOS code changes, identify correctness and maintainability risks, e
 - 不读取完整 xcresult dump。
 - 不重复输出大段 diff。
 - 优先让本地脚本或窄范围命令生成 review packet（scoped diff、changed files、关键符号、验证摘要），reviewer 只消费必要证据。
-- Findings 优先于代码摘录。
+- 审查发现优先于代码摘录。
 - 输出应聚焦阻塞项与风险。
 
 ## Inputs
@@ -165,6 +166,8 @@ Review iOS/macOS code changes, identify correctness and maintainability risks, e
 
 ## Outputs
 
+以下 JSON 字段是内部 / 机器交接合同；面向用户的可见回复必须按 `Reporting Template` 使用中文表格标签。
+
 ```json
 {
   "status": "complete | blocked | partial",
@@ -174,16 +177,31 @@ Review iOS/macOS code changes, identify correctness and maintainability risks, e
   "impact_scope": "...",
   "unreviewed_changes": "none",
   "first_failure": "none",
-  "verification_story": "accepted | needs-ios-verification | needs-ios-verification | insufficient",
+  "verification_story": "accepted | needs-ios-verification | insufficient",
   "risk_level": "low | medium | high",
   "reviewer_independence": "independent-subagent | pure-review | unavailable",
   "next_action": "fix-and-rerun | blocked | complete"
 }
 ```
 
+字段中文映射：
+
+| 内部字段 | 可见中文标签 |
+| --- | --- |
+| `blocking_findings` | 阻塞问题 |
+| `non_blocking_findings` | 非阻塞建议 |
+| `review_scope` | 审查范围 |
+| `impact_scope` | 影响面 |
+| `unreviewed_changes` | 未审查变更 |
+| `first_failure` | 首个失败 |
+| `verification_story` | 验证故事 |
+| `reviewer_independence` | 审查独立性 |
+| `risk_level` | 风险等级 |
+| `next_action` | 下一步 |
+
 ## Severity Format
 
-### Blocking
+### 阻塞问题
 
 ```text
 🔴 [File:Line]
@@ -191,7 +209,7 @@ Issue
 Suggestion
 ```
 
-### Non Blocking
+### 非阻塞建议
 
 ```text
 🟡 [File:Line]
@@ -212,15 +230,15 @@ Positive observation
 ### complete
 
 - 审查已由独立 reviewer subAgent 执行；实现链路收口审查确认未由实现 Agent 自审。
-- blocking_findings 为空。
-- review_scope 明确。
-- impact_scope 已覆盖。
-- verification_story 已给出。
+- `阻塞问题` 为空 / 无。
+- `审查范围` 明确。
+- `影响面` 已覆盖。
+- `验证故事` 已给出。
 
 ### blocked
 
 - 实现链路收口审查无法确认独立 reviewer subAgent 或 reviewer subAgent 不可用。
-- 存在 blocking_findings。
+- 存在 `阻塞问题`。
 - 存在未确认高风险影响面。
 - 验证故事无法成立。
 
@@ -263,35 +281,25 @@ Positive observation
 ## Reporting Template
 
 ```text
-blocking_findings:
-  - ...
+审查结果：
 
-non_blocking_findings:
-  - ...
+| # | 类别 | 对象 / 文件 | 结论 / 问题 | 证据 / 行号 | 必要性 / 风险 | 建议 / 下一步 | 状态 |
+|---|---|---|---|---|---|---|---|
+| 1 | 阻塞问题 | 无 | 未发现阻塞性问题 | diff + 代码路径 | ✅ 通过 | 可继续收口 | complete |
+| 2 | 非阻塞建议 | path/file.swift | 可延后优化点 | L10-L20 | ⚠️ 可选 | 后续迭代处理 | complete |
 
-review_scope:
-  ...
+审查范围与门禁：
 
-impact_scope:
-  ...
-
-unreviewed_changes:
-  none
-
-first_failure:
-  none
-
-verification_story:
-  accepted
-
-reviewer_independence:
-  independent-subagent
-
-risk_level:
-  low
-
-next_action:
-  complete
+| 项目 | 结论 | 证据 / 说明 | 状态 |
+|---|---|---|---|
+| 审查范围 | ... | review_base_ref / staged / unstaged / untracked | complete |
+| 影响面 | ... | 调用方 / 契约 / 副作用边界 | complete |
+| 未审查变更 | none | 无遗漏时写 none | complete |
+| 首个失败 | none | 无阻塞时写 none | complete |
+| 验证故事 | accepted | 定向验证或 no_test_reason 是否成立 | complete |
+| 审查独立性 | independent-subagent | 实现链路必须独立 reviewer subAgent | complete |
+| 风险等级 | low | low / medium / high | complete |
+| 下一步 | complete | fix-and-rerun / blocked / complete | complete |
 ```
 
 ## Reference Resources

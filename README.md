@@ -15,7 +15,7 @@
 - `ios-feature-implementation/` —— 唯一 iOS 代码实施入口；内部按 `business` / `swiftui` / `liquid-glass` / `uikit` / `mixed-ui` / `advanced-swift` / `refactor` / `sdk-contract` 模式细分
 
 ### Automation / Build / Validation
-- `ios-automation/`
+- `ios-automation/` —— Simulator / 真机自动化；优先语义 snapshot 与 snapshot-local 元素 refs，按需采集截图、日志、UI smoke / replay 证据
 - `ios-verification/`
 - `xcode-build/`
 - `codex-subagent-orchestration/` —— 默认优先的自适应编排入口；除 code-review 必须使用独立 reviewer subAgent 外，本仓不对其它 subAgent 使用做额外限制
@@ -130,7 +130,7 @@ python3 scripts/validate_codex_agent_templates.py config/codex/templates/agents
 
 ## 默认收口与可选证据验证
 
-- 默认完成标准：定向验证或必要验证通过，且独立 reviewer subAgent 执行的 `code-review` 无 blocking findings。
+- 默认完成标准：定向验证或必要验证通过，且独立 reviewer subAgent 执行的 `code-review` 无 `阻塞问题`。
 - 涉及代码改动时，`ios-verification` 默认只执行**最窄定向单测**：优先 `-only-testing` 到单个 test case / test class，其次最小受影响 test file / bundle；真机 / 模拟器验证不属于默认验证执行面。
 - 如果当前改动不适合运行测试，验证阶段必须给出 `no_test_reason` 与替代验证依据，然后交给独立 reviewer subAgent 执行 `code-review`。
 - 如果当前改动没有可低成本执行的单测路径，验证阶段必须给出 `no_test_reason` 与 `suggested_validation`，且不要自动升级到真机 / 模拟器验证。

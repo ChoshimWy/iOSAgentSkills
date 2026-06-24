@@ -7,7 +7,7 @@
 - ownership（允许修改的文件/模块）
 - 成功标准
 - 禁止改动范围
-- 当前 reviewer / tester / gate findings（若是修复轮）
+- 当前 reviewer / tester / gate 审查与验证结论（若是修复轮）
 
 ### 输出
 - `changed_files`
@@ -40,26 +40,27 @@
 - 风险关注点（如并发、availability、边界）
 
 ### 输出
-- `review_scope`
-- `impact_scope`
-- `unreviewed_changes`
-- `blocking_findings`
-- `non_blocking_findings`
+- `审查范围`
+- `影响面`
+- `未审查变更`
+- `阻塞问题`
+- `非阻塞建议`
 - `checkpoint_status`
-- `first_failure`
-- `next_action`
+- `首个失败`
+- `下一步`
 
 ### 额外要求
 - 必须由未参与本轮实现的独立 reviewer subAgent 执行；同一 Agent 实现后自审无效
-- 如果 reviewer subAgent 无法启动，返回 `next_action: blocked` 并声明 `first_failure: reviewer subAgent unavailable`
-- `blocking_findings` 只放真实阻塞项
-- 若无阻塞项，写 `blocking_findings: []`，不要展开长解释
-- `review_scope` 必须说明基线与纳入审查的 staged / unstaged / untracked / 提交范围
-- `impact_scope` 必须说明已审查的直接调用方、契约边界与副作用边界
-- `unreviewed_changes` 无遗漏时写 `none`，否则列出未审查差异或影响面
-- findings 默认按严重度降序输出
-- `first_failure` 无阻塞时写 `none`
-- 存在阻塞项时，`next_action` 只能是 `fix-and-rerun` 或 `blocked`
+- 可见回复必须使用中文 Markdown 表格，列风格与主 Agent 回复一致
+- 如果 reviewer subAgent 无法启动，返回 `下一步: blocked` 并声明 `首个失败: reviewer subAgent unavailable`
+- `阻塞问题` 只放真实阻塞项
+- 若无阻塞项，写 `阻塞问题：无`，不要展开长解释
+- `审查范围` 必须说明基线与纳入审查的 staged / unstaged / untracked / 提交范围
+- `影响面` 必须说明已审查的直接调用方、契约边界与副作用边界
+- `未审查变更` 无遗漏时写 `none`，否则列出未审查差异或影响面
+- 审查问题默认按严重度降序输出
+- `首个失败` 无阻塞时写 `none`
+- 存在阻塞项时，`下一步` 只能是 `fix-and-rerun` 或 `blocked`
 
 ### 不负责
 - 直接改代码

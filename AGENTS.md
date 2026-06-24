@@ -36,7 +36,7 @@
 - 除 `code-review` 必须由独立 reviewer subAgent 执行外，本仓不对其它 subAgent 的启动场景、角色拆分或数量做额外限制；主 Agent 可按当前任务与运行时能力自行决定是否使用 coder / tester / pm / reporter 等 subAgent。实现后的 `code-review` 必须交给独立 reviewer subAgent，避免同一 Agent 实现后自审。若 reviewer subAgent 不可用，本次实现任务不得宣告完成，必须报告 blocked / pending review。
 - 默认逻辑角色集合为 `explorer + builder + reporter`；这些角色默认可由主 Agent 串行承担，但实现链路的 reviewer 是强制独立角色，必须由未参与实现的 reviewer subAgent 执行。
 - 实现型任务默认三步收口：主入口 Skill / 实现 Skill -> 定向验证 -> 独立 reviewer subAgent 执行 `code-review`。
-- 审查型任务默认交给独立 reviewer subAgent 执行并优先输出 blocking findings；没有阻塞项时要明确说明无 blocking findings，并指出剩余风险或验证缺口。
+- 审查型任务默认交给独立 reviewer subAgent 执行并优先用中文表格输出 `阻塞问题`；没有阻塞项时要明确说明 `阻塞问题：无`，并指出剩余风险或验证缺口。
 - 高风险任务才升级更强验证；不要把完整 build、Archive、真机验证或 FULL verification 当成默认收尾动作。
 - 路由细节、验证升级条件和 Skill 切换规则以下游 Skill 与 `skills/TAXONOMY.md` 为准。
 
@@ -117,5 +117,5 @@ python scripts/lint_skill_schema.py --strict
 ## 完成标准
 
 - `doc-only` / `rule-only` 任务：内容已更新，交叉引用一致，无多余改动。
-- 实现任务：已完成定向测试或必要验证，且独立 reviewer subAgent 执行的 `code-review` 无 blocking findings；如无法测试，已明确 `no_test_reason` 与替代验证建议。
+- 实现任务：已完成定向测试或必要验证，且独立 reviewer subAgent 执行的 `code-review` 无 `阻塞问题`；如无法测试，已明确 `no_test_reason` 与替代验证建议。
 - 最终回复默认包含：改了什么、如何验证、仍有哪些已知风险或后续动作。

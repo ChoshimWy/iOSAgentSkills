@@ -21,7 +21,7 @@ Coordinate iOS development tasks through an adaptive orchestration workflow whil
 - 在主 Agent 串行实现或自主拉起的多 Agent 场景下保证写入前 CP0 最小计划、checkpoint、fail-fix-report、低 token 验证纪律，以及独立 reviewer subAgent 审查纪律。
 
 默认完成态必须由主 Agent 基于定向测试 / 必要验证与独立 reviewer subAgent 的 `code-review` 结论裁决；任何 subAgent 都不能替代主 Agent 宣告完成。
-只有定向测试 / 必要验证已完成，且独立 reviewer subAgent 执行的 `code-review` 无 blocking findings 时，主 Agent 才能宣告实现任务完成。
+只有定向测试 / 必要验证已完成，且独立 reviewer subAgent 执行的 `code-review` 无 `阻塞问题` 时，主 Agent 才能宣告实现任务完成。
 
 ## When to Use
 
@@ -169,7 +169,7 @@ Activate additional roles only when justified:
 8. If reviewer or tester finds a blocking issue, Main Agent decides whether to fix locally or route the precise issue back to an active coder subAgent with `send_input(..., interrupt=true)`.
 9. If tester determines test code is required, Main Agent decides whether to handle test edits locally or start `tester worker`.
 10. Main Agent applies fail-fix-report discipline until resolved or blocked.
-11. Main Agent performs final closure only when targeted validation / necessary verification is current and independent reviewer subAgent `code-review` has no blocking findings.
+11. Main Agent performs final closure only when targeted validation / necessary verification is current and independent reviewer subAgent `code-review` has no `阻塞问题`.
 12. Only if requested or high-risk, Main Agent routes to `ios-verification` for stronger evidence.
 
 ## Checkpoints
@@ -181,7 +181,7 @@ Default checkpoints:
 | `CP0 Intent Lock` | Confirm intent, constraints, success criteria, non-goals, and a pre-implementation plan before any write. |
 | `CP1 Anchor Slice` | Complete and inspect the first meaningful slice before expanding parallel work. |
 | `CP2 Validation Baseline Freeze` | Freeze validation baseline, affected tests, wrapper path, and log policy. |
-| `CP3 Final Gate` | Decide completion based on evidence and blocking findings. |
+| `CP3 Final Gate` | Decide completion based on evidence and `阻塞问题`. |
 
 Rules:
 
@@ -207,7 +207,7 @@ Expected input from the user or upstream Agent:
   "goal": "Implement or modify an iOS feature",
   "context": ["files", "directories", "logs", "screenshots", "constraints"],
   "constraints": ["minimal changes", "do not run full build", "use build queue"],
-  "success_criteria": ["targeted validation passes", "code-review has no blocking findings"],
+  "success_criteria": ["targeted validation passes", "code-review has no 阻塞问题"],
   "preferred_validation": "auto"
 }
 ```
@@ -243,8 +243,8 @@ Main Agent final output should follow this contract:
     "suggested_validation": null
   },
   "review": {
-    "blocking_findings": [],
-    "non_blocking_findings": []
+    "阻塞问题": [],
+    "非阻塞建议": []
   },
   "acceptance_matrix": [
     {
@@ -261,7 +261,7 @@ Main Agent final output should follow this contract:
 SubAgent outputs must stay compact:
 
 - `coder worker`: `changed_files`, `summary`, `test_impact` or `no_test_reason`, `known_risks`.
-- `reviewer explorer`: `blocking_findings`, `non_blocking_findings`.
+- `reviewer explorer`: `阻塞问题`, `非阻塞建议`（可见输出用中文 Markdown 表格）。
 - `tester explorer`: `suggested_validation`, `executed_validation`, `failure_attribution`, `failure_attribution_type`, `needs_test_code`.
 - `reporter`: `acceptance_matrix`, `residual_risks`, `completion_status`.
 
@@ -272,7 +272,7 @@ A task may be marked `completed` only when:
 - User goal is satisfied or explicitly scoped down.
 - Changed files are summarized.
 - Targeted validation / necessary verification is executed or a clear `no_test_reason` is provided.
-- `code-review` has no blocking findings.
+- `code-review` has no `阻塞问题`.
 - Known risks are disclosed.
 - No subAgent has unresolved blocking output when native subAgents were used.
 - Main Agent, not a subAgent, makes the final completion decision.
@@ -336,7 +336,7 @@ For every repair or implementation task, complete a compact CP0 plan before the 
 Step 1 Main Agent: intent, boundaries, success criteria, level, baseline, fallback conditions.
 Step 2 Coder Worker: implementation ownership and forbidden changes.
 Step 3 Verification: suggested_validation, executed_validation, failure_attribution, no_test_reason.
-Step 4 Code Review: blocking_findings and non_blocking_findings.
+Step 4 Code Review: 阻塞问题 and 非阻塞建议.
 Step 5 Main Agent: aggregate, loop control, final gate, residual risks.
 ```
 

@@ -51,24 +51,25 @@
 - 是否误改了 `Pods/<LibraryName>` 而没有回到本地 `:path` Pod / 私有组件源码仓
 
 输出：
-- review_scope
-- impact_scope
-- unreviewed_changes
-- blocking_findings
-- non_blocking_findings
+- 审查范围
+- 影响面
+- 未审查变更
+- 阻塞问题
+- 非阻塞建议
 - checkpoint_status
-- first_failure
-- next_action
+- 首个失败
+- 下一步
 
 要求：
-- review_scope 必须说明基线和纳入审查的差异范围；无法确认基线时说明 fallback
-- impact_scope 必须说明已审查的直接影响面；没有额外影响面时写 none 并说明依据
-- unreviewed_changes 无遗漏时写 none
-- blocking_findings 只放真实阻塞项
-- 若无阻塞项，写 blocking_findings: []，first_failure: none
-- findings 按严重度降序输出
-- 若存在阻塞项，next_action 不能是 complete
-- 兼容旧合同锚点：first_failure（仅当存在阻塞项时填写）
+- 可见回复必须使用中文 Markdown 表格，风格参照主 Agent 回复表格
+- 审查范围必须说明基线和纳入审查的差异范围；无法确认基线时说明 fallback
+- 影响面必须说明已审查的直接影响面；没有额外影响面时写 none 并说明依据
+- 未审查变更无遗漏时写 none
+- 阻塞问题只放真实阻塞项
+- 若无阻塞项，写 阻塞问题：无，首个失败：none
+- 审查问题按严重度降序输出
+- 若存在阻塞项，下一步不能是 complete
+- 兼容旧合同锚点：first_failure（仅当调用方要求机器字段时填写）
 ```
 
 ## tester explorer
@@ -140,7 +141,7 @@
    同时先给任务分型：`doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`
 2. coder worker（按需）：实现任务与 ownership
 3. ios-verification（实现链路必选；可由 tester explorer 或主 Agent 承担）：suggested_validation / executed_validation / failure_attribution / no_test_reason
-4. code-review 审查（实现链路必选；必须由未参与实现的 reviewer explorer subAgent 执行，主 Agent 不得自审）：blocking_findings / non_blocking_findings
+4. code-review 审查（实现链路必选；必须由未参与实现的 reviewer explorer subAgent 执行，主 Agent 不得自审）：阻塞问题 / 非阻塞建议
 5. reporter（按需）：acceptance_matrix（需求项/证据/状态）
 6. 主 Agent 聚合：回写规则、回环（默认最多 2 轮）、何时 blocked
 7. 可选补强验证：用户显式要求或高风险时，按需执行 `ios-verification`
@@ -165,7 +166,7 @@ first_failure: <none|首个真实失败点>
 next_action: <fix-and-rerun|blocked|complete>
 
 规则：
-- 若存在 blocking finding，next_action 不能是 complete。
+- 若存在阻塞问题，下一步不能是 complete。
 - 可修复问题优先 fix-and-rerun，不跳过重跑直接汇报完成。
 ```
 

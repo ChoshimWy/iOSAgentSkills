@@ -18,16 +18,16 @@ Key Features:
 
 Usage Examples:
     # Quick summary (default)
-    python scripts/screen_mapper.py --udid <device-id>
+    python3 scripts/simulator/screen_mapper.py --udid <device-id>
 
     # Detailed element breakdown
-    python scripts/screen_mapper.py --udid <device-id> --verbose
+    python3 scripts/simulator/screen_mapper.py --udid <device-id> --verbose
 
     # Include navigation suggestions
-    python scripts/screen_mapper.py --udid <device-id> --hints
+    python3 scripts/simulator/screen_mapper.py --udid <device-id> --hints
 
     # Full JSON output for parsing
-    python scripts/screen_mapper.py --udid <device-id> --json
+    python3 scripts/simulator/screen_mapper.py --udid <device-id> --json
 
 Output Format (default):
     Screen: LoginViewController (45 elements, 7 interactive)
@@ -35,6 +35,11 @@ Output Format (default):
     TextFields: 2 (0 filled)
     Navigation: NavBar: "Sign In"
     Focusable: 7 elements
+
+Output Format (--refs):
+    Refs:
+      @e1 [Button] "Login" center=(320,450)
+      @e2 [TextField] "Email" center=(320,220)
 
 Technical Details:
 - Uses IDB's accessibility tree via `idb ui describe-all --json --nested`
@@ -50,6 +55,7 @@ import sys
 from collections import defaultdict
 
 from common import get_accessibility_tree, resolve_udid
+from common import element_center, is_semantic_ref_node, SEMANTIC_REF_TYPES
 
 
 class ScreenMapper:
@@ -72,20 +78,7 @@ class ScreenMapper:
 
     # Element types we care about for navigation
     # These are the accessibility element types that indicate user interaction points
-    INTERACTIVE_TYPES = {
-        "Button",
-        "Link",
-        "TextField",
-        "SecureTextField",
-        "Cell",
-        "Switch",
-        "Slider",
-        "Stepper",
-        "SegmentedControl",
-        "TabBar",
-        "NavigationBar",
-        "Toolbar",
-    }
+    INTERACTIVE_TYPES = SEMANTIC_REF_TYPES
 
     def __init__(self, udid: str | None = None):
         """
@@ -114,6 +107,7 @@ class ScreenMapper:
             "elements_by_type": defaultdict(list),
             "total_elements": 0,
             "interactive_elements": 0,
+            "semantic_refs": [],
             "text_fields": [],
             "buttons": [],
             "navigation": {},
@@ -127,6 +121,10 @@ class ScreenMapper:
         analysis["elements_by_type"] = dict(analysis["elements_by_type"])
 
         return analysis
+
+    def _next_ref(self, analysis: dict) -> str:
+        """Return the next semantic element reference for actionable nodes."""
+        return f"@e{len(analysis['semantic_refs']) + 1}"
 
     def _analyze_recursive(self, node: dict, analysis: dict, depth: int):
         """Recursively analyze tree nodes."""
@@ -164,6 +162,18 @@ class ScreenMapper:
             # Track focusable elements
             if node.get("enabled", False) and elem_type in self.INTERACTIVE_TYPES:
                 analysis["focusable"] += 1
+                center = element_center(node)
+                if is_semantic_ref_node(node) and center is not None:
+                    elem_info = label or value or identifier or "Unnamed"
+                    analysis["semantic_refs"].append(
+                        {
+                            "ref": self._next_ref(analysis),
+                            "type": elem_type,
+                            "label": elem_info,
+                            "identifier": identifier or None,
+                            "center": {"x": center[0], "y": center[1]},
+                        }
+                    )
 
         # Try to identify screen name from view controller
         if not analysis["screen_name"] and identifier:
@@ -223,6 +233,29 @@ class ScreenMapper:
 
         return "\n".join(lines)
 
+    def format_refs(self, analysis: dict, max_refs: int = 8) -> str:
+        """
+        Format actionable elements as semantic refs.
+
+        Refs are valid only for the latest accessibility snapshot. Refresh the
+        snapshot after navigation, scrolling, or any state-changing action.
+        """
+        refs = analysis.get("semantic_refs", [])
+        if not refs:
+            return "Refs: none"
+
+        lines = ["Refs:"]
+        for item in refs[:max_refs]:
+            center = item["center"]
+            label = item.get("label") or "Unnamed"
+            lines.append(
+                f'  {item["ref"]} [{item["type"]}] "{label}" '
+                f'center=({center["x"]},{center["y"]})'
+            )
+        if len(refs) > max_refs:
+            lines.append(f"  ... +{len(refs) - max_refs} more")
+        return "\n".join(lines)
+
     def get_navigation_hints(self, analysis: dict) -> list[str]:
         """Generate navigation hints based on screen analysis."""
         hints = []
@@ -252,6 +285,17 @@ def main():
     parser.add_argument("--json", action="store_true", help="Output raw JSON analysis")
     parser.add_argument("--hints", action="store_true", help="Include navigation hints")
     parser.add_argument(
+        "--refs",
+        action="store_true",
+        help="Include snapshot-local refs for actionable elements in the current screen",
+    )
+    parser.add_argument(
+        "--max-refs",
+        type=int,
+        default=8,
+        help="Maximum semantic refs to print with --refs (default: 8)",
+    )
+    parser.add_argument(
         "--udid",
         help="Device UDID (auto-detects booted simulator if not provided)",
     )
@@ -280,6 +324,10 @@ def main():
         print(summary)
 
         # Add hints if requested
+        if args.refs:
+            print()
+            print(mapper.format_refs(analysis, max_refs=max(1, args.max_refs)))
+
         if args.hints:
             hints = mapper.get_navigation_hints(analysis)
             if hints:

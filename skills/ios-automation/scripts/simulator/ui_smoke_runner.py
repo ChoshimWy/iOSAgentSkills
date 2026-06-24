@@ -75,16 +75,19 @@ puts JSON.generate(data)
     return parsed
 
 
-def resolve_target(step: dict[str, Any]) -> tuple[str | None, str | None]:
+def resolve_target(step: dict[str, Any]) -> tuple[str | None, str | None, str | None]:
     target = step.get("target")
     target_id = step.get("id")
     target_text = step.get("text")
+    target_ref = step.get("ref")
     if isinstance(target, dict):
         target_id = target.get("id", target_id)
         target_text = target.get("text", target_text)
+        target_ref = target.get("ref", target_ref)
     return (
         target_id if isinstance(target_id, str) and target_id else None,
         target_text if isinstance(target_text, str) and target_text else None,
+        target_ref if isinstance(target_ref, str) and target_ref else None,
     )
 
 
@@ -116,7 +119,7 @@ def resolve_expectation(step: dict[str, Any]) -> tuple[str | None, str | None, s
 
     # assert step can use direct id/text/value if expect omitted
     if expect is None and step.get("action") == "assert":
-        target_id, target_text = resolve_target(step)
+        target_id, target_text, _target_ref = resolve_target(step)
         if target_id:
             expect_id = target_id
         if target_text:
@@ -155,12 +158,13 @@ def run_step(
         return StepResult(False, "Step missing action")
 
     action = action.strip().lower()
-    target_id, target_text = resolve_target(step)
+    target_id, target_text, target_ref = resolve_target(step)
 
     if action == "tap":
         success, message = navigator.find_and_tap(
             text=target_text,
             identifier=target_id,
+            element_ref=target_ref,
             element_type=step.get("type") if isinstance(step.get("type"), str) else None,
             index=int(step.get("index", 0)),
         )
@@ -173,6 +177,7 @@ def run_step(
             find_text=target_text,
             element_type=step.get("type") if isinstance(step.get("type"), str) else "TextField",
             identifier=target_id,
+            element_ref=target_ref,
             index=int(step.get("index", 0)),
         )
         if not success:

@@ -48,7 +48,7 @@
 }
 ```
 
-审查型 Skill 建议使用：
+审查型 Skill 建议内部使用以下机器合同；可见回复应按中文表格展示为 `阻塞问题` / `非阻塞建议` / `审查范围` / `影响面` / `验证故事` / `下一步`：
 
 ```json
 {
@@ -56,7 +56,7 @@
   "non_blocking_findings": [],
   "review_scope": "...",
   "impact_scope": "...",
-  "verification_story": "accepted | needs-ios-verification | needs-ios-verification | insufficient",
+  "verification_story": "accepted | needs-ios-verification | insufficient",
   "next_action": "complete | fix-and-rerun | blocked"
 }
 ```
