@@ -33,7 +33,7 @@
 - iOS 开发任务默认先进入 `codex-subagent-orchestration`；由主入口按任务分型器归类为 `doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`，再决定单 Agent 还是 `lite` / `standard` / `full` 编排，并按需路由到实现、测试、审查与验证模块。
 - 修复 / 实现类任务不依赖手动 Plan 模式：允许先做最小只读定位，但在首次写文件或应用 patch 前，必须先自动完成一份简短计划（目标、影响面、实施步骤、验证 / 审查路径）；超小 doc-only / rule-only 改动也至少用一句话锁定计划，禁止从代码查找直接跳到实现。
 - 使用任何 Skill 前，必须先输出 `>>> Skill: <skill-name>` 声明即将使用的 skill，让用户明确知道当前路由到了哪个 skill。
-- 默认进入编排入口不等于必须 spawn 全部 subAgent；coder / tester 可由主 Agent 在运行时工具可用、写集安全、任务风险或吞吐收益明确时自主拉起最少必要 subAgent，工具不可用、上层策略禁止或写集不适合拆分时仍由主 Agent 串行承担。实现后的 `code-review` 必须交给独立 reviewer subAgent，避免同一 Agent 实现后自审。若 reviewer subAgent 不可用，本次实现任务不得宣告完成，必须报告 blocked / pending review。
+- 除 `code-review` 必须由独立 reviewer subAgent 执行外，本仓不对其它 subAgent 的启动场景、角色拆分或数量做额外限制；主 Agent 可按当前任务与运行时能力自行决定是否使用 coder / tester / pm / reporter 等 subAgent。实现后的 `code-review` 必须交给独立 reviewer subAgent，避免同一 Agent 实现后自审。若 reviewer subAgent 不可用，本次实现任务不得宣告完成，必须报告 blocked / pending review。
 - 默认逻辑角色集合为 `explorer + builder + reporter`；这些角色默认可由主 Agent 串行承担，但实现链路的 reviewer 是强制独立角色，必须由未参与实现的 reviewer subAgent 执行。
 - 实现型任务默认三步收口：主入口 Skill / 实现 Skill -> 定向验证 -> 独立 reviewer subAgent 执行 `code-review`。
 - 审查型任务默认交给独立 reviewer subAgent 执行并优先输出 blocking findings；没有阻塞项时要明确说明无 blocking findings，并指出剩余风险或验证缺口。

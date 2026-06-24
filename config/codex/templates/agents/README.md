@@ -19,8 +19,8 @@
 
 说明：
 - 这些 `.toml` 是 Codex custom agent 文件，使用当前支持的扁平 schema：`name` / `description` / `developer_instructions`，以及可选 `nickname_candidates` / `model` / `model_reasoning_effort` / `sandbox_mode` / `mcp_servers` / `skills.config`。
-- 截至 2026-06-15 的共享 Codex 基线使用 `model = "gpt-5.5"`、`image_model = "gpt-image-2"`、`features.multi_agent = true` 与 `[agents] max_threads/max_depth`；默认 reasoning effort 为 `medium`，高难任务可通过 profile 或临时配置升到 `xhigh`。默认进入 `codex-subagent-orchestration` 只表示先做编排决策；coder / tester 可在运行时工具可用、写集安全且拆分有质量/效率收益时，由主 Agent 按 `lite` / `standard` / `full` 自主调用最少必要的原生 subAgent 工具；实现链路的 reviewer subAgent 是强制收口角色。
-- 主 Agent 可自主拉起 coder / tester 原生 subAgent，但必须先确认运行时工具可用、当前工具策略允许、写集 ownership 安全且拆分收益明确；否则默认按单 Agent 方式串行承担这些逻辑角色。
+- 截至 2026-06-15 的共享 Codex 基线使用 `model = "gpt-5.5"`、`image_model = "gpt-image-2"`、`features.multi_agent = true` 与 `[agents] max_threads/max_depth`；默认 reasoning effort 为 `medium`，高难任务可通过 profile 或临时配置升到 `xhigh`。默认进入 `codex-subagent-orchestration` 只表示先做编排决策；除实现链路 reviewer subAgent 是强制收口角色外，本仓不对其它 subAgent 使用做额外限制。
+- 主 Agent 可自主决定 coder / tester / pm / reporter 等非 review 角色是否使用原生 subAgent；本仓只强制实现链路 `code-review` 使用独立 reviewer subAgent。
 - 模型默认继承主 Agent；只有用户明确要求、任务风险需要或预算/吞吐目标明确时才在 `spawn_agent` 中覆盖 `model` / `reasoning_effort`。
 - 工作流合同字段不再放单独 TOML table，而是内嵌在 `developer_instructions` 中约束输出与职责边界。
 - 安装脚本会把它们同步到 `~/.codex/agents/`。
@@ -34,14 +34,14 @@
 - Apple Xcode 项目改动默认以定向验证与独立 reviewer subAgent code-review 收口；`ios-verification` 仅按需补强。
 - `ios-verification` 默认只执行最窄定向单测；真机 / 模拟器验证不属于默认收口执行面。
 - 默认先做任务分型：`doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`。
-- 默认最小逻辑角色集合：`explorer + builder + reporter`；命中风险条件再激活 `pm` 与 `tester`。coder / tester 默认可由主 Agent 串行承担，但实现链路 reviewer subAgent 是强制独立收口角色。
+- 默认最小逻辑角色集合：`explorer + builder + reporter`；命中风险条件再激活 `pm` 与 `tester`。非 review 角色是否使用 subAgent 不做仓库级限制，但实现链路 reviewer subAgent 是强制独立收口角色。
 - 统一字段：每个角色输出都需包含 `checkpoint_status`、`first_failure`、`next_action`（无阻塞时 `first_failure: none`）。
 
 快速任务模板：
 ```text
-请按 explorer -> builder -> reporter 逻辑角色执行，coder / tester 默认由主 Agent 串行承担；
+请按 explorer -> builder -> reporter 逻辑角色执行；
 实现链路收口必须启动独立 reviewer subAgent 执行 code-review，不能由实现 Agent 自审；
-当运行时工具可用、写集安全且拆分能提升质量/效率时，可由主 Agent 自主为 coder / tester 调用 ~/.codex/agents 原生 subAgent；
+除 code-review 必须使用独立 reviewer subAgent 外，其它 subAgent 使用不做仓库级限制；
 若边界不清激活 pm，若需要测试面或失败归因激活 tester。
 目标：<需求>
 上下文：<目录/文件/报错>

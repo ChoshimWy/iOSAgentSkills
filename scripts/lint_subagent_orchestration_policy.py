@@ -18,6 +18,20 @@ FORBIDDEN_AUTO_SUBAGENT_PHRASES = [
     "默认启用 subAgent 工作流",
 ]
 
+FORBIDDEN_SUBAGENT_RESTRICTION_PHRASES = [
+    "默认进入编排入口不等于必须 spawn",
+    "默认进入 `codex-subagent-orchestration` 不等于必须 spawn",
+    "full multi-agent execution",
+    "write ownership",
+    "write set is safe",
+    "throughput benefit",
+    "运行时工具可用",
+    "写集安全",
+    "拆分有质量/效率收益",
+    "收益明确",
+    "最少必要",
+]
+
 
 def require_contains(path: Path, snippets: list[str], failures: list[str]) -> None:
     if not path.exists():
@@ -74,6 +88,7 @@ def main() -> int:
     ]
     for path in policy_paths:
         require_not_contains(path, FORBIDDEN_AUTO_SUBAGENT_PHRASES, failures)
+        require_not_contains(path, FORBIDDEN_SUBAGENT_RESTRICTION_PHRASES, failures)
 
     stale_review_policy_paths = [
         ROOT / "skills" / "ios-feature-implementation" / "SKILL.md",
@@ -104,7 +119,7 @@ def main() -> int:
             "使用任何 Skill 前，必须先输出 `>>> Skill: <skill-name>`",
             "iOS 开发任务默认先进入 `codex-subagent-orchestration`",
             "`doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`",
-            "默认进入编排入口不等于必须 spawn 全部 subAgent",
+            "除 `code-review` 必须由独立 reviewer subAgent 执行外",
             "独立 reviewer subAgent",
             "`explorer + builder + reporter`",
             "独立 reviewer subAgent 执行 `code-review`",
@@ -117,8 +132,8 @@ def main() -> int:
         ROOT / "README.md",
         [
             "`codex-subagent-orchestration/` —— 默认优先的自适应编排入口",
-            "支持在运行时允许且收益明确时由主 Agent 自主拉起 coder / tester subAgent",
-            "默认进入编排入口不等于必须 spawn 全部 coder / tester subAgent",
+            "除 code-review 必须使用独立 reviewer subAgent 外，本仓不对其它 subAgent 使用做额外限制",
+            "其它 subAgent 使用不做仓库级限制",
             "`实现 skill -> 定向验证 / no_test_reason -> reviewer subAgent(code-review)`",
             "独立 reviewer subAgent 执行的 `code-review` 无 blocking findings",
             "最窄定向单测",
@@ -153,9 +168,9 @@ def main() -> int:
         skill_md,
         [
             "默认优先使用的 iOS 主 Skill 入口",
-            "Coder and tester subAgents may be self-started by the Main Agent",
+            "The repository does not add extra restrictions on coder",
             "always use an independent reviewer subAgent",
-            "Default coder / tester work to the main Agent",
+            "Let the Main Agent choose whether non-review roles run locally or as subAgents",
             "hand off `code-review` to an independent reviewer subAgent",
             "`test_impact` or `no_test_reason`",
             "`blocking_findings`",
@@ -197,7 +212,7 @@ def main() -> int:
                 "iOS 主 Skill 入口",
                 "$codex-subagent-orchestration",
                 "lite / standard / full",
-                "coder / tester 不再以用户显式要求为硬门槛",
+                "其它 subAgent 使用做额外限制",
                 "实现后的 $code-review 必须交给独立 reviewer subAgent",
                 "首次写入前完成 CP0 最小计划",
             ],
@@ -211,7 +226,7 @@ def main() -> int:
             "reviewer subAgent 是强制独立审查角色",
             "截至 2026-06-15",
             "默认 reasoning effort 为 `medium`",
-            "未命中“运行时工具可用 / 工具策略允许 / 写集安全 / 拆分有质量或效率收益”",
+            "非 review subAgent 已启动但未命中模型覆盖条件",
             "继承主 Agent 默认模型",
         ],
         failures,
@@ -219,7 +234,7 @@ def main() -> int:
     require_contains(
         SKILL_ROOT / "references" / "prompt-templates.md",
         [
-            "默认进入 `codex-subagent-orchestration` 不等于必须 spawn 全部 coder / tester subAgent",
+            "非 review subAgent 是否启动不做仓库级限制",
             "实现链路 reviewer subAgent 始终独立启动",
             "最窄定向单测",
             "code-review 审查（实现链路必选",
@@ -241,10 +256,10 @@ def main() -> int:
     require_contains(
         SKILL_ROOT / "references" / "role-contracts.md",
         [
-            "默认进入编排入口先做决策",
-            "reviewer subAgent 必须独立启动",
-            "工具策略允许",
-            "coder / tester 按单 Agent 执行",
+            "除实现链路的 reviewer subAgent 必须独立启动外",
+            "其它原生 subAgent 角色做额外限制",
+            "其它 subAgent 使用由主 Agent 按当前任务自行决定",
+            "reviewer subAgent 不可用时不得降级自审",
             "`blocking_findings: []`",
         ],
         failures,
@@ -252,9 +267,9 @@ def main() -> int:
     require_contains(
         SKILL_ROOT / "references" / "handoff-loop.md",
         [
-            "默认进入 `codex-subagent-orchestration` 不等于必须 spawn 全部 coder / tester subAgent",
-            "reviewer subAgent 必须独立启动",
-            "coder / tester 本轮按单 Agent 执行",
+            "除实现链路 reviewer subAgent 必须独立启动外",
+            "本仓不对其它 subAgent 使用做额外限制",
+            "非 review 角色是否使用 subAgent 由主 Agent 按当前任务自行决定",
             "同一类问题最多回写 coder 2 次",
             "不切到单独 `-derivedDataPath` 绕开同一个 `build.db`",
             "该计划不依赖手动 Plan 模式",

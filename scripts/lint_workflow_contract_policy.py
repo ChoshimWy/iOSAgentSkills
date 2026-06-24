@@ -39,6 +39,20 @@ EXPECTED_DISABLED_PLUGINS = {
     "computer-use@openai-bundled",
 }
 
+FORBIDDEN_SUBAGENT_RESTRICTION_PHRASES = [
+    "默认进入编排入口不等于必须 spawn",
+    "默认进入 `codex-subagent-orchestration` 不等于必须 spawn",
+    "full multi-agent execution",
+    "write ownership",
+    "write set is safe",
+    "throughput benefit",
+    "运行时工具可用",
+    "写集安全",
+    "拆分有质量/效率收益",
+    "收益明确",
+    "最少必要",
+]
+
 
 def require_contains(path: Path, snippets: list[str], failures: list[str]) -> None:
     if not path.exists():
@@ -114,6 +128,7 @@ def main() -> int:
             ["仓库级显式触发", "自动使用 subAgent", "按档位自动", "默认启用 subAgent 工作流"],
             failures,
         )
+        require_not_contains(path, FORBIDDEN_SUBAGENT_RESTRICTION_PHRASES, failures)
         require_not_contains(
             path,
             [
@@ -134,7 +149,7 @@ def main() -> int:
             "任务分型器归类",
             "`doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`",
             "`explorer + builder + reporter`",
-            "默认进入编排入口不等于必须 spawn 全部 subAgent",
+            "除 `code-review` 必须由独立 reviewer subAgent 执行外",
             "修复 / 实现类任务不依赖手动 Plan 模式",
         ],
         failures,
@@ -264,7 +279,7 @@ def main() -> int:
             "`failure_attribution_type`",
             "## reporter",
             "acceptance_matrix",
-            "默认进入 `codex-subagent-orchestration` 不等于必须 spawn 全部 coder / tester subAgent",
+            "非 review subAgent 是否启动不做仓库级限制",
             "next_action 不能是 complete",
             "默认写入前输出",
         ],
@@ -276,7 +291,7 @@ def main() -> int:
         [
             "任务分型器判定",
             "`CP1` 未通过前禁止无必要并行扩散",
-            "默认进入 `codex-subagent-orchestration` 不等于必须 spawn 全部 coder / tester subAgent",
+            "本仓不对其它 subAgent 使用做额外限制",
             "next_action` 只能是 `blocked`",
             "该计划不依赖手动 Plan 模式",
         ],

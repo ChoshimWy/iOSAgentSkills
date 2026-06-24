@@ -1,13 +1,13 @@
 ---
 name: codex-subagent-orchestration
-description: 默认优先使用的 iOS 主 Skill 入口；先按任务复杂度选择 lite / standard / full 档位，再协调 coder / reviewer / tester / reporter / main agent 分工；所有 iOS 生产代码与测试代码实施统一路由到 ios-feature-implementation 的内部模式，验证统一路由到 ios-verification，调试、性能、审查与构建配置仍路由到专项模块；coder / tester 可由主 Agent 基于运行时可用性、写集安全、风险与收益自主决定是否拆成原生 subAgent，但实现后的 code-review 必须由独立 reviewer subAgent 执行，避免同一 Agent 实现后自审。
+description: 默认优先使用的 iOS 主 Skill 入口；先按任务复杂度选择 lite / standard / full 档位，再协调 coder / reviewer / tester / reporter / main agent 分工；所有 iOS 生产代码与测试代码实施统一路由到 ios-feature-implementation 的内部模式，验证统一路由到 ios-verification，调试、性能、审查与构建配置仍路由到专项模块；除实现后的 code-review 必须由独立 reviewer subAgent 执行外，其它 subAgent 使用不做仓库级限制。
 ---
 
 # Codex 多 Agent 编排
 
 ## Purpose
 
-Coordinate iOS development tasks through an adaptive orchestration workflow while keeping verification narrow, evidence-based, and low-token by default. Coder and tester subAgents may be self-started by the Main Agent when runtime tools allow it, the write set is safe to split, and task risk or throughput benefit justifies delegation; implementation closure still requires an independent reviewer subAgent for `code-review`.
+Coordinate iOS development tasks through an adaptive orchestration workflow while keeping verification narrow, evidence-based, and low-token by default. The repository does not add extra restrictions on coder, tester, pm, reporter, or other non-review subAgent usage; implementation closure still requires an independent reviewer subAgent for `code-review`.
 
 ## 中文说明
 
@@ -29,7 +29,7 @@ Use this skill when:
 
 - The task is an iOS / Apple platform development task and does not clearly belong to one single specialized Skill.
 - The task contains implementation, review, testing, debugging, performance, Apple API, or optional evidence verification steps.
-- The task may benefit from adaptive role splitting; coder/tester native subAgent spawning is decided by the Main Agent based on runtime availability, safe write ownership, task risk, and throughput benefit, while implementation closure always requires an independent reviewer subAgent.
+- The task may benefit from adaptive role splitting; non-review subAgent usage is unrestricted by this repository policy, while implementation closure always requires an independent reviewer subAgent.
 - The task involves multiple files, unclear risk, or a need to coordinate implementation and verification.
 - The user explicitly asks to use the iOS Agent workflow, multi-agent Codex workflow, subAgent, parallel agent, or delegation workflow.
 
@@ -53,13 +53,11 @@ Do not use this Skill as the first route when the task is clearly one of these s
 - For iOS development tasks, this Skill is the default first route unless the task is clearly a doc-only / rule-only change or clearly belongs to one single-purpose Skill.
 - Always classify task type before selecting `lite` / `standard` / `full`.
 - Repair or implementation tasks do not depend on a manual Plan mode. The Main Agent may do minimal read-only discovery first, but before the first file write or patch it must publish or maintain a concise CP0 plan covering goal, impact scope, implementation steps, and validation / review path. Do not jump directly from code search to implementation.
-- Do not upgrade all tasks to full multi-agent execution.
-- Use Codex native subAgent tools for coder / tester when runtime tools allow it, write ownership can be kept safe and disjoint, and task risk, failure attribution, or throughput benefit justifies delegation; always use an independent reviewer subAgent for implementation-chain `code-review`.
-- Default coder / tester work to the main Agent when runtime tools are unavailable, the current tool policy forbids spawning, expected benefit is low, or the current write set is unsafe to split.
+- Do not add repository-level restrictions for coder / tester / pm / reporter subAgent usage; always use an independent reviewer subAgent for implementation-chain `code-review`.
+- Let the Main Agent choose whether non-review roles run locally or as subAgents according to the current task and runtime; this repository policy adds no extra gate for those roles.
 - Main-Agent implementation must still preserve targeted validation / `no_test_reason` and then hand off `code-review` to an independent reviewer subAgent.
-- Do not let subAgents share unsafe write ownership.
 - Do not use `multi_tool_use.parallel` when tools may touch the same write set, `apply_patch`, Git state, build queue, or project files.
-- Do not introduce external orchestrators; do not spawn coder / tester subAgents merely because the workflow level is `standard` or `full`. Spawn only the minimum useful roles, and only when runtime policy permits it and write ownership is safe. Reviewer subAgent spawning is the required implementation review path.
+- Do not introduce external orchestrators. Reviewer subAgent spawning is the required implementation review path; other subAgent usage is not restricted by this repository policy.
 - Use only built-in `worker` and `explorer` agent types unless the runtime provides additional official types.
 - Do not invent new low-level Agent types.
 
@@ -118,7 +116,7 @@ Default behavior:
 
 - Prefer single Agent execution.
 - Preserve targeted validation and independent reviewer subAgent `code-review` for implementation tasks.
-- Do not spawn unnecessary tester subAgents for pure documentation / rule changes; use reviewer subAgent only when a rule change needs risk review or when the task is an implementation-chain closure.
+- Use reviewer subAgent only when a rule change needs risk review or when the task is an implementation-chain closure.
 
 ### `standard`
 
@@ -126,10 +124,10 @@ Use for normal code or workflow changes with clear boundaries.
 
 Default behavior:
 
-- `coder worker` for implementation when native subAgent use is allowed, useful, and has a safe ownership boundary; otherwise the main Agent performs the implementation role.
+- `coder worker` for implementation when the Main Agent chooses to delegate; otherwise the main Agent performs the implementation role.
 - `reviewer explorer` using `code-review` for every implementation task after targeted validation / necessary validation; do not run implementation-chain review in the main Agent.
 - Main Agent aggregates and decides closure.
-- Start `tester explorer` when native subAgent use is allowed and there is a test surface, failure attribution need, or clear validation-planning benefit; otherwise the main Agent applies the tester contract.
+- Start `tester explorer` when the Main Agent chooses to delegate validation planning or failure attribution; otherwise the main Agent applies the tester contract.
 
 ### `full`
 
@@ -137,9 +135,9 @@ Use for high-risk or cross-module tasks.
 
 Default behavior:
 
-- `coder worker` for implementation when native subAgent use is allowed, useful, and ownership can be kept disjoint; otherwise the main Agent owns implementation.
+- `coder worker` for implementation when the Main Agent chooses to delegate; otherwise the main Agent owns implementation.
 - `reviewer explorer` using `code-review` is mandatory for implementation-chain closure; if it cannot be started, report blocked / pending review instead of self-reviewing.
-- `tester explorer` for test surface, validation advice, and failure attribution when native subAgent use is allowed and useful; otherwise the main Agent follows tester output requirements.
+- `tester explorer` for test surface, validation advice, and failure attribution when the Main Agent chooses to delegate; otherwise the main Agent follows tester output requirements.
 - Main Agent controls checkpoint, loop count, and final closure.
 - Use stronger `ios-verification` execution only when risk or user request justifies it.
 
@@ -166,10 +164,10 @@ Activate additional roles only when justified:
 3. Main Agent freezes relevant workspace / scheme / destination baseline when verification may be needed.
 4. Main Agent checks private Pod / local `:path` ownership if dependencies are involved.
 5. Main Agent selects `lite` / `standard` / `full`.
-6. Main Agent may self-start coder / tester subAgents when runtime policy permits it, ownership can stay safe, and delegation materially improves quality, failure attribution, or throughput; otherwise it performs those roles itself. For implementation-chain closure, Main Agent must spawn an independent reviewer subAgent for `code-review`; if unavailable, stop with blocked / pending review.
+6. Main Agent may choose whether coder / tester / pm / reporter roles run locally or as subAgents; this repository policy adds no extra gate for non-review roles. For implementation-chain closure, Main Agent must spawn an independent reviewer subAgent for `code-review`; if unavailable, stop with blocked / pending review.
 7. Use `spawn_agent` / `send_input` / `wait_agent` / `close_agent` sparingly; `wait_agent(...)` is used only when the result is needed to advance the next step. Reviewer subAgent receives only the frozen diff, validation story, and review contract, not implementation rationale that would bias review.
-8. If reviewer or tester finds a blocking issue, Main Agent fixes it locally in single-Agent mode when that is safest; when a coder subAgent is already active and still owns the affected write set, use `send_input(..., interrupt=true)` to route the precise issue back to coder.
-9. If tester determines test code is required, handle test edits in the main Agent by default; when native subAgent use is allowed and test-file ownership is isolated, start `tester worker` with ownership limited to test files.
+8. If reviewer or tester finds a blocking issue, Main Agent decides whether to fix locally or route the precise issue back to an active coder subAgent with `send_input(..., interrupt=true)`.
+9. If tester determines test code is required, Main Agent decides whether to handle test edits locally or start `tester worker`.
 10. Main Agent applies fail-fix-report discipline until resolved or blocked.
 11. Main Agent performs final closure only when targeted validation / necessary verification is current and independent reviewer subAgent `code-review` has no blocking findings.
 12. Only if requested or high-risk, Main Agent routes to `ios-verification` for stronger evidence.

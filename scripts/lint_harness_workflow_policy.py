@@ -42,6 +42,20 @@ CURRENT_REQUIRED_SKILLS = {
     "xcode-build",
 }
 
+FORBIDDEN_SUBAGENT_RESTRICTION_PHRASES = [
+    "默认进入编排入口不等于必须 spawn",
+    "默认进入 `codex-subagent-orchestration` 不等于必须 spawn",
+    "full multi-agent execution",
+    "write ownership",
+    "write set is safe",
+    "throughput benefit",
+    "运行时工具可用",
+    "写集安全",
+    "拆分有质量/效率收益",
+    "收益明确",
+    "最少必要",
+]
+
 
 def require_contains(path: Path, snippets: list[str], failures: list[str]) -> None:
     if not path.exists():
@@ -105,6 +119,22 @@ def require_existing_non_system_skill_openai_yaml_parse(failures: list[str]) -> 
 def main() -> int:
     failures: list[str] = []
 
+    subagent_policy_paths = [
+        ROOT / "AGENTS.md",
+        ROOT / "README.md",
+        ROOT / "skills" / "TAXONOMY.md",
+        SKILL_ROOT / "SKILL.md",
+        SKILL_ROOT / "agents" / "openai.yaml",
+        SKILL_ROOT / "references" / "coding-standards.md",
+        SKILL_ROOT / "references" / "handoff-loop.md",
+        SKILL_ROOT / "references" / "model-selection.md",
+        SKILL_ROOT / "references" / "prompt-templates.md",
+        SKILL_ROOT / "references" / "role-contracts.md",
+        ROOT / "config" / "codex" / "templates" / "agents" / "README.md",
+    ]
+    for path in subagent_policy_paths:
+        require_not_contains(path, FORBIDDEN_SUBAGENT_RESTRICTION_PHRASES, failures)
+
     require_contains(
         ROOT / "AGENTS.md",
         [
@@ -119,7 +149,7 @@ def main() -> int:
             "主项目默认必须保持本地 `:path` 私有库依赖",
             "私有库仓内自测不能替代主项目验证",
             "验证通过后默认先保持当前本地 `:path` 私有库依赖状态",
-            "默认进入编排入口不等于必须 spawn 全部 subAgent",
+            "除 `code-review` 必须由独立 reviewer subAgent 执行外",
             "修复 / 实现类任务不依赖手动 Plan 模式",
         ],
         failures,
@@ -159,7 +189,7 @@ def main() -> int:
             "`fail-fix-report`",
             "默认 iOS 主 Skill 入口",
             "内部路由到 `apple-docs`",
-            "coder / tester 原生 subAgent 不再以“用户显式要求 / prompt 授权”为硬门槛",
+            "其它原生 subAgent 的启动场景、角色拆分或数量做额外限制"
         ],
         failures,
     )
@@ -208,7 +238,7 @@ def main() -> int:
             "`CP3 Final Gate`",
             "## Fail-Fix-Report",
             "定向验证失败或 `code-review` 存在 blocking findings 时，不得宣告默认收口完成",
-            "默认进入 `codex-subagent-orchestration` 不等于必须 spawn 全部 subAgent",
+            "除实现链路 reviewer subAgent 必须独立启动外",
             "该计划不依赖手动 Plan 模式",
         ],
         failures,
@@ -254,7 +284,7 @@ def main() -> int:
         CODEX_TEMPLATE_AGENTS / "README.md",
         [
             "默认最小逻辑角色集合：`explorer + builder + reporter`",
-            "主 Agent 可自主拉起 coder / tester 原生 subAgent",
+            "本仓只强制实现链路 `code-review` 使用独立 reviewer subAgent",
             "统一字段",
             "非 Plan 模式也必须在首次写入前自动给出 CP0 最小计划",
         ],

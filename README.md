@@ -18,7 +18,7 @@
 - `ios-automation/`
 - `ios-verification/`
 - `xcode-build/`
-- `codex-subagent-orchestration/` —— 默认优先的自适应编排入口；支持在运行时允许且收益明确时由主 Agent 自主拉起 coder / tester subAgent，reviewer subAgent 仍是实现链路强制门禁
+- `codex-subagent-orchestration/` —— 默认优先的自适应编排入口；除 code-review 必须使用独立 reviewer subAgent 外，本仓不对其它 subAgent 使用做额外限制
 
 ### Diagnostics
 - `code-review/`
@@ -79,7 +79,7 @@ ln -s iOSAgentSkills/skills .claude/skills
 请使用 codex-subagent-orchestration 处理这个 iOS 任务。
 默认按主 Agent 串行承担 explorer -> builder -> reporter 逻辑角色；
 实现链路收口必须启动独立 reviewer subAgent 执行 code-review，不能由实现 Agent 自审；
-当运行时工具可用、写集安全且拆分能提升质量/效率时，可由主 Agent 自主为 coder / tester 调用 ~/.codex/agents 原生 subAgent；
+除 code-review 必须使用独立 reviewer subAgent 外，其它 subAgent 使用不做仓库级限制；
 若边界不清激活 pm，若需要测试面或失败归因激活 tester。
 目标：<需求>
 上下文：<目录/文件/报错>
@@ -150,8 +150,8 @@ python3 scripts/validate_codex_agent_templates.py config/codex/templates/agents
 - 编排默认按 `lite` / `standard` / `full` 三档选择角色。
 - 默认先按任务分型器分类，再决定角色激活矩阵（最小集合：`explorer + builder + reporter`）。
 - 修复 / 实现任务不依赖手动 Plan 模式；允许先做最小只读定位，但首次写入前必须自动给出 CP0 最小计划，禁止从代码查找直接跳到实现。
-- 默认进入编排入口不等于必须 spawn 全部 coder / tester subAgent；主 Agent 可按 `lite` / `standard` / `full`，在运行时工具可用、写集安全、任务风险或吞吐收益明确时自主拉起最少必要的 coder / tester 原生 subAgent。工具不可用、上层策略禁止或写集不适合拆分时，coder / tester 仍由主 Agent 串行承担；实现链路的 `code-review` 必须交给独立 reviewer subAgent。
-- 即使 coder / tester 未使用原生 subAgent 或因工具/策略/写集限制回到主 Agent 串行执行，实现链路仍必须保留 `ios-verification` 与独立 reviewer subAgent `code-review`；reviewer subAgent 不可用时只能报告 blocked / pending review。
+- 除实现链路的 `code-review` 必须交给独立 reviewer subAgent 外，本仓不对 coder / tester / pm / reporter 等其它 subAgent 的启动场景、角色拆分或数量做额外限制；主 Agent 可按当前任务与运行时能力自行决定。
+- 无论其它角色是否使用原生 subAgent，实现链路仍必须保留 `ios-verification` 与独立 reviewer subAgent `code-review`；reviewer subAgent 不可用时只能报告 blocked / pending review。
 - CP0 最小计划（`proposed_plan`）输出只要是实现链路，就必须显式包含独立 reviewer subAgent 执行的 `code-review` 审查步骤。
 - 日志输出默认低 token：只回传关键错误段或最后 80~120 行；长日志写入 `/tmp/*.log`。
 

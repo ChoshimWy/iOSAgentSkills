@@ -1,6 +1,6 @@
 # subAgent 模型选择与回退（主 Agent 执行）
 
-目标：coder / tester 可由主 Agent 在运行时工具可用、写集安全且拆分有质量/效率收益时自主调用 Codex 原生 subAgent；实现链路的 reviewer subAgent 是强制独立审查角色。截至 2026-06-15，本仓库共享默认模型为 `gpt-5.5`，默认 reasoning effort 为 `medium`；reviewer subAgent 默认显式使用 `gpt-5.3-codex-spark`。只有用户明确要求模型分工、任务风险需要或预算/吞吐目标明确时，主 Agent 才为 coder / tester 按角色显式指定 `model` / `reasoning_effort`。若指定模型不可用，则回退为继承主 Agent，保证编排不中断。
+目标：除实现链路的 reviewer subAgent 是强制独立审查角色外，本仓不对 coder / tester / pm / reporter 等其它 subAgent 使用做额外限制。截至 2026-06-15，本仓库共享默认模型为 `gpt-5.5`，默认 reasoning effort 为 `medium`；reviewer subAgent 默认显式使用 `gpt-5.3-codex-spark`。只有用户明确要求模型分工、任务风险需要或预算/吞吐目标明确时，主 Agent 才为非 review subAgent 按角色显式指定 `model` / `reasoning_effort`。若指定模型不可用，则回退为继承主 Agent，保证编排不中断。
 
 > 约束：除本仓库明确钉住的 reviewer 默认模型 `gpt-5.3-codex-spark` 外，不写死“永远正确”的模型名；实际可用模型取决于运行时/账号，可能随时间变化。若 reviewer 指定模型不可用，回退为不传 `model`，让 subAgent 继承主 Agent 默认模型。
 
@@ -34,7 +34,7 @@
 
 ### 0) 默认模型策略
 
-- 未命中“运行时工具可用 / 工具策略允许 / 写集安全 / 拆分有质量或效率收益”时，不为 coder / tester 调用 `spawn_agent`；实现链路 reviewer subAgent 仍必须调用，且默认传 `model="gpt-5.3-codex-spark"`；coder / tester 已启动但未命中模型覆盖条件时，`spawn_agent` 不传 `model`，也不为低风险任务强行指定不同推理强度。
+- 实现链路 reviewer subAgent 必须调用，且默认传 `model="gpt-5.3-codex-spark"`；非 review subAgent 已启动但未命中模型覆盖条件时，`spawn_agent` 不传 `model`，也不为低风险任务强行指定不同推理强度。
 - 角色模板中的 `model_reasoning_effort` 只表达角色偏好；具体是否覆盖由主 Agent 根据当前任务决定。
 
 ### 1) 需要显式指定时，为每个角色生成候选模型序列
@@ -57,7 +57,7 @@
 主 Agent 在启动任一原生 subAgent 后，用一行说明本次选择结果（只写最终落地策略，不要把所有候选刷屏）：
 
 - `reviewer model: gpt-5.3-codex-spark`（默认 reviewer 策略）
-- `subagent model policy: inherit parent`（coder / tester 默认）
+- `subagent model policy: inherit parent`（非 review subAgent 默认）
 - 或 `coder model: ...` / `tester model: ... (reasoning_effort=medium)`（确有覆盖时）
 
 若发生回退（候选失败）：再追加一行：
