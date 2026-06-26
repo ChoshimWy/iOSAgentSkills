@@ -37,6 +37,8 @@ CODEX_VERIFY_TOOL_INSTALL="auto"
 - `XCODE_SCHEME` 建议显式配置，避免多 scheme 仓库误判
 - 如果未显式设置 `XCODE_SCHEME`，脚本默认优先选择绑定了单元测试 `*Tests` target / bundle 的 scheme；若不存在，再回退到其它测试 scheme（例如 `*UITests`、`*_TEST`）
 - 如果当前任务里已经先跑过定向测试，可选验证应优先复用同一套 workspace / scheme / destination 基线；必要时用 `XCODE_SCHEME` / `XCODE_DESTINATION` 显式固定
+- 定向 XCTest 不要手工拼 `-workspace` / `-scheme` / `-destination`；应通过 `--build-check` 或 `scripts/build-check.sh` 只传 `-only-testing` / `-skip-testing` 与 action，让脚本从 `.codex/xcodebuild.env` 或自动发现结果注入 workspace、scheme 与 destination
+- 如果显式 `XCODE_SCHEME` 或低层 `codex_verify -- <xcodebuild args>` 里的 `-scheme` 不存在于 shared schemes，wrapper / build-check 会 fail-fast 并打印可用 scheme；不要把环境名和测试动作拼成不存在的 scheme（例如 `Acrux_DEV_TEST`）
 - 验证 wrapper 会把验证型 `xcodebuild` 统一提交到 shared build-queue daemon，并固定使用 Xcode 系统 DerivedData；不要再通过旧 `XCODE_DERIVED_DATA_*` / `CODEX_DERIVED_DATA_SLOT` 公开配置调整缓存策略
 - 默认不做 `clean build`
 - 可选验证仍必须在目标项目根目录的项目环境执行；`.codex/xcodebuild.env` 只负责补充参数，不会把最终验证降级成沙箱构建
@@ -85,6 +87,27 @@ XCODE_SCHEME="Acrux_DEV"
 XCODE_CONFIGURATION="Debug"
 XCODE_DEVICE_ID="00008130-0018782A0210001C"
 ```
+
+### 定向 XCTest：脚本接管 workspace / scheme / destination
+
+```bash
+~/.codex/bin/codex_verify \
+  --build-check /path/to/iOSAgentSkills/skills/ios-verification/scripts/build-check.sh \
+  /path/to/SidusLinkPro \
+  -only-testing:AcruxTests/Unity3DViewServiceStageMembershipTests/test_handleAddFixtureOrGroup_whenRunningCuePixelCCTCrossfadeIsZero_projectsZeroToStageChannel \
+  test
+```
+
+等价地，在 iOSAgentSkills 仓内可直接调用：
+
+```bash
+skills/ios-verification/scripts/build-check.sh \
+  /path/to/SidusLinkPro \
+  -only-testing:AcruxTests/Unity3DViewServiceStageMembershipTests/test_handleAddFixtureOrGroup_whenRunningCuePixelCCTCrossfadeIsZero_projectsZeroToStageChannel \
+  test
+```
+
+这类命令只提供测试 selector 和 action；不要额外传 `-scheme Acrux_DEV`，更不要拼出 `Acrux_DEV_TEST`。
 
 ### 显式保留 simulator 首次校验
 

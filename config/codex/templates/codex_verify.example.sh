@@ -21,6 +21,9 @@ Recommended:
   - Ask all agents to use one of the two entrypoints instead of裸跑 xcodebuild
   - Let iOSAgentSkills ios-verification delegate into the project wrapper first,
     then fall back to the global wrapper automatically
+  - For targeted XCTest, prefer --build-check and pass only selectors/actions
+    (for example -only-testing:Bundle/Class/test test); keep workspace,
+    scheme, and destination selection in the script layer.
 
 Notes:
   - Legacy public overrides XCODE_DERIVED_DATA_MODE / XCODE_DERIVED_DATA_SEED_MODE /
@@ -714,6 +717,7 @@ load_metadata_from_xcode_args() {
       -scheme)
         ((index += 1))
         META_SCHEME="${args[$index]:-}"
+        META_SCHEME_FROM_ARGS='1'
         ;;
       -destination)
         ((index += 1))
@@ -759,6 +763,46 @@ normalize_xcodebuild_entry_args() {
     ((index += 1))
   done
   COMMAND=("${normalized[@]}")
+}
+
+assert_configured_scheme_exists() {
+  [[ "$MODE" == 'xcodebuild' && "${META_SCHEME_FROM_ARGS:-0}" == '1' ]] || return 0
+  local scheme="${META_SCHEME:-}"
+  [[ -n "$scheme" && "$scheme" != 'auto' ]] || return 0
+
+  python3 - "$REPO_ROOT" "$scheme" <<'PY'
+from __future__ import annotations
+
+from pathlib import Path
+import sys
+
+repo_root = Path(sys.argv[1]).resolve()
+scheme = sys.argv[2].strip()
+
+schemes = sorted(
+    {
+        path.stem
+        for path in repo_root.rglob("*.xcscheme")
+        if "Pods" not in path.parts
+    }
+)
+
+# Some repositories intentionally keep schemes unshared. In that case the
+# wrapper cannot prove validity without invoking xcodebuild, so preserve the
+# historical behavior and let xcodebuild report the project-specific error.
+if schemes and scheme not in schemes:
+    print(
+        f"[codex_verify] invalid scheme '{scheme}' is not a shared scheme under {repo_root}",
+        file=sys.stderr,
+    )
+    print(f"[codex_verify] available schemes: {', '.join(schemes)}", file=sys.stderr)
+    print(
+        "[codex_verify] let the script decide scheme/destination via --build-check, "
+        "or fix XCODE_SCHEME in .codex/xcodebuild.env; do not hand-splice a non-existent scheme.",
+        file=sys.stderr,
+    )
+    sys.exit(66)
+PY
 }
 
 load_metadata_defaults() {
@@ -1293,6 +1337,7 @@ esac
 META_WORKSPACE=''
 META_PROJECT=''
 META_SCHEME=''
+META_SCHEME_FROM_ARGS='0'
 META_DESTINATION=''
 META_CONFIGURATION=''
 META_ACTION=''
@@ -1302,6 +1347,7 @@ if [[ "$MODE" == 'xcodebuild' ]]; then
 fi
 load_metadata_defaults
 normalize_xcodebuild_entry_args
+assert_configured_scheme_exists
 
 if [[ "$MODE" == 'daemon' ]]; then
   daemon_main

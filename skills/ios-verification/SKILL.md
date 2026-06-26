@@ -115,6 +115,8 @@ Use the smallest sufficient level:
 - The wrapper / script owns formatter selection, tool bootstrap, parsing, redaction, artifact generation, and preserving the real `xcodebuild` exit code.
 - Agents must not manually install or invoke `xcbeautify`, `xcpretty`, `xcprint`, `xcresulttool`, or equivalent parser tools.
 - Reuse Xcode 系统 DerivedData (`~/Library/Developer/Xcode/DerivedData`) via daemon; do not reintroduce `XCODE_DERIVED_DATA_*` or `CODEX_DERIVED_DATA_SLOT` public configuration.
+- For targeted XCTest, do not hand-compose `-workspace` / `-project` / `-scheme` / `-destination` in a direct `codex_verify -- <xcodebuild args>` command. Prefer `codex_verify --build-check <build-check.sh> <repo-root> -only-testing:<selector> test` (or `scripts/build-check.sh <repo-root> -only-testing:<selector> test`) so workspace, scheme, and destination stay script-owned.
+- Direct `codex_verify -- <xcodebuild args>` is only for a user-supplied exact Xcode command or a deliberate low-level diagnostic; the wrapper must fail fast when an explicit scheme is not present in shared schemes.
 
 ### Script-Owned Validation Decisions
 
@@ -122,6 +124,7 @@ The following deterministic steps are script-owned; Agents should invoke the wra
 
 - Workspace / project discovery and `.xcworkspace` vs `.xcodeproj` priority.
 - Scheme selection, including `*Tests` / `*UITests` / `*_TEST` preference and reporting via `project_selection` / `scheme_selection`.
+- Targeted XCTest command assembly: Agents may provide `-only-testing` / `-skip-testing` selectors and the action (`test`, `build`, etc.), but must let scripts inject the actual workspace/project, scheme, configuration, and destination from `.codex/xcodebuild.env` or auto-discovery.
 - Connected physical-device discovery: scripts combine `xcodebuild -showdestinations` with `xcrun devicectl list devices`, select only `connected` devices by default, and do not treat paired but disconnected devices as final verification targets.
 - Simulator fallback selection, including `TARGETED_DEVICE_FAMILY` model preference: if iPhone is supported, prefer iPhone; otherwise prefer iPad when iPad is supported.
 - Explicit destination / device override handling: `XCODE_DESTINATION`, `XCODE_DEVICE_ID`, `XCODE_DEVICE_NAME`, and `XCODE_PREFER_MODEL` take precedence over automatic inference.

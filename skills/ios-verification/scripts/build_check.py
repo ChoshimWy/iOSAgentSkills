@@ -30,6 +30,31 @@ UI_TEST_SCHEME_NAME_PATTERN = re.compile(r"(?:^|[_-])UITESTS?$", re.IGNORECASE)
 UNIT_TEST_SCHEME_TOKEN_PATTERN = re.compile(r"(?:^|[_-])TESTS$", re.IGNORECASE)
 GENERIC_TEST_SCHEME_NAME_PATTERN = re.compile(r"(?:^|[_-])TEST$", re.IGNORECASE)
 NON_PRODUCTION_SCHEME_PATTERN = re.compile(r"(^|[_-])(DEV|TEST|UAT|STAGING)$", re.IGNORECASE)
+XCODEBUILD_ACTIONS = {
+    "build",
+    "build-for-testing",
+    "test",
+    "test-without-building",
+    "archive",
+    "analyze",
+    "clean",
+}
+SCRIPT_OWNED_XCODEBUILD_OPTIONS = {
+    "-workspace",
+    "-project",
+    "-scheme",
+    "-destination",
+    "-configuration",
+    "-derivedDataPath",
+}
+PASSTHROUGH_VALUE_OPTIONS = {
+    "-only-testing",
+    "-skip-testing",
+}
+PASSTHROUGH_PREFIX_OPTIONS = (
+    "-only-testing:",
+    "-skip-testing:",
+)
 WORKSPACE_PATH_ERROR_PATTERN = re.compile(
     r"is not a workspace file|contents\.xcworkspacedata|Unable to open workspace|workspace .* cannot be opened",
     re.IGNORECASE,
@@ -152,6 +177,7 @@ class BuildConfig:
     formatter_preference: str
     tool_install_policy: str
     tool_install_overrides: dict[str, str]
+    xcodebuild_passthrough_args: list[str] = field(default_factory=list)
 
     def command_for_destination(self, destination: str | None) -> list[str]:
         command = ["xcodebuild"]
@@ -176,6 +202,7 @@ class BuildConfig:
         if is_simulator_destination(destination):
             command += ["CODE_SIGNING_ALLOWED=NO", "CODE_SIGNING_REQUIRED=NO"]
 
+        command += self.xcodebuild_passthrough_args
         command.append(self.action)
         return command
 
@@ -416,10 +443,18 @@ def scheme_sort_key(name: str, path: Path | None) -> tuple[int, str]:
 
 
 def pick_scheme(root: Path, env: dict[str, str]) -> str:
-    if env.get("XCODE_SCHEME"):
-        return env["XCODE_SCHEME"]
-
     paths = scheme_paths(root)
+
+    if env.get("XCODE_SCHEME"):
+        scheme = env["XCODE_SCHEME"]
+        if paths and scheme not in paths:
+            available = ", ".join(sorted(paths)) or "(none)"
+            raise RuntimeError(
+                f"Configured XCODE_SCHEME '{scheme}' is not a shared scheme. "
+                f"Available schemes: {available}. "
+                "Fix .codex/xcodebuild.env or omit XCODE_SCHEME to let the script choose."
+            )
+        return scheme
 
     schemes = list(paths.keys())
     if not schemes:
@@ -428,10 +463,65 @@ def pick_scheme(root: Path, env: dict[str, str]) -> str:
     return sorted(schemes, key=lambda name: scheme_sort_key(name, paths.get(name)))[0]
 
 
-def resolve_build_config(root: Path) -> BuildConfig:
+def normalize_xcodebuild_passthrough_args(args: list[str]) -> tuple[list[str], str | None]:
+    """Keep only validation-scope xcodebuild args; script owns baseline selection."""
+
+    normalized: list[str] = []
+    action_override: str | None = None
+    index = 0
+    while index < len(args):
+        part = args[index]
+        if part == "--":
+            index += 1
+            continue
+        if index == 0 and part == "xcodebuild":
+            index += 1
+            continue
+        if part in XCODEBUILD_ACTIONS:
+            if action_override and action_override != part:
+                raise RuntimeError(
+                    f"Multiple xcodebuild actions were provided: {action_override}, {part}"
+                )
+            action_override = part
+            index += 1
+            continue
+        if part in SCRIPT_OWNED_XCODEBUILD_OPTIONS:
+            raise RuntimeError(
+                f"{part} is owned by build-check.py. "
+                "Set XCODE_* in .codex/xcodebuild.env or omit it to let the script decide; "
+                "only pass test selectors such as -only-testing and the action."
+            )
+        if any(part.startswith(prefix) for prefix in PASSTHROUGH_PREFIX_OPTIONS):
+            normalized.append(part)
+            index += 1
+            continue
+        if part in PASSTHROUGH_VALUE_OPTIONS:
+            if index + 1 >= len(args):
+                raise RuntimeError(f"{part} requires a selector value")
+            normalized.extend([part, args[index + 1]])
+            index += 2
+            continue
+        raise RuntimeError(
+            f"Unsupported build-check xcodebuild passthrough argument: {part}. "
+            "Use XCODE_* environment/config for workspace, scheme, destination, and configuration; "
+            "pass only -only-testing/-skip-testing selectors and the action."
+        )
+
+    return normalized, action_override
+
+
+def resolve_build_config(root: Path, passthrough_args: list[str] | None = None) -> BuildConfig:
     env = load_env(root)
+    xcodebuild_passthrough_args, action_override = normalize_xcodebuild_passthrough_args(
+        passthrough_args or []
+    )
     workspace = pick_workspace(root, env)
     project = pick_project(root, env)
+    action = action_override or (
+        "test"
+        if any(arg.startswith("-only-testing") for arg in xcodebuild_passthrough_args)
+        else env.get("XCODE_ACTION", "build")
+    )
 
     if not workspace and not project:
         raise RuntimeError(f"No .xcworkspace or .xcodeproj found in {root}")
@@ -442,7 +532,7 @@ def resolve_build_config(root: Path) -> BuildConfig:
         project=project,
         scheme=pick_scheme(root, env),
         configuration=env.get("XCODE_CONFIGURATION", "Debug"),
-        action=env.get("XCODE_ACTION", "build"),
+        action=action,
         destination=env.get("XCODE_DESTINATION"),
         device_fallback_enabled=truthy(env.get("XCODE_DEVICE_FALLBACK"), default=True),
         explicit_device_id=env.get("XCODE_DEVICE_ID"),
@@ -462,6 +552,7 @@ def resolve_build_config(root: Path) -> BuildConfig:
             "xcpretty": env.get("CODEX_VERIFY_INSTALL_XCPRETTY", ""),
             "xcprint": env.get("CODEX_VERIFY_INSTALL_XCPRINT", ""),
         },
+        xcodebuild_passthrough_args=xcodebuild_passthrough_args,
     )
 
 
@@ -1872,13 +1963,13 @@ def main() -> int:
         action="store_true",
         help="Print resolved commands without invoking xcodebuild",
     )
-    args = parser.parse_args()
+    args, passthrough_args = parser.parse_known_args()
 
     root = Path(args.root).resolve()
     dry_run = args.dry_run or truthy(os.environ.get("XCODEBUILD_DRY_RUN"), default=False)
 
     try:
-        config = resolve_build_config(root)
+        config = resolve_build_config(root, passthrough_args)
     except Exception as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
