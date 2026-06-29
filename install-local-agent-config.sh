@@ -40,6 +40,7 @@ When --init-project <path> is specified, the script initializes or updates:
   <path>/.codex/xcodebuild.env
 with detected workspace/project, scheme, Debug configuration, and device fallback defaults.
 The generated file is project-local; device IDs remain commented because they are machine-specific.
+The script also ensures <path>/.gitignore ignores .codex/ verification artifacts and local overrides.
 
 When --init-memory <path> is specified, the script prints a memory-seeding prompt to use as
 the first message when starting Claude Code in the given project directory.
@@ -337,6 +338,38 @@ ensure_text_file() {
   record_change "$action"
 }
 
+ensure_line_in_file() {
+  local file_path="$1"
+  local expected_line="$2"
+  local label="$3"
+  local action='updated'
+
+  ensure_directory "$(dirname "$file_path")"
+
+  if [[ -f "$file_path" && ! -L "$file_path" ]]; then
+    if grep -Fxq "$expected_line" "$file_path"; then
+      log "unchanged: $label"
+      record_change unchanged
+      return 0
+    fi
+  elif [[ -e "$file_path" || -L "$file_path" ]]; then
+    backup_existing_path "$file_path"
+    action='updated'
+  else
+    action='created'
+  fi
+
+  log "$action: $label"
+  if [[ "$DRY_RUN" == '0' ]]; then
+    if [[ -s "$file_path" ]]; then
+      printf '\n%s\n' "$expected_line" >> "$file_path"
+    else
+      printf '%s\n' "$expected_line" > "$file_path"
+    fi
+  fi
+  record_change "$action"
+}
+
 build_claude_md_content() {
   local import_line="@${REPO_AGENTS}"
   local repo_claude_md="$REPO_ROOT/CLAUDE.md"
@@ -577,12 +610,15 @@ init_project_xcode_env() {
   local project_path="$1"
   local resolved_project_path
   local env_path
+  local gitignore_path
   local content
 
   resolved_project_path="$(resolve_physical_path "$project_path")"
   env_path="$resolved_project_path/.codex/xcodebuild.env"
+  gitignore_path="$resolved_project_path/.gitignore"
   content="$(build_project_xcode_env_content "$resolved_project_path")"
   ensure_text_file "$env_path" "$content" "$resolved_project_path/.codex/xcodebuild.env"
+  ensure_line_in_file "$gitignore_path" ".codex/" "$resolved_project_path/.gitignore ignores .codex/"
 }
 
 ensure_file_copied() {

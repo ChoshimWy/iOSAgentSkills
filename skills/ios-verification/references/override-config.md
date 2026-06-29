@@ -59,6 +59,7 @@ CODEX_VERIFY_TOOL_INSTALL="auto"
 - `XCODE_UI_SMOKE_SPEC` 指定 smoke spec 路径，默认 `.codex/ui-smoke.yml`
 - UI smoke 默认采用 text-first 断言（accessibility tree），截图用于失败证据
 - `CODEX_VERIFY_ARTIFACT_DIR` 指定结构化验证证据输出目录，默认 `.codex/build-results/latest`
+- 因默认验证产物与 `.codex/xcodebuild.env` 都位于项目 `.codex/` 下，目标项目应在 `.gitignore` 中忽略 `.codex/`；`install-local-agent-config.sh --init-project <path>` 会自动确保该忽略项存在。
 - `CODEX_VERIFY_FORMATTER` 控制脚本内部 formatter：`auto`、`xcbeautify`、`xcpretty`、`xcprint`、`none`
 - `CODEX_VERIFY_TOOL_INSTALL` 控制脚本是否自动安装缺失 formatter：`auto`（默认，失败后回退内建解析）、`off`（不安装）、`required`（无法安装即 blocked）
 - 如需指定非默认安装命令，可在项目环境中设置 `CODEX_VERIFY_INSTALL_XCBEAUTIFY`、`CODEX_VERIFY_INSTALL_XCPRETTY`、`CODEX_VERIFY_INSTALL_XCPRINT`；值会由脚本解析并执行，Agent 不需要判断安装方式
