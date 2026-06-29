@@ -31,7 +31,7 @@ mkdir -p "$(dirname "$OUT_JSON")" "$(dirname "$OUT_SUMMARY")" "$(dirname "$OUT_R
 
 # Keep only a compact set of actionable lines. This summary is intentionally small.
 grep -nE \
-  "error:|fatal error:|warning:|Command SwiftCompile failed|Command CompileSwift failed|Undefined symbol|No such module|cannot find|does not conform|failed to build module|Provisioning profile|CodeSign|Signing|The operation couldn.t be completed|xcodebuild: error:|Testing failed|Test Case .* failed|Executed .* tests" \
+  "error:|fatal error:|warning:|Command SwiftCompile failed|Command CompileSwift failed|Undefined symbol|No such module|cannot find|does not conform|failed to build module|Provisioning profile|CodeSign|Signing for .* requires a development team|No profiles for|The operation couldn.t be completed|xcodebuild: error:|Testing failed|TEST FAILED|Test Case .* failed|Failing tests:|Executed .* tests|Restarting after unexpected exit" \
   "$LOG_FILE" \
   | head -n 200 > "$OUT_SUMMARY" || true
 
@@ -86,9 +86,16 @@ patterns = [
     ("swift_compile_error", re.compile(r"(?P<file>[^:\n]+\.swift):(?P<line>\d+):(?P<column>\d+):\s*error:\s*(?P<msg>.*)")),
     ("objc_compile_error", re.compile(r"(?P<file>[^:\n]+\.(?:m|mm|h|hpp|cpp|c)):?(?P<line>\d+)?:?(?P<column>\d+)?:?\s*error:\s*(?P<msg>.*)")),
     ("linker_error", re.compile(r"Undefined symbol|duplicate symbol|ld: .*error|clang: error: linker command failed", re.I)),
-    ("signing_error", re.compile(r"Provisioning profile|CodeSign|Signing for .* requires a development team|No profiles for", re.I)),
+    (
+        "signing_error",
+        re.compile(
+            r"Provisioning profile|Command CodeSign failed|CodeSign .* failed|Signing for .* requires a development team|No profiles for|No signing certificate|requires a provisioning profile|errSecInternalComponent",
+            re.I,
+        ),
+    ),
     ("destination_error", re.compile(r"destination specifier|destination .*not|device .*not|No devices are available", re.I)),
-    ("test_failure", re.compile(r"Test Case .* failed|XCTAssert|Testing failed", re.I)),
+    ("test_failure", re.compile(r"Test Case .* failed|Failing tests?:|XCTAssert|Testing failed|\*\* TEST FAILED \*\*", re.I)),
+    ("test_runner_restart", re.compile(r"Restarting after unexpected exit", re.I)),
     ("xcodebuild_error", re.compile(r"xcodebuild: error:", re.I)),
 ]
 
@@ -105,9 +112,10 @@ priority = {
     "swift_compile_error": 6,
     "objc_compile_error": 7,
     "linker_error": 8,
-    "signing_error": 9,
-    "destination_error": 10,
-    "test_failure": 11,
+    "test_failure": 9,
+    "test_runner_restart": 10,
+    "signing_error": 11,
+    "destination_error": 12,
     "xcodebuild_error": 12,
     "unknown": 99,
 }
@@ -126,6 +134,7 @@ failure_domain = {
     "linker_error": "code",
     "signing_error": "signing",
     "test_failure": "test",
+    "test_runner_restart": "test",
     "unknown": "unknown",
 }
 
@@ -145,6 +154,11 @@ non_blocking_noise_patterns = [
         r"DVTProvisioningProfileManager: Failed to load profile .*Profile is missing the required UUID property",
         re.I,
     ),
+    # Normal successful embed/sign phases print these lines for every framework.
+    # They are not blockers unless a nearby line explicitly says CodeSign failed.
+    re.compile(r"^Code Signing .+ with Identity ", re.I),
+    re.compile(r"^/usr/bin/codesign\s+--force\s+--sign\b", re.I),
+    re.compile(r"^deleting .+\.framework/_CodeSignature/?(?:CodeResources)?$", re.I),
 ]
 
 def is_non_blocking_noise(line: str) -> bool:
@@ -167,7 +181,9 @@ items = []
 failed_tests = []
 warning_count = 0
 
-failed_test_pattern = re.compile(r"Test Case ['\"](?P<name>[^'\"]+)['\"] failed|Failing tests?:\s*(?P<tail>.+)", re.I)
+failed_test_pattern = re.compile(r"Test Case ['\"](?P<name>[^'\"]+)['\"] failed|Failing tests?:\s*(?P<tail>.*)", re.I)
+failed_test_name_line = re.compile(r"^\s*(?P<name>[A-Za-z_][A-Za-z0-9_]*Tests?\.[A-Za-z_][A-Za-z0-9_]*(?:\(\))?)\s*$")
+expect_failed_test_name = False
 
 for idx, line in enumerate(lines):
     if is_non_blocking_noise(line):
@@ -176,9 +192,37 @@ for idx, line in enumerate(lines):
     if " warning: " in f" {line} " or line.strip().startswith("warning:"):
         warning_count += 1
     if m := failed_test_pattern.search(line):
-        name = (m.groupdict().get("name") or m.groupdict().get("tail") or line).strip()
-        if name and name not in failed_tests:
+        name = (m.groupdict().get("name") or m.groupdict().get("tail") or "").strip()
+        if not name:
+            expect_failed_test_name = True
+        elif name not in failed_tests:
             failed_tests.append(name[:300])
+        if name:
+            items.append({
+                "kind": "test_failure",
+                "severity": "error",
+                "message": name[:1000],
+                "raw_excerpt": compact_excerpt(idx),
+                "failure_domain": "test",
+                "retryable": False,
+            })
+        continue
+    elif expect_failed_test_name:
+        expect_failed_test_name = False
+        if m := failed_test_name_line.match(line):
+            name = m.group("name").strip()
+            if name and name not in failed_tests:
+                failed_tests.append(name[:300])
+            if name:
+                items.append({
+                    "kind": "test_failure",
+                    "severity": "error",
+                    "message": name[:1000],
+                    "raw_excerpt": compact_excerpt(idx),
+                    "failure_domain": "test",
+                    "retryable": False,
+                })
+                continue
 
     for kind, pattern in patterns:
         m = pattern.search(line)

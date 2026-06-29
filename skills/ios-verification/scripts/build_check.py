@@ -67,6 +67,21 @@ DESTINATION_UNAVAILABLE_PATTERN = re.compile(
     r"Unable to find a destination|destination specifier|No available destinations|Unable to locate a destination",
     re.IGNORECASE,
 )
+FAILED_TEST_CASE_PATTERN = re.compile(
+    r"Test Case ['\"](?P<case>[^'\"]+)['\"] failed|Failing tests?:\s*(?P<tail>.*)",
+    re.IGNORECASE,
+)
+FAILED_TEST_NAME_LINE_PATTERN = re.compile(
+    r"^\s*(?P<name>[A-Za-z_][A-Za-z0-9_]*Tests?\.[A-Za-z_][A-Za-z0-9_]*(?:\(\))?)\s*$"
+)
+GENERIC_TEST_FAILURE_PATTERN = re.compile(
+    r"\*\* TEST FAILED \*\*|Testing failed",
+    re.IGNORECASE,
+)
+TEST_RUNNER_RESTART_PATTERN = re.compile(
+    r"Restarting after unexpected exit",
+    re.IGNORECASE,
+)
 UI_SENSITIVE_FILE_PATTERNS = (
     re.compile(r".*ViewController.*\.swift$", re.IGNORECASE),
     re.compile(r".*View.*\.swift$", re.IGNORECASE),
@@ -978,10 +993,57 @@ def collect_window(lines: list[str], index: int, radius: int = 4) -> str:
 def parse_build_issues(output: str, root: Path) -> list[BuildIssue]:
     issues: list[BuildIssue] = []
     lines = output.splitlines()
+    expect_failed_test_name = False
 
     for index, raw_line in enumerate(lines):
         line = raw_line.rstrip()
         if not line:
+            continue
+
+        if test_match := FAILED_TEST_CASE_PATTERN.search(line):
+            name = (test_match.group("case") or test_match.group("tail") or "").strip()
+            if name:
+                issues.append(
+                    BuildIssue(
+                        order=index,
+                        kind="test_failure",
+                        message=name,
+                    )
+                )
+            else:
+                expect_failed_test_name = True
+            continue
+
+        if expect_failed_test_name:
+            expect_failed_test_name = False
+            if name_match := FAILED_TEST_NAME_LINE_PATTERN.match(line):
+                issues.append(
+                    BuildIssue(
+                        order=index,
+                        kind="test_failure",
+                        message=name_match.group("name"),
+                    )
+                )
+                continue
+
+        if GENERIC_TEST_FAILURE_PATTERN.search(line):
+            issues.append(
+                BuildIssue(
+                    order=index,
+                    kind="test_failure",
+                    message=line.strip(),
+                )
+            )
+            continue
+
+        if TEST_RUNNER_RESTART_PATTERN.search(line):
+            issues.append(
+                BuildIssue(
+                    order=index,
+                    kind="test_runner_restart",
+                    message=line.strip(),
+                )
+            )
             continue
 
         if WORKSPACE_PATH_ERROR_PATTERN.search(line):
@@ -1145,23 +1207,33 @@ def failure_domain_for_issue(issue: BuildIssue) -> str:
         return "code"
     if issue.kind == "ui_smoke_failure":
         return "test"
+    if issue.kind in {"test_failure", "test_runner_restart"}:
+        return "test"
     if issue.kind == "destination_unavailable":
         return "env_issue"
     return "code"
 
 
-def issue_priority(issue: BuildIssue) -> tuple[int, int]:
+def issue_priority(issue: BuildIssue) -> tuple[int, int, int]:
     priority_by_domain = {
         "env_issue": 0,
         "project_config": 1,
         "dependency": 2,
         "code": 3,
-        "signing": 4,
-        "destination": 5,
-        "test": 6,
+        "test": 4,
+        "signing": 5,
+        "destination": 6,
         "infra": 7,
     }
-    return (priority_by_domain.get(failure_domain_for_issue(issue), 10), issue.order)
+    priority_by_kind = {
+        "test_failure": -1,
+        "test_runner_restart": 1,
+    }
+    return (
+        priority_by_domain.get(failure_domain_for_issue(issue), 10),
+        priority_by_kind.get(issue.kind, 0),
+        issue.order,
+    )
 
 
 def select_primary_issue(issues: list[BuildIssue]) -> BuildIssue | None:
@@ -1385,21 +1457,29 @@ def warning_count(output: str) -> int:
 def extract_failed_tests(output: str, limit: int = 5) -> list[dict[str, str]]:
     failed_tests: list[dict[str, str]] = []
     seen: set[str] = set()
-    patterns = (
-        re.compile(r"Test Case '([^']+)' failed"),
-        re.compile(r"Failing tests:\s*(.+)$"),
-    )
+    expect_failed_test_name = False
     for line in output.splitlines():
-        for pattern in patterns:
-            match = pattern.search(line)
-            if not match:
+        if match := FAILED_TEST_CASE_PATTERN.search(line):
+            name = (match.group("case") or match.group("tail") or "").strip()
+            if not name:
+                expect_failed_test_name = True
                 continue
-            name = match.group(1).strip()
             if name and name not in seen:
                 failed_tests.append({"name": name})
                 seen.add(name)
             if len(failed_tests) >= limit:
                 return failed_tests
+            continue
+
+        if expect_failed_test_name:
+            expect_failed_test_name = False
+            if match := FAILED_TEST_NAME_LINE_PATTERN.match(line):
+                name = match.group("name").strip()
+                if name and name not in seen:
+                    failed_tests.append({"name": name})
+                    seen.add(name)
+                if len(failed_tests) >= limit:
+                    return failed_tests
     return failed_tests
 
 
