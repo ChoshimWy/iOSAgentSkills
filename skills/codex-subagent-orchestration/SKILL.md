@@ -261,7 +261,7 @@ Main Agent final output should follow this contract:
 SubAgent outputs must stay compact:
 
 - `coder worker`: `changed_files`, `summary`, `test_impact` or `no_test_reason`, `known_risks`.
-- `reviewer explorer`: `阻塞问题`, `非阻塞建议`（可见输出用中文 Markdown 表格）。
+- `reviewer explorer`: `阻塞问题`, `非阻塞建议`。
 - `tester explorer`: `suggested_validation`, `executed_validation`, `failure_attribution`, `failure_attribution_type`, `needs_test_code`.
 - `reporter`: `acceptance_matrix`, `residual_risks`, `completion_status`.
 

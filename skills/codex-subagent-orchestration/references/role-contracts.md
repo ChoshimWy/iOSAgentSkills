@@ -51,7 +51,6 @@
 
 ### 额外要求
 - 必须由未参与本轮实现的独立 reviewer subAgent 执行；同一 Agent 实现后自审无效
-- 可见回复必须使用中文 Markdown 表格，列风格与主 Agent 回复一致
 - 如果 reviewer subAgent 无法启动，返回 `下一步: blocked` 并声明 `首个失败: reviewer subAgent unavailable`
 - `阻塞问题` 只放真实阻塞项
 - 若无阻塞项，写 `阻塞问题：无`，不要展开长解释

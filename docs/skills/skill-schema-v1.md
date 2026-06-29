@@ -162,7 +162,7 @@
 
 审查型 Skill 默认输出：
 
-可见回复必须优先使用中文 Markdown 表格；以下 JSON 字段仅作为内部 / 机器交接合同。字段对用户展示时映射为：`blocking_findings` -> `阻塞问题`，`non_blocking_findings` -> `非阻塞建议`，`review_scope` -> `审查范围`，`impact_scope` -> `影响面`，`unreviewed_changes` -> `未审查变更`，`verification_story` -> `验证故事`，`risk_level` -> `风险等级`，`next_action` -> `下一步`。
+可见回复使用中文标签即可，不强制表格格式；以下 JSON 字段仅作为内部 / 机器交接合同。字段对用户展示时映射为：`blocking_findings` -> `阻塞问题`，`non_blocking_findings` -> `非阻塞建议`，`review_scope` -> `审查范围`，`impact_scope` -> `影响面`，`unreviewed_changes` -> `未审查变更`，`verification_story` -> `验证故事`，`risk_level` -> `风险等级`，`next_action` -> `下一步`。
 
 ```json
 {

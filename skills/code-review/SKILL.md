@@ -61,12 +61,12 @@ Review iOS/macOS code changes, identify correctness and maintainability risks, e
 
 - 用于实现链路收口时，必须由未参与本轮实现的独立 reviewer subAgent 执行。
 - 同一 Agent 先实现再执行本 Skill 的审查结论无效，不能作为完成条件。
-- 如果无法确认 reviewer 独立性或无法启动 reviewer subAgent，可见回复写 `status: blocked` / `首个失败：reviewer subAgent unavailable` / `下一步：blocked`，并用中文表格呈现。
+- 如果无法确认 reviewer 独立性或无法启动 reviewer subAgent，可见回复写 `status: blocked` / `首个失败：reviewer subAgent unavailable` / `下一步：blocked`。
 - 纯 review 请求也应由独立 reviewer subAgent 执行；如果平台无法启动 reviewer subAgent，必须说明审查独立性缺口。
 
 ### Evidence Rules
 
-- 审查发现必须优先输出，并使用与主回复一致的紧凑 Markdown 表格。
+- 审查发现必须优先输出，格式保持简洁清晰。
 - 审查发现按严重等级排序。
 - 可见回复字段默认中文化：`阻塞问题`、`非阻塞建议`、`审查范围`、`影响面`、`未审查变更`、`首个失败`、`验证故事`、`审查独立性`、`风险等级`、`下一步`。
 - 无阻塞项时必须显式输出 `阻塞问题：无`；不要在可见回复中裸露 `blocking_findings: []`，除非调用方明确要求机器可读 JSON。
@@ -166,7 +166,7 @@ Review iOS/macOS code changes, identify correctness and maintainability risks, e
 
 ## Outputs
 
-以下 JSON 字段是内部 / 机器交接合同；面向用户的可见回复必须按 `Reporting Template` 使用中文表格标签。
+以下 JSON 字段是内部 / 机器交接合同；面向用户的可见回复使用中文标签即可，不强制固定表格格式。
 
 ```json
 {
@@ -186,18 +186,16 @@ Review iOS/macOS code changes, identify correctness and maintainability risks, e
 
 字段中文映射：
 
-| 内部字段 | 可见中文标签 |
-| --- | --- |
-| `blocking_findings` | 阻塞问题 |
-| `non_blocking_findings` | 非阻塞建议 |
-| `review_scope` | 审查范围 |
-| `impact_scope` | 影响面 |
-| `unreviewed_changes` | 未审查变更 |
-| `first_failure` | 首个失败 |
-| `verification_story` | 验证故事 |
-| `reviewer_independence` | 审查独立性 |
-| `risk_level` | 风险等级 |
-| `next_action` | 下一步 |
+- `blocking_findings` -> `阻塞问题`
+- `non_blocking_findings` -> `非阻塞建议`
+- `review_scope` -> `审查范围`
+- `impact_scope` -> `影响面`
+- `unreviewed_changes` -> `未审查变更`
+- `first_failure` -> `首个失败`
+- `verification_story` -> `验证故事`
+- `reviewer_independence` -> `审查独立性`
+- `risk_level` -> `风险等级`
+- `next_action` -> `下一步`
 
 ## Severity Format
 
@@ -278,29 +276,15 @@ Positive observation
 
 - 已确认问题且需要修复
 
-## Reporting Template
+## Reporting Guidance
 
-```text
-审查结果：
+可见审查回复只要求信息完整、中文标签清晰，不强制使用 Markdown 表格。建议包含：
 
-| # | 类别 | 对象 / 文件 | 结论 / 问题 | 证据 / 行号 | 必要性 / 风险 | 建议 / 下一步 | 状态 |
-|---|---|---|---|---|---|---|---|
-| 1 | 阻塞问题 | 无 | 未发现阻塞性问题 | diff + 代码路径 | ✅ 通过 | 可继续收口 | complete |
-| 2 | 非阻塞建议 | path/file.swift | 可延后优化点 | L10-L20 | ⚠️ 可选 | 后续迭代处理 | complete |
-
-审查范围与门禁：
-
-| 项目 | 结论 | 证据 / 说明 | 状态 |
-|---|---|---|---|
-| 审查范围 | ... | review_base_ref / staged / unstaged / untracked | complete |
-| 影响面 | ... | 调用方 / 契约 / 副作用边界 | complete |
-| 未审查变更 | none | 无遗漏时写 none | complete |
-| 首个失败 | none | 无阻塞时写 none | complete |
-| 验证故事 | accepted | 定向验证或 no_test_reason 是否成立 | complete |
-| 审查独立性 | independent-subagent | 实现链路必须独立 reviewer subAgent | complete |
-| 风险等级 | low | low / medium / high | complete |
-| 下一步 | complete | fix-and-rerun / blocked / complete | complete |
-```
+- 审查结果 / 状态
+- 阻塞问题（无阻塞时写 `阻塞问题：无`）
+- 非阻塞建议
+- 审查范围、影响面、未审查变更
+- 首个失败、验证故事、审查独立性、风险等级、下一步
 
 ## Reference Resources
 
