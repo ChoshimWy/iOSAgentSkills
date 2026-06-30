@@ -126,6 +126,12 @@ Review iOS/macOS code changes, identify correctness and maintainability risks, e
 - Use `skills/ios-feature-implementation/references/coding-standards.md` as the shared standard when classifying style, documentation, public API, concurrency, UI ownership, or private dependency review results.
 - Apply that reference as review policy; do not turn `非阻塞建议` style preferences into `阻塞问题` unless they violate the blocking criteria.
 
+### File Header Review Rules
+
+- Review every newly added `.swift`, `.h`, `.m`, or `.mm` file in the diff.
+- If sibling files show that the target project uses file headers, missing headers or wrong `Created by` values are blocking policy violations.
+- Treat `Created by Codex`, literal `$(whoami)`, `<user>`, placeholder names, or dates not in `YYYY/M/D` as `阻塞问题`.
+
 ### Comment Rules
 
 阻塞：

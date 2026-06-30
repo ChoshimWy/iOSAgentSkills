@@ -14,6 +14,7 @@
 - `summary`
 - `known_risks`
 - `test_impact` 或 `no_test_reason`
+- `file_header_check`（新增 `.swift` / `.h` / `.m` / `.mm` 时必须为 `passed` 或 `blocked`；未新增时为 `not-applicable`）
 - `change_intent`
 - `rollback_hint`
 - `checkpoint_status`
@@ -52,6 +53,7 @@
 ### 额外要求
 - 必须由未参与本轮实现的独立 reviewer subAgent 执行；同一 Agent 实现后自审无效
 - 如果 reviewer subAgent 无法启动，返回 `下一步: blocked` 并声明 `首个失败: reviewer subAgent unavailable`
+- 必须检查新增 `.swift` / `.h` / `.m` / `.mm` 的文件头；当目标项目使用文件头却缺失 header、`Created by` 不是真实本机用户名，或出现 `Codex` / 字面量 `$(whoami)` / 占位符时，按阻塞项处理
 - `阻塞问题` 只放真实阻塞项
 - 若无阻塞项，写 `阻塞问题：无`，不要展开长解释
 - `审查范围` 必须说明基线与纳入审查的 staged / unstaged / untracked / 提交范围

@@ -27,9 +27,11 @@
 - 只改 ownership 内文件
 - 不要回滚他人改动
 - 不做无关重构
+- 新建 `.swift` / `.h` / `.m` / `.mm` 前先看同目录现有文件头；若项目使用文件头，必须用 `whoami` 或 `id -un` 的真实值生成 `Created by`，日期为 `YYYY/M/D`，禁止写 `Codex`、字面量 `$(whoami)` 或占位符；提交前重新打开新增源文件检查文件头
 - 若目标工程使用 CocoaPods 且涉及私有组件/本地联调，先查 `Podfile` / `Podfile.lock` / `Pods/Manifest.lock`；如需修改私有库，主项目默认保持本地 `:path` 私有库依赖进行开发、验证与独立 `code-review`，仅在尚未指向本地源码时才切到本地 `:path`；修改真实私有库源码仓后回主项目本地依赖验证与 review；命中本地 `:path` Pod 时，禁止把 `Pods/<LibraryName>` 作为 ownership
 - 如果改动了公共接口、配置前提或调用契约，必须显式说明影响面
 - 输出 changed_files / summary / known_risks / test_impact 或 no_test_reason
+- 若新增 Apple 源文件，输出 file_header_check: passed|blocked；未新增则写 not-applicable
 - 输出 change_intent / rollback_hint / checkpoint_status / first_failure / next_action
 - 输出只给摘要和影响面，不粘贴大段 diff、文件全文或完整日志
 ```
@@ -48,6 +50,7 @@
 - 边界遗漏
 - 架构越界
 - 潜在回归风险
+- 新增 `.swift` / `.h` / `.m` / `.mm` 是否在项目需要文件头时使用真实本机用户名与 `YYYY/M/D` 日期，且没有 `Codex`、字面量 `$(whoami)` 或占位符
 - 是否误改了 `Pods/<LibraryName>` 而没有回到本地 `:path` Pod / 私有组件源码仓
 
 输出：
@@ -139,6 +142,7 @@
 1. 主 Agent：任务边界、成功标准、所选 lite / standard / full 档位、基线（workspace / scheme / destination）
    同时先给任务分型：`doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`
 2. coder worker（按需）：实现任务与 ownership
+   - 若 ownership 可能新增 `.swift` / `.h` / `.m` / `.mm`，先冻结文件头策略：读取 sibling header -> `whoami` / `id -un` -> `YYYY/M/D` -> 创建后复查
 3. ios-verification（实现链路必选；可由 tester explorer 或主 Agent 承担）：suggested_validation / executed_validation / failure_attribution / no_test_reason
 4. code-review 审查（实现链路必选；必须由未参与实现的 reviewer explorer subAgent 执行，主 Agent 不得自审）：阻塞问题 / 非阻塞建议
 5. reporter（按需）：acceptance_matrix（需求项/证据/状态）

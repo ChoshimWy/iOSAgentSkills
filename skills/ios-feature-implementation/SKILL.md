@@ -197,9 +197,11 @@ Do not use this Skill as the main route when:
 
 When adding `.swift`, `.h`, `.m`, or `.mm` files and the project requires headers:
 
-- `Created by` must use local `whoami`.
-- Do not write `Codex`.
+- Before writing the new file, inspect sibling source files to confirm the local header style and target/project name.
+- Resolve the real local author with `whoami` or `id -un`; insert that value in `Created by` immediately when creating the file.
+- Do not write `Codex`, literal `$(whoami)`, `<user>`, or any other placeholder.
 - Date format: `YYYY/M/D`.
+- After edits, re-open each newly added Apple source file and verify the header before reporting completion.
 
 ### Validation Handoff Rules
 
@@ -251,6 +253,7 @@ Return compact structured output:
   "implementation_mode": "business | swiftui | liquid-glass | uikit | mixed-ui | advanced-swift | refactor | sdk-contract | test-implementation",
   "secondary_modes": [],
   "changed_files": [],
+  "file_header_check": "not-applicable | passed | blocked",
   "summary": [],
   "test_changes": {
     "added_or_modified_tests": [],
@@ -284,6 +287,7 @@ Return compact structured output:
 Field rules:
 
 - `changed_files`: only files changed by this implementation.
+- `file_header_check`: use `passed` when newly added `.swift`, `.h`, `.m`, or `.mm` files have compliant headers; use `not-applicable` when no such files were added; use `blocked` when the project requires headers but the header could not be made compliant.
 - `summary`: behavior and implementation outcome, not raw diff.
 - `contract_changes`: public API, model, error, persistence, navigation, dependency, side-effect, or availability contract changes.
 - `test_impact` or `no_test_reason` must be present.
@@ -298,6 +302,7 @@ Return `completed` when:
 - Requested implementation/refactor/SDK contract behavior is implemented or explicitly scoped down.
 - Primary mode and any secondary modes are stated.
 - Changes are scoped and summarized.
+- Newly added `.swift`, `.h`, `.m`, or `.mm` files pass the file header check, or `file_header_check` is explicitly `not-applicable`.
 - Contract, UI, concurrency, SDK, Liquid Glass, and refactoring impact fields are filled as applicable.
 - Test implementation impact is filled when tests, fixtures, test doubles, or testability seams changed.
 - `test_impact` or `no_test_reason` is provided.
@@ -346,6 +351,7 @@ Changed files:
 - ...
 Summary:
 - ...
+File header check: not-applicable | passed | blocked
 Contract changes:
 - ...
 Test changes:

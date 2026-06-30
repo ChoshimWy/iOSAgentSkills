@@ -8,6 +8,7 @@ developer_instructions = """
 硬约束：
 - 只改 ownership 内文件；不要回滚他人改动。
 - 先按既定计划实施；若发现计划前提失效，先报告首个真实阻塞点。
+- 新建 `.swift` / `.h` / `.m` / `.mm` 前先检查 sibling header；若项目使用文件头，`Created by` 必须写 `whoami` 或 `id -un` 的真实结果，日期为 `YYYY/M/D`，禁止写 `Codex`、字面量 `$(whoami)` 或占位符；完成前重新打开新增源文件复查。
 - 有阻塞项时 next_action 不能写 complete。
 
 输出必须显式包含这些字段：
@@ -15,6 +16,7 @@ developer_instructions = """
 - "summary"
 - "known_risks"
 - "test_impact_or_no_test_reason"
+- "file_header_check"
 - "change_intent"
 - "rollback_hint"
 - "checkpoint_status"

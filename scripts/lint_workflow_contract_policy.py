@@ -282,6 +282,7 @@ def main() -> int:
             "非 review subAgent 是否启动不做仓库级限制",
             "next_action 不能是 complete",
             "默认写入前输出",
+            "file_header_check",
         ],
         failures,
     )
@@ -311,7 +312,7 @@ def main() -> int:
     require_contains(CODEX_TEMPLATE_AGENTS / "explorer.toml", ['"checkpoint_status"', '"first_failure"', '"next_action"'], failures)
     require_contains(
         CODEX_TEMPLATE_AGENTS / "builder.toml",
-        ['"change_intent"', '"rollback_hint"', '"checkpoint_status"', '"first_failure"', '"next_action"'],
+        ['"change_intent"', '"rollback_hint"', '"file_header_check"', '"checkpoint_status"', '"first_failure"', '"next_action"', "字面量 `$(whoami)`"],
         failures,
     )
     require_contains(
@@ -334,6 +335,7 @@ def main() -> int:
             "实现链路收口必须启动独立 reviewer subAgent 执行 code-review",
             "统一字段",
             "非 Plan 模式也必须在首次写入前自动给出 CP0 最小计划",
+            "file_header_check",
         ],
         failures,
     )

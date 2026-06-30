@@ -15,7 +15,7 @@
 - Workspace 优先：同时存在 `.xcworkspace` 和 `.xcodeproj` 时使用前者
 - Scheme 优先：默认选包含 `*Tests` target 的 scheme
 - 设备优先：按需完整验证时，已连接真机 > simulator
-- 作者标注：`Created by $(whoami)`，日期格式 `YYYY/M/D`
+- 新建 `.swift` / `.h` / `.m` / `.mm` 时先检查同目录现有文件头；若项目使用文件头，作者标注必须写 `whoami` 或 `id -un` 的真实结果，日期格式 `YYYY/M/D`，不得写 `Codex`、字面量 `$(whoami)` 或占位符
 
 ## 实现链路（硬约束）
 

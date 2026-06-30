@@ -125,6 +125,7 @@ def main() -> int:
             "独立 reviewer subAgent 执行 `code-review`",
             "最窄定向验证",
             "修复 / 实现类任务不依赖手动 Plan 模式",
+            "字面量 `$(whoami)`",
         ],
         failures,
     )
@@ -240,6 +241,8 @@ def main() -> int:
             "code-review 审查（实现链路必选",
             "验证通过后默认保持当前本地 `:path` 状态",
             "默认写入前输出",
+            "file_header_check",
+            "字面量 `$(whoami)`",
         ],
         failures,
     )
@@ -250,6 +253,8 @@ def main() -> int:
             "开发、验证与独立 `code-review`",
             "私有库仓内自测不能替代主项目验证",
             "禁止把 `Pods/` 副本当作 ownership",
+            "新增 `.swift` / `.h` / `.m` / `.mm`",
+            "字面量 `$(whoami)`",
         ],
         failures,
     )
@@ -261,6 +266,7 @@ def main() -> int:
             "其它 subAgent 使用由主 Agent 按当前任务自行决定",
             "reviewer subAgent 不可用时不得降级自审",
             "`阻塞问题：无`",
+            "`file_header_check`",
         ],
         failures,
     )

@@ -253,6 +253,7 @@ def main() -> int:
             "禁止把 `Pods/<LibraryName>` 作为 ownership",
             "验证通过后默认保持当前本地 `:path` 状态",
             "默认写入前输出",
+            "file_header_check",
         ],
         failures,
     )
@@ -277,7 +278,7 @@ def main() -> int:
 
     require_contains(CODEX_TEMPLATE_AGENTS / "pm.toml", ["name = \"pm\"", '"checkpoint_status"', '"first_failure"', '"next_action"'], failures)
     require_contains(CODEX_TEMPLATE_AGENTS / "explorer.toml", ["name = \"explorer\"", '"validation_baseline"', '"checkpoint_status"', '"first_failure"', '"next_action"'], failures)
-    require_contains(CODEX_TEMPLATE_AGENTS / "builder.toml", ["name = \"builder\"", '"changed_files"', '"known_risks"', '"change_intent"', '"rollback_hint"', '"checkpoint_status"', '"first_failure"', '"next_action"'], failures)
+    require_contains(CODEX_TEMPLATE_AGENTS / "builder.toml", ["name = \"builder\"", '"changed_files"', '"known_risks"', '"change_intent"', '"rollback_hint"', '"file_header_check"', '"checkpoint_status"', '"first_failure"', '"next_action"', "字面量 `$(whoami)`"], failures)
     require_contains(CODEX_TEMPLATE_AGENTS / "tester.toml", ["name = \"tester\"", '"suggested_validation"', '"failure_attribution"', '"failure_attribution_type"', '"checkpoint_status"', '"first_failure"', '"next_action"'], failures)
     require_contains(CODEX_TEMPLATE_AGENTS / "reporter.toml", ["name = \"reporter\"", '"acceptance_matrix"', '"delivery_summary"', '"residual_risks"', '"checkpoint_status"', '"first_failure"', '"next_action"'], failures)
     require_contains(
@@ -287,18 +288,19 @@ def main() -> int:
             "本仓只强制实现链路 `code-review` 使用独立 reviewer subAgent",
             "统一字段",
             "非 Plan 模式也必须在首次写入前自动给出 CP0 最小计划",
+            "file_header_check",
         ],
         failures,
     )
 
     require_contains(
         ROOT / "skills" / "ios-feature-implementation" / "SKILL.md",
-        ["`changed_files`", "`summary`", "`known_risks`", "`test_impact`"],
+        ["`changed_files`", "`summary`", "`known_risks`", "`test_impact`", "`file_header_check`", "literal `$(whoami)`"],
         failures,
     )
     require_contains(
         ROOT / "skills" / "code-review" / "SKILL.md",
-        ["阻塞问题", "非阻塞建议", "首个失败", "下一步", "阻塞问题：无"],
+        ["阻塞问题", "非阻塞建议", "首个失败", "下一步", "阻塞问题：无", "File Header Review Rules", "literal `$(whoami)`"],
         failures,
     )
     require_contains(

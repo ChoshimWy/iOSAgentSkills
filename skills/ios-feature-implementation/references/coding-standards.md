@@ -86,9 +86,11 @@ Do not add comments that only restate syntax. Add Chinese `why` comments for com
 
 When adding `.swift`, `.h`, `.m`, or `.mm` files and the target project uses headers:
 
-- `Created by` must use the local `whoami` value.
-- Do not write `Codex`.
+- Inspect sibling source files first and match the local header layout, project/target line, and copyright convention when present.
+- `Created by` must use the resolved local author from `whoami` or `id -un`.
+- Do not write `Codex`, literal `$(whoami)`, `<user>`, or any placeholder.
 - Use date format `YYYY/M/D`.
+- Re-open every newly added Apple source file after editing and verify its header before reporting completion.
 
 ## Review Classification
 
@@ -100,6 +102,7 @@ Blocking findings include:
 - Public/open API missing required Chinese semantics documentation.
 - Missing Chinese failure/side-effect/cancellation documentation where callers depend on it.
 - Changes in vendored `Pods/` snapshots when the real source repo should be edited.
+- Newly added `.swift`, `.h`, `.m`, or `.mm` files missing the required project header, or using `Codex` / literal placeholders in `Created by`, when sibling files show that the target project requires headers.
 
 `非阻塞建议` include:
 
