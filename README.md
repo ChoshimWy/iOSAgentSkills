@@ -123,9 +123,10 @@ python3 scripts/validate_codex_agent_templates.py config/codex/templates/agents
 ## HTML 文档工作流（新增）
 
 - 适用范围：`Docs` 下的方案、任务清单、评审报告、整改报告等 HTML 文档交付。
-- 默认路由：`skills/html-docs`，并按 `references/tasklist-template.md` 执行任务清单样式。
+- 默认路由：所有可归档 / 可分享的 HTML 方案、PRD、评审、报告、任务清单、接口说明与 handoff 文档都必须使用 `skills/html-docs` 生成；其它 Skill 只输出素材包、结论和证据路径。
+- 模板选择：按文档类型读取 `skills/html-docs/references/*-template.md`；任务清单按 `references/tasklist-template.md` 执行任务清单样式。
 - 状态标识统一：`√` 表示已完成，`□` 表示未完成 / 待办；建议用 `.check-mark.done` / `.check-mark.todo` 样式呈现。
-- 样式基线：Notion-light + SidusLinkPro checklist（Hero 元信息独立行、chips、状态图例、指标卡、固定表格与 callout）。
+- 样式基线：Notion-light + SidusLinkPro checklist（Hero 元信息独立行、chips、状态图例、指标卡、固定表格与 callout），同时必须通过 CSS variables + `@media (prefers-color-scheme: dark)` 支持系统暗黑模式。
 - 文档治理：顶部使用绝对日期（创建/更新），实施后必须回写进度，保持文档与代码状态一致。
 
 ## 默认收口与可选证据验证

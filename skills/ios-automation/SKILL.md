@@ -93,6 +93,7 @@ Do not use this Skill when:
 - Store replay artifacts when the task is exploratory but likely reusable; do not paste full replay scripts if a path is enough.
 - Report device/simulator identifier, OS/runtime, bundle id, and command path.
 - Record evidence path for semantic snapshot, replay script, screenshots, accessibility dumps, app state, or logs.
+- If the user asks for a formal HTML UI smoke report, visual evidence report, or handoff document, route the collected evidence bundle to `html-docs` for final document generation.
 - Do not paste huge logs.
 - Do not claim UI state from screenshots alone if accessibility/text state contradicts it.
 
@@ -281,6 +282,10 @@ Escalate to `ios-performance` when:
 Escalate to `ios-verification` when:
 
 - Automation-triggered build/test logs need compact failure attribution.
+
+Escalate to `html-docs` when:
+
+- Automation evidence, screenshots, replay artifacts, or UI smoke results must be packaged as a formal HTML report or handoff document.
 
 ## Reporting Format
 

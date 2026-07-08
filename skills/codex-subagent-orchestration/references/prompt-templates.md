@@ -132,6 +132,7 @@
 要求：
 - 有阻塞项时，next_action 不能是 complete
 - 无阻塞项时，first_failure 写 none
+- 若用户要求正式 HTML 文档，只整理 source packet；最终文档生成交给 `html-docs`
 ```
 
 ## 主 Agent CP0 最小计划模板（默认写入前输出）

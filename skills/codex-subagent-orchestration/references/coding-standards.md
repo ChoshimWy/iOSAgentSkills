@@ -53,6 +53,7 @@
 ## reporter
 - 输出必须包含 `acceptance_matrix`，并覆盖“需求项 -> 证据 -> 状态(pass|fail|blocked)”。
 - 输出同时补齐 `checkpoint_status` / `first_failure` / `next_action`；有阻塞项时禁止 `next_action=complete`。
+- 如果用户要求正式 HTML 文档，reporter 只整理 source packet；最终生成与样式治理交给 `html-docs`。
 
 ## 低 Token 输出约束
 - 搜索优先 `rg` 精确匹配，不做全仓库 `cat`。

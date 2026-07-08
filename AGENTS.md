@@ -22,6 +22,7 @@
 ## 默认工作流
 
 - `doc-only` / `rule-only` 任务：直接修改目标文档或规则文件，并检查相关引用是否仍一致。
+- 任何流程只要需要生成、整理或归档正式文档（HTML 方案、PRD、评审、报告、任务清单、接口说明、handoff），默认路由到 `skills/html-docs`；其它 Skill 只负责收集素材、结论和验证证据，不重复维护 HTML 结构或样式。
 - iOS 开发任务默认先进入 `codex-subagent-orchestration`；由主入口按任务分型器归类为 `doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`，再决定单 Agent 还是 `lite` / `standard` / `full` 编排，并按需路由到实现、测试、审查与验证模块。
 - 修复 / 实现类任务不依赖手动 Plan 模式：允许先做最小只读定位，但在首次写文件或应用 patch 前，必须先自动完成一份简短计划（目标、影响面、实施步骤、验证 / 审查路径）；超小 doc-only / rule-only 改动也至少用一句话锁定计划，禁止从代码查找直接跳到实现。
 - 使用任何 Skill 前，必须先输出 `>>> Skill: <skill-name>` 声明即将使用的 skill，让用户明确知道当前路由到了哪个 skill。

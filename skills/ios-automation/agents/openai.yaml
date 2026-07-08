@@ -2,4 +2,4 @@ interface:
   display_name: "iOS 设备自动化"
   short_description: "iOS Simulator 与真机安装启动、语义 snapshot、UI smoke、replay、诊断与自动化执行"
   default_prompt: >-
-    使用 $ios-automation 按目标设备类型自动路由到 Simulator 或真机子模式。Simulator 场景覆盖安装启动、语义 snapshot、snapshot-local 元素 refs、无障碍检查、UI smoke、replay 取证、视觉比对与模拟器生命周期管理；真机场景覆盖设备发现、安装、启动、进程查询与常见真机诊断。若任务产出修改了 Apple Xcode 项目相关内容，默认以定向验证/必要验证与独立 reviewer subAgent 执行的 $code-review 放行为收口；默认验证只执行最窄定向单测，`ios-automation` 不作为真机 / 模拟器验证的默认收口步骤；$ios-verification 仅在用户显式要求或需要补强完整项目环境证据时按需使用。
+    使用 $ios-automation 按目标设备类型自动路由到 Simulator 或真机子模式。Simulator 场景覆盖安装启动、语义 snapshot、snapshot-local 元素 refs、无障碍检查、UI smoke、replay 取证、视觉比对与模拟器生命周期管理；真机场景覆盖设备发现、安装、启动、进程查询与常见真机诊断。若任务产出修改了 Apple Xcode 项目相关内容，默认以定向验证/必要验证与独立 reviewer subAgent 执行的 $code-review 放行为收口；默认验证只执行最窄定向单测，`ios-automation` 不作为真机 / 模拟器验证的默认收口步骤；$ios-verification 仅在用户显式要求或需要补强完整项目环境证据时按需使用。若自动化证据需要整理为正式 HTML UI smoke / 视觉报告 / handoff 文档，最终文档生成交给 $html-docs。

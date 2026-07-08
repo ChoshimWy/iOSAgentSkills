@@ -31,6 +31,7 @@ CP2 Validation Baseline Freeze：锁定验证命令、workspace、scheme、desti
 - 无阻塞 → Phase 6
 - 有阻塞 → 精确回写 builder（新 Agent:general-purpose，携带阻塞描述和修复指令），最多 2 轮
 - 超限未收敛 → next_action = blocked
+- 若用户要求正式 HTML 文档，只在本阶段整理 source packet；最终生成交给 `html-docs`
 
 ### Phase 6: 默认收口（CP3）
 主 Agent 基于定向验证/必要验证与独立 reviewer subAgent `code-review` 结论裁决默认收口；用户显式要求、发布前自检或高风险时，再按需执行 `Skill("ios-verification")`。

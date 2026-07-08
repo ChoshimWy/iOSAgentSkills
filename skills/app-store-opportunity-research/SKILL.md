@@ -1,6 +1,6 @@
 ---
 name: app-store-opportunity-research
-description: App Store 机会研究技能。用于在指定赛道中识别可商业化机会，完成竞品缺口分析、Top-3 机会排序与 MVP PRD 产出；可按需补充 Rork 原型提示词。
+description: App Store 机会研究技能。用于在指定赛道中识别可商业化机会，完成竞品缺口分析、Top-3 机会排序与 MVP PRD 源素材整理；若需要正式 HTML 研究报告或 PRD，最终文档生成交给 html-docs；可按需补充 Rork 原型提示词。
 ---
 
 # App Store 机会研究 / App Store Opportunity Research
@@ -32,6 +32,7 @@ Research App Store opportunity spaces, rank candidate product opportunities with
 - Avoid fake precision in market sizing, revenue, or conversion estimates.
 - Each recommended opportunity must include target user, gap, monetization path, implementation complexity, and main risk.
 - Default deliverable is a compact Top-3 list plus one recommended pick.
+- When the user needs a formal PRD, HTML report, or shareable research package, produce a compact source packet and route final document generation to `html-docs`.
 
 ## Inputs
 
@@ -55,7 +56,7 @@ Research App Store opportunity spaces, rank candidate product opportunities with
   "evidence_notes": [],
   "assumptions": [],
   "known_risks": [],
-  "next_action": "write-prd | ask-user | app-store-changelog | blocked"
+  "next_action": "write-prd | html-docs | ask-user | app-store-changelog | blocked"
 }
 ```
 
@@ -67,6 +68,7 @@ Research App Store opportunity spaces, rank candidate product opportunities with
 
 ## Escalation Rules
 
+- Escalate to `html-docs` when Top-3 findings, the recommended pick, or the MVP PRD must become a formal HTML document.
 - Escalate to `app-store-changelog` when the task becomes release-note writing.
 - Escalate to implementation Skills when the task becomes product delivery.
 - Escalate to `xcode-build` when the task becomes build, signing, archive, export, or CI work.
@@ -79,7 +81,7 @@ Research App Store opportunity spaces, rank candidate product opportunities with
 
 ## Relationship to Other Skills
 
+- Use `html-docs` for final formal HTML research reports or MVP PRD documents.
 - Use `app-store-changelog` for App Store release copy.
 - Use implementation Skills for actual app delivery.
 - Use `xcode-build` for build and release pipeline work.
-

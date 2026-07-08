@@ -69,6 +69,7 @@ Review iOS/macOS code changes, identify correctness and maintainability risks, e
 - 审查发现必须优先输出，格式保持简洁清晰。
 - 审查发现按严重等级排序。
 - 可见回复字段默认中文化：`阻塞问题`、`非阻塞建议`、`审查范围`、`影响面`、`未审查变更`、`首个失败`、`验证故事`、`审查独立性`、`风险等级`、`下一步`。
+- 若用户需要正式 HTML review report，先输出审查结论与证据包；最终 HTML 文档生成交给 `html-docs`。
 - 无阻塞项时必须显式输出 `阻塞问题：无`；不要在可见回复中裸露 `blocking_findings: []`，除非调用方明确要求机器可读 JSON。
 - 必须尽量绑定文件和行号。
 - 不得伪造运行时证据。
@@ -282,6 +283,10 @@ Positive observation
 
 - 已确认问题且需要修复
 
+升级到 `html-docs`：
+
+- 审查结论需要归档为正式 HTML 评审文档、整改报告或 handoff 文档
+
 ## Reporting Guidance
 
 可见审查回复只要求信息完整、中文标签清晰，不强制使用 Markdown 表格。建议包含：
@@ -304,3 +309,4 @@ Positive observation
 - 性能问题切换 ios-performance。
 - SDK 边界设计可联动 `ios-feature-implementation` 的 `sdk-contract` 模式。
 - 本 Skill 只负责审查与结论，不负责实现；实现者自审不得作为实现任务完成条件。
+- 正式 HTML 评审文档交给 `html-docs`，本 Skill 只提供审查结论、证据和风险。

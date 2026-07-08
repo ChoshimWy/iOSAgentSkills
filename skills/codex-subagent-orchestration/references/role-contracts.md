@@ -119,10 +119,12 @@
 - `acceptance_matrix` 至少包含：`需求项`、`证据`、`状态(pass|fail|blocked)`
 - 存在阻塞项时，`next_action` 不能是 `complete`
 - 若无阻塞项，`first_failure` 写 `none`
+- 若交付物是正式 HTML 文档，reporter 只输出 source packet，并将最终生成交给 `html-docs`
 
 ### 不负责
 - 改代码
 - 替代主 Agent 的可选验证裁决
+- 直接手写最终 HTML 文档模板或样式
 
 ## main agent
 

@@ -1,8 +1,9 @@
 # HTML 文档统一模板总览
 
 ## 默认风格
-- 以 **Notion 风格** 为主：浅色、克制、轻边框、正文优先。
-- 如果用户明确要求深色或展示型风格，再切换到深色模板。
+- 以 **Notion 风格** 为主：浅色优先、克制、轻边框、正文优先。
+- 所有最终 HTML 都必须支持系统暗黑模式；读取 `dark-mode-style.md`，使用 CSS variables + `@media (prefers-color-scheme: dark)`。
+- 如果用户明确要求展示型风格，也必须保留 light / dark 两套 token。
 
 ## 目标
 - 让所有对外 HTML 文档统一为“正式、克制、可分享阅读”的风格。
@@ -31,9 +32,12 @@
 - 白底或极浅灰底
 - 主内容区宽度适中，优先单栏阅读
 - 表格表头浅灰，长文本自动换行
-- 代码块使用浅灰底等宽字体
+- 代码块使用独立 code token 与等宽字体
 - 风险 / 提示 / 结论使用轻 callout 区块
 - Hero 元信息逐行排布，不要把创建日期、更新日期、来源、作者塞在同一行
+- `<head>` 包含 `<meta name="color-scheme" content="light dark">`
+- 所有背景、正文、弱化文字、边框、链接、代码块、callout、chips 与 checklist 状态都使用语义 CSS 变量
+- `@media (prefers-color-scheme: dark)` 至少覆盖 `--bg`、`--panel`、`--text`、`--muted`、`--border`、`--accent`、`--code-bg`、`--code-text` 和 `--callout-*`
 
 ## 文件命名原则
 - 默认不在文件名中追加日期。

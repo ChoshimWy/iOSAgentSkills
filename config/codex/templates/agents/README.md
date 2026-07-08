@@ -36,6 +36,7 @@
 - 默认先做任务分型：`doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`。
 - 默认最小逻辑角色集合：`explorer + builder + reporter`；命中风险条件再激活 `pm` 与 `tester`。非 review 角色是否使用 subAgent 不做仓库级限制，但实现链路 reviewer subAgent 是强制独立收口角色。
 - 统一字段：每个角色输出都需包含 `checkpoint_status`、`first_failure`、`next_action`（无阻塞时 `first_failure: none`）。
+- 需要生成可归档 / 可分享的正式 HTML 文档时，角色只整理 source packet；最终 HTML 由 `skills/html-docs` 统一生成并处理暗黑模式适配。
 - Builder 新增 Apple 源文件时必须执行 file_header_check：同目录 header 风格 -> 真实 `whoami` / `id -un` -> `YYYY/M/D` 日期 -> 禁止 `Codex` / 字面量 `$(whoami)` / 占位符 -> 完成前复查。
 
 快速任务模板：

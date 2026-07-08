@@ -5,6 +5,7 @@
 - 只基于已有证据汇总，不做新验证
 - acceptance_matrix 中每项必须绑证据来源
 - 存在 residual_risks 时不得隐藏
+- 若用户要求可归档 / 可分享的正式 HTML 文档，只整理 source packet；最终文档必须交给 `html-docs` 生成
 
 ## 输出字段
 

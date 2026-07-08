@@ -1,6 +1,6 @@
 ---
 name: ui-ux-design-system
-description: UI/UX 设计系统与开放式设计探索 Skill。用于视觉方向、设计系统、交互规则、色板、字体、无障碍、设计评审、原型方向、HTML review 优先的设计交付建议；不要用于 SwiftUI/UIKit API 级落地实现、构建配置、性能取证或外部 Open Design 工具安装流程。
+description: UI/UX 设计系统与开放式设计探索 Skill。用于视觉方向、设计系统、交互规则、色板、字体、无障碍、设计评审、原型方向、HTML review 优先的设计交付建议；若需要正式 HTML 设计说明、PRD 或评审文档，最终文档生成交给 html-docs；不要用于 SwiftUI/UIKit API 级落地实现、构建配置、性能取证或外部 Open Design 工具安装流程。
 ---
 
 # UI/UX Design System
@@ -103,7 +103,7 @@ If the user already provided enough context, do not ask again.
 - Use a prototype plan before generating many screens.
 - Keep prototype scope small for first iteration.
 - Do not over-specify implementation APIs unless handing off to SwiftUI/UIKit Skills.
-- If the output becomes a formal HTML document, hand off to `html-docs`.
+- If the output becomes a formal HTML design spec, PRD, review document, or shareable / archived HTML artifact, hand off source decisions and evidence to `html-docs`; do not craft the final HTML in this Skill.
 
 ### Token Budget
 
@@ -190,6 +190,7 @@ Escalate to `ios-feature-implementation` with `liquid-glass` mode when:
 Escalate to `html-docs` when:
 
 - The output should become a formal HTML design spec, PRD, or review document.
+- The user asks to generate, save, publish, or archive the design output as HTML.
 
 Escalate to `ios-automation` when:
 
@@ -239,5 +240,6 @@ Next action: prototype | implement | document | review | blocked
 - UIKit implementation: `ios-feature-implementation` with `uikit` mode.
 - Liquid Glass API implementation: `ios-feature-implementation` with `liquid-glass` mode.
 - Formal HTML design docs: `html-docs`.
+- This Skill owns design direction and tokens; `html-docs` owns final HTML document structure, templates, and dark-mode adaptation.
 - Screenshots / device UI evidence: `ios-automation`.
 - Rendering and animation performance: `ios-performance`.

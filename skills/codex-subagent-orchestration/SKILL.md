@@ -1,6 +1,6 @@
 ---
 name: codex-subagent-orchestration
-description: 默认优先使用的 iOS 主 Skill 入口；先按任务复杂度选择 lite / standard / full 档位，再协调 coder / reviewer / tester / reporter / main agent 分工；所有 iOS 生产代码与测试代码实施统一路由到 ios-feature-implementation 的内部模式，验证统一路由到 ios-verification，调试、性能、审查与构建配置仍路由到专项模块；除实现后的 code-review 必须由独立 reviewer subAgent 执行外，其它 subAgent 使用不做仓库级限制。
+description: 默认优先使用的 iOS 主 Skill 入口；先按任务复杂度选择 lite / standard / full 档位，再协调 coder / reviewer / tester / reporter / main agent 分工；所有 iOS 生产代码与测试代码实施统一路由到 ios-feature-implementation 的内部模式，验证统一路由到 ios-verification，正式 HTML 文档生成统一路由到 html-docs，调试、性能、审查与构建配置仍路由到专项模块；除实现后的 code-review 必须由独立 reviewer subAgent 执行外，其它 subAgent 使用不做仓库级限制。
 ---
 
 # Codex 多 Agent 编排
@@ -44,6 +44,7 @@ Do not use this Skill as the first route when the task is clearly one of these s
 - Pure Apple API / availability / WWDC lookup: route to `apple-docs`.
 - Pure runtime crash or debugging request: route to `debugging`.
 - Pure performance profiling or benchmark request: route to `ios-performance`.
+- Pure formal documentation generation: route to `html-docs`.
 - Pure documentation or rule edit that does not need role splitting.
 
 ## Agent Rules
@@ -66,6 +67,7 @@ Do not use this Skill as the first route when the task is clearly one of these s
 - `ios-feature-implementation` owns all production and test-code implementation modes, including `test-implementation`.
 - `ios-verification` owns validation routing, affected-test selection, targeted execution, build/test digest, project-environment verification, and final evidence judgement.
 - `debugging` owns runtime symptom diagnosis; `ios-performance` only owns performance evidence and benchmark workflows.
+- `html-docs` owns final generation and style governance for formal HTML docs, including proposals, PRDs, reviews, reports, task lists, API docs, and handoff docs. Other Skills provide source packets, conclusions, and evidence paths instead of crafting the final HTML.
 
 ### Token Budget
 
@@ -154,7 +156,7 @@ Activate additional roles only when justified:
 | `reviewer explorer` | Any implementation task; risky rule changes | `code-review` |
 | `tester explorer` | Test surface exists, failure attribution is needed, or task is `code-risky` | `ios-verification` |
 | `tester worker` | Test code must be added or updated | `ios-feature-implementation(test-implementation)` |
-| `reporter` | Delivery summary, acceptance matrix, residual risk | this Skill |
+| `reporter` | Delivery summary, acceptance matrix, residual risk; if the deliverable must be a formal HTML document, prepare a compact source packet and route to `html-docs` | this Skill / `html-docs` |
 | `main agent` | Always active for aggregation, control, and final decision | this Skill |
 
 ## Workflow
@@ -171,6 +173,7 @@ Activate additional roles only when justified:
 10. Main Agent applies fail-fix-report discipline until resolved or blocked.
 11. Main Agent performs final closure only when targeted validation / necessary verification is current and independent reviewer subAgent `code-review` has no `阻塞问题`.
 12. Only if requested or high-risk, Main Agent routes to `ios-verification` for stronger evidence.
+13. If the task needs a shareable / archived HTML document, Main Agent routes the final source packet to `html-docs`; this Skill does not duplicate HTML templates or visual styling.
 
 ## Checkpoints
 
@@ -410,3 +413,4 @@ Read these only when needed:
 - Apple documentation routes to `apple-docs`.
 - Test code implementation routes to `ios-feature-implementation(test-implementation)`.
 - Validation, build/test failure attribution, project-environment verification, and optional final evidence judgement route to `ios-verification`.
+- Formal HTML documentation routes to `html-docs`; this includes proposals, PRDs, review reports, run reports, task lists, API docs, and handoff docs.

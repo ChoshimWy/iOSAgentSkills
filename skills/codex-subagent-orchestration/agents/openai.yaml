@@ -1,7 +1,7 @@
 interface:
   display_name: "Codex 多 Agent 编排"
-  short_description: "默认优先的 iOS 主 Skill 入口：按 lite/standard/full 协调实现、调试、性能、审查、验证与可选补强"
-  default_prompt: "默认优先使用 $codex-subagent-orchestration 作为 iOS 主 Skill 入口；即使未进入 Plan 模式，修复 / 实现任务也要在首次写入前完成 CP0 最小计划，再按 lite / standard / full 做编排决策，并把所有代码实施统一路由到 $ios-feature-implementation 的内部模式，再协调调试、性能、审查、验证与按需补强。除实现后的 $code-review 必须交给独立 reviewer subAgent 外，本仓不对 coder / tester / pm / reporter 等其它 subAgent 使用做额外限制。真机 / 模拟器验证仅在用户显式要求、发布前、高风险或证据不足时按需进入 $ios-verification。"
+  short_description: "默认优先的 iOS 主 Skill 入口：按 lite/standard/full 协调实现、调试、性能、审查、验证、文档与可选补强"
+  default_prompt: "默认优先使用 $codex-subagent-orchestration 作为 iOS 主 Skill 入口；即使未进入 Plan 模式，修复 / 实现任务也要在首次写入前完成 CP0 最小计划，再按 lite / standard / full 做编排决策，并把所有代码实施统一路由到 $ios-feature-implementation 的内部模式，再协调调试、性能、审查、验证与按需补强。除实现后的 $code-review 必须交给独立 reviewer subAgent 外，本仓不对 coder / tester / pm / reporter 等其它 subAgent 使用做额外限制。真机 / 模拟器验证仅在用户显式要求、发布前、高风险或证据不足时按需进入 $ios-verification。若任务产出正式 HTML 方案、PRD、评审、报告、任务清单、接口说明或 handoff 文档，最终文档生成统一交给 $html-docs。"
 
 policy:
   allow_implicit_invocation: false

@@ -21,6 +21,7 @@
 - 如果当前改动没有可低成本执行的单测路径，验证阶段必须给出 `no_test_reason` 与 `suggested_validation`，且不要自动升级到真机 / 模拟器验证。
 - 私有库 / 私有组件改动默认要求主项目保持本地 `:path` 私有库依赖进行开发、验证与独立 `code-review`；仅当当前尚未指向本地源码且需要验证私有库源码改动时，才切到本地 `:path`。修改真实私有库源码仓后，回主项目基于本地依赖验证与 review；未收到明确指令前，不把验证或 review 基线切到线上版本化依赖或 `Pods/` vendored snapshot。
 - 涉及私有库验证时，必须保持本地 `:path` 私有库依赖作为开发验证基线；验证通过后默认保持当前本地 `:path` 状态完成独立 review，除非用户明确要求回切线上版本化依赖或需要提交主项目依赖文件。
+- 任何流程如果产出正式文档（HTML 方案、PRD、评审、报告、任务清单、接口说明、handoff），统一路由到 `html-docs`。其它 Skill 只提供素材包、结论和证据路径，不自行维护最终 HTML 文档结构或样式。
 - `ios-verification` 统一负责验证前路由、受影响测试选择、定向验证执行、项目环境验证、失败摘要和最终证据裁决。
 - `ios-verification` 不再是所有 Apple Xcode 项目改动的强制收尾；只有用户显式要求、发布前自检、高风险、证据不足或需要项目环境证据时才补强执行。
 - 执行可选 `xcodebuild` 验证时，证据必须来自目标项目根目录的非沙盒项目环境，而不是 sandbox 结果；继续遵守 `.xcworkspace` 优先、优先选择绑定了单元测试 `*Tests` target / bundle 的 scheme、iOS 默认优先已连接真机约束。
@@ -44,7 +45,7 @@
 
 | Skill | 角色 | 主触发场景 | 不要触发的场景 | 切换到 |
 | --- | --- | --- | --- | --- |
-| `codex-subagent-orchestration` | 默认 iOS 主 Skill 入口 | 所有 iOS 开发任务的统一入口；先按 `lite` / `standard` / `full` 做编排决策，再内部路由到统一实施 / 验证 / 调试 / 性能 / 审查 / 按需补强模块；除 reviewer subAgent 是强制收口角色外，其它 subAgent 使用不做仓库级限制 | 只做一次纯文档型低频任务；或运行时工具不可用、策略禁止导致 reviewer subAgent 无法启动时，需要报告 blocked / pending review | `ios-feature-implementation`、`ios-verification`、`debugging`、`ios-performance`、`code-review` |
+| `codex-subagent-orchestration` | 默认 iOS 主 Skill 入口 | 所有 iOS 开发任务的统一入口；先按 `lite` / `standard` / `full` 做编排决策，再内部路由到统一实施 / 验证 / 调试 / 性能 / 审查 / 按需补强模块；除 reviewer subAgent 是强制收口角色外，其它 subAgent 使用不做仓库级限制 | 只做一次纯文档型低频任务时直接使用 `html-docs`；或运行时工具不可用、策略禁止导致 reviewer subAgent 无法启动时，需要报告 blocked / pending review | `ios-feature-implementation`、`ios-verification`、`debugging`、`ios-performance`、`code-review`、`html-docs` |
 | `ios-feature-implementation` | 唯一 iOS 代码实施 Skill | service / repository / use case / view model / 导航接线 / SwiftUI / Liquid Glass / UIKit / mixed UI / advanced Swift / refactor / SDK contract / SDK architecture / XCTest / XCUITest / Mock / Stub / Spy / Fake / fixture / Page Object | 构建配置、设备自动化、性能 profiling、运行时诊断、官方文档事实检索、纯验证执行、纯静态审查、纯视觉方向探索 | `ios-verification`、`code-review`、`debugging`、`ios-performance`、`xcode-build`、`apple-docs`、`ui-ux-design-system` |
 
 ## Automation / Build / Validation
@@ -71,6 +72,6 @@
 ## Additional Skills
 
 这些技能同样位于 `skills/` 下，但默认按需触发，不作为 iOS 主链路的第一入口：
-- `docs`：`html-docs`
+- `docs`：`html-docs`（正式 HTML 文档唯一规范入口；承接方案、PRD、评审、报告、任务清单、接口说明与 handoff，并负责统一样式和暗黑模式适配）
 - `research`：`ui-ux-design-system`、`app-store-changelog`、`app-store-opportunity-research`
 - `workflow`：`git-workflow`、`gh-pr-flow`

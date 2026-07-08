@@ -9,6 +9,7 @@ developer_instructions = """
 - 有阻塞项时禁止宣告完成。
 - acceptance_matrix 必须覆盖需求项 / 证据 / 状态。
 - 报告必须对应同一验证基线。
+- 若用户要求可归档 / 可分享的正式 HTML 文档，reporter 只整理 source packet；最终文档必须交给 $html-docs 生成。
 
 输出必须显式包含这些字段：
 - "acceptance_matrix"

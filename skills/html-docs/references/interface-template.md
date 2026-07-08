@@ -1,7 +1,7 @@
 # 接口说明 HTML 模板
 
 ## 默认风格
-- Notion 风格优先：轻表格、轻 callout、正文和示例分离。
+- Notion 风格优先：轻表格、轻 callout、正文和示例分离；最终 HTML 必须按 `dark-mode-style.md` 支持系统暗黑模式。
 
 ## 结构
 - Hero：接口主题、版本、适用范围

@@ -1,6 +1,6 @@
 ---
 name: html-docs
-description: HTML 文档规范与交付 Skill。用于把方案、技术设计、PRD、工作流说明、评审稿、接口说明、运行记录等内容整理为结构清晰、可对外分享和归档的 HTML 文档；不要用于 .docx/.pptx 办公文件处理、普通聊天答复或与文档交付无关的写作。
+description: HTML 文档规范与交付 Skill。作为正式 HTML 文档生成的统一入口，用于把方案、技术设计、PRD、工作流说明、评审稿、接口说明、运行记录、任务清单和 handoff 等内容整理为结构清晰、可分享、可归档且支持系统暗黑模式的 HTML 文档；不要用于 .docx/.pptx 办公文件处理、普通聊天答复或与文档交付无关的写作。
 ---
 
 # HTML 文档规范
@@ -18,7 +18,9 @@ Create, organize, and maintain structured HTML documentation for iOS engineering
 - PRD / 产品设计包 HTML 文档。
 - 工作流、Agent 规范、构建验证规范文档。
 - 接口说明、流程说明、评审稿、变更说明。
+- 任务清单、运行报告、handoff 文档。
 - 可归档、可分享、可浏览的正式文档页面。
+- HTML 文档样式基线与暗黑模式适配。
 
 不负责：
 - `.docx` / Word 文件处理。
@@ -34,6 +36,7 @@ Use this Skill when:
 - The user asks for a document that should be shareable, archived, or reviewed.
 - The output needs headings, table of contents, tables, code blocks, JSON examples, callouts, and responsive layout.
 - The topic is iOS engineering workflow, technical design, PRD, review report, implementation plan, or process specification.
+- Another Skill has produced a source packet, conclusion, evidence path, or checklist that must become a formal HTML document.
 
 ## When Not to Use
 
@@ -72,6 +75,12 @@ Do not use this Skill when:
 - Use readable spacing, line height, and code block formatting.
 - Do not inline huge logs or raw outputs.
 - Prefer concise summaries and linked/attached artifacts where available.
+- Generate a light-first visual baseline, but every HTML document must support system dark mode.
+- Use CSS custom properties for color tokens, then override them in `@media (prefers-color-scheme: dark)`.
+- Include `<meta name="color-scheme" content="light dark">` in `<head>`.
+- Do not hard-code light-only text, table, code, or callout colors; reference semantic variables such as `--bg`, `--panel`, `--text`, `--muted`, `--border`, `--code-bg`, and `--callout-*`.
+- Keep dark-mode contrast readable for body text, table borders, code blocks, links, chips, and checklist status marks.
+- Read `references/dark-mode-style.md` before writing final CSS unless the caller provides an equivalent dark-mode stylesheet.
 
 ### Token Budget
 
@@ -92,6 +101,7 @@ Expected input contract:
   "source_material": [],
   "sections": [],
   "constraints": [],
+  "theme_mode": "auto",
   "output_path": "optional"
 }
 ```
@@ -107,6 +117,7 @@ Return compact structured output:
   "output_files": [],
   "summary": [],
   "sections": [],
+  "dark_mode_support": "included | user-provided | blocked",
   "known_risks": [],
   "next_action": "review | publish | revise | blocked"
 }
@@ -118,6 +129,7 @@ Return `completed` when:
 
 - HTML document is generated or fully specified.
 - Required sections are included.
+- Dark-mode behavior is included or an explicit reason for not including it is recorded.
 - Output path or delivery format is clear.
 
 Return `partial` when:
@@ -143,6 +155,10 @@ Escalate to `ui-ux-design-system` when:
 
 - The task is primarily visual design system, typography, color, or accessibility guidance.
 
+Escalate back to the source Skill when:
+
+- The input lacks enough domain evidence, decisions, screenshots, validation artifacts, or review findings to produce a reliable formal document.
+
 ## Reporting Format
 
 ```text
@@ -157,9 +173,19 @@ Known risks:
 Next action: review | publish | revise | blocked
 ```
 
+## Reference Resources
+
+- `references/template-overview.md`: shared HTML skeleton and style baseline.
+- `references/dark-mode-style.md`: required color-token and `prefers-color-scheme` baseline for dark-mode support.
+- `references/plan-template.md`: proposal / technical-design template.
+- `references/tasklist-template.md`: task checklist / PR checklist template.
+- `references/review-template.md`: review / analysis report template.
+- `references/interface-template.md`: API / interface documentation template.
+
 ## Relationship to Other Skills
 
 - iOS workflow docs can summarize outputs from `codex-subagent-orchestration`, `ios-verification`, `code-review`, `ios-feature-implementation`, and related Skills.
 - App Store release notes route to `app-store-changelog`.
 - Visual design guidance routes to `ui-ux-design-system`.
 - Code implementation routes to iOS implementation Skills.
+- Other Skills should route formal HTML doc generation here after producing source packets, conclusions, evidence paths, and risks.

@@ -1,7 +1,7 @@
 # 任务清单 / PR Checklist HTML 模板
 
 ## 默认风格
-- Notion 风格优先：浅色、克制、目录清晰、 checklist 易扫读。
+- Notion 风格优先：浅色优先、克制、目录清晰、 checklist 易扫读；最终 HTML 必须按 `dark-mode-style.md` 支持系统暗黑模式。
 
 ## 顶部规范
 - 标题下方的创建日期、更新日期、来源、作者、仓库等信息必须拆成独立行。

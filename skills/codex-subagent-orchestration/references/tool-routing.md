@@ -2,6 +2,7 @@
 
 ## 文档与 API 事实
 - Apple API、platform availability、WWDC、framework 指导：优先 `appleDeveloperDocs`，不要默认退回普通 web 搜索。
+- 正式 HTML 方案、PRD、评审、报告、任务清单、接口说明与 handoff 文档：统一使用 `html-docs`；其它 Skill 只提供 source packet、结论和证据路径。
 - 只有当问题超出 Apple 文档覆盖范围，或需要外部最新事实时，才额外使用 web。
 
 ## 构建、测试与设备

@@ -7,6 +7,7 @@
 4. 主 Agent 聚合后决定是否回写 coder
 5. 代码收敛后，主 Agent 基于定向验证/必要验证与独立 reviewer subAgent `code-review` 推进 `CP3 Final Gate`
 6. 用户显式要求、发布前自检或高风险时，主 Agent 再按需执行 `ios-verification` 补强证据
+7. 如果最终交付物是可归档 / 可分享的正式 HTML 文档，主 Agent 将 source packet 交给 `html-docs` 生成，不在本流程重复维护 HTML 模板或样式
 
 ## 验证默认边界
 - 默认验证先收敛到最窄定向单测：优先 `-only-testing` 到单个 test case / test class，其次最小受影响 test file / bundle。

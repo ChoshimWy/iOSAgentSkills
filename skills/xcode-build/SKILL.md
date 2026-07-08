@@ -143,7 +143,8 @@ When adding `.swift`, `.h`, `.m`, `.mm` files and headers are required:
 5. Propose or apply minimal scoped changes.
 6. Document CI/local impact.
 7. If evidence is required, hand off to `ios-verification` or `ios-verification` rather than running ad-hoc verification inside this Skill.
-8. Report residual risk and next action.
+8. If the desired deliverable is a formal HTML build/CI/signing strategy document, prepare a source packet and route final document generation to `html-docs`.
+9. Report residual risk and next action.
 
 ## Inputs
 
@@ -244,6 +245,10 @@ Escalate to `ios-feature-implementation` with `sdk-contract` mode when:
 
 - The task is SDK distribution boundary, module design, package layout, or XCFramework product strategy.
 
+Escalate to `html-docs` when:
+
+- Build, signing, Archive/Export, CI/CD, or XCFramework decisions must become a formal HTML strategy, review, or handoff document.
+
 ## Reporting Format
 
 ```text
@@ -289,3 +294,4 @@ Next action:
 - Use `code-review` for static review of configuration changes.
 - Use `ios-verification` for compact build failure attribution.
 - Use `ios-feature-implementation` with `sdk-contract` mode for SDK distribution and module boundary strategy; keep concrete build/signing/archive mechanics in this Skill.
+- Use `html-docs` for final formal HTML build / CI / signing documents; this Skill provides the configuration source packet and risks.

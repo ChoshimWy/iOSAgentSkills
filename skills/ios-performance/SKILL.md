@@ -37,6 +37,7 @@ Analyze and improve iOS performance issues using the smallest credible evidence 
 - Output should include symptom, evidence, hypothesis, optimization direction, and validation method.
 - When performance fixes edit code, document non-obvious performance invariants, caching/lifecycle side effects, concurrency boundaries, and fallback behavior in Chinese in touched code.
 - Update stale comments, keep code comments Chinese by default, and avoid adding comments that merely restate optimization syntax.
+- If the user asks for a formal HTML performance report, regression report, or shareable postmortem, prepare evidence summaries and route final document generation to `html-docs`.
 - If code changes are produced, final closure still follows targeted validation / necessary verification plus independent reviewer subAgent `code-review`; the implementation Agent must not self-review.
 
 ## Inputs
@@ -78,6 +79,7 @@ Analyze and improve iOS performance issues using the smallest credible evidence 
 - Escalate to `debugging` when the issue is primarily crash, hang, leak root cause, or runtime behavior diagnosis.
 - Escalate to `ios-feature-implementation(test-implementation)` when benchmark/regression test code is needed; escalate to `ios-verification` for low-cost targeted validation.
 - Escalate to `apple-docs` when official API or Instruments behavior must be confirmed.
+- Escalate to `html-docs` when the performance evidence and conclusions must become a formal HTML report or handoff document.
 
 ## Token Budget
 
@@ -97,3 +99,4 @@ Analyze and improve iOS performance issues using the smallest credible evidence 
 - Use `ios-feature-implementation(test-implementation)` for test authoring and `ios-verification` for targeted validation execution.
 - Use `ios-feature-implementation` with `advanced-swift` mode when performance work reveals deeper concurrency or abstraction implementation needs.
 - Use `apple-docs` for official API and Instruments fact lookup.
+- Use `html-docs` for final formal HTML performance reports; this Skill only owns the evidence, hypotheses, and validation plan.

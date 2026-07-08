@@ -48,6 +48,9 @@
 | 性能 | `ios-performance` |
 | 自动化 | `ios-automation` |
 | 构建配置 | `xcode-build` |
+| 正式 HTML 文档 | `html-docs` |
+
+任何流程如果需要生成可归档 / 可分享的 HTML 方案、PRD、评审、报告、任务清单、接口说明或 handoff 文档，最终文档都交给 `html-docs`；其它 Skill 只提供 source packet、结论与证据路径。
 
 ## 编排档位
 
