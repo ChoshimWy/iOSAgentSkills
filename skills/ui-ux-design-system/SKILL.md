@@ -1,6 +1,6 @@
 ---
 name: ui-ux-design-system
-description: UI/UX 设计系统与开放式设计探索 Skill。用于视觉方向、设计系统、交互规则、色板、字体、无障碍、设计评审、原型方向、HTML review 优先的设计交付建议；若需要正式 HTML 设计说明、PRD 或评审文档，最终文档生成交给 html-docs；不要用于 SwiftUI/UIKit API 级落地实现、构建配置、性能取证或外部 Open Design 工具安装流程。
+description: UI/UX 设计系统与开放式设计探索 Skill。用于视觉方向、设计系统、交互规则、色板、字体、无障碍、设计评审、原型方向、HTML review 优先的设计交付建议；也用于读取 Sketch 源文件 / SketchMCP / 蓝湖标注并整理 Design-to-Code Spec，帮助 SwiftUI/UIKit/Web 高保真实现；若需要正式 HTML 设计说明、PRD 或评审文档，最终文档生成交给 html-docs；不要用于 SwiftUI/UIKit API 级落地实现、构建配置、性能取证或外部 Open Design 工具安装流程。
 ---
 
 # UI/UX Design System
@@ -20,6 +20,7 @@ Guide UI/UX direction, design systems, design exploration, accessibility, protot
 - 交互规则。
 - 无障碍和可读性建议。
 - 原型方向选择。
+- Sketch 源文件 / SketchMCP / 蓝湖标注到 Design-to-Code Spec 的拆解。
 - HTML review / 设计文档优先的交付建议。
 - 设计评审与风险提示。
 
@@ -44,6 +45,8 @@ Use this Skill when the user asks for:
 - Design critique or review.
 - Prototype planning before implementation.
 - Product UI direction for iOS, web, dashboard, landing page, or docs.
+- Sketch source file, SketchMCP, Lanhu/Figma inspect, or exported design asset analysis before coding.
+- Design-to-Code Spec generation for high-fidelity implementation handoff.
 - HTML review first, then optional PDF/PPTX/export discussion.
 
 ## When Not to Use
@@ -70,6 +73,7 @@ Choose the smallest design mode that fits the request:
 | `design-system` | Tokens, components, typography, colors, spacing, accessibility, consistency. |
 | `design-review` | Existing UI or mock needs critique and improvement suggestions. |
 | `prototype-planning` | User wants a prototype direction before SwiftUI/UIKit implementation. |
+| `sketch-to-code-spec` | User provides Sketch source, SketchMCP, Lanhu/Figma inspect, PNG, or design assets and wants high-fidelity implementation guidance. |
 | `artifact-guidance` | User wants HTML review, design doc, PDF/PPTX/export direction. |
 
 ### Discovery Rules
@@ -83,6 +87,7 @@ Before giving a full design direction, capture the smallest useful packet:
 - Primary screens or flows.
 - Brand constraints.
 - Accessibility constraints.
+- Design source: Sketch file path, SketchMCP endpoint, inspect link, PNG screenshots, asset zip, or selected frame / artboard name.
 - Output format: discussion, HTML review, PRD, prototype plan, or implementation handoff.
 
 If the user already provided enough context, do not ask again.
@@ -105,6 +110,18 @@ If the user already provided enough context, do not ask again.
 - Do not over-specify implementation APIs unless handing off to SwiftUI/UIKit Skills.
 - If the output becomes a formal HTML design spec, PRD, review document, or shareable / archived HTML artifact, hand off source decisions and evidence to `html-docs`; do not craft the final HTML in this Skill.
 
+### Sketch / Design Source Rules
+
+- When the input is a Sketch file, SketchMCP endpoint, Lanhu/Figma inspect link, or exported PNG, select `sketch-to-code-spec` mode before implementation.
+- First produce a `Design-to-Code Spec`; do not write SwiftUI/UIKit/Web code in the same step unless the user explicitly asks to continue.
+- Read `references/sketch-to-code-spec.md` before using SketchMCP or converting a design source into implementation guidance.
+- Prefer source-of-truth data over visual guessing: document info, artboard size, layer tree, text styles, layer styles, swatches, symbols, exported assets, and screenshots.
+- If using SketchMCP, call its `get_guide(topic: "mcp")` first, then inspect the document with `get_document_info`, target frame with `get_layer_tree_summary`, and visual state with `get_screenshot`.
+- Require the user to identify the target frame / artboard when multiple frames match; do not pick by name guess if ambiguous.
+- Record unknown design facts explicitly in `unknowns` instead of inventing measurements, colors, fonts, or states.
+- The implementation handoff must include tokens, component tree, state matrix, asset list, responsive rules, accessibility notes, and visual acceptance criteria.
+- If the next step is code, hand off to `ios-feature-implementation(swiftui|uikit|mixed-ui)` or an appropriate web implementation flow with the Spec as source of truth.
+
 ### Token Budget
 
 - Do not include huge visual inventories.
@@ -121,6 +138,8 @@ Expected input contract:
   "goal": "Design direction | design system | design review | prototype planning",
   "product_type": "optional",
   "platform": "iOS | iPadOS | macOS | web | mixed | unknown",
+  "design_source": "Sketch file | SketchMCP endpoint | Lanhu/Figma link | PNG | asset zip | none",
+  "target_frame": "optional artboard/frame name or id",
   "target_users": [],
   "visual_keywords": [],
   "screens_or_flows": [],
@@ -137,8 +156,10 @@ Return compact structured output:
 ```json
 {
   "status": "completed | partial | blocked",
-  "mode": "design-exploration | design-system | design-review | prototype-planning | artifact-guidance",
+  "mode": "design-exploration | design-system | design-review | prototype-planning | sketch-to-code-spec | artifact-guidance",
   "design_direction": [],
+  "design_source_evidence": [],
+  "design_to_code_spec": {},
   "tokens": {
     "color": [],
     "typography": [],
@@ -149,6 +170,8 @@ Return compact structured output:
   "component_guidelines": [],
   "interaction_guidelines": [],
   "accessibility_notes": [],
+  "visual_acceptance": [],
+  "unknowns": [],
   "prototype_scope": [],
   "implementation_handoff": "ios-feature-implementation(swiftui|uikit|mixed-ui) | html-docs | none",
   "known_risks": [],
@@ -162,6 +185,7 @@ Return `completed` when:
 
 - Design mode is selected.
 - Visual direction or design-system guidance is clear.
+- For `sketch-to-code-spec`, target frame, extracted design facts, unknowns, and implementation handoff are explicit.
 - Accessibility and implementation handoff are addressed when relevant.
 - Next action is clear.
 
@@ -192,6 +216,11 @@ Escalate to `html-docs` when:
 - The output should become a formal HTML design spec, PRD, or review document.
 - The user asks to generate, save, publish, or archive the design output as HTML.
 
+Escalate to `ios-feature-implementation` after `sketch-to-code-spec` when:
+
+- The Design-to-Code Spec is complete enough for SwiftUI / UIKit implementation.
+- The user explicitly asks to proceed from design extraction to code.
+
 Escalate to `ios-automation` when:
 
 - The task needs screenshot capture, accessibility tree evidence, or device/simulator UI smoke.
@@ -204,8 +233,10 @@ Escalate to `ios-performance` when:
 
 ```text
 UI/UX status: completed | partial | blocked
-Mode: design-exploration | design-system | design-review | prototype-planning | artifact-guidance
+Mode: design-exploration | design-system | design-review | prototype-planning | sketch-to-code-spec | artifact-guidance
 Design direction:
+- ...
+Design source evidence:
 - ...
 Tokens:
 - color: ...
@@ -216,6 +247,10 @@ Component guidelines:
 Interaction guidelines:
 - ...
 Accessibility notes:
+- ...
+Visual acceptance:
+- ...
+Unknowns:
 - ...
 Implementation handoff: ios-feature-implementation(swiftui|uikit|mixed-ui) | html-docs | none
 Next action: prototype | implement | document | review | blocked
@@ -232,10 +267,12 @@ Next action: prototype | implement | document | review | blocked
 - `data/charts.csv`
 - `data/ux-guidelines.csv`
 - `data/ui-reasoning.csv`
+- `references/sketch-to-code-spec.md`: Sketch / SketchMCP / inspect-link to Design-to-Code Spec extraction workflow, required data fields, output contract, and visual acceptance loop.
 
 ## Relationship to Other Skills
 
 - Visual direction, design exploration, design review, tokens, typography, color, accessibility: use this Skill.
+- Sketch source file / SketchMCP / Lanhu/Figma inspect extraction and Design-to-Code Spec generation: use this Skill, then hand off implementation.
 - SwiftUI implementation: `ios-feature-implementation` with `swiftui` mode.
 - UIKit implementation: `ios-feature-implementation` with `uikit` mode.
 - Liquid Glass API implementation: `ios-feature-implementation` with `liquid-glass` mode.
