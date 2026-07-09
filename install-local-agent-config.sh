@@ -16,7 +16,7 @@ Configure local Codex and Claude entrypoints to use this cloned iOSAgentSkills r
   - ~/.codex/templates/ui-smoke.example.yml -> <repo>/config/codex/templates/ui-smoke.example.yml
   - ~/.copilot/skills -> <repo>/skills (默认)
   - ~/.copilot/skills -> ~/.cc-switch/iOSAgentSkills/skills（当启用 --ccswitch 时）
-  - ~/.claude/CLAUDE.md -> @<repo>/AGENTS.md + CC 运行时编排指令
+  - ~/.claude/CLAUDE.md -> <repo>/CLAUDE.md
   - ~/.claude/skills -> <repo>/skills (默认)
   - ~/.claude/skills -> ~/.cc-switch/iOSAgentSkills/skills（当启用 --ccswitch 时）
   - ~/.claude/settings.json -> merge config/claude-code/settings.json into existing
@@ -371,20 +371,12 @@ ensure_line_in_file() {
 }
 
 build_claude_md_content() {
-  local import_line="@${REPO_AGENTS}"
   local repo_claude_md="$REPO_ROOT/CLAUDE.md"
-  local orchestration_section
 
   if [[ -f "$repo_claude_md" ]]; then
-    orchestration_section="$(tail -n +2 "$repo_claude_md")"
+    cat "$repo_claude_md"
   else
-    orchestration_section=''
-  fi
-
-  if [[ -n "$orchestration_section" ]]; then
-    printf '%s\n%s\n' "$import_line" "$orchestration_section"
-  else
-    printf '%s\n' "$import_line"
+    printf '%s\n' '# Claude Code Runtime Orchestration'
   fi
 }
 

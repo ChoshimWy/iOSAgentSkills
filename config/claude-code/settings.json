@@ -22,6 +22,10 @@
     ]
   },
   "mcpServers": {
+    "gitnexus": {
+      "command": "npx",
+      "args": ["-y", "gitnexus@1.6.9", "mcp"]
+    },
     "appleDeveloperDocs": {
       "command": "npx",
       "args": ["-y", "@kimsungwhee/apple-docs-mcp@latest"]
