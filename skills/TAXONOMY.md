@@ -75,4 +75,4 @@
 - `docs`：`html-docs`（正式 HTML 文档唯一规范入口；承接方案、PRD、评审、报告、任务清单、接口说明与 handoff，并负责统一样式和暗黑模式适配）
 - `research`：`ui-ux-design-system`、`app-store-changelog`、`app-store-opportunity-research`
 - `workflow`：`git-workflow`、`gh-pr-flow`
-- `code-intelligence`：`gitnexus-guide`、`gitnexus-cli`、`gitnexus-exploring`、`gitnexus-debugging`、`gitnexus-impact-analysis`、`gitnexus-refactoring`、`gitnexus-pr-review`、`gitnexus-pdg-query`、`gitnexus-taint-analysis`（只在需要 GitNexus MCP / 索引 / 图谱查询 / 影响面 / PR 图谱审查时按需触发，不替代 iOS 主链路）
+- `code-intelligence`：CodeGraph MCP 工具（只在需要低 token 代码搜索、符号关系、影响面或 PR 辅助审查时按需使用；不替代 iOS 主链路，结论必须回到当前 worktree 复核）

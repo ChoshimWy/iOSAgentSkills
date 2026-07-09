@@ -25,12 +25,12 @@
 - 高风险才升级完整 build、Archive、真机验证或 FULL verification；不要把这些当默认收尾。
 - 默认遵守 checkpoint 合同：`CP0 Intent Lock`、`CP1 Anchor Slice`、`CP2 Validation Baseline Freeze`、`CP3 Final Gate`；主 Agent 维护 `checkpoint_status`，并按 `fail-fix-report` 先定位失败、修复并重跑，最多回环同类问题 2 次。
 
-## 代码智能 / GitNexus
+## 代码智能 / CodeGraph
 
-- 代码理解、排查并修复、影响面分析、重构或 PR 审查任务，可在手工大范围搜索前优先尝试 GitNexus；先用 `gitnexus-guide` 判断是否有可用索引，再切到对应 `gitnexus-*` Skill。
-- GitNexus MCP 查询只作为低 token 导航和影响面证据；修改前仍必须回到当前 worktree 的源码、配置、日志或测试证据确认。
-- “排查并修复 *** 问题”不等同于允许静默建索引。仓库未索引或 stale 时，先说明 GitNexus 证据不可用；只有用户明确要求或任务成功条件包含索引时，才运行 `node .gitnexus/run.cjs analyze` / `npx gitnexus analyze`。
-- GitNexus `analyze` 会写入项目目录（如 `.gitnexus/` 与上下文文件）；未经说明不得把生成物纳入提交，也不得为使用 GitNexus 自动向目标项目新增或提交 `AGENTS.md` / `CLAUDE.md`。
+- 代码理解、排查并修复、影响面分析、重构或 PR 审查任务，可在手工大范围搜索前按需使用 CodeGraph 缩小搜索面。
+- CodeGraph 查询只作为低 token 导航和影响面证据；修改前仍必须回到当前 worktree 的源码、配置、日志或测试证据确认。
+- 默认低 token 路径：`rg` / `git grep` → 精准文件切片 → 少量 `codegraph_search` → 仅在跨文件关系仍不清楚时升级 `codegraph_explore` / `codegraph_node`。
+- 使用 CodeGraph 时避免把大输出反复回灌上下文；优先提取符号、文件路径、调用关系和最小必要行号。
 
 ## Apple 平台工程规则
 

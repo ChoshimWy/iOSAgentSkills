@@ -22,9 +22,9 @@
     ]
   },
   "mcpServers": {
-    "gitnexus": {
-      "command": "npx",
-      "args": ["-y", "gitnexus@1.6.9", "mcp"]
+    "codegraph": {
+      "command": "codegraph",
+      "args": ["serve", "--mcp"]
     },
     "appleDeveloperDocs": {
       "command": "npx",

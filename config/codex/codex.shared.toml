@@ -19,9 +19,9 @@ memories = true
 max_threads = 6
 max_depth = 1
 
-[mcp_servers.gitnexus]
-command = "npx"
-args = ["-y", "gitnexus@1.6.9", "mcp"]
+[mcp_servers.codegraph]
+command = "codegraph"
+args = ["serve", "--mcp"]
 
 [mcp_servers.openaiDeveloperDocs]
 url = "https://developers.openai.com/mcp"

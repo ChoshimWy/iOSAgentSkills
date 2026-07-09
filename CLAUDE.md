@@ -26,11 +26,11 @@
 - `full`：高风险任务先 `Agent:Plan`，再按需拆分探索、实现、测试和审查。
 - 同类问题最多回写实现步骤 2 次；定向验证失败、reviewer 未执行或存在阻塞项时，不得宣告完成。
 
-## GitNexus
+## CodeGraph
 
-- 若 `.claude/settings.json` 已配置 `mcpServers.gitnexus`，排查、理解、影响面分析、重构和 PR 审查任务可以优先读取已有 GitNexus 索引来缩小搜索面。
-- GitNexus MCP 查询不等于自动建索引；仓库未索引或 stale 时，不要因为用户只说“排查并修复”就静默运行 `analyze`。
-- 子 Agent 使用 GitNexus 时，只把图谱结果当作导航线索；最终结论仍需由当前 worktree 的源码、日志或测试证据确认。
+- 若运行时已提供 CodeGraph MCP，排查、理解、影响面分析、重构和 PR 审查任务可以按需读取 CodeGraph 结果来缩小搜索面。
+- CodeGraph MCP 查询只作为导航线索；最终结论仍需由当前 worktree 的源码、日志或测试证据确认。
+- 优先使用 `rg` / `git grep` 与精准切片控制上下文，只有跨文件符号关系不清楚时再升级到更重的 CodeGraph 查询。
 
 ## Task 与输出约束
 
