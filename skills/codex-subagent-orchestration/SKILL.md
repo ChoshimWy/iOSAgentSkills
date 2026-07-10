@@ -84,7 +84,7 @@ Do not use this Skill as the first route when the task is clearly one of these s
 - `ios-verification` is the unified validation path; stronger project-environment verification is still optional, not default mandatory closure.
 - Use `ios-verification` before broad test execution, project-environment verification, raw log reading, or final evidence decisions.
 - 真机 / 模拟器验证不属于默认验证执行面；只有用户显式要求、发布前自检、高风险或证据不足时才按需升级。
-- Any local `xcodebuild` verification must go through the target project wrapper `./codex_verify.sh` when available, otherwise `~/.codex/bin/codex_verify`.
+- When the official `xcode` MCP is available for an open project, use its read-only/verification tools for the daily narrow fast lane; do not call its project-writing tools. Any **direct** local `xcodebuild` verification must go through the target project wrapper `./codex_verify.sh` when available, otherwise `~/.codex/bin/codex_verify`; use that wrapper for high-risk or archive-grade evidence.
 - Verification stdout must stay evidence-first and low-noise: the wrapper should print `verification-report.json` by default; Agents should not stream raw logs unless `CODEX_VERIFY_STREAM_LOG=1` is explicitly justified.
 - Shared build-queue daemon remains the default path for validation-type `xcodebuild`.
 - Reuse the same workspace / scheme / destination baseline when a task already ran targeted build or test validation.

@@ -25,7 +25,7 @@
 - `ios-verification` 统一负责验证前路由、受影响测试选择、定向验证执行、项目环境验证、失败摘要和最终证据裁决。
 - `ios-verification` 不再是所有 Apple Xcode 项目改动的强制收尾；只有用户显式要求、发布前自检、高风险、证据不足或需要项目环境证据时才补强执行。
 - 执行可选 `xcodebuild` 验证时，证据必须来自目标项目根目录的非沙盒项目环境，而不是 sandbox 结果；继续遵守 `.xcworkspace` 优先、优先选择绑定了单元测试 `*Tests` target / bundle 的 scheme、iOS 默认优先已连接真机约束。
-- 本地执行 `xcodebuild`（含 `-list` / `-showdestinations` / build/test）必须由主 Agent 以非沙盒环境（Codex 使用 `functions.exec_command` + `sandbox_permissions="require_escalated"`）启动目标项目根目录 `codex_verify.sh` 或本机 `~/.codex/bin/codex_verify`，并接入 shared build-queue daemon；可用 `--queue-status` 查看队列；不得直接调用 `xcodebuild`，也不要让多个 Agent 各自裸跑。
+- 已打开 Xcode 且官方 `xcode` MCP 可用时，`ios-verification` 默认用 `GetTestList` → 一次 `RunSomeTests` / `BuildProject` 作为最窄快车道；同一 fingerprint 不与 wrapper 重复执行。直接执行 `xcodebuild`（含 `-list` / `-showdestinations` / build/test）才必须由主 Agent 以非沙盒环境（Codex 使用 `functions.exec_command` + `sandbox_permissions="require_escalated"`）启动目标项目根目录 `codex_verify.sh` 或本机 `~/.codex/bin/codex_verify`，并接入 shared build-queue daemon；可用 `--queue-status` 查看队列。wrapper 用于可归档证据、MCP 不可用或高风险升级；不得直接调用 `xcodebuild`。
 - 主入口 `codex-subagent-orchestration` 负责自适应编排：所有生产代码和测试代码实施统一切到 `ios-feature-implementation` 的内部模式，验证相关动作统一切到 `ios-verification`。
 - 除实现链路的 reviewer subAgent 是强制收口角色外，本仓不对 coder / tester / pm / reporter 等其它原生 subAgent 的启动场景、角色拆分或数量做额外限制；主 Agent 可按当前任务与运行时能力自行决定。
 - 多 Agent 编排默认遵守 checkpoint 合同：`CP0` / `CP1` / `CP2` / `CP3`。

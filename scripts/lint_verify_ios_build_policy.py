@@ -78,6 +78,8 @@ def main() -> int:
             "--queue-status",
             "最窄定向验证",
             "不得直接调用 `xcodebuild` 二进制",
+            "Xcode MCP 快车道",
+            "RunSomeTests",
             "不得为了绕过同一个 `build.db` 锁而切到单独 `-derivedDataPath`",
         ],
         failures,
@@ -152,6 +154,9 @@ def main() -> int:
             "~/.codex/bin/codex_verify",
             "shared build-queue daemon",
             "Xcode 系统 DerivedData",
+            "Xcode MCP Fast Lane",
+            "RunSomeTests",
+            "XcodeWrite",
         ],
         failures,
     )
@@ -169,6 +174,28 @@ def main() -> int:
         ],
         failures,
     )
+    require_contains(
+        ROOT / "config" / "claude-code" / "memory-seed.md",
+        ["GetTestList", "RunSomeTests", "GetBuildLog", "同一 fingerprint 不重复 wrapper"],
+        failures,
+    )
+    require_contains(
+        ROOT / "config" / "claude-code" / "agents" / "orchestration.md",
+        ["GetTestList", "RunSomeTests", "不得调用 MCP 写工具", "才升级 `ios-verification` 的 wrapper 路径"],
+        failures,
+    )
+    require_contains(
+        ROOT / "config" / "codex" / "templates" / "agents" / "tester.toml",
+        ["GetTestList", "RunSomeTests", "XcodeWrite", "同一 fingerprint 不重复 wrapper", "升级 wrapper"],
+        failures,
+    )
+    require_contains(
+        ROOT / "skills" / "ios-verification" / "agents" / "openai.yaml",
+        ["GetTestList", "RunSomeTests", "XcodeWrite", "不要为同一 fingerprint 重复 wrapper", "才通过目标项目 ./codex_verify.sh"],
+        failures,
+    )
+    for settings_path in sorted((ROOT / "config" / "claude-code").glob("settings*.json")):
+        require_not_contains(settings_path, ["Bash(xcodebuild:*)"], failures)
     require_contains(
         ROOT / "skills" / "ios-verification" / "scripts" / "build-check.sh",
         [

@@ -1,7 +1,6 @@
 {
   "permissions": {
     "allow": [
-      "Bash(xcodebuild:*)",
       "Bash(xcrun:*)",
       "Bash(swift:*)",
       "Bash(pod:*)",

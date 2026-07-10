@@ -46,8 +46,18 @@ def main() -> int:
         print(f"FAIL: invalid Claude settings template: {error}")
         return 1
 
-    allow = settings.get("permissions", {}).get("allow", [])
-    fail_if("Bash(xcodebuild:*)" in allow, "settings must not allow bare Bash(xcodebuild:*)", failures)
+    for settings_path in sorted(SETTINGS.parent.glob("settings*.json")):
+        try:
+            candidate = json.loads(settings_path.read_text())
+        except (OSError, json.JSONDecodeError) as error:
+            failures.append(f"invalid Claude settings file {settings_path.relative_to(ROOT)}: {error}")
+            continue
+        allow = candidate.get("permissions", {}).get("allow", [])
+        fail_if(
+            "Bash(xcodebuild:*)" in allow,
+            f"{settings_path.relative_to(ROOT)} must not allow bare Bash(xcodebuild:*)",
+            failures,
+        )
     servers = settings.get("mcpServers", {})
     fail_if("codegraph" not in servers, "settings missing codegraph MCP", failures)
     expected_apple = {"command": "npx", "args": ["-y", "@kimsungwhee/apple-docs-mcp@1.0.26"]}

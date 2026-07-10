@@ -47,8 +47,9 @@
 - 代码改动优先最窄定向验证：单个 test case / class → 最小受影响 test file / bundle；无低成本测试时给出 `no_test_reason` 与 `suggested_validation`。
 - 验证链路优先读取结构化证据：`verification-report.json`、`diagnostics.json`、`build-summary.txt` / `test-summary.json`；不要默认读取完整 raw log 或 `.xcresult` dump。
 - 同时存在 `.xcworkspace` 和 `.xcodeproj` 时，验证优先 `.xcworkspace`；优先选择绑定 `*Tests` target / bundle 的 scheme；iOS 默认优先已连接真机，无真机再回退 simulator。
-- 本地执行验证型 `xcodebuild`（含 `-list` / `-showdestinations` / build/test）必须由主 Agent 使用 `functions.exec_command` + `sandbox_permissions="require_escalated"` 在目标项目根目录的非沙盒项目环境启动 `./codex_verify.sh`，否则用 `~/.codex/bin/codex_verify`，并接入 shared build-queue daemon；可用 `--queue-status` 查看队列；不得直接调用 `xcodebuild` 二进制。
-- 验证证据必须来自目标项目根目录的项目环境；sandbox 中的 `xcodebuild` / wrapper 结果只能作为环境诊断线索，不得作为完整项目环境证据；需要完整项目环境证据时继续使用 Xcode 系统 DerivedData；不得为了绕过同一个 `build.db` 锁而切到单独 `-derivedDataPath` 跑同一组验证。
+- Xcode 已打开且官方 `xcode` MCP 可用时，日常代码改动优先走 **Xcode MCP 快车道**：`GetTestList` 选择测试 → `RunSomeTests` 或 `BuildProject` 执行一次最窄验证 → 仅失败时 `GetBuildLog` / Issue Navigator 归因；不得为同一改动默认再跑一遍 wrapper。验证角色禁止调用 `XcodeWrite` / `XcodeUpdate` / `XcodeRM` 等写工具。
+- 本地直接执行验证型 `xcodebuild`（含 `-list` / `-showdestinations` / build/test）仍必须由主 Agent 使用 `functions.exec_command` + `sandbox_permissions="require_escalated"` 在目标项目根目录的非沙盒项目环境启动 `./codex_verify.sh`，否则用 `~/.codex/bin/codex_verify`，并接入 shared build-queue daemon；可用 `--queue-status` 查看队列；不得直接调用 `xcodebuild` 二进制。wrapper 仅在 Xcode MCP 不可用、用户要求可归档证据、发布前/高风险/依赖或项目配置改动、多人验证冲突或 MCP 验证失败难以归因时升级使用。
+- Xcode MCP 的通过结果可作为日常定向验证证据；需要完整项目环境证据时，wrapper 必须从目标项目根目录的项目环境生成结构化 artifact 并接入队列治理，继续使用 Xcode 系统 DerivedData。sandbox 中的 `xcodebuild` / wrapper 结果只能作为环境诊断线索；不得为了绕过同一个 `build.db` 锁而切到单独 `-derivedDataPath` 跑同一组验证。
 
 ## Skill 与规则维护
 

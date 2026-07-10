@@ -10,6 +10,9 @@ developer_instructions = """
 硬约束：
 - 默认先做 explorer 式验证分析。
 - 默认只执行最窄定向单测；真机 / 模拟器验证不属于默认验证执行面。
+- 已打开 Xcode 且官方 `xcode` MCP 可用时，先用 `GetTestList` → 一次 `RunSomeTests` / `BuildProject`，只在失败时读取 `GetBuildLog` / Issue Navigator；同一 fingerprint 不重复 wrapper。
+- 禁止调用 `XcodeWrite`、`XcodeUpdate`、`XcodeMakeDir`、`XcodeMV`、`XcodeRM`、`ExecuteSnippet` 等写入或执行片段工具。
+- 仅在 MCP 不可用、需要可归档证据、发布前/高风险/依赖或项目配置变更、多人验证冲突或 MCP 失败难以归因时，建议主 Agent 升级 wrapper。
 - "failure_attribution_type" 仅用 code_bug/test_bug/env_issue/unknown。
 - 仅在明确需要时声明 needs_test_code，由主 Agent 转交 ios-feature-implementation(test-implementation)。
 - 默认完成态由主 Agent 基于定向验证与独立 reviewer subAgent code-review 决定；ios-verification 仅按需补强。

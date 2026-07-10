@@ -1,6 +1,6 @@
 ---
 name: ios-verification
-description: iOS / Apple Xcode 项目统一验证 Skill。用于验证前路由、最窄 XCTest / -only-testing 选择、通过 codex_verify wrapper 接入 shared build-queue daemon 执行项目环境 build/test、读取 agent-summary.json / verification-report.json / diagnostics.json 做低 token 失败归因，以及在定向验证和独立 code-review 后裁决最终证据是否足够；替代原先分散的验证路由、受影响测试选择、定向验证执行、构建日志摘要、最终证据裁决与项目环境构建验证入口。
+description: iOS / Apple Xcode 项目统一验证 Skill。用于验证前路由、优先通过官方 Xcode MCP 执行最窄交互式 build/test、按风险升级到 codex_verify wrapper + shared build-queue 的项目环境证据、读取 MCP 结果或结构化 artifact 做低 token 失败归因，以及在定向验证和独立 code-review 后裁决最终证据是否足够；替代原先分散的验证路由、受影响测试选择、定向验证执行、构建日志摘要、最终证据裁决与项目环境构建验证入口。
 ---
 
 # iOS Verification（统一验证入口）
@@ -17,7 +17,8 @@ Select, execute, digest, and judge the cheapest sufficient iOS / Apple-platform 
 | --- | --- | --- |
 | `route` | 根据 diff 选择最低有效验证等级 | 验证前决策 |
 | `affected-tests` | 推导最窄 XCTest / `-only-testing` 范围 | 测试面选择 |
-| `execute` | 通过 `codex_verify` / build-queue 执行项目环境验证 | 定向或项目环境执行 |
+| `xcode-mcp` | 通过已打开 Xcode 的官方 MCP 执行一次最窄 build/test | 默认快车道 |
+| `execute` | 通过 `codex_verify` / build-queue 执行项目环境验证 | 风险升级或可归档证据 |
 | `digest` | 读取结构化 artifact，定位第一个 blocking failure | 失败归因 |
 | `final-gate` | 在定向验证和独立 `code-review` 后裁决证据是否足够 | 最终证据裁决 |
 
@@ -54,7 +55,11 @@ Do not use this Skill when:
 
 - Use `route` first when validation level is unclear.
 - Use `affected-tests` when unit test mapping is non-trivial.
-- Use `execute` only when targeted validation or project-environment verification should actually run.
+- Xcode 项目已打开且 `xcode` MCP 暴露 `GetTestList`、`RunSomeTests` / `BuildProject` 时，先用 `xcode-mcp`：从测试列表选最窄目标，只执行一次；仅失败时读取 `GetBuildLog` / `XcodeListNavigatorIssues`。
+- MCP 快车道不可用、用户要求 artifact、发布前/高风险/依赖或项目配置变更、需要多人队列治理，或 MCP 失败无法归因时，才用 `execute` 升级到 wrapper。
+- 同一 workspace / scheme / 测试集合在同一任务内只允许一个活动验证；复用 MCP 测试列表与已完成结果，避免并行或 wrapper 重复执行。
+- 验证角色只允许调用 Xcode MCP 的只读/验证工具；禁止 `XcodeWrite`、`XcodeUpdate`、`XcodeMakeDir`、`XcodeMV`、`XcodeRM`、`ExecuteSnippet`。
+- Use `execute` only when wrapper-backed targeted validation or project-environment verification should actually run.
 - Use `digest` after a failed verification or when raw log inspection is being considered.
 - Use `final-gate` only after targeted validation / `no_test_reason` and independent `code-review` evidence are available, or when the user explicitly asks for final confidence.
 - Do not run full verification by default.
@@ -104,14 +109,22 @@ Use the smallest sufficient level:
 - For SwiftUI / UIKit view-only changes, prefer build unless targeted UI tests are cheap and explicit.
 - If no deterministic low-cost path exists, return `no_test_reason` and `suggested_validation` instead of escalating automatically.
 
-### Wrapper and Build Queue Rules
+### Xcode MCP Fast Lane
+
+- 前置条件：目标项目在 Xcode 中打开，官方 `xcode` MCP 已连接且实际工具面包含 `GetTestList`、`RunSomeTests` 或 `BuildProject`。
+- 先以 `GetTestList` 建立本任务的 session-scoped 测试映射（受影响文件/模块 → XCTest 标识）；仅在 diff、scheme 或 test plan 改变时刷新，避免重复 discovery。
+- 有确定测试时调用一次 `RunSomeTests`；无确定低成本测试但需要编译信号时调用一次 `BuildProject`。不要对同一 fingerprint 同时运行 MCP 测试和 wrapper 测试。
+- 通过时记录工具名、Xcode 窗口/workspace、scheme/test plan、测试标识、耗时和结果；失败时只读取 `GetBuildLog` / `XcodeListNavigatorIssues` 的首个阻塞项。
+- MCP 结果用于日常快速反馈；它不替代 wrapper 的 build-queue、结构化 artifact、明确 destination 或发布级可复现证据。
+
+### Wrapper and Build Queue Rules（升级路径）
 
 - Never run validation-type `xcodebuild` directly.
-- Always prefer target project `./codex_verify.sh`.
+- 当已选择 `execute` 时，优先 target project `./codex_verify.sh`。
 - If absent, use `~/.codex/bin/codex_verify`.
 - The wrapper must submit validation-type `xcodebuild` to shared build-queue daemon.
 - Project-environment verification must run from the target project root in the non-sandbox host environment.
-- For Codex, every validation-type `xcodebuild` probe or run (`-list`, `-showdestinations`, build, test) must start the wrapper through `functions.exec_command` with `sandbox_permissions="require_escalated"`; do not run sandboxed `codex_verify` / `xcodebuild` as final evidence.
+- For Codex, every **direct validation-type `xcodebuild`** probe or run (`-list`, `-showdestinations`, build, test) must start the wrapper through `functions.exec_command` with `sandbox_permissions="require_escalated"`; do not run sandboxed `codex_verify` / `xcodebuild` as final evidence. This does not prohibit the official Xcode MCP fast lane.
 - The wrapper / script owns formatter selection, tool bootstrap, parsing, redaction, artifact generation, and preserving the real `xcodebuild` exit code.
 - Agents must not manually install or invoke `xcbeautify`, `xcpretty`, `xcprint`, `xcresulttool`, or equivalent parser tools.
 - Reuse Xcode 系统 DerivedData (`~/Library/Developer/Xcode/DerivedData`) via daemon; do not reintroduce `XCODE_DERIVED_DATA_*` or `CODEX_DERIVED_DATA_SLOT` public configuration.
@@ -148,7 +161,8 @@ Agents may set explicit inputs when the user or project config requires a non-de
 
 ### Execution and Fingerprint Rules
 
-- Prefer wrapper `--mode auto` unless a narrower/stronger mode is justified.
+- Xcode MCP 快车道的 fingerprint 包含 Xcode window/workspace、scheme/test plan、测试标识和 diff；同一 fingerprint 已通过则复用结果，不重复运行。
+- 进入 wrapper 升级路径后，prefer wrapper `--mode auto` unless a narrower/stronger mode is justified.
 - If the same fingerprint has successful same-or-stronger evidence after the latest change, skip duplicate verification and report cached evidence.
 - If the same fingerprint failed, read cached `agent-summary.json` / `verification-report.json` before another run.
 - Change code, config, destination, scheme, or mode before rerunning a failed fingerprint.
@@ -175,7 +189,7 @@ Agents may set explicit inputs when the user or project config requires a non-de
 Accept existing evidence only when all are true:
 
 1. Evidence happened after the latest code/config/resource/dependency change.
-2. Evidence came from the target project root in the non-sandbox host environment when project-environment evidence is claimed.
+2. 日常快车道证据来自已打开的目标 Xcode 项目；当 project-environment / 可归档证据被声明时，证据必须来自目标项目根目录的非沙盒 wrapper 环境。
 3. Baseline matches final delivery target or is clearly stronger.
 4. Targeted validation executed, or `no_test_reason` plus `suggested_validation` is explicit.
 5. Independent `code-review` has no `阻塞问题` and reviewed the verification story.
@@ -203,7 +217,7 @@ Escalate to `execute` / stronger verification when any are true:
 
 ```json
 {
-  "verification_mode": "route | affected-tests | execute | digest | final-gate | auto",
+  "verification_mode": "route | affected-tests | xcode-mcp | execute | digest | final-gate | auto",
   "changed_files": [],
   "target_project_root": ".",
   "workspace": "optional",
@@ -236,13 +250,13 @@ Escalate to `execute` / stronger verification when any are true:
 ```json
 {
   "status": "passed | failed | skipped | blocked | accepted | escalated | proposed",
-  "verification_mode": "route | affected-tests | execute | digest | final-gate",
+  "verification_mode": "route | affected-tests | xcode-mcp | execute | digest | final-gate",
   "verification_level": "none | lint | typecheck | unit | build | ui | full",
   "reason": "...",
   "changed_files": [],
   "only_testing": [],
   "also_build": false,
-  "verification_route": "wrapper -> build-queue daemon -> xcodebuild",
+  "verification_route": "xcode-mcp-fast-lane | wrapper -> build-queue daemon -> xcodebuild",
   "workspace_or_project": "App.xcworkspace",
   "scheme": "App",
   "configuration": "Debug",
@@ -269,7 +283,7 @@ Escalate to `execute` / stronger verification when any are true:
 
 Field rules:
 
-- `executed_validation` records only verification actually run in the target project environment or explicitly marked local/static validation.
+- `executed_validation` records only verification actually run through the active Xcode MCP, target project wrapper environment, or explicitly marked local/static validation.
 - `failure_attribution` must be evidence-backed; use `unknown` rather than guessing when compact artifacts are insufficient.
 - `first_blocking_error` is the first real compile, link, test, signing, destination, or UI-smoke blocker from compact artifacts.
 - `no_test_reason` is required when code changed but no low-cost deterministic test path exists.
