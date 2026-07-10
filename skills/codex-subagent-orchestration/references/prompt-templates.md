@@ -9,6 +9,7 @@
 - explorer / pm / tester：Terra low/medium。
 - reporter：Luna + low。
 - docs_researcher：GPT-5.4 mini + medium，并只给该角色加载官方文档 MCP。
+- design_researcher：GPT-5.4 + high + read-only，只给该角色加载本机 SketchMCP；仅从明确指定的 `.sketch` 源文件提取设计事实。
 
 若 runtime 不暴露 custom agent 选择或目标模型不可用，回退为继承父 Agent并显式报告；实现链路 reviewer subAgent 仍必须独立启动。
 

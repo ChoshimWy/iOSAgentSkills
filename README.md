@@ -54,7 +54,7 @@ ln -s iOSAgentSkills/skills .claude/skills
 
 ## 多角色配置（按图示结构补齐）
 
-- 仓库内模板源：`config/codex/templates/agents/`（7 角色模板）
+- 仓库内模板源：`config/codex/templates/agents/`（8 角色模板）
   - `pm.toml`（拆解需求 / 验收标准 / checkpoint）
   - `explorer.toml`（上下文收集 / 依赖梳理）
   - `builder.toml`（最小实现 / 变更说明）
@@ -62,6 +62,7 @@ ln -s iOSAgentSkills/skills .claude/skills
   - `reporter.toml`（交付汇总 / 风险收口）
   - `reviewer.toml`（独立高质量静态审查）
   - `docs_researcher.toml`（OpenAI / Apple 官方事实核实）
+  - `design_researcher.toml`（通过本机 SketchMCP 读取 `.sketch` 设计源文件并输出 Design-to-Code Spec）
 - 这些模板使用 Codex 当前支持的扁平 custom agent schema：`name` / `description` / `developer_instructions`，以及可选 `nickname_candidates` / `model` / `model_reasoning_effort` / `model_verbosity` / `sandbox_mode` / `mcp_servers` / `skills.config`。
 - 安装脚本会同步到：`~/.codex/agents/`。
 - Profile 模板源：`config/codex/templates/profiles/`；缺失时安装到 `~/.codex/<name>.config.toml`，已有本机 Profile 默认保留，只有显式执行 `bash install-local-agent-config.sh --refresh-profiles` 才备份并刷新。使用 `codex --profile daily|budget|readonly|deep|extreme|interactive-fast` 切换。
@@ -74,9 +75,10 @@ ln -s iOSAgentSkills/skills .claude/skills
   - 图示 `skills/*/SKILL.md` 对应本仓库全部 skills（含按需触发的低频技能）
   - 图示 `config.toml` 对应本仓库 `config/codex/codex.shared.toml`
   - 共享 Codex 基线保留 `image_model = "gpt-image-2"`、`features.multi_agent = true`、`[agents] max_threads/max_depth`、plugin 与 TUI 等跨设备配置；不再设置 model、reasoning、verbosity 或 `service_tier`，安装时保留本机已有偏好，避免降级模型或全局强制 Fast mode。
-  - 角色模型策略：builder 使用 Sol + high；reviewer 使用 GPT-5.4 + high + read-only；explorer/pm/tester 使用 Terra；reporter 使用 Luna；docs_researcher 使用 GPT-5.4 mini 并独占官方文档 MCP。
+  - 角色模型策略：builder 使用 Sol + high；reviewer 使用 GPT-5.4 + high + read-only；explorer/pm/tester 使用 Terra；reporter 使用 Luna；docs_researcher 使用 GPT-5.4 mini 并独占官方文档 MCP；design_researcher 使用 GPT-5.4 + high + read-only，并仅连接本机 `http://localhost:31126/mcp`。
   - `interactive-fast` 是唯一默认启用 Fast mode 的 Profile；普通、后台与长任务使用 Standard。
   - 安装同步只会移除内容与旧 shared baseline 完全一致的全局 `codegraph` / `openaiDeveloperDocs` / `appleDeveloperDocs`，改由 explorer、reviewer、docs_researcher 按角色加载；同名但内容不同的本机自定义 MCP 与其它本机 MCP 均保留。
+  - SketchMCP 不进全局 shared config；仅 `design_researcher` 在用户明确要求从 `.sketch` 源文件还原设计时连接，Sketch App 插件未启动则应报告 blocked，不能退化为截图猜测。
   - 安装同步会清理旧 baseline 遗留的单独 `service_tier = "fast"`；只有本机同时显式设置 `[features].fast_mode = true` 时才保留全局 Fast 选择。
   - 本仓 shared config 会禁用 `openai-curated`、`openai-curated-remote`、`openai-primary-runtime`、`openai-bundled` 等插件来源；如需恢复某个插件，需显式把对应 `[plugins."<id>"] enabled = true` 改回。
 

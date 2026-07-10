@@ -146,6 +146,29 @@
 - 区分文档事实与推断，不用第三方文章替代官方结论
 - 返回最小必要证据，不粘贴长文档
 
+## design_researcher
+
+### 输入
+- 用户明确指定的 `.sketch` 源文件、页面、画板或组件
+- 目标平台与需要还原的页面/状态范围
+
+### 输出
+- `design_source`
+- `artboards_and_states`
+- `layout_and_tokens`
+- `assets_and_interactions`
+- `implementation_contract`
+- `ambiguities`
+- `checkpoint_status`
+- `first_failure`
+- `next_action`
+
+### 额外要求
+- 只读，不修改 Sketch 文件、代码或配置
+- 只使用专属 `sketchMCP` 读取源文件真相；截图、历史 UI 与主观推断不能替代源文件事实
+- MCP 不可达、文件不可读或图层信息缺失时报告 blocked，不虚构尺寸、token 或交互
+- 将源文件事实与待确认项分开；实现前由主 Agent 冻结 `implementation_contract`
+
 ## main agent
 
 ### 固定职责

@@ -1,6 +1,6 @@
 # Multi-Agent Role Templates
 
-该目录提供 7 个角色协作模板：
+该目录提供 8 个角色协作模板：
 - `pm.toml`
 - `explorer.toml`
 - `builder.toml`
@@ -8,6 +8,7 @@
 - `reporter.toml`
 - `reviewer.toml`
 - `docs_researcher.toml`
+- `design_researcher.toml`
 
 以及 1 个项目侧验证模板：
 - `../codex_verify.example.sh` —— 复制到目标 Xcode 项目根目录并重命名为 `codex_verify.sh`，作为多 Codex CLI 本地 `xcodebuild` / `build-check` 的统一验证入口；wrapper 会自动接入 shared build-queue daemon，把验证型 `xcodebuild` 串行排队执行，并统一使用 Xcode 系统 DerivedData
@@ -26,6 +27,7 @@
 - 角色模型与 reasoning 由各 custom-agent TOML 管理；`spawn_agent` 只使用当前 runtime 暴露的字段。无法选择 custom agent 时回退继承主 Agent并显式报告。
 - `reviewer.toml` 使用 `gpt-5.4 + high + read-only`，不得用 Spark + low 作为强制最终门禁。
 - `docs_researcher.toml` 独占 OpenAI/Apple Docs MCP；Apple Docs MCP 固定版本，避免 `@latest` 漂移。
+- `design_researcher.toml` 独占本机 Sketch App 插件启动的 `sketchMCP`（`http://localhost:31126/mcp`）。它只在明确以 `.sketch` 源文件为设计真源的还原任务中启动；不写入 global shared config，避免 Sketch 未启动时影响普通任务。
 - 安装时只迁移并删除内容与旧 shared baseline 完全一致的全局 CodeGraph / Docs MCP；同名但内容不同的本机自定义 MCP 与其它本机 MCP 都不会删除。
 - 安装时会移除旧 baseline 遗留但未配套 `features.fast_mode = true` 的全局 `service_tier = "fast"`，避免后台和长任务继续无条件加速。
 - 工作流合同字段不再放单独 TOML table，而是内嵌在 `developer_instructions` 中约束输出与职责边界。

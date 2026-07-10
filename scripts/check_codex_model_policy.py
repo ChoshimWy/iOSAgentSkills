@@ -33,6 +33,7 @@ REQUIRED_PROFILES = {
 }
 REQUIRED_AGENTS = {
     "builder",
+    "design_researcher",
     "docs_researcher",
     "explorer",
     "pm",
@@ -171,6 +172,18 @@ def validate_static(failures: list[str]) -> list[tuple[str, Path, dict]]:
     )
     if not apple_args or any("@latest" in str(item) for item in apple_args):
         failures.append("docs_researcher must pin apple-docs-mcp to an explicit version")
+
+    design_agent = by_name.get("agent:design_researcher", {})
+    design_servers = design_agent.get("mcp_servers", {})
+    if design_servers.get("sketchMCP", {}).get("url") != "http://localhost:31126/mcp":
+        failures.append("design_researcher must scope sketchMCP to http://localhost:31126/mcp")
+    if design_agent.get("sandbox_mode") != "read-only":
+        failures.append("design_researcher must use sandbox_mode=read-only")
+    if "sketchMCP" in shared.get("mcp_servers", {}):
+        failures.append("sketchMCP must not be configured in the global shared baseline")
+    for name, data in by_name.items():
+        if name != "agent:design_researcher" and "sketchMCP" in data.get("mcp_servers", {}):
+            failures.append(f"sketchMCP must be scoped only to design_researcher, found in {name}")
 
     for role in ("agent:explorer", "agent:reviewer"):
         servers = by_name.get(role, {}).get("mcp_servers", {})

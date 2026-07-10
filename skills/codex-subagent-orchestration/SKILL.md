@@ -157,6 +157,7 @@ Activate additional roles only when justified:
 | `tester explorer` | Test surface exists, failure attribution is needed, or task is `code-risky` | `ios-verification` |
 | `tester worker` | Test code must be added or updated | `ios-feature-implementation(test-implementation)` |
 | `docs_researcher` | Apple/OpenAI API、availability、WWDC 或 Codex 官方行为需要核实 | `apple-docs` / `openai-docs`，只读官方资料 |
+| `design_researcher` | 用户明确指定 `.sketch` 源文件为设计真源，需高保真还原页面或组件 | `ui-ux-design-system`，只读 `sketchMCP`；先产出 Design-to-Code Spec，再实施 |
 | `reporter` | Delivery summary, acceptance matrix, residual risk; if the deliverable must be a formal HTML document, prepare a compact source packet and route to `html-docs` | this Skill / `html-docs` |
 | `main agent` | Always active for aggregation, control, and final decision | this Skill |
 
@@ -224,7 +225,7 @@ Optional runtime inputs:
   "scheme": "App",
   "destination": "platform=iOS Simulator,id=<selected-simulator-id>",
   "changed_files": [],
-  "available_subagents": ["worker", "explorer", "reviewer", "docs_researcher"],
+  "available_subagents": ["worker", "explorer", "reviewer", "docs_researcher", "design_researcher"],
   "build_wrapper": "./codex_verify.sh"
 }
 ```

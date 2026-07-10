@@ -21,6 +21,7 @@
 | explorer / pm / tester | `gpt-5.6-terra` | `low` / `medium` | 平衡速度、成本与代码理解 |
 | reporter | `gpt-5.6-luna` | `low` | 低成本汇总已有证据 |
 | docs_researcher | `gpt-5.4-mini` | `medium` | 只读官方资料检索，MCP 仅对该角色启用 |
+| design_researcher | `gpt-5.4` | `high` | 只读 Sketch 源文件解析；只在本机 SketchMCP 可达时启用 |
 
 `gpt-5.3-codex-spark` 只适合近实时、低延迟、文本型局部迭代或快速探索；不得以 `Spark + low` 作为所有实现任务的强制 reviewer 门禁。
 

@@ -311,7 +311,7 @@ def main() -> int:
         failures,
     )
 
-    for agent_name in ("reviewer.toml", "docs_researcher.toml"):
+    for agent_name in ("reviewer.toml", "docs_researcher.toml", "design_researcher.toml"):
         require_exists(ROOT / "config" / "codex" / "templates" / "agents" / agent_name, failures)
 
     model_policy = subprocess.run(
