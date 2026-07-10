@@ -23,9 +23,11 @@ override func viewDidLoad() {
 ```
 
 ## 布局规则
-- 纯代码布局，优先使用 **SnapKit** 作为约束布局工具
+- Swift 的纯代码 UIKit 布局，默认使用 **SnapKit**；Objective-C 的纯代码 UIKit 布局，默认使用 **Masonry**
+- 先检查目标 target 的依赖和同目录既有约束写法；库未集成时不得静默新增依赖
+- 保持既有页面的布局系统；不要为统一风格改写无关的原生约束，也不要在同一页面混用多套约束 DSL
 - 优先 `UIStackView` 减少约束
-- SnapKit 不可用时，手动约束用 `NSLayoutConstraint.activate([])` 批量激活
+- SnapKit / Masonry 不可用、系统 API 特殊要求或既有局部约定明确时，手动约束用 `NSLayoutConstraint.activate([])` 批量激活
 - 复杂列表用 `UICollectionViewCompositionalLayout` + `DiffableDataSource`
 
 ### SnapKit 约束示例
@@ -77,6 +79,22 @@ view.snp.makeConstraints { make in
 view2.snp.makeConstraints { make in
     make.top.equalTo(view1.snp.bottom).offset(8)
     make.leading.trailing.equalTo(view1)
+}
+```
+
+### Masonry 约束示例（Objective-C）
+```objc
+- (void)setupConstraints {
+    [self.titleLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.top.equalTo(self.view.mas_safeAreaLayoutGuideTop).offset(16);
+        make.leading.trailing.equalTo(self.view).inset(20);
+    }];
+
+    [self.contentView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.top.equalTo(self.titleLabel.mas_bottom).offset(12);
+        make.leading.trailing.equalTo(self.view);
+        make.bottom.lessThanOrEqualTo(self.view.mas_safeAreaLayoutGuideBottom);
+    }];
 }
 ```
 

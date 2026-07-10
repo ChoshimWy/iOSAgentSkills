@@ -70,7 +70,10 @@ Do not add comments that only restate syntax. Add Chinese `why` comments for com
 
 - Keep `UIViewController` / `UIView` focused on rendering, layout, binding, interaction, and lifecycle.
 - Keep business rules in service, model, coordinator, or view model layers.
-- Follow the existing layout system; use SnapKit only when the project already does or the task asks for it.
+- 新增 UIKit 纯代码布局默认：Swift 使用 SnapKit，Objective-C 使用 Masonry。
+- 先确认目标 target 已集成对应依赖；缺失时不得静默引入，先报告依赖缺口并遵循用户决定。
+- 保持既有页面的布局系统，不因风格统一改写无关 `NSLayoutConstraint` / 其它 DSL；同一页面避免混用多套约束 DSL。
+- 仅当目标库不可用、系统 API 特殊要求或既有局部约定明确时，使用 `NSLayoutConstraint.activate([])` 批量激活。
 - Keep cell configuration idempotent and reset reusable state in `prepareForReuse` when needed.
 - Avoid retaining index paths or cells across async boundaries without validation.
 - Cancel tasks/subscriptions/timers/observers at the lifecycle owner that created them.

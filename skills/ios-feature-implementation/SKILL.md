@@ -18,7 +18,7 @@ Implement iOS / Apple-platform production and test code through one implementati
 | `business` | service / repository / use case / domain model / view model / coordinator / router / DI / async 业务流程 | 行为、契约、依赖、错误语义 |
 | `swiftui` | SwiftUI 页面结构、`NavigationStack`、sheet、状态归属、组件、列表、表单、动画、预览、SwiftUI 视图重构 | view structure、state ownership、navigation |
 | `liquid-glass` | iOS 26+ SwiftUI `glassEffect`、`GlassEffectContainer`、玻璃按钮样式、形态过渡、兼容回退 | API 选型、视觉层级、fallback |
-| `uikit` | `UIViewController`、`UIView`、Auto Layout、SnapKit、table / collection、cell 复用、事件绑定 | UI 结构、布局、生命周期 / 内存 |
+| `uikit` | `UIViewController`、`UIView`、Auto Layout、Swift + SnapKit、Objective-C + Masonry、table / collection、cell 复用、事件绑定 | UI 结构、布局、生命周期 / 内存 |
 | `mixed-ui` | SwiftUI + UIKit 桥接、hosting/controller 包装、跨技术栈导航接线 | 桥接边界、ownership、生命周期 |
 | `advanced-swift` | actor、`Sendable`、取消传播、重入、PAT、复杂泛型、类型擦除、跨平台可用性、public/open API | API 边界、并发不变量、可用性 |
 | `refactor` | 长方法、重复逻辑、深层嵌套、回调地狱、God Object、行为保持型整理 | refactoring pattern、行为保持证据 |
@@ -110,7 +110,10 @@ Do not use this Skill as the main route when:
 #### `uikit`
 
 - Keep UIKit code focused on rendering, layout, binding, reuse, lifecycle, and interaction.
-- Follow existing layout conventions; if the project uses SnapKit, follow local SnapKit style.
+- 新增或重写 UIKit 纯代码布局时：Swift 默认使用 SnapKit，Objective-C 默认使用 Masonry。
+- 先检查目标 target 的依赖与同目录既有写法；若 SnapKit / Masonry 未集成，不得静默新增依赖，报告依赖缺口并遵循用户决定。
+- 不为统一风格重构无关的既有 `NSLayoutConstraint` / 其他布局系统；在同一页面内避免混用多套约束 DSL。
+- 仅在目标库不可用、系统 API 特殊要求或既有局部约定明确时，使用 `NSLayoutConstraint.activate([])`，并保持批量激活。
 - Avoid ambiguous constraints and unnamed magic layout constants when they affect reuse.
 - Keep cell configuration idempotent and reset reusable state in `prepareForReuse` when needed.
 - Avoid retaining index paths across async boundaries without validation.
