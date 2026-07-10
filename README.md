@@ -177,6 +177,7 @@ bash install-local-agent-config.sh
 python3 scripts/lint_skill_schema.py
 python3 scripts/validate_codex_agent_templates.py config/codex/templates/agents
 python3 scripts/check_codex_model_policy.py --offline
+python3 scripts/check_claude_config_policy.py
 python3 scripts/check_codex_model_policy.py
 # 可选：诊断本机旧 profile 与不可解析 MCP，不自动删除本机自定义配置
 python3 scripts/check_codex_model_policy.py --local-config ~/.codex/config.toml

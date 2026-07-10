@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SKILL_ROOT = ROOT / "skills" / "codex-subagent-orchestration"
 CODEX_TEMPLATE_AGENTS = ROOT / "config" / "codex" / "templates" / "agents"
 CODEX_AGENT_VALIDATE_SCRIPT = ROOT / "scripts" / "validate_codex_agent_templates.py"
+CLAUDE_CONFIG_POLICY_CHECK_SCRIPT = ROOT / "scripts" / "check_claude_config_policy.py"
 REMOVED_SKILLS = {
     "office-docx",
     "office-pptx",
@@ -109,6 +110,17 @@ def require_codex_agent_templates_parse(failures: list[str]) -> None:
         failures.append(f"{CODEX_TEMPLATE_AGENTS.relative_to(ROOT)} invalid codex agent schema: {stderr}")
 
 
+def require_claude_config_policy(failures: list[str]) -> None:
+    result = subprocess.run(
+        ["python3", str(CLAUDE_CONFIG_POLICY_CHECK_SCRIPT)],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        stderr = result.stderr.strip() or result.stdout.strip() or "unknown Claude config policy error"
+        failures.append(f"Claude config policy invalid: {stderr}")
+
+
 def require_existing_non_system_skill_openai_yaml_parse(failures: list[str]) -> None:
     for openai_yaml in sorted((ROOT / "skills").glob("*/agents/openai.yaml")):
         if ".system" in openai_yaml.relative_to(ROOT / "skills").parts:
@@ -118,6 +130,8 @@ def require_existing_non_system_skill_openai_yaml_parse(failures: list[str]) -> 
 
 def main() -> int:
     failures: list[str] = []
+
+    require_claude_config_policy(failures)
 
     subagent_policy_paths = [
         ROOT / "AGENTS.md",

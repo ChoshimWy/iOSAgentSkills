@@ -7,7 +7,6 @@
       "Bash(rg:*)",
       "Bash(ls:*)",
       "Bash(cat:*)",
-      "Bash(xcodebuild:*)",
       "Bash(xcrun:*)",
       "Bash(swift:*)",
       "Bash(xcode-select:*)",

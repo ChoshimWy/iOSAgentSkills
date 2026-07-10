@@ -1,15 +1,45 @@
 #!/usr/bin/env python3
-"""
-Merge Claude Code settings template with existing user settings.
+"""Merge the Claude settings template without overwriting local custom MCPs.
 
-- Preserves user-added permissions, MCP servers, and hooks
-- Template values win for core managed keys
-- Union strategy for allow/deny lists (deduplicate)
+The repository owns only explicit safety migrations and known legacy managed
+baselines. Same-name MCP entries that differ from a known legacy baseline are
+user customizations and must remain untouched.
 """
 import argparse
+from copy import deepcopy
 import json
 import sys
 from pathlib import Path
+
+
+RETIRED_ALLOW_ENTRIES = {"Bash(xcodebuild:*)"}
+LEGACY_MANAGED_MCP_SERVERS = {
+    "appleDeveloperDocs": {
+        "command": "npx",
+        "args": ["-y", "@kimsungwhee/apple-docs-mcp@latest"],
+    },
+}
+
+
+def merge_mcp_servers(existing: dict, template: dict) -> dict:
+    """Add missing managed MCPs and migrate only exact legacy configurations."""
+    result = deepcopy(existing)
+    for name, template_value in template.items():
+        if name not in result or result.get(name) == LEGACY_MANAGED_MCP_SERVERS.get(name):
+            result[name] = deepcopy(template_value)
+    return result
+
+
+def migrate_retired_permissions(settings: dict) -> dict:
+    """Remove entries deliberately retired by the repository safety policy."""
+    result = deepcopy(settings)
+    permissions = result.get("permissions")
+    if not isinstance(permissions, dict):
+        return result
+    allow = permissions.get("allow")
+    if isinstance(allow, list):
+        permissions["allow"] = [item for item in allow if item not in RETIRED_ALLOW_ENTRIES]
+    return result
 
 
 def deep_merge(existing, template):
@@ -26,7 +56,9 @@ def deep_merge(existing, template):
         elif key not in existing:
             result[key] = template[key]
         else:
-            if key in ("allow", "deny") and isinstance(existing[key], list) and isinstance(template[key], list):
+            if key == "mcpServers" and isinstance(existing[key], dict) and isinstance(template[key], dict):
+                result[key] = merge_mcp_servers(existing[key], template[key])
+            elif key in ("allow", "deny") and isinstance(existing[key], list) and isinstance(template[key], list):
                 result[key] = sorted(set(existing[key] + template[key]))
             elif isinstance(existing[key], dict) and isinstance(template[key], dict):
                 result[key] = deep_merge(existing[key], template[key])
@@ -55,7 +87,7 @@ def main():
     else:
         existing = {}
 
-    merged = deep_merge(existing, template)
+    merged = deep_merge(migrate_retired_permissions(existing), template)
 
     target_path.parent.mkdir(parents=True, exist_ok=True)
     target_path.write_text(json.dumps(merged, indent=2, ensure_ascii=False) + "\n")

@@ -5,14 +5,18 @@
 ## 编排流程
 
 ### Phase 1: 计划（CP0）
-使用 `EnterPlanMode` 或 `Agent(subagent_type="Plan")` 完成：
+主 Agent 默认直接输出 CP0 最小计划，不依赖 `EnterPlanMode`：
 - 目标、范围、成功标准
 - 任务分型：doc-only | rule-only | code-small | code-medium | code-risky
 - 档位选择：lite | standard | full
 - workspace / scheme / destination 基线
 
+仅当需求存在歧义、约束冲突或属于高风险任务时，才按需使用 `EnterPlanMode` 或 `Agent(subagent_type="Plan", prompt=<pm.md>)` 补充拆解。
+
 ### Phase 2: 探索
 `Agent(subagent_type="Explore", prompt=<explorer.md>)` 收集上下文、文件范围、依赖、风险。CP1 未通过不扩散到实现。
+
+按需启动官方事实核实：当结论依赖 Apple API / availability / WWDC 或 OpenAI / Codex 官方行为时，使用 `Agent(subagent_type="Explore", prompt=<docs_researcher.md>)`；只返回官方证据并区分文档事实与推断，不参与实现。
 
 ### Phase 3: 实现
 `Agent(subagent_type="general-purpose", prompt=<builder.md>)` 执行最小可验证实现。或直接通过 `Skill` 工具调用 `ios-feature-implementation`，并在内部选择 business / swiftui / liquid-glass / uikit / mixed-ui / advanced-swift / refactor / sdk-contract 模式。

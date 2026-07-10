@@ -130,6 +130,7 @@ REPO_CLAUDE_SETTINGS="$REPO_CLAUDE_CONFIG/settings.json"
 REPO_CLAUDE_AGENTS="$REPO_CLAUDE_CONFIG/agents"
 REPO_CLAUDE_MEMORY_SEED="$REPO_CLAUDE_CONFIG/memory-seed.md"
 CLAUDE_SYNC_SCRIPT="$REPO_ROOT/scripts/sync_claude_settings.py"
+CLAUDE_CONFIG_POLICY_CHECK_SCRIPT="$REPO_ROOT/scripts/check_claude_config_policy.py"
 REPO_COMMITLINT_SCRIPT="$REPO_ROOT/scripts/commitlint.py"
 
 HOME_DIR="${HOME:?HOME is required}"
@@ -886,6 +887,16 @@ if [[ ! -f "$REPO_COMMITLINT_SCRIPT" ]]; then
   echo "Error: missing commitlint script: $REPO_COMMITLINT_SCRIPT" >&2
   exit 1
 fi
+
+if [[ ! -f "$CLAUDE_CONFIG_POLICY_CHECK_SCRIPT" ]]; then
+  echo "Error: missing Claude config policy check script: $CLAUDE_CONFIG_POLICY_CHECK_SCRIPT" >&2
+  exit 1
+fi
+
+python3 "$CLAUDE_CONFIG_POLICY_CHECK_SCRIPT" >/dev/null || {
+  echo "Error: repository Claude settings/agent policy is invalid" >&2
+  exit 1
+}
 
 CLAUDE_MD_CONTENT="$(build_claude_md_content)"
 if [[ "$CCSWITCH_MODE" == '1' ]]; then
