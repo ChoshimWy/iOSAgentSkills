@@ -54,14 +54,17 @@ ln -s iOSAgentSkills/skills .claude/skills
 
 ## 多角色配置（按图示结构补齐）
 
-- 仓库内模板源：`config/codex/templates/agents/`（5 角色模板）
+- 仓库内模板源：`config/codex/templates/agents/`（7 角色模板）
   - `pm.toml`（拆解需求 / 验收标准 / checkpoint）
   - `explorer.toml`（上下文收集 / 依赖梳理）
   - `builder.toml`（最小实现 / 变更说明）
   - `tester.toml`（验证建议 / 执行结果 / 失败归因）
   - `reporter.toml`（交付汇总 / 风险收口）
-- 这些模板使用 Codex 当前支持的扁平 custom agent schema：`name` / `description` / `developer_instructions`，以及可选 `nickname_candidates` / `model` / `model_reasoning_effort` / `sandbox_mode` / `mcp_servers` / `skills.config`。
+  - `reviewer.toml`（独立高质量静态审查）
+  - `docs_researcher.toml`（OpenAI / Apple 官方事实核实）
+- 这些模板使用 Codex 当前支持的扁平 custom agent schema：`name` / `description` / `developer_instructions`，以及可选 `nickname_candidates` / `model` / `model_reasoning_effort` / `model_verbosity` / `sandbox_mode` / `mcp_servers` / `skills.config`。
 - 安装脚本会同步到：`~/.codex/agents/`。
+- Profile 模板源：`config/codex/templates/profiles/`；缺失时安装到 `~/.codex/<name>.config.toml`，已有本机 Profile 默认保留，只有显式执行 `bash install-local-agent-config.sh --refresh-profiles` 才备份并刷新。使用 `codex --profile daily|budget|readonly|deep|extreme|interactive-fast` 切换。
 - 角色模板说明见：`config/codex/templates/agents/README.md`。
 - 验证 wrapper 模板：`config/codex/templates/codex_verify.example.sh`；安装脚本会同步到本机 `~/.codex/bin/codex_verify` 作为全局 fallback，并同步 `tools/digest-xcodebuild-log.sh` 到 `~/.codex/bin/digest-xcodebuild-log`。若目标项目接入了 repo-tracked `codex_verify.sh`，则项目脚本优先；否则自动回退到全局 wrapper。wrapper 会自动接入 shared build-queue daemon，把验证型 `xcodebuild` 串行排队执行，统一使用 Xcode 系统 DerivedData（`~/Library/Developer/Xcode/DerivedData`），并默认只把 `verification-report.json` 打印给 Agent。
 - 推荐执行顺序：先 `explorer -> builder -> reporter`，再按需激活 `pm` / `tester`。
@@ -70,7 +73,11 @@ ln -s iOSAgentSkills/skills .claude/skills
   - 图示 `AGENTS.md` 对应仓库根 `AGENTS.md`
   - 图示 `skills/*/SKILL.md` 对应本仓库全部 skills（含按需触发的低频技能）
   - 图示 `config.toml` 对应本仓库 `config/codex/codex.shared.toml`
-  - 截至 2026-06-15 的共享 Codex 基线：`model = "gpt-5.5"`、`image_model = "gpt-image-2"`、`features.multi_agent = true`、`[agents] max_threads/max_depth`，以及默认 `model_reasoning_effort = "medium"` / `plan_mode_reasoning_effort = "medium"`；安装脚本会同步到 `~/.codex/config.toml`。`image_model` 是本仓共享配置基线，用于对齐 Codex 内置 image generation 使用 `gpt-image-2` 的行为，不把它表述为官方 config reference 已公开稳定字段。
+  - 共享 Codex 基线保留 `image_model = "gpt-image-2"`、`features.multi_agent = true`、`[agents] max_threads/max_depth`、plugin 与 TUI 等跨设备配置；不再设置 model、reasoning、verbosity 或 `service_tier`，安装时保留本机已有偏好，避免降级模型或全局强制 Fast mode。
+  - 角色模型策略：builder 使用 Sol + high；reviewer 使用 GPT-5.4 + high + read-only；explorer/pm/tester 使用 Terra；reporter 使用 Luna；docs_researcher 使用 GPT-5.4 mini 并独占官方文档 MCP。
+  - `interactive-fast` 是唯一默认启用 Fast mode 的 Profile；普通、后台与长任务使用 Standard。
+  - 安装同步只会移除内容与旧 shared baseline 完全一致的全局 `codegraph` / `openaiDeveloperDocs` / `appleDeveloperDocs`，改由 explorer、reviewer、docs_researcher 按角色加载；同名但内容不同的本机自定义 MCP 与其它本机 MCP 均保留。
+  - 安装同步会清理旧 baseline 遗留的单独 `service_tier = "fast"`；只有本机同时显式设置 `[features].fast_mode = true` 时才保留全局 Fast 选择。
   - 本仓 shared config 会禁用 `openai-curated`、`openai-curated-remote`、`openai-primary-runtime`、`openai-bundled` 等插件来源；如需恢复某个插件，需显式把对应 `[plugins."<id>"] enabled = true` 改回。
 
 快速发任务模板：
@@ -169,6 +176,10 @@ bash install-local-agent-config.sh
 ./scripts/install-git-hooks.sh
 python3 scripts/lint_skill_schema.py
 python3 scripts/validate_codex_agent_templates.py config/codex/templates/agents
+python3 scripts/check_codex_model_policy.py --offline
+python3 scripts/check_codex_model_policy.py
+# 可选：诊断本机旧 profile 与不可解析 MCP，不自动删除本机自定义配置
+python3 scripts/check_codex_model_policy.py --local-config ~/.codex/config.toml
 python3 scripts/lint_subagent_orchestration_policy.py
 python3 scripts/lint_workflow_contract_policy.py
 python3 scripts/lint_harness_workflow_policy.py

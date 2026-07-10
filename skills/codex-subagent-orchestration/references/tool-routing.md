@@ -1,7 +1,9 @@
 # 多 Agent 工具与 MCP 路由矩阵
 
 ## 文档与 API 事实
-- Apple API、platform availability、WWDC、framework 指导：优先 `appleDeveloperDocs`，不要默认退回普通 web 搜索。
+- Apple API、platform availability、WWDC、framework 指导：优先 `apple-docs`；需要独立证据包时启动只读 `docs_researcher`，由其专属固定版本 `appleDeveloperDocs` 核实，不要默认退回普通 web 搜索。
+- OpenAI/Codex 配置、模型与官方行为：优先 `openai-docs`；需要独立核实时由 `docs_researcher` 使用 `openaiDeveloperDocs`。官方文档 MCP 不放在全局 shared config，避免无关任务加载额外工具面。
+- CodeGraph 仅配置给 `explorer` / `reviewer` 等确需代码关系与影响面分析的角色；其它 Agent 先用 `rg` 和精准文件切片。
 - 正式 HTML 方案、PRD、评审、报告、任务清单、接口说明与 handoff 文档：统一使用 `html-docs`；其它 Skill 只提供 source packet、结论和证据路径。
 - 只有当问题超出 Apple 文档覆盖范围，或需要外部最新事实时，才额外使用 web。
 

@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 from pathlib import Path
+import subprocess
 import sys
+import tempfile
 
 try:  # Python 3.11+
     import tomllib  # type: ignore[attr-defined]
@@ -105,6 +107,106 @@ def require_codex_plugins_disabled(path: Path, failures: list[str]) -> None:
         )
 
 
+def validate_codex_sync_behavior(failures: list[str]) -> None:
+    sync_script = ROOT / "scripts" / "sync_codex_shared_config.py"
+    shared_config = ROOT / "config" / "codex" / "codex.shared.toml"
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp = Path(temp_dir)
+        existing = temp / "existing.toml"
+        existing.write_text(
+            '''model = "gpt-5.6-sol"\n'''
+            '''model_reasoning_effort = "high"\n'''
+            '''service_tier = "fast"\n'''
+            '''[mcp_servers.codegraph]\ncommand = "codegraph"\n'''
+            '''args = ["serve", "--mcp"]\n'''
+            '''[mcp_servers.openaiDeveloperDocs]\nurl = "https://developers.openai.com/mcp"\n'''
+            '''[mcp_servers.openaiDeveloperDocs.tools.search_openai_docs]\napproval_mode = "approve"\n'''
+            '''[mcp_servers.appleDeveloperDocs]\ncommand = "npx"\n'''
+            '''args = ["-y", "@kimsungwhee/apple-docs-mcp@latest"]\n'''
+            '''[mcp_servers.local_only]\ncommand = "local-tool"\n'''
+        )
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(sync_script),
+                "--shared-config",
+                str(shared_config),
+                "--existing-config",
+                str(existing),
+                "--agents-path",
+                "/tmp/AGENTS.md",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            failures.append("sync_codex_shared_config.py migration smoke failed")
+            return
+        merged = tomllib.loads(result.stdout)
+        if merged.get("model") != "gpt-5.6-sol" or merged.get("model_reasoning_effort") != "high":
+            failures.append("Codex sync must preserve explicit local model/reasoning")
+        if "service_tier" in merged:
+            failures.append("Codex sync must retire legacy unpaired global Fast mode")
+        servers = merged.get("mcp_servers", {})
+        if ({"codegraph", "openaiDeveloperDocs", "appleDeveloperDocs"} & set(servers)) or "local_only" not in servers:
+            failures.append("Codex sync must retire legacy global MCPs and preserve unrelated local MCPs")
+
+        custom_mcp = temp / "custom-mcp.toml"
+        custom_mcp.write_text(
+            '''[mcp_servers.codegraph]\ncommand = "my-codegraph"\nargs = ["custom"]\n'''
+            '''[mcp_servers.openaiDeveloperDocs]\nurl = "https://example.invalid/custom-mcp"\n'''
+        )
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(sync_script),
+                "--shared-config",
+                str(shared_config),
+                "--existing-config",
+                str(custom_mcp),
+                "--agents-path",
+                "/tmp/AGENTS.md",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            failures.append("sync_codex_shared_config.py custom MCP preservation smoke failed")
+            return
+        merged = tomllib.loads(result.stdout)
+        servers = merged.get("mcp_servers", {})
+        if servers.get("codegraph") != {"command": "my-codegraph", "args": ["custom"]}:
+            failures.append("Codex sync must preserve customized same-name codegraph MCP")
+        if servers.get("openaiDeveloperDocs") != {"url": "https://example.invalid/custom-mcp"}:
+            failures.append("Codex sync must preserve customized same-name docs MCP")
+
+        explicit_fast = temp / "explicit-fast.toml"
+        explicit_fast.write_text(
+            '''model = "gpt-5.5"\nservice_tier = "fast"\n'''
+            '''[features]\nfast_mode = true\n'''
+        )
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(sync_script),
+                "--shared-config",
+                str(shared_config),
+                "--existing-config",
+                str(explicit_fast),
+                "--agents-path",
+                "/tmp/AGENTS.md",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            failures.append("sync_codex_shared_config.py explicit Fast smoke failed")
+            return
+        merged = tomllib.loads(result.stdout)
+        if merged.get("service_tier") != "fast" or merged.get("features", {}).get("fast_mode") is not True:
+            failures.append("Codex sync must preserve an explicitly paired local Fast mode")
+
+
 def main() -> int:
     failures: list[str] = []
 
@@ -162,9 +264,9 @@ def main() -> int:
             "任务分型：`doc-only` / `rule-only` / `code-small` / `code-medium` / `code-risky`",
             "默认先按任务分型器分类",
             "`explorer + builder + reporter`",
-            "model = \"gpt-5.5\"",
             "image_model = \"gpt-image-2\"",
-            "model_reasoning_effort = \"medium\"",
+            "config/codex/templates/profiles/",
+            "check_codex_model_policy.py",
             "pod_private_cache_guard.py",
             "python3 scripts/lint_workflow_contract_policy.py",
             "python3 scripts/validate_codex_agent_templates.py",
@@ -179,10 +281,7 @@ def main() -> int:
     require_contains(
         ROOT / "config" / "codex" / "codex.shared.toml",
         [
-            "model = \"gpt-5.5\"",
             "image_model = \"gpt-image-2\"",
-            "model_reasoning_effort = \"medium\"",
-            "plan_mode_reasoning_effort = \"medium\"",
             "[features]",
             "multi_agent = true",
             "[agents]",
@@ -196,14 +295,26 @@ def main() -> int:
         ],
         failures,
     )
+    require_not_contains(
+        ROOT / "config" / "codex" / "codex.shared.toml",
+        [
+            'model_reasoning_effort =',
+            'plan_mode_reasoning_effort =',
+            'model_verbosity =',
+            'service_tier =',
+            "[mcp_servers.",
+        ],
+        failures,
+    )
     require_codex_plugins_disabled(ROOT / "config" / "codex" / "codex.shared.toml", failures)
     require_contains(
         ROOT / "scripts" / "sync_codex_shared_config.py",
         [
             '"image_model"',
             '"agents"',
-            '"model_reasoning_effort"',
-            '"plan_mode_reasoning_effort"',
+            "LOCAL_RUNTIME_KEYS",
+            "RETIRED_SHARED_MCP_SERVERS",
+            "Never downgrade an explicit local choice",
             "disable_plugin_entry",
             "local-only skills mode",
         ],
@@ -217,10 +328,24 @@ def main() -> int:
             "config/codex/templates/agents/*.toml",
             "sync_codex_agent_templates",
             "verify_codex_agent_templates",
+            "sync_codex_profile_templates",
+            "verify_codex_profile_templates",
+            "--refresh-profiles",
+            "preserved: ~/.codex/",
             "validate_codex_agent_templates.py",
         ],
         failures,
     )
+
+    model_policy = subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "check_codex_model_policy.py"), "--offline"],
+        capture_output=True,
+        text=True,
+    )
+    if model_policy.returncode != 0:
+        failures.append(model_policy.stderr.strip() or "offline Codex model policy check failed")
+
+    validate_codex_sync_behavior(failures)
     require_contains(
         ROOT / ".githooks" / "pre-commit",
         ["pod_private_cache_guard.py"],

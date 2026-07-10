@@ -59,8 +59,8 @@ Do not use this Skill as the first route when the task is clearly one of these s
 - Main-Agent implementation must still preserve targeted validation / `no_test_reason` and then hand off `code-review` to an independent reviewer subAgent.
 - Do not use `multi_tool_use.parallel` when tools may touch the same write set, `apply_patch`, Git state, build queue, or project files.
 - Do not introduce external orchestrators. Reviewer subAgent spawning is the required implementation review path; other subAgent usage is not restricted by this repository policy.
-- Use only built-in `worker` and `explorer` agent types unless the runtime provides additional official types.
-- Do not invent new low-level Agent types.
+- Prefer repository custom agents from `config/codex/templates/agents/` when the runtime exposes them; otherwise fall back to the runtime's built-in agent surface and report that the role-specific model could not be guaranteed.
+- Do not invent low-level Agent types or pass unsupported `model` / `reasoning_effort` fields to `spawn_agent`; role model policy belongs in custom-agent TOML.
 
 ### Boundary Precedence
 
@@ -156,6 +156,7 @@ Activate additional roles only when justified:
 | `reviewer explorer` | Any implementation task; risky rule changes | `code-review` |
 | `tester explorer` | Test surface exists, failure attribution is needed, or task is `code-risky` | `ios-verification` |
 | `tester worker` | Test code must be added or updated | `ios-feature-implementation(test-implementation)` |
+| `docs_researcher` | Apple/OpenAI API、availability、WWDC 或 Codex 官方行为需要核实 | `apple-docs` / `openai-docs`，只读官方资料 |
 | `reporter` | Delivery summary, acceptance matrix, residual risk; if the deliverable must be a formal HTML document, prepare a compact source packet and route to `html-docs` | this Skill / `html-docs` |
 | `main agent` | Always active for aggregation, control, and final decision | this Skill |
 
@@ -167,8 +168,8 @@ Activate additional roles only when justified:
 4. Main Agent checks private Pod / local `:path` ownership if dependencies are involved.
 5. Main Agent selects `lite` / `standard` / `full`.
 6. Main Agent may choose whether coder / tester / pm / reporter roles run locally or as subAgents; this repository policy adds no extra gate for non-review roles. For implementation-chain closure, Main Agent must spawn an independent reviewer subAgent for `code-review`; if unavailable, stop with blocked / pending review.
-7. Use `spawn_agent` / `send_input` / `wait_agent` / `close_agent` sparingly; `wait_agent(...)` is used only when the result is needed to advance the next step. Reviewer subAgent receives only the frozen diff, validation story, and review contract, not implementation rationale that would bias review.
-8. If reviewer or tester finds a blocking issue, Main Agent decides whether to fix locally or route the precise issue back to an active coder subAgent with `send_input(..., interrupt=true)`.
+7. Use `spawn_agent` / `send_message` / `followup_task` / `wait_agent` / `interrupt_agent` sparingly and only with fields exposed by the current runtime. `wait_agent(...)` is used only when the result is needed to advance the next step. Reviewer subAgent receives only the frozen diff, validation story, and review contract, not implementation rationale that would bias review.
+8. If reviewer or tester finds a blocking issue, Main Agent decides whether to fix locally, send a non-triggering update with `send_message`, or trigger a new turn with `followup_task`; use `interrupt_agent` only when an active turn must be stopped.
 9. If tester determines test code is required, Main Agent decides whether to handle test edits locally or start `tester worker`.
 10. Main Agent applies fail-fix-report discipline until resolved or blocked.
 11. Main Agent performs final closure only when targeted validation / necessary verification is current and independent reviewer subAgent `code-review` has no `阻塞问题`.
@@ -223,7 +224,7 @@ Optional runtime inputs:
   "scheme": "App",
   "destination": "platform=iOS Simulator,id=<selected-simulator-id>",
   "changed_files": [],
-  "available_subagents": ["worker", "explorer"],
+  "available_subagents": ["worker", "explorer", "reviewer", "docs_researcher"],
   "build_wrapper": "./codex_verify.sh"
 }
 ```
@@ -323,13 +324,10 @@ Escalate to raw logs only when:
 
 ## Model Selection Guidance
 
-When runtime supports per-subAgent model selection:
-
-- `coder worker`: quality-priority model.
-- `reviewer explorer`: `gpt-5.3-codex-spark` by default for fast reading/review.
-- `tester explorer`: quality-priority model with medium reasoning when failure attribution is complex.
-
-Do not hardcode other model names in this Skill. Available model names depend on runtime and account state. If the reviewer default model or another requested model is unavailable, omit the model parameter and inherit the Main Agent default.
+- Role model and reasoning policy lives in `config/codex/templates/agents/*.toml` and `references/model-selection.md`.
+- The mandatory reviewer uses a read-only, high-reasoning quality model; do not use Spark + low as the default final gate.
+- Lightweight exploration, reporting, and docs lookup use lower-cost role models with narrow tool surfaces.
+- `spawn_agent` calls only use fields exposed by the current runtime. If custom-agent selection or its model is unavailable, inherit the parent model, report the fallback, and preserve reviewer independence.
 
 ## Plan Output Template
 

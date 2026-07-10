@@ -188,7 +188,8 @@ def main() -> int:
             "`CP0` / `CP1` / `CP2` / `CP3`",
             "`fail-fix-report`",
             "默认 iOS 主 Skill 入口",
-            "内部路由到 `apple-docs`",
+            "优先路由到 `apple-docs`",
+            "`docs_researcher`",
             "其它原生 subAgent 的启动场景、角色拆分或数量做额外限制"
         ],
         failures,

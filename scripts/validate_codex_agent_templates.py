@@ -14,7 +14,13 @@ except ModuleNotFoundError:
 
 
 REQUIRED_STRING_FIELDS = ("name", "description", "developer_instructions")
-OPTIONAL_STRING_FIELDS = ("model", "model_reasoning_effort", "sandbox_mode", "default_permissions")
+OPTIONAL_STRING_FIELDS = (
+    "model",
+    "model_reasoning_effort",
+    "model_verbosity",
+    "sandbox_mode",
+    "default_permissions",
+)
 OPTIONAL_STRING_LIST_FIELDS = ("nickname_candidates",)
 OPTIONAL_TABLE_FIELDS = ("mcp_servers", "skills")
 FORBIDDEN_FIELDS = ("role", "permissions", "output_contract")

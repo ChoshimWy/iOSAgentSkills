@@ -1,11 +1,13 @@
 # Multi-Agent Role Templates
 
-该目录提供 5 角色协作模板：
+该目录提供 7 个角色协作模板：
 - `pm.toml`
 - `explorer.toml`
 - `builder.toml`
 - `tester.toml`
 - `reporter.toml`
+- `reviewer.toml`
+- `docs_researcher.toml`
 
 以及 1 个项目侧验证模板：
 - `../codex_verify.example.sh` —— 复制到目标 Xcode 项目根目录并重命名为 `codex_verify.sh`，作为多 Codex CLI 本地 `xcodebuild` / `build-check` 的统一验证入口；wrapper 会自动接入 shared build-queue daemon，把验证型 `xcodebuild` 串行排队执行，并统一使用 Xcode 系统 DerivedData
@@ -18,12 +20,16 @@
 `explorer -> builder -> reporter`，按需激活 `pm` 与 `tester`
 
 说明：
-- 这些 `.toml` 是 Codex custom agent 文件，使用当前支持的扁平 schema：`name` / `description` / `developer_instructions`，以及可选 `nickname_candidates` / `model` / `model_reasoning_effort` / `sandbox_mode` / `mcp_servers` / `skills.config`。
-- 截至 2026-06-15 的共享 Codex 基线使用 `model = "gpt-5.5"`、`image_model = "gpt-image-2"`、`features.multi_agent = true` 与 `[agents] max_threads/max_depth`；默认 reasoning effort 为 `medium`，高难任务可通过 profile 或临时配置升到 `xhigh`。默认进入 `codex-subagent-orchestration` 只表示先做编排决策；除实现链路 reviewer subAgent 是强制收口角色外，本仓不对其它 subAgent 使用做额外限制。
-- 主 Agent 可自主决定 coder / tester / pm / reporter 等非 review 角色是否使用原生 subAgent；本仓只强制实现链路 `code-review` 使用独立 reviewer subAgent。
-- 模型默认继承主 Agent；只有用户明确要求、任务风险需要或预算/吞吐目标明确时才在 `spawn_agent` 中覆盖 `model` / `reasoning_effort`。
+- 这些 `.toml` 是 Codex custom agent 文件，使用当前支持的扁平 schema：`name` / `description` / `developer_instructions`，以及可选 `nickname_candidates` / `model` / `model_reasoning_effort` / `model_verbosity` / `sandbox_mode` / `mcp_servers` / `skills.config`。
+- 共享 Codex baseline 只维护可跨设备复用的能力与安全配置，不设置 `model`、reasoning、verbosity 或 `service_tier`；安装脚本保留本机已有运行时偏好。场景模型组合由 `../profiles/*.config.toml` 提供。
+- 主 Agent 可自主决定 coder / tester / pm / reporter 等非 review 角色是否使用原生 subAgent；本仓只强制实现链路 `code-review` 使用独立 reviewer subAgent，reviewer subAgent 是强制收口角色。
+- 角色模型与 reasoning 由各 custom-agent TOML 管理；`spawn_agent` 只使用当前 runtime 暴露的字段。无法选择 custom agent 时回退继承主 Agent并显式报告。
+- `reviewer.toml` 使用 `gpt-5.4 + high + read-only`，不得用 Spark + low 作为强制最终门禁。
+- `docs_researcher.toml` 独占 OpenAI/Apple Docs MCP；Apple Docs MCP 固定版本，避免 `@latest` 漂移。
+- 安装时只迁移并删除内容与旧 shared baseline 完全一致的全局 CodeGraph / Docs MCP；同名但内容不同的本机自定义 MCP 与其它本机 MCP 都不会删除。
+- 安装时会移除旧 baseline 遗留但未配套 `features.fast_mode = true` 的全局 `service_tier = "fast"`，避免后台和长任务继续无条件加速。
 - 工作流合同字段不再放单独 TOML table，而是内嵌在 `developer_instructions` 中约束输出与职责边界。
-- 安装脚本会把它们同步到 `~/.codex/agents/`。
+- 安装脚本会把 agent 同步到 `~/.codex/agents/`；Profile 只在缺失时安装到 `~/.codex/<name>.config.toml`，已有本机调整默认保留，显式 `--refresh-profiles` 才覆盖。
 - Codex 默认采用 local-only skills mode：`~/.codex/skills` 指向本仓 `skills/`，共享配置会把所有 plugin-contributed skills/tools 设为 `enabled = false`；插件 cache 可保留但不会自动参与 Skill 选择。
 - 安装脚本也会同步 `~/.codex/bin/codex_verify` 作为全局验证入口。
 - 安装脚本也会同步 `~/.codex/bin/digest-xcodebuild-log` 作为全局日志摘要入口。

@@ -1,17 +1,16 @@
 # Prompt 模板
 
-## subAgent 模型分工（可选，但推荐）
+## subAgent 模型分工
 
-除实现链路的 `code-review` 必须调用独立 reviewer subAgent 外，本仓不对 coder / tester / pm / reporter 等其它 subAgent 使用做额外限制；reviewer 默认在 `spawn_agent` 参数里指定 `model="gpt-5.3-codex-spark"`。只有用户明确要求模型分工、任务风险需要或预算/吞吐目标明确时，主 Agent 才为非 review subAgent 在 `spawn_agent` 参数里按角色指定 `model` / `reasoning_effort`：
+除实现链路的 `code-review` 必须调用独立 reviewer subAgent 外，本仓不对 coder / tester / pm / reporter 等其它 subAgent 使用做额外限制；非 review subAgent 是否启动不做仓库级限制，实现链路 reviewer subAgent 始终独立启动。角色模型由 `config/codex/templates/agents/*.toml` 决定，不在 `spawn_agent` 调用里传当前 runtime 未公开的 `model` / `reasoning_effort` 字段。
 
-- coder：强模型
-- reviewer：`gpt-5.3-codex-spark`
-- tester：强模型 + `reasoning_effort=medium`
+- builder：Sol + high，复杂实现质量优先。
+- reviewer：GPT-5.4 + high + read-only，最终质量门禁；禁止默认 Spark + low。
+- explorer / pm / tester：Terra low/medium。
+- reporter：Luna + low。
+- docs_researcher：GPT-5.4 mini + medium，并只给该角色加载官方文档 MCP。
 
-说明：
-- 除 reviewer 默认模型 `gpt-5.3-codex-spark` 外，不写死其他具体模型名；由主 Agent 按当前运行时可用模型选择。
-- 不传 `model` 时，subAgent 会继承主 Agent 默认模型；若 reviewer 指定模型不可用，回退为不传 `model`。
-- 非 review subAgent 是否启动不做仓库级限制；实现链路 reviewer subAgent 始终独立启动。
+若 runtime 不暴露 custom agent 选择或目标模型不可用，回退为继承父 Agent并显式报告；实现链路 reviewer subAgent 仍必须独立启动。
 
 ## coder worker
 
@@ -183,27 +182,24 @@ next_action: <fix-and-rerun|blocked|complete>
 - 长任务按“排查 / 实现 / 验证 / 提交”分会话，新会话只带目标、关键路径、验证基线和上一轮结论。
 ```
 
-## spawn_agent 参数示例（概念示例）
+## spawn_agent 参数示例
 
-> 注意：以下是“参数形态示例”，模型名仅占位；以当前运行时实际可用为准。
+只使用当前协作 surface 暴露的字段；模型与 reasoning 由 custom-agent TOML 管理。
 
 ```json
 {
-  "agent_type": "worker",
-  "fork_context": true,
-  "model": "<strong-model-if-needed>",
-  "reasoning_effort": "high",
+  "task_name": "builder",
+  "fork_turns": "all",
   "message": "负责实现；只改 ownership 内文件；不要无关重构。"
 }
 ```
 
-reviewer 默认参数形态：
+reviewer 参数形态：
 
 ```json
 {
-  "agent_type": "explorer",
-  "fork_context": true,
-  "model": "gpt-5.3-codex-spark",
+  "task_name": "reviewer",
+  "fork_turns": "all",
   "message": "负责 code-review；只读审查本次 diff 与验证故事，不改代码。"
 }
 ```

@@ -28,7 +28,7 @@
     },
     "appleDeveloperDocs": {
       "command": "npx",
-      "args": ["-y", "@kimsungwhee/apple-docs-mcp@latest"]
+      "args": ["-y", "@kimsungwhee/apple-docs-mcp@1.0.26"]
     }
   }
 }

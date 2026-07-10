@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 Render a local Codex config by overlaying repo-managed shared defaults onto an
-existing ~/.codex/config.toml while preserving unmanaged local sections.
+existing ~/.codex/config.toml while preserving unmanaged local sections and
+machine/task-specific model, reasoning, verbosity, and service-tier choices.
 """
 
 from __future__ import annotations
@@ -48,6 +49,27 @@ ROOT_TABLE_PRIORITY = [
 ]
 DOTTED_ROOT_TABLES = {"memories"}
 REPLACE_NAMED_CHILDREN_TABLES = {"mcp_servers", "plugins"}
+LOCAL_RUNTIME_KEYS = {
+    "model",
+    "model_reasoning_effort",
+    "plan_mode_reasoning_effort",
+    "model_verbosity",
+    "service_tier",
+}
+RETIRED_SHARED_MCP_SERVERS = {
+    "codegraph": {
+        "command": "codegraph",
+        "args": ["serve", "--mcp"],
+    },
+    "openaiDeveloperDocs": {
+        "url": "https://developers.openai.com/mcp",
+        "tools": {"search_openai_docs": {"approval_mode": "approve"}},
+    },
+    "appleDeveloperDocs": {
+        "command": "npx",
+        "args": ["-y", "@kimsungwhee/apple-docs-mcp@latest"],
+    },
+}
 BARE_KEY_PATTERN = re.compile(r"^[A-Za-z0-9_-]+$")
 
 
@@ -109,7 +131,31 @@ def merge_shared_config(
 ) -> dict[str, Any]:
     merged = deepcopy(existing)
 
+    # Retire the previous repository baseline that set service_tier="fast"
+    # without the matching fast_mode feature. Preserve an explicit local Fast
+    # choice only when the user enabled both fields intentionally.
+    features = merged.get("features")
+    explicit_fast_mode = isinstance(features, dict) and features.get("fast_mode") is True
+    if merged.get("service_tier") == "fast" and not explicit_fast_mode:
+        merged.pop("service_tier", None)
+
+    # These servers used to be injected globally by codex.shared.toml. They now
+    # live on explorer/reviewer/docs_researcher custom agents, so remove only
+    # the legacy repo-managed global copies while preserving unrelated local MCPs.
+    existing_mcp = merged.get("mcp_servers")
+    if isinstance(existing_mcp, dict):
+        for server_name, retired_config in RETIRED_SHARED_MCP_SERVERS.items():
+            if existing_mcp.get(server_name) == retired_config:
+                existing_mcp.pop(server_name, None)
+        if not existing_mcp:
+            merged.pop("mcp_servers", None)
+
     for key, value in shared.items():
+        if key in LOCAL_RUNTIME_KEYS and key in merged:
+            # Runtime/account availability changes faster than this repository.
+            # Never downgrade an explicit local choice during reinstall.
+            continue
+
         if key == "plugins" and isinstance(value, dict):
             current: dict[str, Any] = {}
             existing_plugins = merged.get(key)

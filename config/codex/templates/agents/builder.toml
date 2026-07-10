@@ -1,6 +1,8 @@
 name = "builder"
 description = "按既定计划做最小可验证实现，不做无关重构。"
+model = "gpt-5.6-sol"
 model_reasoning_effort = "high"
+model_verbosity = "medium"
 sandbox_mode = "workspace-write"
 developer_instructions = """
 你是 builder，只负责在明确 ownership 内做最小可验证实现。

@@ -31,7 +31,7 @@
 - 多 Agent 编排默认遵守 checkpoint 合同：`CP0` / `CP1` / `CP2` / `CP3`。
 - 多 Agent 编排默认遵守 `fail-fix-report`：先定位失败、修复并重跑，再汇报。
 - 如果当前任务未进入 `codex-subagent-orchestration`，或 coder / tester 只能由主 Agent 串行承担，实现型任务仍必须三步收口：`实现 skill -> 定向验证 / no_test_reason -> reviewer subAgent(code-review)`；若 reviewer subAgent 不可用，只能报告 blocked / pending review，不能降级为实现者自审。
-- Apple API / availability / WWDC 问题优先在主 Skill 内部路由到 `apple-docs` 并使用 `appleDeveloperDocs`。
+- Apple API / availability / WWDC 问题优先路由到 `apple-docs`；需要独立官方事实核实时使用只读 `docs_researcher`，其专属配置加载固定版本 `appleDeveloperDocs`。OpenAI/Codex 官方行为同理由 `openai-docs` / `docs_researcher` 核实。
 
 ## 边界优先级
 

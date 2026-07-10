@@ -3,13 +3,14 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: bash install-local-agent-config.sh [--dry-run] [--ccswitch] [--claude-only] [--init-project <path>] [--init-memory <path>]
+Usage: bash install-local-agent-config.sh [--dry-run] [--refresh-profiles] [--ccswitch] [--claude-only] [--init-project <path>] [--init-memory <path>]
 
 Configure local Codex and Claude entrypoints to use this cloned iOSAgentSkills repo:
   - ~/.codex/AGENTS.md -> <repo>/AGENTS.md
   - ~/.codex/skills -> <repo>/skills (默认)
   - ~/.codex/skills -> ~/.cc-switch/iOSAgentSkills/skills（当启用 --ccswitch 时）
   - ~/.codex/agents/*.toml -> <repo>/config/codex/templates/agents/*.toml
+  - ~/.codex/*.config.toml -> <repo>/config/codex/templates/profiles/*.config.toml
   - ~/.codex/bin/codex_verify -> <repo>/config/codex/templates/codex_verify.example.sh
   - ~/.codex/bin/digest-xcodebuild-log -> <repo>/tools/digest-xcodebuild-log.sh
   - ~/.codex/templates/codex_verify.example.sh -> <repo>/config/codex/templates/codex_verify.example.sh
@@ -22,7 +23,7 @@ Configure local Codex and Claude entrypoints to use this cloned iOSAgentSkills r
   - ~/.claude/settings.json -> merge config/claude-code/settings.json into existing
   - ~/.claude/agents/*.md -> <repo>/config/claude-code/agents/*.md
   - ~/.cc-switch/skills -> <repo>/skills（固定不随 --ccswitch 切换）
-  - ~/.codex/config.toml -> merge repo config/codex/codex.shared.toml into local shared defaults
+  - ~/.codex/config.toml -> merge repo config/codex/codex.shared.toml without overriding local model/reasoning/Fast preferences
   - ~/.codex/config.toml -> ensure model_instructions_file points to ~/.codex/AGENTS.md
   - ~/.codex/config.toml -> keep Codex memories enabled without overwriting local-only state
   - ~/.config/git/commitlint.py + hooks/commit-msg -> repo-managed global commit message lint
@@ -35,6 +36,9 @@ from deleting files in the current checked-out repository.
 
 When --claude-only is specified, all Codex-specific steps (~/.codex/*, ~/.copilot/*) are skipped.
 Claude Code setup and global Git commitlint hook synchronization still run.
+
+Codex Profile templates are installed only when the corresponding local file is missing.
+Use --refresh-profiles to back up and replace existing ~/.codex/*.config.toml files explicitly.
 
 When --init-project <path> is specified, the script initializes or updates:
   <path>/.codex/xcodebuild.env
@@ -53,6 +57,7 @@ EOF
 DRY_RUN='0'
 CCSWITCH_MODE='0'
 CLAUDE_ONLY='0'
+REFRESH_PROFILES='0'
 INIT_PROJECT_PATH=''
 INIT_MEMORY_PATH=''
 
@@ -78,6 +83,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --claude-only)
       CLAUDE_ONLY='1'
+      shift
+      ;;
+    --refresh-profiles)
+      REFRESH_PROFILES='1'
       shift
       ;;
     --init-project)
@@ -109,11 +118,13 @@ REPO_SYSTEM_SKILLS="$REPO_SKILLS/.system"
 REPO_CODEX_SHARED_CONFIG="$REPO_ROOT/config/codex/codex.shared.toml"
 REPO_CODEX_TEMPLATES="$REPO_ROOT/config/codex/templates"
 REPO_CODEX_AGENT_TEMPLATES="$REPO_CODEX_TEMPLATES/agents"
+REPO_CODEX_PROFILE_TEMPLATES="$REPO_CODEX_TEMPLATES/profiles"
 REPO_CODEX_VERIFY_TEMPLATE="$REPO_CODEX_TEMPLATES/codex_verify.example.sh"
 REPO_CODEX_UI_SMOKE_TEMPLATE="$REPO_CODEX_TEMPLATES/ui-smoke.example.yml"
 REPO_XCODEBUILD_DIGEST_SCRIPT="$REPO_ROOT/tools/digest-xcodebuild-log.sh"
 CODEX_SYNC_SCRIPT="$REPO_ROOT/scripts/sync_codex_shared_config.py"
 CODEX_AGENT_VALIDATE_SCRIPT="$REPO_ROOT/scripts/validate_codex_agent_templates.py"
+CODEX_MODEL_POLICY_CHECK_SCRIPT="$REPO_ROOT/scripts/check_codex_model_policy.py"
 REPO_CLAUDE_CONFIG="$REPO_ROOT/config/claude-code"
 REPO_CLAUDE_SETTINGS="$REPO_CLAUDE_CONFIG/settings.json"
 REPO_CLAUDE_AGENTS="$REPO_CLAUDE_CONFIG/agents"
@@ -759,6 +770,21 @@ sync_codex_agent_templates() {
   done
 }
 
+sync_codex_profile_templates() {
+  local source target base_name
+  for source in "$REPO_CODEX_PROFILE_TEMPLATES"/*.config.toml; do
+    [[ -f "$source" ]] || continue
+    base_name="$(basename "$source")"
+    target="$CODEX_DIR/$base_name"
+    if [[ "$REFRESH_PROFILES" == '0' && ( -e "$target" || -L "$target" ) ]]; then
+      log "preserved: ~/.codex/$base_name (use --refresh-profiles to replace)"
+      record_change unchanged
+      continue
+    fi
+    ensure_file_copied "$target" "$source" "~/.codex/$base_name"
+  done
+}
+
 sync_codex_ui_smoke_template() {
   [[ -f "$REPO_CODEX_UI_SMOKE_TEMPLATE" ]] || return 0
   ensure_directory "$CODEX_TEMPLATES_DIR"
@@ -830,6 +856,11 @@ if [[ "$CLAUDE_ONLY" == '0' ]]; then
     exit 1
   fi
 
+  if [[ ! -d "$REPO_CODEX_PROFILE_TEMPLATES" ]]; then
+    echo "Error: missing Codex profile templates directory: $REPO_CODEX_PROFILE_TEMPLATES" >&2
+    exit 1
+  fi
+
   if [[ ! -f "$CODEX_SYNC_SCRIPT" ]]; then
     echo "Error: missing Codex config sync script: $CODEX_SYNC_SCRIPT" >&2
     exit 1
@@ -839,6 +870,16 @@ if [[ "$CLAUDE_ONLY" == '0' ]]; then
     echo "Error: missing Codex agent validation script: $CODEX_AGENT_VALIDATE_SCRIPT" >&2
     exit 1
   fi
+
+  if [[ ! -f "$CODEX_MODEL_POLICY_CHECK_SCRIPT" ]]; then
+    echo "Error: missing Codex model policy check script: $CODEX_MODEL_POLICY_CHECK_SCRIPT" >&2
+    exit 1
+  fi
+
+  python3 "$CODEX_MODEL_POLICY_CHECK_SCRIPT" --offline >/dev/null || {
+    echo "Error: repository Codex model/profile policy is invalid" >&2
+    exit 1
+  }
 fi
 
 if [[ ! -f "$REPO_COMMITLINT_SCRIPT" ]]; then
@@ -945,6 +986,32 @@ verify_codex_agent_templates() {
   fi
 }
 
+verify_codex_profile_templates() {
+  local source target base_name
+  for source in "$REPO_CODEX_PROFILE_TEMPLATES"/*.config.toml; do
+    [[ -f "$source" ]] || continue
+    base_name="$(basename "$source")"
+    target="$CODEX_DIR/$base_name"
+    [[ -f "$target" && ! -L "$target" ]] || fail "~/.codex/$base_name is missing or not a regular file"
+    python3 - "$target" <<'PY' || fail "~/.codex/$base_name is not valid TOML"
+from pathlib import Path
+import sys
+try:
+    import tomllib
+except ModuleNotFoundError:
+    try:
+        import tomli as tomllib
+    except ModuleNotFoundError:
+        import pip._vendor.tomli as tomllib
+
+tomllib.loads(Path(sys.argv[1]).read_text())
+PY
+    if [[ "$REFRESH_PROFILES" == '1' ]]; then
+      cmp -s "$source" "$target" || fail "~/.codex/$base_name does not match refreshed repo template"
+    fi
+  done
+}
+
 verify_global_git_hooks() {
   [[ -f "$GLOBAL_GIT_COMMITLINT" && ! -L "$GLOBAL_GIT_COMMITLINT" ]] || fail "~/.config/git/commitlint.py is missing or not a regular file"
   cmp -s "$REPO_COMMITLINT_SCRIPT" "$GLOBAL_GIT_COMMITLINT" || fail "~/.config/git/commitlint.py does not match repo script"
@@ -969,6 +1036,7 @@ verify_installation() {
     [[ -f "$CODEX_CONFIG" && ! -L "$CODEX_CONFIG" ]] || fail "~/.codex/config.toml is missing or not a regular file"
     verify_codex_config || fail "~/.codex/config.toml does not match repo-managed Codex shared config"
     verify_codex_agent_templates
+    verify_codex_profile_templates
   fi
 
   [[ -L "$CLAUDE_SKILLS" ]] || fail "~/.claude/skills is not a symlink"
@@ -994,6 +1062,7 @@ if [[ "$CLAUDE_ONLY" == '0' ]]; then
   ensure_symlink "$COPILOT_SKILLS" "$TARGET_SKILLS" "~/.copilot/skills"
   ensure_codex_config
   sync_codex_agent_templates
+  sync_codex_profile_templates
   sync_codex_verify_wrapper
   sync_codex_xcodebuild_digest
   sync_codex_verify_template

@@ -126,6 +126,26 @@
 - 替代主 Agent 的可选验证裁决
 - 直接手写最终 HTML 文档模板或样式
 
+## docs_researcher
+
+### 输入
+- 需要核实的 OpenAI/Codex 或 Apple API / availability / WWDC 问题
+- 目标平台、SDK、Xcode 或 Codex runtime 版本约束
+
+### 输出
+- `question`
+- `official_findings`
+- `availability_or_version`
+- `source_links`
+- `uncertainties`
+- `next_action`
+
+### 额外要求
+- 只读，不修改代码或配置
+- 优先使用角色专属 OpenAI / Apple 官方文档 MCP
+- 区分文档事实与推断，不用第三方文章替代官方结论
+- 返回最小必要证据，不粘贴长文档
+
 ## main agent
 
 ### 固定职责

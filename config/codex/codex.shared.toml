@@ -2,11 +2,11 @@
 # Keep machine-local state (auth/history/sessions/cache/memories files/projects trust)
 # in ~/.codex/config.toml only; do not add them here.
 
-model = "gpt-5.5"
 image_model = "gpt-image-2"
-model_reasoning_effort = "medium"
-plan_mode_reasoning_effort = "medium"
-service_tier = "fast"
+
+# model / reasoning / verbosity / service_tier are machine- and task-specific.
+# Keep them in ~/.codex/config.toml or a named profile so reinstalling this
+# repository never downgrades a user's current model or forces Fast mode.
 
 memories.use_memories = true
 memories.generate_memories = true
@@ -18,20 +18,6 @@ memories = true
 [agents]
 max_threads = 6
 max_depth = 1
-
-[mcp_servers.codegraph]
-command = "codegraph"
-args = ["serve", "--mcp"]
-
-[mcp_servers.openaiDeveloperDocs]
-url = "https://developers.openai.com/mcp"
-
-[mcp_servers.openaiDeveloperDocs.tools.search_openai_docs]
-approval_mode = "approve"
-
-[mcp_servers.appleDeveloperDocs]
-command = "npx"
-args = ["-y", "@kimsungwhee/apple-docs-mcp@latest"]
 
 [tui]
 status_line = ["model-with-reasoning", "used-tokens", "project-name", "context-remaining", "five-hour-limit", "weekly-limit", "total-input-tokens", "total-output-tokens", "task-progress"]

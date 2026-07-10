@@ -1,6 +1,8 @@
 name = "reporter"
 description = "汇总交付说明、验证证据与残余风险，输出最终可交付报告。"
+model = "gpt-5.6-luna"
 model_reasoning_effort = "low"
+model_verbosity = "low"
 sandbox_mode = "read-only"
 developer_instructions = """
 你是 reporter，只负责汇总交付结论，不新增实现与验证结论。

@@ -140,8 +140,9 @@ def main() -> int:
             "最窄定向单测",
             "80~120 行",
             "image_model = \"gpt-image-2\"",
-            "model = \"gpt-5.5\"",
-            "model_reasoning_effort = \"medium\"",
+            "config/codex/templates/profiles/",
+            "interactive-fast",
+            "check_codex_model_policy.py",
             "python3 scripts/lint_subagent_orchestration_policy.py",
             "非 Plan 模式也必须在首次写入前自动给出 CP0 最小计划",
         ],
@@ -180,7 +181,7 @@ def main() -> int:
             "`failure_attribution`",
             "`no_test_reason`",
             "真机 / 模拟器验证不属于默认验证执行面",
-            "`spawn_agent` / `send_input` / `wait_agent` / `close_agent`",
+            "`spawn_agent` / `send_message` / `followup_task` / `wait_agent` / `interrupt_agent`",
             "80-120 relevant lines",
             "references/coding-standards.md",
             "references/tool-routing.md",
@@ -192,14 +193,22 @@ def main() -> int:
     require_contains(
         ROOT / "config" / "codex" / "codex.shared.toml",
         [
-            "model = \"gpt-5.5\"",
             "image_model = \"gpt-image-2\"",
-            "model_reasoning_effort = \"medium\"",
-            "plan_mode_reasoning_effort = \"medium\"",
             "multi_agent = true",
             "[agents]",
             "max_threads = 6",
             "max_depth = 1",
+        ],
+        failures,
+    )
+    require_not_contains(
+        ROOT / "config" / "codex" / "codex.shared.toml",
+        [
+            'model_reasoning_effort =',
+            'plan_mode_reasoning_effort =',
+            'model_verbosity =',
+            'service_tier =',
+            "[mcp_servers.",
         ],
         failures,
     )
@@ -224,11 +233,13 @@ def main() -> int:
     require_contains(
         SKILL_ROOT / "references" / "model-selection.md",
         [
-            "reviewer subAgent 是强制独立审查角色",
-            "截至 2026-06-15",
-            "默认 reasoning effort 为 `medium`",
-            "非 review subAgent 已启动但未命中模型覆盖条件",
-            "继承主 Agent 默认模型",
+            "角色模型、推理强度、sandbox、专属 MCP",
+            "不得以 `Spark + low`",
+            "`task_name`、`message`、`fork_turns`",
+            "`send_message`",
+            "`followup_task`",
+            "`interrupt_agent`",
+            "check_codex_model_policy.py",
         ],
         failures,
     )
@@ -299,6 +310,17 @@ def main() -> int:
         ],
         failures,
     )
+
+    for agent_name in ("reviewer.toml", "docs_researcher.toml"):
+        require_exists(ROOT / "config" / "codex" / "templates" / "agents" / agent_name, failures)
+
+    model_policy = subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "check_codex_model_policy.py"), "--offline"],
+        capture_output=True,
+        text=True,
+    )
+    if model_policy.returncode != 0:
+        failures.append(model_policy.stderr.strip() or "offline Codex model policy check failed")
 
     if failures:
         print("subagent orchestration policy lint failed:", file=sys.stderr)

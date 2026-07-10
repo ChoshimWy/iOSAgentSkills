@@ -39,4 +39,4 @@ Agent(
 
 - Codex 用 TOML 预定义 agent（含 model / sandbox / reasoning 配置）
 - Claude Code 用 Markdown prompt 模板，model 由 runtime 决定
-- Codex 的 `send_input(interrupt=true)` 回写机制 → Claude Code 的 post-completion 再 spawn 修正循环
+- Codex 的 `send_message` / `followup_task` / `interrupt_agent` 回写机制 → Claude Code 的 post-completion 再 spawn 修正循环
