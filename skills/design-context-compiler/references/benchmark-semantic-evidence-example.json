@@ -1,0 +1,31 @@
+{
+  "semantic_evidence_version": "1.1.0",
+  "case_id": "synthetic-fixture-detail-example",
+  "variant": "ui-ir-with-binding",
+  "validator_id": "synthetic-validator",
+  "validator_adapter_sha256": "8888888888888888888888888888888888888888888888888888888888888888",
+  "validator_probe_sha256": "6666666666666666666666666666666666666666666666666666666666666666",
+  "capture_adapter_sha256": "7777777777777777777777777777777777777777777777777777777777777777",
+  "regions": [
+    {
+      "id": "root",
+      "frame": { "x": 0, "y": 0, "width": 393, "height": 852 },
+      "structure": "passed",
+      "semantic": "passed"
+    }
+  ],
+  "required_bindings": [
+    {
+      "id": "intensity-slider",
+      "registry_entry_id": "component.intensity-slider",
+      "code_symbol": "SLIntensitySliderView",
+      "source": "Sources/FixtureDetail.swift",
+      "region_id": "root",
+      "runtime_type": "SLIntensitySliderView",
+      "runtime_observed": true,
+      "reused": true,
+      "locations": [{ "path": "Sources/FixtureDetail.swift", "line": 42 }]
+    }
+  ],
+  "unmapped_literals": []
+}

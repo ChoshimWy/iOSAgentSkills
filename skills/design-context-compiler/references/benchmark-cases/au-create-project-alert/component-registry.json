@@ -1,0 +1,30 @@
+{
+  "registry_version": "1.0.0",
+  "generated_at": "2026-07-13T18:12:49+08:00",
+  "source_roots": ["../../Projects/SidusLinkPro"],
+  "entries": [
+    {
+      "id": "component.create-project-alert",
+      "design_id": "Sketch/SLP_014/NewProjectAlert",
+      "semantic_role": "create_project_alert",
+      "reuse_policy": "required",
+      "status": "active",
+      "bindings": [
+        {
+          "id": "binding.create-project-alert.uikit",
+          "framework": "UIKit",
+          "symbol": "AUCreateProjectAlertView",
+          "module": "Acrux",
+          "source": "Acrux/Acrux/ViewController/Project/ViewController/Project/AUCreateProjectAlertView.swift",
+          "availability": "iOS 13.0+",
+          "declaration_line": 18,
+          "declaration_hash": "sha256:350f258e51f5624f4505773ae9dba1406a177862d8e37a7cd1183eafca4f2585"
+        }
+      ],
+      "provenance": {
+        "source": "manual-contract",
+        "confidence": "exact"
+      }
+    }
+  ]
+}

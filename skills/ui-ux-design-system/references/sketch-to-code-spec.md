@@ -1,6 +1,6 @@
 # Sketch 源文件到代码实现规范
 
-用于把 Sketch 源文件、SketchMCP、蓝湖 / PNG 补充素材转换为可执行的 `Design-to-Code Spec`，再交给 `ios-feature-implementation` 的 SwiftUI / UIKit / mixed-ui 模式实现。
+用于把 Sketch 源文件、SketchMCP、蓝湖 / PNG 补充素材转换为可追溯的 `Design Evidence / Design-to-Code source packet`，再交给 `design-context-compiler` 生成 Canonical UI IR、iOS bindings 与任务级 Agent Packet；合同校验通过后才交给 `ios-feature-implementation` 的 SwiftUI / UIKit / mixed-ui 模式实现。
 
 ## 目标
 
@@ -85,7 +85,7 @@
 - modal presented / dismissed
 - light / dark mode（如产品要求）
 
-## Design-to-Code Spec 输出格式
+## Design Evidence / Source Packet 输出格式
 
 ```json
 {
@@ -151,6 +151,7 @@
 - 组件边界和状态矩阵已列出。
 - 资源清单和需要导出的资产已列出。
 - 视觉验收项可执行，例如“弹窗宽度 312pt、圆角 16pt、遮罩 40% black”。
+- iOS 实现还必须经过 `design-context-compiler` 生成并校验任务级 Agent Packet；不得从本 source packet 或完整 Sketch JSON 直接跳到产品代码。
 
 ## 高保真验收闭环
 

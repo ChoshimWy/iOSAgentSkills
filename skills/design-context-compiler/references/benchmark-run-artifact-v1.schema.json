@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ios-agent-skills.local/schemas/benchmark-run-artifact-v1.schema.json",
+  "title": "Design Context Benchmark Run Artifact v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["artifact_version", "run_id", "variant", "validation_status", "capture_overlay", "environment", "metrics", "evidence"],
+  "properties": {
+    "artifact_version": { "const": "1.2.0" },
+    "run_id": { "type": "string", "minLength": 1 },
+    "variant": { "enum": ["screenshot-only", "ui-ir", "ui-ir-with-binding"] },
+    "validation_status": { "enum": ["passed", "failed"] },
+    "capture_overlay": { "$ref": "#/$defs/captureOverlay" },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model", "reasoning", "appearance", "ui_framework", "adapter_runtime", "adapter_runtime_version", "provider_cli_name", "provider_cli_version", "provider_cli_launcher_path", "provider_cli_native_path", "provider_cli_launcher_hash", "provider_cli_native_hash", "provider_cli_package_json_hash", "code_baseline_hash", "shared_prompt_hash", "design_source_hash", "validation_config_hash", "run_plan_hash", "benchmark_case_hash", "executor_adapter_hash", "validator_id", "capture_adapter_hash", "capture_overlay_mode", "capture_overlay_hash", "capture_runtime_hash", "validator_adapter_hash"],
+      "properties": {
+        "model": { "type": "string", "minLength": 1 },
+        "reasoning": { "type": "string", "minLength": 1 },
+        "appearance": { "enum": ["light", "dark"] },
+        "ui_framework": { "enum": ["UIKit", "SwiftUI", "mixed-ui"] },
+        "adapter_runtime": { "type": "string", "minLength": 1 },
+        "adapter_runtime_version": { "type": "string", "minLength": 1 },
+        "provider_cli_name": { "type": "string", "minLength": 1 },
+        "provider_cli_version": { "type": "string", "minLength": 1 },
+        "provider_cli_launcher_path": { "type": "string", "minLength": 1 },
+        "provider_cli_native_path": { "type": "string", "minLength": 1 },
+        "provider_cli_launcher_hash": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+        "provider_cli_native_hash": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+        "provider_cli_package_json_hash": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+        "code_baseline_hash": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+        "shared_prompt_hash": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+        "design_source_hash": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+        "validation_config_hash": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+        "run_plan_hash": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+        "benchmark_case_hash": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+        "executor_adapter_hash": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+        "validator_id": { "type": "string", "minLength": 1 },
+        "capture_adapter_hash": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+        "capture_overlay_mode": { "enum": ["none", "git-patch"] },
+        "capture_overlay_hash": { "type": ["string", "null"], "pattern": "^[a-fA-F0-9]{64}$" },
+        "capture_runtime_hash": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+        "validator_adapter_hash": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["layout_deviation_pt", "component_reuse_rate", "magic_numbers", "repair_iterations", "input_tokens", "manual_minutes"],
+      "properties": {
+        "layout_deviation_pt": { "type": "number", "minimum": 0 },
+        "component_reuse_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "magic_numbers": { "type": "integer", "minimum": 0 },
+        "repair_iterations": { "type": "integer", "minimum": 0 },
+        "input_tokens": { "type": "integer", "minimum": 0 },
+        "manual_minutes": { "type": "number", "minimum": 0 }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["input_context", "implementation_output", "implementation_stdout", "implementation_stderr", "capture_stdout", "capture_stderr", "validation_stdout", "validation_stderr", "validation_report"],
+      "properties": {
+        "input_context": { "$ref": "#/$defs/fileEvidence" },
+        "implementation_output": { "$ref": "#/$defs/fileEvidence" },
+        "implementation_stdout": { "$ref": "#/$defs/fileEvidence" },
+        "implementation_stderr": { "$ref": "#/$defs/fileEvidence" },
+        "capture_stdout": { "$ref": "#/$defs/fileEvidence" },
+        "capture_stderr": { "$ref": "#/$defs/fileEvidence" },
+        "validation_stdout": { "$ref": "#/$defs/fileEvidence" },
+        "validation_stderr": { "$ref": "#/$defs/fileEvidence" },
+        "validation_report": { "$ref": "#/$defs/fileEvidence" }
+      }
+    }
+  },
+  "$defs": {
+    "captureOverlay": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode"],
+          "properties": { "mode": { "const": "none" } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "artifact"],
+          "properties": {
+            "mode": { "const": "git-patch" },
+            "artifact": { "$ref": "#/$defs/fileEvidence" }
+          }
+        }
+      ]
+    },
+    "fileEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" }
+      }
+    }
+  }
+}

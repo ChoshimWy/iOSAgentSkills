@@ -1,0 +1,28 @@
+{
+  "visual_diff_version": "1.1.0",
+  "case_id": "synthetic-fixture-detail-example",
+  "variant": "ui-ir-with-binding",
+  "validator_id": "synthetic-validator",
+  "validator_adapter_sha256": "8888888888888888888888888888888888888888888888888888888888888888",
+  "validator_probe_sha256": "6666666666666666666666666666666666666666666666666666666666666666",
+  "capture_adapter_sha256": "7777777777777777777777777777777777777777777777777777777777777777",
+  "reference_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+  "actual_sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+  "regions": [
+    {
+      "id": "root",
+      "visual": "passed",
+      "layout_deviation_pt": 0.5,
+      "pixel_difference_ratio": 0.01,
+      "anchors": [
+        {
+          "id": "content.position",
+          "metric": "position",
+          "reference_value": [0, 0],
+          "actual_value": [0.5, 0],
+          "deviation_pt": 0.5
+        }
+      ]
+    }
+  ]
+}

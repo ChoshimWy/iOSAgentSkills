@@ -341,6 +341,8 @@ Escalate to `apple-docs` when official Apple API facts, availability, WWDC guida
 
 Escalate to `ui-ux-design-system` when the task becomes visual direction, design-system language, branding, color, typography, or product design exploration before implementation.
 
+Escalate to `design-context-compiler` when implementation originates from Figma / Sketch evidence but lacks a validated Canonical UI IR, iOS binding set, or task-scoped Agent Packet. Consume the validated packet when present; do not read full design-tool JSON as implementation context.
+
 Escalate to `ios-automation` when simulator/device UI smoke, screenshot, accessibility tree, installation, launch, or navigation evidence is required.
 
 Escalate to `ios-verification` when targeted validation execution, build/test failure digest, final evidence judgement, release/high-risk evidence, or exact `-only-testing` selection is needed.
@@ -400,5 +402,6 @@ Read only the reference files needed by the selected mode:
 - Device/simulator automation routes to `ios-automation`.
 - Apple official facts route to `apple-docs`.
 - Visual/product design direction routes to `ui-ux-design-system` before implementation.
+- Figma / Sketch Design Evidence, Canonical UI IR, iOS bindings and task-scoped Agent Packet route through `design-context-compiler` before implementation.
 - SDK architecture and SwiftUI Liquid Glass are internal modes/references of this Skill, not standalone implementation Skills.
 - Optional final evidence routes to `ios-verification` only when required.

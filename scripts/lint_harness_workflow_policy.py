@@ -32,6 +32,7 @@ CURRENT_REQUIRED_SKILLS = {
     "code-review",
     "codex-subagent-orchestration",
     "debugging",
+    "design-context-compiler",
     "gh-pr-flow",
     "git-workflow",
     "html-docs",
@@ -297,7 +298,7 @@ def main() -> int:
     require_contains(CODEX_TEMPLATE_AGENTS / "builder.toml", ["name = \"builder\"", '"changed_files"', '"known_risks"', '"change_intent"', '"rollback_hint"', '"file_header_check"', '"checkpoint_status"', '"first_failure"', '"next_action"', "字面量 `$(whoami)`"], failures)
     require_contains(CODEX_TEMPLATE_AGENTS / "tester.toml", ["name = \"tester\"", '"suggested_validation"', '"failure_attribution"', '"failure_attribution_type"', '"checkpoint_status"', '"first_failure"', '"next_action"'], failures)
     require_contains(CODEX_TEMPLATE_AGENTS / "reporter.toml", ["name = \"reporter\"", '"acceptance_matrix"', '"delivery_summary"', '"residual_risks"', '"checkpoint_status"', '"first_failure"', '"next_action"'], failures)
-    require_contains(CODEX_TEMPLATE_AGENTS / "design_researcher.toml", ["name = \"design_researcher\"", '"design_source"', '"implementation_contract"', "[mcp_servers.sketchMCP]", "http://localhost:31126/mcp", '"checkpoint_status"', '"first_failure"', '"next_action"'], failures)
+    require_contains(CODEX_TEMPLATE_AGENTS / "design_researcher.toml", ["name = \"design_researcher\"", '"design_source"', '"design_evidence"', '"implementation_contract"', '"canonical_ui_ir_handoff"', "[mcp_servers.sketchMCP]", "http://localhost:31126/mcp", '"checkpoint_status"', '"first_failure"', '"next_action"'], failures)
     require_contains(
         CODEX_TEMPLATE_AGENTS / "README.md",
         [

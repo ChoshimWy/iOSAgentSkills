@@ -1,0 +1,53 @@
+{
+  "run_plan_version": "1.2.0",
+  "plan_id": "synthetic.runner.example",
+  "evidence_status": "synthetic-example",
+  "case": {
+    "path": "benchmark-cases/example/benchmark-case.json",
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "executor": {
+    "model": "synthetic-model",
+    "reasoning": "synthetic",
+    "synthetic": true,
+    "provider_cli": {
+      "name": "synthetic-test-adapter",
+      "version": "1.0.0",
+      "launcher_path": "/synthetic/codex",
+      "native_path": "/synthetic/codex",
+      "launcher_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "native_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "package_json_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    },
+    "adapter": {
+      "path": "../scripts/fake_benchmark_executor.py",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    "implementation_command": ["{adapter}", "--phase", "implementation"],
+    "timeout_seconds": 60,
+    "environment": {}
+  },
+  "validator": {
+    "id": "synthetic-validator",
+    "synthetic": true,
+    "capture_adapter": {
+      "path": "../scripts/fake_benchmark_capture.py",
+      "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+    },
+    "capture_overlay": { "mode": "none" },
+    "capture_runtime": { "mode": "none" },
+    "capture_command": ["{capture}"],
+    "adapter": {
+      "path": "../scripts/fake_benchmark_executor.py",
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    "command": ["{validator}", "--phase", "validation"],
+    "timeout_seconds": 60,
+    "environment": {}
+  },
+  "isolation": {
+    "strategy": "git-shared-clone",
+    "run_order": ["screenshot-only", "ui-ir", "ui-ir-with-binding"],
+    "clean_checkout": true
+  }
+}

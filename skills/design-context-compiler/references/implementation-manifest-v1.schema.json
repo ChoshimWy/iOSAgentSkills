@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ios-agent-skills.local/schemas/implementation-manifest-v1.schema.json",
+  "title": "iOS UI Implementation Manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["manifest_version", "status", "screen", "source", "mappings", "validation"],
+  "properties": {
+    "manifest_version": { "const": "1.0.0" },
+    "status": { "enum": ["draft", "complete"] },
+    "screen": { "type": "string", "minLength": 1 },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ui_ir", "agent_packet"],
+      "properties": {
+        "ui_ir": { "$ref": "#/$defs/source_artifact" },
+        "agent_packet": { "$ref": "#/$defs/source_artifact" }
+      }
+    },
+    "mappings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["design_node_id", "semantic_role", "binding_id", "framework", "code_symbol", "source_file", "preview_scene", "validation_region"],
+        "properties": {
+          "design_node_id": { "type": "string", "minLength": 1 },
+          "semantic_role": { "type": "string", "minLength": 1 },
+          "binding_id": { "type": "string", "minLength": 1 },
+          "framework": { "enum": ["UIKit", "SwiftUI"] },
+          "code_symbol": { "type": "string", "minLength": 1 },
+          "source_file": { "type": "string", "minLength": 1 },
+          "preview_scene": { "type": "string" },
+          "validation_region": { "type": "string" }
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "evidence"],
+      "properties": {
+        "status": { "enum": ["pending", "passed", "failed"] },
+        "evidence": { "type": "array", "items": { "$ref": "#/$defs/evidence_artifact" } }
+      }
+    }
+  },
+  "$defs": {
+    "source_artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+      }
+    },
+    "evidence_artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "path", "sha256"],
+      "properties": {
+        "kind": { "enum": ["semantic-visual-validation", "ui-smoke", "test-report", "manual-review"] },
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+      }
+    }
+  }
+}

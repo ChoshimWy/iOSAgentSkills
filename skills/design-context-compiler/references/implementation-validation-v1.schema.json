@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ios-agent-skills.local/schemas/implementation-validation-v1.schema.json",
+  "title": "iOS Semantic Visual Validation Artifact v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "validation_artifact_version",
+    "kind",
+    "screen",
+    "region",
+    "status",
+    "source_hash",
+    "environment",
+    "checks"
+  ],
+  "properties": {
+    "validation_artifact_version": { "const": "1.0.0" },
+    "kind": { "const": "semantic-visual-validation" },
+    "screen": { "type": "string", "minLength": 1 },
+    "region": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["passed", "failed"] },
+    "source_hash": { "type": "string", "minLength": 8 },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["platform", "device", "viewport", "scale", "appearance", "locale"],
+      "properties": {
+        "platform": { "enum": ["iOS", "iPadOS"] },
+        "device": { "type": "string", "minLength": 1 },
+        "viewport": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["width", "height"],
+          "properties": {
+            "width": { "type": "number", "exclusiveMinimum": 0 },
+            "height": { "type": "number", "exclusiveMinimum": 0 }
+          }
+        },
+        "scale": { "type": "number", "exclusiveMinimum": 0 },
+        "appearance": { "enum": ["light", "dark"] },
+        "locale": { "type": "string", "minLength": 2 }
+      }
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["structure", "semantic", "visual"],
+      "properties": {
+        "structure": { "enum": ["passed", "failed"] },
+        "semantic": { "enum": ["passed", "failed"] },
+        "visual": { "enum": ["passed", "failed"] }
+      }
+    }
+  }
+}

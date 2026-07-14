@@ -1,0 +1,156 @@
+{
+  "evidence_version": "1.0.0",
+  "source": {
+    "kind": "sketch",
+    "document_id": "SLP_014.sketch",
+    "node_id": "C9A8ED98-5762-4416-B165-ECE0335FE955",
+    "version": "0084dbb83e2b0080e3e432dc9eb350d39784ad6b",
+    "captured_at": "2026-07-13T18:12:49+08:00",
+    "adapter": "manual-anchor-slice",
+    "adapter_version": "1.0.0",
+    "document_sha256": "2377f359847721c627a65b2feb14665b2355593ad07d70d4f4f052ccad69b224"
+  },
+  "snapshot": {
+    "reference_image": "reference.png",
+    "raw_export": "SLP_014.sketch#C9A8ED98-5762-4416-B165-ECE0335FE955",
+    "viewport": { "width": 728, "height": 471 },
+    "scale": 1,
+    "appearance": "dark",
+    "locale": "en_US",
+    "evidence_hash": "sha256:41d9300ecab9e26050cd0374fbaded9cd926b39e9c183610b879336b101a979e"
+  },
+  "extracted": {
+    "layers": [
+      {
+        "id": "C9A8ED98-5762-4416-B165-ECE0335FE955",
+        "type": "group",
+        "name": "New Scene弹框",
+        "frame": { "x": 319.5, "y": 231.5, "width": 290, "height": 175 },
+        "note": "Sketch group bounds are stale; the visible underframe and export define the visual bounds."
+      },
+      {
+        "id": "E18BC3B1-7647-48E2-82B1-F2A443847227",
+        "type": "rectangle",
+        "name": "underframe",
+        "frame": { "x": -170, "y": -73, "width": 725, "height": 470 },
+        "fill": "#3A3A3AFF"
+      },
+      {
+        "id": "44496408-61BB-4E3F-966F-945B1C32FFE8",
+        "type": "text",
+        "name": "New Project",
+        "frame": { "x": 130, "y": -53, "width": 125, "height": 25 },
+        "normalized_frame": { "x": 300, "y": 20, "width": 125, "height": 25 },
+        "text": "New Project",
+        "font": { "family": "SidusLinkCGeos-Black", "size": 20 },
+        "color": "#D2D2D2FF"
+      },
+      {
+        "id": "5E965B46-9217-4F8C-9398-6232CFE37BEE",
+        "type": "rectangle",
+        "name": "enterbox",
+        "frame": { "x": -130, "y": -12, "width": 645, "height": 40 },
+        "normalized_frame": { "x": 40, "y": 61, "width": 645, "height": 40 },
+        "fill": "#3A3A3AFF",
+        "border": { "color": "#787878FF", "width": 0.5 }
+      },
+      {
+        "id": "C2605BCB-0FAB-4A83-8A11-E59620C61C15",
+        "type": "text",
+        "name": "Scene 01",
+        "frame": { "x": -120, "y": -2, "width": 74, "height": 20 },
+        "normalized_frame": { "x": 50, "y": 71, "width": 74, "height": 20 },
+        "text": "Scene 01",
+        "font": { "family": "SidusLinkCGeos-Regular", "size": 16 },
+        "color": "#D2D2D2FF"
+      },
+      {
+        "id": "5C037FF5-D7A9-4996-9C2F-77C0974D8410",
+        "type": "text",
+        "name": "Default entry mode",
+        "frame": { "x": -130, "y": 68.5, "width": 128, "height": 18 },
+        "normalized_frame": { "x": 40, "y": 141.5, "width": 128, "height": 18 },
+        "text": "Default entry mode",
+        "font": { "family": "SidusLinkCGeos-Bold", "size": 14 },
+        "color": "#999999FF"
+      },
+      {
+        "id": "ED11E63F-A2D5-4A1B-B858-2C84D921A8BF",
+        "type": "group",
+        "name": "Fixture View card",
+        "normalized_frame": { "x": 40, "y": 178.5, "width": 150, "height": 190 },
+        "selected": true
+      },
+      {
+        "id": "036870EF-B6EB-47AC-8972-EF66ABF7BFD8",
+        "type": "group",
+        "name": "Layout View card",
+        "normalized_frame": { "x": 205, "y": 178.5, "width": 150, "height": 190 },
+        "selected": false
+      },
+      {
+        "id": "90AD5508-669B-4D73-B655-992A6A43E10E",
+        "type": "group",
+        "name": "3D Visualizer card",
+        "normalized_frame": { "x": 370, "y": 178.5, "width": 150, "height": 190 },
+        "selected": false,
+        "badge": "PRO/MAX"
+      },
+      {
+        "id": "F9B881A7-6C71-48BC-A2C9-4A24C3E22D17",
+        "type": "group",
+        "name": "Sidus BT View card",
+        "normalized_frame": { "x": 535, "y": 178.5, "width": 150, "height": 190 },
+        "selected": false
+      },
+      {
+        "id": "08C3080A-4567-4892-AF1F-37C0D6372092",
+        "type": "group",
+        "name": "footer actions",
+        "normalized_frame": { "x": 0, "y": 396, "width": 727, "height": 74 }
+      }
+    ],
+    "variables": [],
+    "styles": [
+      { "id": "surface.alert", "value": "#3A3A3AFF", "source": "design-node" },
+      { "id": "surface.card", "value": "#464646FF", "source": "design-node" },
+      { "id": "text.primary", "value": "#D2D2D2FF", "source": "design-node" },
+      { "id": "text.secondary", "value": "#999999FF", "source": "design-node" },
+      { "id": "accent.selection", "value": "#46AA5FFF", "source": "design-node" },
+      { "id": "accent.pro", "value": "#C4A03BFF", "source": "design-node" }
+    ],
+    "components": [
+      {
+        "design_id": "Sketch/SLP_014/NewProjectAlert",
+        "node_id": "C9A8ED98-5762-4416-B165-ECE0335FE955",
+        "semantic_role": "create_project_alert",
+        "source": "manual-contract"
+      }
+    ],
+    "assets": [
+      { "role": "fixture-preview", "layer_id": "E3931E28-2947-4508-B5E8-69D69CB16911", "ref": "images/296db9c547cc1666cf5185ab86033be89f34dac0.png" },
+      { "role": "layout-preview", "layer_id": "D7F721DF-6B78-4FA7-9EF0-8EB8846C1985", "ref": "images/5944f2e5dbb7708fb9381527ee124c6aa81825c3.png" },
+      { "role": "three-d-preview", "layer_id": "2B876953-CF3C-4A7B-AF9A-C77E58DB3FF5", "ref": "images/3d259af93ef64319eed02a25222b9baf7660ce1b.jpg" },
+      { "role": "sidus-bt-preview", "layer_id": "06609517-3E4C-4E6E-8E56-09FD8B646F86", "ref": "images/c5884aaf9ff14fff39029f1f1e3a9f38c9fda88b.png" }
+    ],
+    "interactions": [
+      { "event": "select-entry-mode", "targets": ["Fixture View", "Layout View", "3D Visualizer", "Sidus BT View"], "source": "manual-contract" },
+      { "event": "confirm", "condition": "project name is non-empty", "source": "code-anchor" },
+      { "event": "select-3d-free-user", "result": "subscription gate", "source": "code-anchor" }
+    ]
+  },
+  "unknowns": [
+    {
+      "path": "extracted.variables",
+      "reason": "The Sketch file does not bind these alert values to named Variables; semantic token names are normalized manually.",
+      "severity": "non-blocking",
+      "source": "sketch"
+    },
+    {
+      "path": "source.group_bounds",
+      "reason": "The target group reports stale 290 × 175 bounds while the visible underframe is 725 × 470; the exported 728 × 471 raster is the visual reference.",
+      "severity": "non-blocking",
+      "source": "sketch"
+    }
+  ]
+}

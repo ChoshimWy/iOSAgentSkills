@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ios-agent-skills.local/schemas/benchmark-input-context-v1.schema.json",
+  "title": "Design Context Benchmark Input Context v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["input_context_version", "case_id", "variant", "plan_sha256", "run_plan", "benchmark_case", "executor_adapter", "capture_adapter", "capture_overlay", "provider_source_scope", "evaluator_dependency_setup", "validator_adapter", "environment", "inputs"],
+  "properties": {
+    "input_context_version": { "const": "1.2.0" },
+    "case_id": { "type": "string", "minLength": 1 },
+    "variant": { "enum": ["screenshot-only", "ui-ir", "ui-ir-with-binding"] },
+    "plan_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "run_plan": { "$ref": "#/$defs/fileEvidence" },
+    "benchmark_case": { "$ref": "#/$defs/fileEvidence" },
+    "executor_adapter": { "$ref": "#/$defs/fileEvidence" },
+    "capture_adapter": { "$ref": "#/$defs/fileEvidence" },
+    "capture_overlay": { "$ref": "#/$defs/captureOverlay" },
+    "provider_source_scope": { "$ref": "#/$defs/providerSourceScope" },
+    "evaluator_dependency_setup": { "$ref": "#/$defs/evaluatorDependencySetup" },
+    "validator_adapter": { "$ref": "#/$defs/fileEvidence" },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["task_mode", "screen", "state", "viewport", "scale", "appearance", "locale", "ui_framework"],
+      "properties": {
+        "task_mode": { "type": "string", "minLength": 1 },
+        "screen": { "type": "string", "minLength": 1 },
+        "state": { "type": "string", "minLength": 1 },
+        "viewport": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["width", "height"],
+          "properties": {
+            "width": { "type": "integer", "minimum": 1 },
+            "height": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "scale": { "type": "number", "exclusiveMinimum": 0 },
+        "appearance": { "enum": ["light", "dark"] },
+        "locale": { "type": "string", "minLength": 1 },
+        "ui_framework": { "enum": ["UIKit", "SwiftUI", "mixed-ui"] }
+      }
+    },
+    "inputs": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "audience", "path", "sha256"],
+        "properties": {
+          "kind": { "enum": ["reference", "shared-prompt", "validation-config", "ui-ir", "agent-packet"] },
+          "audience": { "enum": ["agent", "validator"] },
+          "path": { "type": "string", "minLength": 1 },
+          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "providerSourceScope": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode"],
+          "properties": { "mode": { "const": "full-tree" } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "artifact", "file_count", "total_bytes", "content_sha256", "worktree"],
+          "properties": {
+            "mode": { "const": "allowlist" },
+            "artifact": { "$ref": "#/$defs/fileEvidence" },
+            "file_count": { "type": "integer", "minimum": 1 },
+            "total_bytes": { "type": "integer", "minimum": 1 },
+            "content_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+            "worktree": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["path", "baseline_commit", "object_set_sha256", "git_metadata_sha256"],
+              "properties": {
+                "path": { "const": "provider-worktree" },
+                "baseline_commit": { "type": "string", "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$" },
+                "object_set_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+                "git_metadata_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "captureOverlay": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode"],
+          "properties": { "mode": { "const": "none" } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "artifact"],
+          "properties": {
+            "mode": { "const": "git-patch" },
+            "artifact": { "$ref": "#/$defs/fileEvidence" }
+          }
+        }
+      ]
+    },
+    "evaluatorDependencySetup": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode"],
+          "properties": { "mode": { "const": "none" } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "artifact"],
+          "properties": {
+            "mode": { "const": "unityframework-arm64-simulator-stub-v1" },
+            "artifact": { "$ref": "#/$defs/fileEvidence" }
+          }
+        }
+      ]
+    },
+    "fileEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    }
+  }
+}

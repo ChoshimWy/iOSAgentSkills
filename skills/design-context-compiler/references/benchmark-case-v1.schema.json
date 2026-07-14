@@ -1,0 +1,226 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ios-agent-skills.local/schemas/benchmark-case-v1.schema.json",
+  "title": "Design Context Benchmark Case v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "case_version",
+    "case_id",
+    "readiness_status",
+    "workspace_roots",
+    "source",
+    "contracts",
+    "benchmark",
+    "readiness"
+  ],
+  "properties": {
+    "case_version": { "const": "1.0.0" },
+    "case_id": { "type": "string", "minLength": 1 },
+    "readiness_status": { "enum": ["prepared", "ready", "blocked"] },
+    "workspace_roots": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "path"],
+        "properties": {
+          "id": { "$ref": "#/$defs/identifier" },
+          "path": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["design", "code"],
+      "properties": {
+        "design": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["file", "node_id", "document_version", "reference_export"],
+          "properties": {
+            "file": { "$ref": "#/$defs/rootedArtifact" },
+            "node_id": { "type": "string", "pattern": "^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$" },
+            "document_version": { "type": "string", "minLength": 1 },
+            "reference_export": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["tool", "format", "scale", "expected_output", "expected_sha256", "expected_viewport"],
+              "properties": {
+                "tool": { "const": "sketchtool" },
+                "format": { "const": "png" },
+                "scale": { "type": "number", "exclusiveMinimum": 0 },
+                "expected_output": { "const": "reference.png" },
+                "expected_sha256": { "$ref": "#/$defs/sha256" },
+                "expected_viewport": { "$ref": "#/$defs/size" }
+              }
+            }
+          }
+        },
+        "code": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["root", "git_commit", "files"],
+          "properties": {
+            "root": { "$ref": "#/$defs/identifier" },
+            "git_commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+            "provider_source_scope": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["mode", "entries", "expected_file_count", "expected_total_bytes", "expected_content_sha256"],
+              "properties": {
+                "mode": { "const": "allowlist" },
+                "entries": {
+                  "type": "array",
+                  "minItems": 1,
+                  "uniqueItems": true,
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["kind", "path"],
+                    "properties": {
+                      "kind": { "enum": ["file", "directory"] },
+                      "path": { "type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\u0000]+$" }
+                    }
+                  }
+                },
+                "expected_file_count": { "type": "integer", "minimum": 1 },
+                "expected_total_bytes": { "type": "integer", "minimum": 1 },
+                "expected_content_sha256": { "$ref": "#/$defs/sha256" }
+              }
+            },
+            "files": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "$ref": "#/$defs/rootedArtifact" }
+            }
+          }
+        }
+      }
+    },
+    "contracts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["design_evidence", "ui_ir", "ui_ir_unbound", "component_registry", "agent_packet"],
+      "properties": {
+        "design_evidence": { "$ref": "#/$defs/localArtifact" },
+        "ui_ir": { "$ref": "#/$defs/localArtifact" },
+        "ui_ir_unbound": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["projection", "sha256"],
+          "properties": {
+            "projection": { "const": "strip-component-bindings" },
+            "sha256": { "$ref": "#/$defs/sha256" }
+          }
+        },
+        "component_registry": { "$ref": "#/$defs/localArtifact" },
+        "agent_packet": { "$ref": "#/$defs/localArtifact" }
+      }
+    },
+    "benchmark": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["shared_prompt", "validation_config", "environment", "variants"],
+      "properties": {
+        "shared_prompt": { "$ref": "#/$defs/localArtifact" },
+        "validation_config": { "$ref": "#/$defs/localArtifact" },
+        "environment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["task_mode", "screen", "state", "viewport", "scale", "appearance", "locale", "ui_framework"],
+          "properties": {
+            "task_mode": { "enum": ["reuse-conformance", "greenfield"] },
+            "screen": { "type": "string", "minLength": 1 },
+            "state": { "type": "string", "minLength": 1 },
+            "viewport": { "$ref": "#/$defs/size" },
+            "scale": { "type": "number", "exclusiveMinimum": 0 },
+            "appearance": { "enum": ["light", "dark"] },
+            "locale": { "type": "string", "minLength": 2 },
+            "ui_framework": { "enum": ["UIKit", "SwiftUI", "mixed-ui"] }
+          }
+        },
+        "variants": {
+          "type": "array",
+          "minItems": 3,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["variant", "inputs"],
+            "properties": {
+              "variant": { "enum": ["screenshot-only", "ui-ir", "ui-ir-with-binding"] },
+              "inputs": {
+                "type": "array",
+                "minItems": 3,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["kind", "artifact"],
+                  "properties": {
+                    "kind": { "enum": ["reference", "shared-prompt", "validation-config", "ui-ir", "agent-packet"] },
+                    "artifact": { "$ref": "#/$defs/artifactPointer" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "readiness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ready", "blocking_unknowns", "measured_results"],
+      "properties": {
+        "ready": { "type": "boolean" },
+        "blocking_unknowns": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "measured_results": { "const": false }
+      }
+    }
+  },
+  "$defs": {
+    "identifier": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$" },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "size": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width", "height"],
+      "properties": {
+        "width": { "type": "number", "exclusiveMinimum": 0 },
+        "height": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+    "rootedArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["root", "path", "sha256"],
+      "properties": {
+        "root": { "$ref": "#/$defs/identifier" },
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "localArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "artifactPointer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source"],
+      "properties": {
+                    "source": { "enum": ["generated-reference", "generated-ui-ir-unbound", "shared_prompt", "validation_config", "agent_packet"] }
+      }
+    }
+  }
+}

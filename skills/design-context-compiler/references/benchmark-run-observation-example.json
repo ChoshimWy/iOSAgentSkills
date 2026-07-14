@@ -1,0 +1,33 @@
+{
+  "run_observation_version": "1.1.0",
+  "case_id": "synthetic-fixture-detail-example",
+  "variant": "ui-ir-with-binding",
+  "executor_adapter_sha256": "7777777777777777777777777777777777777777777777777777777777777777",
+  "model": "synthetic-model",
+  "reasoning": "synthetic",
+  "provider_cli": {
+    "name": "synthetic-test-adapter",
+    "version": "1.0.0",
+    "launcher_path": "/synthetic/codex",
+    "native_path": "/synthetic/codex",
+    "launcher_sha256": "8888888888888888888888888888888888888888888888888888888888888888",
+    "native_sha256": "9999999999999999999999999999999999999999999999999999999999999999",
+    "package_json_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "provider_event_stream_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "provider_runs": [
+    {
+      "id": "synthetic-provider-run",
+      "input_tokens": 6000,
+      "cached_input_tokens": 0,
+      "output_tokens": 1000,
+      "reasoning_output_tokens": 0
+    }
+  ],
+  "repair_events": [
+    { "id": "repair-1", "provider_run_id": "synthetic-provider-run", "reason": "synthetic example" }
+  ],
+  "manual_interventions": [
+    { "id": "manual-1", "duration_seconds": 1200, "reason": "synthetic example" }
+  ]
+}

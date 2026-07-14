@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ios-agent-skills.local/schemas/benchmark-run-observation-v1.schema.json",
+  "title": "Design Context Benchmark Run Observation v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["run_observation_version", "case_id", "variant", "executor_adapter_sha256", "model", "reasoning", "provider_cli", "provider_event_stream_sha256", "provider_runs", "repair_events", "manual_interventions"],
+  "properties": {
+    "run_observation_version": { "const": "1.1.0" },
+    "case_id": { "type": "string", "minLength": 1 },
+    "variant": { "enum": ["screenshot-only", "ui-ir", "ui-ir-with-binding"] },
+    "executor_adapter_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "model": { "type": "string", "minLength": 1 },
+    "reasoning": { "type": "string", "minLength": 1 },
+    "provider_cli": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "launcher_path", "native_path", "launcher_sha256", "native_sha256", "package_json_sha256"],
+      "properties": {
+        "name": { "enum": ["openai-codex-cli", "anthropic-claude-code", "synthetic-test-adapter"] },
+        "version": { "type": "string", "minLength": 1 },
+        "launcher_path": { "type": "string", "minLength": 1 },
+        "native_path": { "type": "string", "minLength": 1 },
+        "launcher_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "native_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "package_json_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    },
+    "provider_event_stream_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "provider_runs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "input_tokens", "cached_input_tokens", "output_tokens", "reasoning_output_tokens"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "input_tokens": { "type": "integer", "minimum": 0 },
+          "cached_input_tokens": { "type": "integer", "minimum": 0 },
+          "output_tokens": { "type": "integer", "minimum": 0 },
+          "reasoning_output_tokens": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "repair_events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "provider_run_id", "reason"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "provider_run_id": { "type": "string", "minLength": 1 },
+          "reason": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "manual_interventions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "duration_seconds", "reason"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "duration_seconds": { "type": "number", "minimum": 0 },
+          "reason": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "input_context_version": "1.2.0",
+  "case_id": "synthetic-fixture-detail-example",
+  "variant": "ui-ir",
+  "plan_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "run_plan": {
+    "path": "run-plan.json",
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "benchmark_case": {
+    "path": "benchmark-case.json",
+    "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  },
+  "executor_adapter": {
+    "path": "executor-adapter",
+    "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "capture_adapter": {
+    "path": "capture-adapter",
+    "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+  },
+  "capture_overlay": { "mode": "none" },
+  "provider_source_scope": { "mode": "full-tree" },
+  "evaluator_dependency_setup": { "mode": "none" },
+  "validator_adapter": {
+    "path": "validator-adapter",
+    "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+  },
+  "environment": {
+    "task_mode": "reuse-conformance",
+    "screen": "fixture-detail",
+    "state": "default",
+    "viewport": { "width": 393, "height": 852 },
+    "scale": 3,
+    "appearance": "dark",
+    "locale": "en_US",
+    "ui_framework": "UIKit"
+  },
+  "inputs": [
+    { "kind": "reference", "audience": "agent", "path": "input/reference.png", "sha256": "1111111111111111111111111111111111111111111111111111111111111111" },
+    { "kind": "shared-prompt", "audience": "agent", "path": "input/shared-prompt.md", "sha256": "2222222222222222222222222222222222222222222222222222222222222222" },
+    { "kind": "validation-config", "audience": "validator", "path": "input/validation-config.json", "sha256": "3333333333333333333333333333333333333333333333333333333333333333" },
+    { "kind": "ui-ir", "audience": "agent", "path": "input/ui-ir.json", "sha256": "4444444444444444444444444444444444444444444444444444444444444444" }
+  ]
+}

@@ -14,6 +14,9 @@
 ### Core Implementation
 - `ios-feature-implementation/` —— 唯一 iOS 代码实施入口；内部按 `business` / `swiftui` / `liquid-glass` / `uikit` / `mixed-ui` / `advanced-swift` / `refactor` / `sdk-contract` 模式细分
 
+### Design Context
+- `design-context-compiler/` —— 把 Figma / Sketch / 人工设计证据编译为 Canonical UI IR、iOS bindings 与受 context budget 约束的 Agent Packet；不直接编写产品 UI
+
 ### Automation / Build / Validation
 - `ios-automation/` —— Simulator / 真机自动化；优先语义 snapshot 与 snapshot-local 元素 refs，按需采集截图、日志、UI smoke / replay 证据
 - `ios-verification/`
@@ -62,7 +65,7 @@ ln -s iOSAgentSkills/skills .claude/skills
   - `reporter.toml`（交付汇总 / 风险收口）
   - `reviewer.toml`（独立高质量静态审查）
   - `docs_researcher.toml`（OpenAI / Apple 官方事实核实）
-  - `design_researcher.toml`（通过本机 SketchMCP 读取 `.sketch` 设计源文件并输出 Design-to-Code Spec）
+  - `design_researcher.toml`（通过本机 SketchMCP 读取 `.sketch` 设计源文件并输出 Design Evidence / Design-to-Code source packet，再交给 `design-context-compiler`）
 - 这些模板使用 Codex 当前支持的扁平 custom agent schema：`name` / `description` / `developer_instructions`，以及可选 `nickname_candidates` / `model` / `model_reasoning_effort` / `model_verbosity` / `sandbox_mode` / `mcp_servers` / `skills.config`。
 - 安装脚本会同步到：`~/.codex/agents/`。
 - Profile 模板源：`config/codex/templates/profiles/`；缺失时安装到 `~/.codex/<name>.config.toml`，已有本机 Profile 默认保留，只有显式执行 `bash install-local-agent-config.sh --refresh-profiles` 才备份并刷新。使用 `codex --profile daily|budget|readonly|deep|extreme|interactive-fast` 切换。
@@ -132,6 +135,7 @@ python3 scripts/validate_codex_agent_templates.py config/codex/templates/agents
 ## HTML 文档工作流（新增）
 
 - 适用范围：`Docs` 下的方案、任务清单、评审报告、整改报告等 HTML 文档交付。
+- 核心方案文档：[`docs/ios-high-fidelity-ui-ir-plan.html`](docs/ios-high-fidelity-ui-ir-plan.html) —— 面向 UIKit / SwiftUI 的 Design Evidence、Canonical UI IR、Task Context Compiler、Component Registry 与语义视觉验收方案。
 - 默认路由：所有可归档 / 可分享的 HTML 方案、PRD、评审、报告、任务清单、接口说明与 handoff 文档都必须使用 `skills/html-docs` 生成；其它 Skill 只输出素材包、结论和证据路径。
 - 模板选择：按文档类型读取 `skills/html-docs/references/*-template.md`；任务清单按 `references/tasklist-template.md` 执行任务清单样式。
 - 状态标识统一：`√` 表示已完成，`□` 表示未完成 / 待办；建议用 `.check-mark.done` / `.check-mark.todo` 样式呈现。
@@ -178,6 +182,7 @@ python3 scripts/validate_codex_agent_templates.py config/codex/templates/agents
 bash install-local-agent-config.sh
 ./scripts/install-git-hooks.sh
 python3 scripts/lint_skill_schema.py
+python3 skills/design-context-compiler/scripts/self_test.py
 python3 scripts/validate_codex_agent_templates.py config/codex/templates/agents
 python3 scripts/check_codex_model_policy.py --offline
 python3 scripts/check_claude_config_policy.py

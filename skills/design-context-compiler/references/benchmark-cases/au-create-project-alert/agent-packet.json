@@ -1,0 +1,951 @@
+{
+  "packet_version": "1.0.0",
+  "task": {
+    "screen": "create-project-alert",
+    "target_kind": "screen",
+    "target_id": "create-project-alert",
+    "requested_states": [
+      "fixture-selected"
+    ]
+  },
+  "reference": {
+    "image": "reference.png",
+    "source_hash": "sha256:41d9300ecab9e26050cd0374fbaded9cd926b39e9c183610b879336b101a979e",
+    "viewport": {
+      "width": 728,
+      "height": 471
+    },
+    "scale": 1,
+    "appearance": "dark",
+    "locale": "en_US"
+  },
+  "environment": {
+    "platform": "iPadOS",
+    "ui_framework": "UIKit",
+    "minimum_os": "13.0",
+    "device": "iPad landscape alert crop"
+  },
+  "nodes": [
+    {
+      "id": "create-project-alert",
+      "type": "screen",
+      "role": "create_project_alert",
+      "layout": {
+        "position": "overlay",
+        "axis": "vertical",
+        "width": {
+          "mode": "fixed",
+          "value": 725
+        },
+        "height": {
+          "mode": "fixed",
+          "value": 470
+        },
+        "alignment": "center",
+        "reason": "The visible Sketch underframe is the canonical alert surface; exported raster adds antialiasing pixels."
+      },
+      "token_refs": [
+        "color.surface.alert",
+        "radius.alert"
+      ],
+      "binding_refs": [
+        "binding.create-project-alert.uikit"
+      ],
+      "state_refs": [
+        "fixture-selected",
+        "layout-selected",
+        "three-d-selected",
+        "three-d-blocked",
+        "sidus-bt-selected",
+        "empty-name"
+      ],
+      "interaction_refs": [
+        "transition.0",
+        "transition.1",
+        "transition.2",
+        "transition.3",
+        "transition.4",
+        "transition.5",
+        "transition.6"
+      ],
+      "style": {
+        "background_token": "color.surface.alert",
+        "corner_radius_token": "radius.alert",
+        "clips_content": true
+      },
+      "component": {
+        "design_id": "Sketch/SLP_014/NewProjectAlert",
+        "semantic_role": "create_project_alert",
+        "reuse_policy": "required"
+      }
+    },
+    {
+      "id": "alert-title",
+      "type": "primitive",
+      "role": "title",
+      "layout": {
+        "position": "flow",
+        "width": {
+          "mode": "intrinsic"
+        },
+        "height": {
+          "mode": "fixed",
+          "value": 25
+        },
+        "top": 20,
+        "horizontal_alignment": "center",
+        "evidence_frame": {
+          "x": 300,
+          "y": 20,
+          "width": 125,
+          "height": 25
+        }
+      },
+      "token_refs": [
+        "color.text.primary",
+        "typography.title"
+      ],
+      "binding_refs": [],
+      "state_refs": [
+        "fixture-selected",
+        "layout-selected",
+        "three-d-selected",
+        "three-d-blocked",
+        "sidus-bt-selected",
+        "empty-name"
+      ],
+      "interaction_refs": [
+        "transition.0",
+        "transition.1",
+        "transition.2",
+        "transition.3",
+        "transition.4",
+        "transition.5",
+        "transition.6"
+      ],
+      "style": {
+        "typography_token": "typography.title",
+        "color_token": "color.text.primary",
+        "text_alignment": "center"
+      },
+      "node_state": {
+        "text": "New Project",
+        "localization_key": "my_projects_creat_scene_dialog"
+      },
+      "parent": "create-project-alert"
+    },
+    {
+      "id": "name-input",
+      "type": "region",
+      "role": "project_name_input",
+      "layout": {
+        "position": "flow",
+        "width": {
+          "mode": "fill"
+        },
+        "height": {
+          "mode": "fixed",
+          "value": 40
+        },
+        "horizontal_margin_token": "spacing.alert.horizontal",
+        "top": 61,
+        "evidence_frame": {
+          "x": 40,
+          "y": 61,
+          "width": 645,
+          "height": 40
+        }
+      },
+      "token_refs": [
+        "color.border.input",
+        "color.surface.alert",
+        "color.text.primary",
+        "radius.input",
+        "spacing.alert.horizontal",
+        "typography.input"
+      ],
+      "binding_refs": [],
+      "state_refs": [
+        "fixture-selected",
+        "layout-selected",
+        "three-d-selected",
+        "three-d-blocked",
+        "sidus-bt-selected",
+        "empty-name"
+      ],
+      "interaction_refs": [
+        "transition.0",
+        "transition.1",
+        "transition.2",
+        "transition.3",
+        "transition.4",
+        "transition.5",
+        "transition.6"
+      ],
+      "style": {
+        "background_token": "color.surface.alert",
+        "border_color_token": "color.border.input",
+        "border_width": 0.5,
+        "corner_radius_token": "radius.input",
+        "typography_token": "typography.input",
+        "color_token": "color.text.primary"
+      },
+      "node_state": {
+        "text": "Scene 01",
+        "clear_button_visible": true,
+        "max_length": "kMaxTextNum"
+      },
+      "parent": "create-project-alert"
+    },
+    {
+      "id": "entry-mode-grid",
+      "type": "region",
+      "role": "default_entry_mode_selector",
+      "layout": {
+        "position": "flow",
+        "axis": "vertical",
+        "width": {
+          "mode": "fill"
+        },
+        "height": {
+          "mode": "fixed",
+          "value": 227
+        },
+        "horizontal_margin_token": "spacing.alert.horizontal",
+        "top": 141.5,
+        "section_title_height": 18,
+        "section_to_cards_spacing": 19,
+        "evidence_frame": {
+          "x": 40,
+          "y": 141.5,
+          "width": 645,
+          "height": 227
+        }
+      },
+      "token_refs": [
+        "color.text.secondary",
+        "spacing.alert.horizontal",
+        "typography.section"
+      ],
+      "binding_refs": [],
+      "state_refs": [
+        "fixture-selected",
+        "layout-selected",
+        "three-d-selected",
+        "three-d-blocked",
+        "sidus-bt-selected",
+        "empty-name"
+      ],
+      "interaction_refs": [
+        "transition.0",
+        "transition.1",
+        "transition.2",
+        "transition.3",
+        "transition.4",
+        "transition.5",
+        "transition.6"
+      ],
+      "style": {
+        "section_typography_token": "typography.section",
+        "section_color_token": "color.text.secondary"
+      },
+      "node_state": {
+        "title": "Default entry mode",
+        "localization_key": "default_enter_mode"
+      },
+      "parent": "create-project-alert"
+    },
+    {
+      "id": "entry-card-row",
+      "type": "region",
+      "role": "entry_mode_cards",
+      "layout": {
+        "position": "flow",
+        "axis": "horizontal",
+        "width": {
+          "mode": "fill"
+        },
+        "height": {
+          "mode": "fixed",
+          "value": 190
+        },
+        "spacing_token": "spacing.card.gap",
+        "distribution": "equal-fixed-cards"
+      },
+      "token_refs": [
+        "spacing.card.gap"
+      ],
+      "binding_refs": [],
+      "state_refs": [
+        "fixture-selected",
+        "layout-selected",
+        "three-d-selected",
+        "three-d-blocked",
+        "sidus-bt-selected",
+        "empty-name"
+      ],
+      "interaction_refs": [
+        "transition.0",
+        "transition.1",
+        "transition.2",
+        "transition.3",
+        "transition.4",
+        "transition.5",
+        "transition.6"
+      ],
+      "parent": "entry-mode-grid"
+    },
+    {
+      "id": "fixture-card",
+      "type": "component",
+      "role": "entry_mode_card",
+      "layout": {
+        "position": "flow",
+        "width": {
+          "mode": "fixed",
+          "value": 150
+        },
+        "height": {
+          "mode": "fixed",
+          "value": 190
+        },
+        "evidence_frame": {
+          "x": 40,
+          "y": 178.5,
+          "width": 150,
+          "height": 190
+        }
+      },
+      "token_refs": [
+        "color.accent.selection",
+        "color.surface.card",
+        "radius.card"
+      ],
+      "binding_refs": [],
+      "state_refs": [
+        "fixture-selected",
+        "layout-selected",
+        "three-d-selected",
+        "three-d-blocked",
+        "sidus-bt-selected",
+        "empty-name"
+      ],
+      "interaction_refs": [
+        "transition.0",
+        "transition.1",
+        "transition.2",
+        "transition.3",
+        "transition.4",
+        "transition.5",
+        "transition.6"
+      ],
+      "style": {
+        "background_token": "color.surface.card",
+        "corner_radius_token": "radius.card",
+        "selected_border_token": "color.accent.selection",
+        "selected_border_width": 2
+      },
+      "node_state": {
+        "mode": "fixture",
+        "title": "Fixture View",
+        "subtitle": "List light control and fast-cut sequence programming",
+        "preview_asset": "fixture_view",
+        "selected": true
+      },
+      "parent": "entry-card-row"
+    },
+    {
+      "id": "layout-card",
+      "type": "component",
+      "role": "entry_mode_card",
+      "layout": {
+        "position": "flow",
+        "width": {
+          "mode": "fixed",
+          "value": 150
+        },
+        "height": {
+          "mode": "fixed",
+          "value": 190
+        },
+        "evidence_frame": {
+          "x": 205,
+          "y": 178.5,
+          "width": 150,
+          "height": 190
+        }
+      },
+      "token_refs": [
+        "color.surface.card",
+        "radius.card"
+      ],
+      "binding_refs": [],
+      "state_refs": [
+        "fixture-selected",
+        "layout-selected",
+        "three-d-selected",
+        "three-d-blocked",
+        "sidus-bt-selected",
+        "empty-name"
+      ],
+      "interaction_refs": [
+        "transition.0",
+        "transition.1",
+        "transition.2",
+        "transition.3",
+        "transition.4",
+        "transition.5",
+        "transition.6"
+      ],
+      "style": {
+        "background_token": "color.surface.card",
+        "corner_radius_token": "radius.card"
+      },
+      "node_state": {
+        "mode": "layout",
+        "title": "Layout View",
+        "subtitle": "Flat lighting, quick positioning",
+        "preview_asset": "layout_view",
+        "selected": false
+      },
+      "parent": "entry-card-row"
+    },
+    {
+      "id": "three-d-card",
+      "type": "component",
+      "role": "entry_mode_card",
+      "layout": {
+        "position": "flow",
+        "width": {
+          "mode": "fixed",
+          "value": 150
+        },
+        "height": {
+          "mode": "fixed",
+          "value": 190
+        },
+        "evidence_frame": {
+          "x": 370,
+          "y": 178.5,
+          "width": 150,
+          "height": 190
+        }
+      },
+      "token_refs": [
+        "color.accent.pro",
+        "color.surface.card",
+        "radius.card",
+        "typography.badge"
+      ],
+      "binding_refs": [],
+      "state_refs": [
+        "fixture-selected",
+        "layout-selected",
+        "three-d-selected",
+        "three-d-blocked",
+        "sidus-bt-selected",
+        "empty-name"
+      ],
+      "interaction_refs": [
+        "transition.0",
+        "transition.1",
+        "transition.2",
+        "transition.3",
+        "transition.4",
+        "transition.5",
+        "transition.6"
+      ],
+      "style": {
+        "background_token": "color.surface.card",
+        "corner_radius_token": "radius.card",
+        "badge_background_token": "color.accent.pro",
+        "badge_typography_token": "typography.badge"
+      },
+      "node_state": {
+        "mode": "three-d",
+        "title": "3D Visualizer",
+        "subtitle": "Space preview, plan communication",
+        "preview_asset": "3d_view",
+        "badge": "PRO/MAX",
+        "selected": false,
+        "requires_paid_membership": true
+      },
+      "parent": "entry-card-row"
+    },
+    {
+      "id": "sidus-bt-card",
+      "type": "component",
+      "role": "entry_mode_card",
+      "layout": {
+        "position": "flow",
+        "width": {
+          "mode": "fixed",
+          "value": 150
+        },
+        "height": {
+          "mode": "fixed",
+          "value": 190
+        },
+        "evidence_frame": {
+          "x": 535,
+          "y": 178.5,
+          "width": 150,
+          "height": 190
+        }
+      },
+      "token_refs": [
+        "color.surface.card",
+        "radius.card"
+      ],
+      "binding_refs": [],
+      "state_refs": [
+        "fixture-selected",
+        "layout-selected",
+        "three-d-selected",
+        "three-d-blocked",
+        "sidus-bt-selected",
+        "empty-name"
+      ],
+      "interaction_refs": [
+        "transition.0",
+        "transition.1",
+        "transition.2",
+        "transition.3",
+        "transition.4",
+        "transition.5",
+        "transition.6"
+      ],
+      "style": {
+        "background_token": "color.surface.card",
+        "corner_radius_token": "radius.card"
+      },
+      "node_state": {
+        "mode": "sidus-bt",
+        "title": "Sidus BT View",
+        "subtitle": "Sidus BT Fixture, exclusive control",
+        "preview_asset": "sidusbt_view",
+        "selected": false
+      },
+      "parent": "entry-card-row"
+    },
+    {
+      "id": "footer-actions",
+      "type": "region",
+      "role": "dialog_actions",
+      "layout": {
+        "position": "flow",
+        "axis": "horizontal",
+        "width": {
+          "mode": "fill"
+        },
+        "height": {
+          "mode": "fixed",
+          "value": 74
+        },
+        "top": 396,
+        "distribution": "equal-halves",
+        "evidence_frame": {
+          "x": 0,
+          "y": 396,
+          "width": 727,
+          "height": 74
+        }
+      },
+      "token_refs": [
+        "color.surface.alert",
+        "typography.action"
+      ],
+      "binding_refs": [],
+      "state_refs": [
+        "fixture-selected",
+        "layout-selected",
+        "three-d-selected",
+        "three-d-blocked",
+        "sidus-bt-selected",
+        "empty-name"
+      ],
+      "interaction_refs": [
+        "transition.0",
+        "transition.1",
+        "transition.2",
+        "transition.3",
+        "transition.4",
+        "transition.5",
+        "transition.6"
+      ],
+      "style": {
+        "background_token": "color.surface.alert",
+        "typography_token": "typography.action"
+      },
+      "parent": "create-project-alert"
+    },
+    {
+      "id": "cancel-action",
+      "type": "primitive",
+      "role": "cancel_button",
+      "layout": {
+        "position": "flow",
+        "width": {
+          "mode": "fill"
+        },
+        "height": {
+          "mode": "fill"
+        }
+      },
+      "token_refs": [
+        "color.text.disabled",
+        "typography.action"
+      ],
+      "binding_refs": [],
+      "state_refs": [
+        "fixture-selected",
+        "layout-selected",
+        "three-d-selected",
+        "three-d-blocked",
+        "sidus-bt-selected",
+        "empty-name"
+      ],
+      "interaction_refs": [
+        "transition.0",
+        "transition.1",
+        "transition.2",
+        "transition.3",
+        "transition.4",
+        "transition.5",
+        "transition.6"
+      ],
+      "style": {
+        "color_token": "color.text.disabled",
+        "typography_token": "typography.action"
+      },
+      "node_state": {
+        "title": "Cancel",
+        "localization_key": "general_dialog_cancel"
+      },
+      "parent": "footer-actions"
+    },
+    {
+      "id": "confirm-action",
+      "type": "primitive",
+      "role": "confirm_button",
+      "layout": {
+        "position": "flow",
+        "width": {
+          "mode": "fill"
+        },
+        "height": {
+          "mode": "fill"
+        }
+      },
+      "token_refs": [
+        "color.accent.confirm",
+        "typography.action"
+      ],
+      "binding_refs": [],
+      "state_refs": [
+        "fixture-selected",
+        "layout-selected",
+        "three-d-selected",
+        "three-d-blocked",
+        "sidus-bt-selected",
+        "empty-name"
+      ],
+      "interaction_refs": [
+        "transition.0",
+        "transition.1",
+        "transition.2",
+        "transition.3",
+        "transition.4",
+        "transition.5",
+        "transition.6"
+      ],
+      "style": {
+        "color_token": "color.accent.confirm",
+        "typography_token": "typography.action"
+      },
+      "node_state": {
+        "title": "OK",
+        "localization_key": "general_dialog_ok",
+        "enabled_when": "project_name.trimmed.isEmpty == false"
+      },
+      "parent": "footer-actions"
+    }
+  ],
+  "tokens": [
+    {
+      "id": "color.accent.confirm",
+      "value": "#46AA4BFF"
+    },
+    {
+      "id": "color.accent.pro",
+      "value": "#C4A03BFF"
+    },
+    {
+      "id": "color.accent.selection",
+      "value": "#46AA5FFF"
+    },
+    {
+      "id": "color.border.input",
+      "value": "#787878FF"
+    },
+    {
+      "id": "color.surface.alert",
+      "value": "#3A3A3AFF"
+    },
+    {
+      "id": "color.surface.card",
+      "value": "#464646FF"
+    },
+    {
+      "id": "color.text.disabled",
+      "value": "#787878FF"
+    },
+    {
+      "id": "color.text.primary",
+      "value": "#D2D2D2FF"
+    },
+    {
+      "id": "color.text.secondary",
+      "value": "#999999FF"
+    },
+    {
+      "id": "radius.alert",
+      "value": 12
+    },
+    {
+      "id": "radius.card",
+      "value": 11
+    },
+    {
+      "id": "radius.input",
+      "value": 6
+    },
+    {
+      "id": "spacing.alert.horizontal",
+      "value": 40
+    },
+    {
+      "id": "spacing.card.gap",
+      "value": 15
+    },
+    {
+      "id": "typography.action",
+      "value": {
+        "family": "SidusLinkCGeos-Medium",
+        "size": 18,
+        "line_height": 23
+      }
+    },
+    {
+      "id": "typography.badge",
+      "value": {
+        "family": "SidusLinkCGeos-Bold",
+        "size": 10,
+        "line_height": 12.5
+      }
+    },
+    {
+      "id": "typography.input",
+      "value": {
+        "family": "SidusLinkCGeos-Regular",
+        "size": 16,
+        "line_height": 20
+      }
+    },
+    {
+      "id": "typography.section",
+      "value": {
+        "family": "SidusLinkCGeos-Bold",
+        "size": 14,
+        "line_height": 18
+      }
+    },
+    {
+      "id": "typography.title",
+      "value": {
+        "family": "SidusLinkCGeos-Black",
+        "size": 20,
+        "line_height": 25
+      }
+    }
+  ],
+  "bindings": [
+    {
+      "id": "binding.create-project-alert.uikit",
+      "design_id": "Sketch/SLP_014/NewProjectAlert",
+      "reuse_policy": "required",
+      "framework": "UIKit",
+      "symbol": "AUCreateProjectAlertView",
+      "source": "Acrux/Acrux/ViewController/Project/ViewController/Project/AUCreateProjectAlertView.swift"
+    }
+  ],
+  "states": [
+    {
+      "id": "fixture-selected",
+      "data": {
+        "project_name": "Scene 01",
+        "selected_mode": "fixture",
+        "membership": "pro-or-max",
+        "confirm_enabled": true,
+        "keyboard_visible": false
+      }
+    },
+    {
+      "id": "layout-selected",
+      "data": {
+        "project_name": "Scene 01",
+        "selected_mode": "layout",
+        "membership": "pro-or-max",
+        "confirm_enabled": true,
+        "keyboard_visible": false
+      }
+    },
+    {
+      "id": "three-d-selected",
+      "data": {
+        "project_name": "Scene 01",
+        "selected_mode": "three-d",
+        "membership": "pro-or-max",
+        "subscription_gate_visible": false
+      }
+    },
+    {
+      "id": "three-d-blocked",
+      "data": {
+        "project_name": "Scene 01",
+        "selected_mode": "sidus-bt",
+        "membership": "free",
+        "subscription_gate_visible": true
+      }
+    },
+    {
+      "id": "sidus-bt-selected",
+      "data": {
+        "project_name": "Scene 01",
+        "selected_mode": "sidus-bt",
+        "membership": "any",
+        "confirm_enabled": true,
+        "keyboard_visible": false
+      }
+    },
+    {
+      "id": "empty-name",
+      "data": {
+        "project_name": "",
+        "selected_mode": "fixture",
+        "confirm_enabled": false,
+        "validation_feedback": "shake"
+      }
+    }
+  ],
+  "interactions": [
+    {
+      "id": "transition.0",
+      "event": "tap_layout",
+      "from": "fixture-selected",
+      "to": "layout-selected"
+    },
+    {
+      "id": "transition.1",
+      "event": "tap_3d_entitled",
+      "from": "fixture-selected",
+      "to": "three-d-selected"
+    },
+    {
+      "id": "transition.2",
+      "event": "tap_3d_free",
+      "from": "fixture-selected",
+      "to": "three-d-blocked",
+      "presentation": "subscription-alert"
+    },
+    {
+      "id": "transition.3",
+      "event": "tap_sidus_bt",
+      "from": "fixture-selected",
+      "to": "sidus-bt-selected"
+    },
+    {
+      "id": "transition.4",
+      "event": "clear_project_name",
+      "from": "fixture-selected",
+      "to": "empty-name"
+    },
+    {
+      "id": "transition.5",
+      "event": "enter_project_name",
+      "from": "empty-name",
+      "to": "fixture-selected"
+    },
+    {
+      "id": "transition.6",
+      "event": "confirm",
+      "from": "fixture-selected",
+      "to": "fixture-selected",
+      "side_effect": "dismiss alert, then invoke confirm(name, mode)"
+    }
+  ],
+  "responsive": [
+    {
+      "when": {
+        "available_width": ">= 810",
+        "available_height": ">= 550"
+      },
+      "layout": {
+        "width": 730,
+        "height": 470,
+        "alignment": "center"
+      }
+    },
+    {
+      "when": {
+        "available_width": "< 810 or available_height < 550"
+      },
+      "layout": {
+        "width": "min(730, max(available_width - 80, 320))",
+        "height": "min(470, max(available_height - 80, 360))",
+        "card_width": "(alert_width - 80 - 48) / 4",
+        "card_height": "min(186, alert_height - 278)"
+      }
+    }
+  ],
+  "accessibility": {
+    "dynamic_type": false,
+    "voice_over": true,
+    "reduce_motion": false
+  },
+  "code_anchors": [
+    {
+      "id": "anchor.binding.create-project-alert.uikit",
+      "symbol": "AUCreateProjectAlertView",
+      "source": "Acrux/Acrux/ViewController/Project/ViewController/Project/AUCreateProjectAlertView.swift"
+    }
+  ],
+  "unknowns": [
+    {
+      "path": "accessibility.dynamic_type",
+      "reason": "The current code and Sketch use fixed custom-font sizes; Dynamic Type behavior is not specified by the design source.",
+      "severity": "non-blocking",
+      "source": "not-provided"
+    },
+    {
+      "path": "accessibility.reduce_motion",
+      "reason": "The current keyboard translation and invalid-name shake do not expose a Reduce Motion contract.",
+      "severity": "non-blocking",
+      "source": "not-provided"
+    }
+  ],
+  "acceptance": {
+    "required_regions": [
+      "create-project-alert",
+      "name-input",
+      "entry-mode-grid",
+      "footer-actions"
+    ],
+    "max_geometry_deviation_pt": 1
+  },
+  "context_budget": {
+    "estimated_tokens": 3691,
+    "max_tokens": 12000,
+    "within_budget": true
+  }
+}

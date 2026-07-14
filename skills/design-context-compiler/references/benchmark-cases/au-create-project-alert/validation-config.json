@@ -1,0 +1,124 @@
+{
+  "config_version": "1.1.0",
+  "reference_viewport": { "width": 728, "height": 471 },
+  "reference_scale": 1,
+  "appearance": "dark",
+  "locale": "en_US",
+  "required_regions": [
+    "create-project-alert",
+    "name-input",
+    "entry-mode-grid",
+    "footer-actions"
+  ],
+  "reference_regions": [
+    {
+      "id": "create-project-alert",
+      "frame": { "x": 0, "y": 0, "width": 725, "height": 470 },
+      "runtime_type": "AUCreateProjectAlertView",
+      "accessibility_identifier": "project.alert.create.root",
+      "parent_id": null,
+      "child_ids": ["name-input", "entry-mode-grid", "footer-actions"]
+    },
+    {
+      "id": "name-input",
+      "frame": { "x": 40, "y": 61, "width": 645, "height": 40 },
+      "runtime_type": "AUSearchTextField",
+      "accessibility_identifier": "project.alert.create.input.container",
+      "parent_id": "create-project-alert",
+      "child_ids": []
+    },
+    {
+      "id": "entry-mode-grid",
+      "frame": { "x": 40, "y": 141.5, "width": 645, "height": 227 },
+      "runtime_type": "AUCreateProjectEntryCardView[]",
+      "accessibility_identifier": "project.alert.create.entry.*",
+      "parent_id": "create-project-alert",
+      "child_ids": []
+    },
+    {
+      "id": "footer-actions",
+      "frame": { "x": 0, "y": 396, "width": 727, "height": 74 },
+      "runtime_type": "UIButton[]",
+      "accessibility_identifier": "project.alert.create.cancel+project.alert.create.confirm",
+      "parent_id": "create-project-alert",
+      "child_ids": []
+    }
+  ],
+  "required_bindings": [
+    {
+      "id": "binding.create-project-alert.uikit",
+      "registry_entry_id": "component.create-project-alert",
+      "code_symbol": "AUCreateProjectAlertView",
+      "source": "Acrux/Acrux/ViewController/Project/ViewController/Project/AUCreateProjectAlertView.swift",
+      "region_id": "create-project-alert",
+      "runtime_type": "AUCreateProjectAlertView"
+    }
+  ],
+  "required_anchors": [
+    {
+      "region_id": "create-project-alert",
+      "anchors": [
+        { "id": "frame-position", "metric": "position" },
+        { "id": "frame-size", "metric": "size" }
+      ]
+    },
+    {
+      "region_id": "name-input",
+      "anchors": [
+        {
+          "id": "top-spacing",
+          "metric": "spacing",
+          "relative_to_region_id": "create-project-alert",
+          "region_edge": "min_y",
+          "relative_edge": "min_y",
+          "reference_value": 61
+        },
+        { "id": "field-size", "metric": "size" }
+      ]
+    },
+    {
+      "region_id": "entry-mode-grid",
+      "anchors": [
+        { "id": "grid-position", "metric": "position" },
+        { "id": "cell-size", "metric": "size" }
+      ]
+    },
+    {
+      "region_id": "footer-actions",
+      "anchors": [
+        {
+          "id": "bottom-spacing",
+          "metric": "spacing",
+          "relative_to_region_id": "create-project-alert",
+          "region_edge": "max_y",
+          "relative_edge": "max_y",
+          "reference_value": 0
+        },
+        { "id": "action-size", "metric": "size" }
+      ]
+    }
+  ],
+  "ignore_regions": [],
+  "pixel_diff": {
+    "max_channel_delta": 12,
+    "max_different_pixel_ratio": 0.02
+  },
+  "metrics": {
+    "layout_deviation": "max-anchor-deviation-pt",
+    "component_reuse": "required-binding-coverage",
+    "magic_numbers": "unmapped-layout-literal-count",
+    "repair_iterations": "accepted-repair-rounds",
+    "input_tokens": "actual-model-input-tokens",
+    "manual_minutes": "human-intervention-minutes"
+  },
+  "thresholds": {
+    "max_layout_deviation_pt": 2,
+    "min_component_reuse_rate": 1,
+    "max_repair_iterations": 2,
+    "max_input_tokens": 12000,
+    "max_magic_numbers": 8,
+    "max_manual_minutes": 30,
+    "min_ui_ir_layout_improvement_pt": 0.5,
+    "min_binding_reuse_gain": 0.25
+  }
+}

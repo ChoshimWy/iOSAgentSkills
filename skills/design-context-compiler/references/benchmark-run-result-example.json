@@ -1,0 +1,28 @@
+{
+  "run_result_version": "1.1.0",
+  "status": "passed",
+  "variant": "ui-ir-with-binding",
+  "model": "synthetic-model",
+  "reasoning": "synthetic",
+  "code_baseline_commit": "1111111111111111111111111111111111111111",
+  "reference_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+  "provider_run_id": "synthetic-provider-run",
+  "model_usage": { "input_tokens": 6000, "output_tokens": 1000 },
+  "metrics": {
+    "layout_deviation_pt": 0.5,
+    "component_reuse_rate": 1.0,
+    "magic_numbers": 2,
+    "repair_iterations": 1,
+    "manual_minutes": 20
+  },
+  "regions": [
+    { "id": "root", "structure": "passed", "semantic": "passed", "visual": "passed", "layout_deviation_pt": 0.5 }
+  ],
+  "evidence": {
+    "actual_screenshot": { "path": "actual.png", "sha256": "3333333333333333333333333333333333333333333333333333333333333333" },
+    "validator_probe": { "path": "validator-probe.json", "sha256": "7777777777777777777777777777777777777777777777777777777777777777" },
+    "semantic_snapshot": { "path": "semantic.json", "sha256": "4444444444444444444444444444444444444444444444444444444444444444" },
+    "visual_diff": { "path": "diff.json", "sha256": "5555555555555555555555555555555555555555555555555555555555555555" },
+    "run_observation": { "path": "run-observation.json", "sha256": "6666666666666666666666666666666666666666666666666666666666666666" }
+  }
+}

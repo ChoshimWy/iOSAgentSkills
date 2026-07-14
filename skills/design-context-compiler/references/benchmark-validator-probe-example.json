@@ -1,0 +1,35 @@
+{
+  "validator_probe_version": "1.0.0",
+  "case_id": "synthetic-fixture-detail-example",
+  "variant": "ui-ir-with-binding",
+  "validator_id": "synthetic-validator",
+  "capture_adapter_sha256": "7777777777777777777777777777777777777777777777777777777777777777",
+  "environment": {
+    "viewport": { "width": 393, "height": 852 },
+    "scale": 3,
+    "appearance": "dark",
+    "locale": "en_US"
+  },
+  "actual_screenshot": {
+    "path": "actual.png",
+    "sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+  },
+  "regions": [
+    {
+      "id": "root",
+      "frame": { "x": 0, "y": 0, "width": 393, "height": 852 },
+      "runtime_type": "FixtureDetailView",
+      "accessibility_identifier": "fixture.detail.root",
+      "visible": true,
+      "parent_id": null,
+      "child_ids": []
+    }
+  ],
+  "bindings": [
+    {
+      "id": "intensity-slider",
+      "region_id": "root",
+      "runtime_type": "SLIntensitySliderView"
+    }
+  ]
+}

@@ -1,0 +1,125 @@
+{
+  "packet_version": "1.0.0",
+  "task": {
+    "screen": "fixture-detail",
+    "target_kind": "component",
+    "target_id": "intensity",
+    "requested_states": ["default"]
+  },
+  "reference": {
+    "image": "source/reference.png",
+    "crop": { "x": 24, "y": 612, "width": 345, "height": 64 },
+    "source_hash": "sha256:example-only",
+    "viewport": { "width": 393, "height": 852 },
+    "scale": 3,
+    "appearance": "dark",
+    "locale": "en_US"
+  },
+  "environment": {
+    "platform": "iOS",
+    "ui_framework": "mixed-ui",
+    "minimum_os": "17.0",
+    "device": "iPhone16Pro"
+  },
+  "nodes": [
+    {
+      "id": "root",
+      "type": "screen",
+      "role": "fixture_detail",
+      "layout": {
+        "position": "flow",
+        "axis": "vertical",
+        "width": { "mode": "fill" },
+        "height": { "mode": "fill" }
+      },
+      "token_refs": [],
+      "binding_refs": [],
+      "state_refs": ["default", "ota-available"],
+      "interaction_refs": ["transition.0"]
+    },
+    {
+      "id": "intensity",
+      "type": "component",
+      "role": "intensity_slider",
+      "parent": "root",
+      "layout": {
+        "position": "flow",
+        "width": { "mode": "fill" },
+        "height": { "mode": "fixed", "value": 64 }
+      },
+      "style": {
+        "horizontal_margin_token": "spacing.page.horizontal"
+      },
+      "node_state": { "value": 0.8 },
+      "component": {
+        "design_id": "Control/Slider/Intensity",
+        "semantic_role": "intensity_slider",
+        "reuse_policy": "required"
+      },
+      "token_refs": ["spacing.page.horizontal"],
+      "binding_refs": ["binding.intensity.uikit"],
+      "state_refs": ["default", "ota-available"],
+      "interaction_refs": ["transition.0"]
+    }
+  ],
+  "tokens": [
+    { "id": "spacing.page.horizontal", "value": 24 }
+  ],
+  "bindings": [
+    {
+      "id": "binding.intensity.uikit",
+      "design_id": "Control/Slider/Intensity",
+      "reuse_policy": "required",
+      "framework": "UIKit",
+      "symbol": "SLIntensitySliderView",
+      "source": "Modules/LightingUI/Controls/SLIntensitySliderView.swift"
+    }
+  ],
+  "states": [
+    {
+      "id": "default",
+      "data": { "fixture": "LS600cProII", "mode": "cct", "intensity": 0.8, "cct": 5600 }
+    },
+    {
+      "id": "ota-available",
+      "data": { "otaAvailable": true, "otaUpdating": false }
+    }
+  ],
+  "interactions": [
+    {
+      "id": "transition.0",
+      "event": "tap_ota",
+      "from": "ota-available",
+      "to": "default",
+      "presentation": "confirmation-sheet"
+    }
+  ],
+  "responsive": [
+    {
+      "when": { "horizontalSizeClass": "regular" },
+      "layout": { "maxWidth": 600, "horizontalMargin": 40 }
+    }
+  ],
+  "accessibility": {
+    "dynamic_type": true,
+    "voice_over": true,
+    "reduce_motion": true
+  },
+  "code_anchors": [
+    {
+      "id": "anchor.binding.intensity.uikit",
+      "symbol": "SLIntensitySliderView",
+      "source": "Modules/LightingUI/Controls/SLIntensitySliderView.swift"
+    }
+  ],
+  "unknowns": [],
+  "acceptance": {
+    "required_regions": ["intensity"],
+    "max_geometry_deviation_pt": 1
+  },
+  "context_budget": {
+    "estimated_tokens": 591,
+    "max_tokens": 6000,
+    "within_budget": true
+  }
+}

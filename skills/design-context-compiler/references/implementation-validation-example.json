@@ -1,0 +1,21 @@
+{
+  "validation_artifact_version": "1.0.0",
+  "kind": "semantic-visual-validation",
+  "screen": "fixture-detail",
+  "region": "intensity",
+  "status": "passed",
+  "source_hash": "sha256:example-only",
+  "environment": {
+    "platform": "iOS",
+    "device": "iPhone16Pro",
+    "viewport": { "width": 393, "height": 852 },
+    "scale": 3,
+    "appearance": "dark",
+    "locale": "en_US"
+  },
+  "checks": {
+    "structure": "passed",
+    "semantic": "passed",
+    "visual": "passed"
+  }
+}

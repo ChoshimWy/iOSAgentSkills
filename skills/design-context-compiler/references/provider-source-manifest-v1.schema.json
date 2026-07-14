@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ios-agent-skills.local/schemas/provider-source-manifest-v1.schema.json",
+  "title": "Design Context Provider Source Manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "provider_source_manifest_version",
+    "mode",
+    "code_baseline_commit",
+    "scope_entries",
+    "file_count",
+    "total_bytes",
+    "content_sha256",
+    "files"
+  ],
+  "properties": {
+    "provider_source_manifest_version": { "const": "1.0.0" },
+    "mode": { "const": "allowlist" },
+    "code_baseline_commit": { "type": "string", "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$" },
+    "scope_entries": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "path"],
+        "properties": {
+          "kind": { "enum": ["file", "directory"] },
+          "path": { "type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\u0000]+$" }
+        }
+      }
+    },
+    "file_count": { "type": "integer", "minimum": 1 },
+    "total_bytes": { "type": "integer", "minimum": 1 },
+    "content_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "files": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "git_mode", "blob_sha1", "bytes"],
+        "properties": {
+          "path": { "type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\u0000]+$" },
+          "git_mode": { "enum": ["100644", "100755"] },
+          "blob_sha1": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+          "bytes": { "type": "integer", "minimum": 0 }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,271 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ios-agent-skills.local/schemas/ui-ir-v1.1.schema.json",
+  "title": "Canonical iOS UI IR v1.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "source",
+    "reference",
+    "environment",
+    "screen",
+    "state",
+    "tokens",
+    "tree",
+    "responsive",
+    "accessibility",
+    "validation",
+    "unknowns"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.1.0" },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "document_id", "node_id", "version", "captured_at", "parser_version", "evidence_hash"],
+      "properties": {
+        "kind": { "enum": ["figma", "sketch", "manual-evidence"] },
+        "document_id": { "type": "string", "minLength": 1 },
+        "node_id": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 },
+        "captured_at": { "type": "string", "format": "date-time" },
+        "parser_version": { "type": "string", "minLength": 1 },
+        "evidence_hash": { "type": "string", "minLength": 8 }
+      }
+    },
+    "reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["image", "viewport", "scale", "appearance", "locale"],
+      "properties": {
+        "image": { "type": "string", "minLength": 1 },
+        "viewport": { "$ref": "#/$defs/size" },
+        "scale": { "type": "number", "exclusiveMinimum": 0 },
+        "appearance": { "enum": ["light", "dark"] },
+        "locale": { "type": "string", "minLength": 2 }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["platform", "ui_framework", "minimum_os", "device"],
+      "properties": {
+        "platform": { "enum": ["iOS", "iPadOS"] },
+        "ui_framework": { "enum": ["UIKit", "SwiftUI", "mixed-ui"] },
+        "minimum_os": { "type": "string", "minLength": 1 },
+        "device": { "type": "string", "minLength": 1 }
+      }
+    },
+    "screen": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "name": { "type": "string", "minLength": 1 }
+      }
+    },
+    "state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scenes", "transitions"],
+      "properties": {
+        "scenes": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/scene" }
+        },
+        "transitions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/transition" }
+        }
+      }
+    },
+    "tokens": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": { "$ref": "#/$defs/token" }
+      }
+    },
+    "tree": { "$ref": "#/$defs/node" },
+    "responsive": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["when", "layout"],
+        "properties": {
+          "when": { "type": "object" },
+          "layout": { "type": "object" }
+        }
+      }
+    },
+    "accessibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dynamic_type", "voice_over", "reduce_motion"],
+      "properties": {
+        "dynamic_type": { "type": "boolean" },
+        "voice_over": { "type": "boolean" },
+        "reduce_motion": { "type": "boolean" }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["similarity_threshold", "required_regions", "ignore_regions"],
+      "properties": {
+        "similarity_threshold": { "type": "number", "minimum": 0, "maximum": 1 },
+        "required_regions": { "type": "array", "items": { "type": "string" } },
+        "ignore_regions": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "unknowns": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/unknown" }
+    }
+  },
+  "$defs": {
+    "identifier": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$" },
+    "size": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width", "height"],
+      "properties": {
+        "width": { "type": "number", "exclusiveMinimum": 0 },
+        "height": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "confidence"],
+      "properties": {
+        "source": { "enum": ["design-variable", "design-node", "component-registry", "manual-contract", "inferred", "not-provided"] },
+        "confidence": { "enum": ["exact", "high", "medium", "low", "unknown"] }
+      }
+    },
+    "token": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["value", "provenance"],
+      "properties": {
+        "value": {},
+        "provenance": { "$ref": "#/$defs/provenance" }
+      }
+    },
+    "dimension": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode"],
+      "properties": {
+        "mode": { "enum": ["fill", "fixed", "intrinsic", "hug", "min", "max"] },
+        "value": { "type": "number" },
+        "relative_to": { "type": "string" },
+        "priority": { "type": "number", "minimum": 1, "maximum": 1000 }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "mode": { "const": "fixed" } },
+            "required": ["mode"]
+          },
+          "then": { "required": ["value"] }
+        }
+      ]
+    },
+    "layout": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["position", "width", "height"],
+      "properties": {
+        "position": { "enum": ["flow", "overlay", "absolute", "sticky"] },
+        "axis": { "enum": ["horizontal", "vertical", "z"] },
+        "width": { "$ref": "#/$defs/dimension" },
+        "height": { "$ref": "#/$defs/dimension" },
+        "reason": { "type": "string" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "position": { "const": "absolute" } },
+            "required": ["position"]
+          },
+          "then": { "required": ["reason"] }
+        }
+      ]
+    },
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["framework", "symbol", "source"],
+      "properties": {
+        "framework": { "enum": ["UIKit", "SwiftUI"] },
+        "symbol": { "type": "string", "minLength": 1 },
+        "source": { "type": "string", "minLength": 1 },
+        "availability": { "type": "string" }
+      }
+    },
+    "component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["design_id", "semantic_role", "reuse_policy", "bindings"],
+      "properties": {
+        "design_id": { "type": "string", "minLength": 1 },
+        "semantic_role": { "type": "string", "minLength": 1 },
+        "reuse_policy": { "enum": ["required", "preferred", "native", "custom-allowed", "asset-only"] },
+        "bindings": { "type": "array", "items": { "$ref": "#/$defs/binding" } }
+      }
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "role", "layout", "children"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "type": { "enum": ["screen", "region", "component", "primitive"] },
+        "role": { "type": "string", "minLength": 1 },
+        "layout": { "$ref": "#/$defs/layout" },
+        "style": { "type": "object" },
+        "component": { "$ref": "#/$defs/component" },
+        "state": { "type": "object" },
+        "provenance": { "$ref": "#/$defs/provenance" },
+        "children": { "type": "array", "items": { "$ref": "#/$defs/node" } }
+      }
+    },
+    "scene": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "data"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "data": { "type": "object" }
+      }
+    },
+    "transition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["event", "from", "to"],
+      "properties": {
+        "event": { "type": "string", "minLength": 1 },
+        "from": { "$ref": "#/$defs/identifier" },
+        "to": { "$ref": "#/$defs/identifier" },
+        "side_effect": { "type": "string" },
+        "presentation": { "type": "string" },
+        "animation": { "type": "string" }
+      }
+    },
+    "unknown": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "reason", "severity", "source"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "reason": { "type": "string", "minLength": 1 },
+        "severity": { "enum": ["blocking", "non-blocking"] },
+        "source": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

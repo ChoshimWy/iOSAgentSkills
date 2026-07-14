@@ -1,6 +1,6 @@
 ---
 name: ui-ux-design-system
-description: UI/UX 设计系统与开放式设计探索 Skill。用于视觉方向、设计系统、交互规则、色板、字体、无障碍、设计评审、原型方向、HTML review 优先的设计交付建议；也用于读取 Sketch 源文件 / SketchMCP / 蓝湖标注并整理 Design-to-Code Spec，帮助 SwiftUI/UIKit/Web 高保真实现；若需要正式 HTML 设计说明、PRD 或评审文档，最终文档生成交给 html-docs；不要用于 SwiftUI/UIKit API 级落地实现、构建配置、性能取证或外部 Open Design 工具安装流程。
+description: UI/UX 设计系统与开放式设计探索 Skill。用于视觉方向、设计系统、交互规则、色板、字体、无障碍、设计评审、原型方向、HTML review 优先的设计交付建议；也用于读取 Sketch 源文件 / SketchMCP / 蓝湖标注并整理可追溯 Design-to-Code source packet，iOS 高保真链路随后交给 design-context-compiler 生成 Canonical UI IR / Agent Packet；若需要正式 HTML 文档交给 html-docs。不要用于 SwiftUI/UIKit API 级实现、设计上下文编译、构建配置或性能取证。
 ---
 
 # UI/UX Design System
@@ -20,7 +20,7 @@ Guide UI/UX direction, design systems, design exploration, accessibility, protot
 - 交互规则。
 - 无障碍和可读性建议。
 - 原型方向选择。
-- Sketch 源文件 / SketchMCP / 蓝湖标注到 Design-to-Code Spec 的拆解。
+- Sketch 源文件 / SketchMCP / 蓝湖标注到可追溯 Design Evidence / Design-to-Code source packet 的拆解。
 - HTML review / 设计文档优先的交付建议。
 - 设计评审与风险提示。
 
@@ -46,7 +46,7 @@ Use this Skill when the user asks for:
 - Prototype planning before implementation.
 - Product UI direction for iOS, web, dashboard, landing page, or docs.
 - Sketch source file, SketchMCP, Lanhu/Figma inspect, or exported design asset analysis before coding.
-- Design-to-Code Spec generation for high-fidelity implementation handoff.
+- Design Evidence / Design-to-Code source packet generation for high-fidelity compilation handoff.
 - HTML review first, then optional PDF/PPTX/export discussion.
 
 ## When Not to Use
@@ -113,7 +113,7 @@ If the user already provided enough context, do not ask again.
 ### Sketch / Design Source Rules
 
 - When the input is a Sketch file, SketchMCP endpoint, Lanhu/Figma inspect link, or exported PNG, select `sketch-to-code-spec` mode before implementation.
-- First produce a `Design-to-Code Spec`; do not write SwiftUI/UIKit/Web code in the same step unless the user explicitly asks to continue.
+- First produce a traceable `Design-to-Code source packet`; for iOS, route it through `design-context-compiler` before SwiftUI/UIKit implementation.
 - Read `references/sketch-to-code-spec.md` before using SketchMCP or converting a design source into implementation guidance.
 - Prefer source-of-truth data over visual guessing: document info, artboard size, layer tree, text styles, layer styles, swatches, symbols, exported assets, and screenshots.
 - If using SketchMCP, call its `get_guide(topic: "mcp")` first, then inspect the document with `get_document_info`, target frame with `get_layer_tree_summary`, and visual state with `get_screenshot`.
@@ -173,7 +173,7 @@ Return compact structured output:
   "visual_acceptance": [],
   "unknowns": [],
   "prototype_scope": [],
-  "implementation_handoff": "ios-feature-implementation(swiftui|uikit|mixed-ui) | html-docs | none",
+  "implementation_handoff": "design-context-compiler | ios-feature-implementation(swiftui|uikit|mixed-ui) | html-docs | none",
   "known_risks": [],
   "next_action": "prototype | implement | document | review | blocked"
 }
@@ -216,10 +216,12 @@ Escalate to `html-docs` when:
 - The output should become a formal HTML design spec, PRD, or review document.
 - The user asks to generate, save, publish, or archive the design output as HTML.
 
-Escalate to `ios-feature-implementation` after `sketch-to-code-spec` when:
+Escalate to `design-context-compiler` after `sketch-to-code-spec` when:
 
-- The Design-to-Code Spec is complete enough for SwiftUI / UIKit implementation.
-- The user explicitly asks to proceed from design extraction to code.
+- The Design-to-Code source packet has a traceable file/page/frame/node and design evidence.
+- UIKit / SwiftUI implementation needs Canonical UI IR, component bindings or a task-scoped Agent Packet.
+
+Escalate to `ios-feature-implementation` only after `design-context-compiler` returns a validated Agent Packet, or when the task does not originate from an external design source.
 
 Escalate to `ios-automation` when:
 
@@ -267,12 +269,13 @@ Next action: prototype | implement | document | review | blocked
 - `data/charts.csv`
 - `data/ux-guidelines.csv`
 - `data/ui-reasoning.csv`
-- `references/sketch-to-code-spec.md`: Sketch / SketchMCP / inspect-link to Design-to-Code Spec extraction workflow, required data fields, output contract, and visual acceptance loop.
+- `references/sketch-to-code-spec.md`: Sketch / SketchMCP / inspect-link to Design Evidence / source packet extraction workflow, required data fields, output contract, and visual acceptance loop.
 
 ## Relationship to Other Skills
 
 - Visual direction, design exploration, design review, tokens, typography, color, accessibility: use this Skill.
-- Sketch source file / SketchMCP / Lanhu/Figma inspect extraction and Design-to-Code Spec generation: use this Skill, then hand off implementation.
+- Sketch source file / SketchMCP / Lanhu/Figma inspect extraction and Design-to-Code source packet generation: use this Skill, then hand off to `design-context-compiler` for iOS.
+- Canonical UI IR, iOS component bindings, context budget and Agent Packet: `design-context-compiler`.
 - SwiftUI implementation: `ios-feature-implementation` with `swiftui` mode.
 - UIKit implementation: `ios-feature-implementation` with `uikit` mode.
 - Liquid Glass API implementation: `ios-feature-implementation` with `liquid-glass` mode.

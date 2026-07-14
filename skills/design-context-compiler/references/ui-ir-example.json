@@ -1,0 +1,152 @@
+{
+  "schema_version": "1.1.0",
+  "source": {
+    "kind": "manual-evidence",
+    "document_id": "fixture-detail-design",
+    "node_id": "fixture-detail",
+    "version": "example-v1",
+    "captured_at": "2026-07-13T12:00:00+08:00",
+    "parser_version": "manual-example-1.0.0",
+    "evidence_hash": "sha256:example-only"
+  },
+  "reference": {
+    "image": "source/reference.png",
+    "viewport": { "width": 393, "height": 852 },
+    "scale": 3,
+    "appearance": "dark",
+    "locale": "en_US"
+  },
+  "environment": {
+    "platform": "iOS",
+    "ui_framework": "mixed-ui",
+    "minimum_os": "17.0",
+    "device": "iPhone16Pro"
+  },
+  "screen": {
+    "id": "fixture-detail",
+    "name": "Fixture Detail"
+  },
+  "state": {
+    "scenes": [
+      {
+        "id": "default",
+        "data": {
+          "fixture": "LS600cProII",
+          "mode": "cct",
+          "intensity": 0.8,
+          "cct": 5600
+        }
+      },
+      {
+        "id": "ota-available",
+        "data": {
+          "otaAvailable": true,
+          "otaUpdating": false
+        }
+      }
+    ],
+    "transitions": [
+      {
+        "event": "tap_ota",
+        "from": "ota-available",
+        "to": "default",
+        "presentation": "confirmation-sheet"
+      }
+    ]
+  },
+  "tokens": {
+    "color": {
+      "surface.primary": {
+        "value": "#1C1C1EFF",
+        "provenance": {
+          "source": "design-variable",
+          "confidence": "exact"
+        }
+      }
+    },
+    "spacing": {
+      "page.horizontal": {
+        "value": 24,
+        "provenance": {
+          "source": "design-node",
+          "confidence": "exact"
+        }
+      }
+    }
+  },
+  "tree": {
+    "id": "root",
+    "type": "screen",
+    "role": "fixture_detail",
+    "layout": {
+      "position": "flow",
+      "axis": "vertical",
+      "width": { "mode": "fill" },
+      "height": { "mode": "fill" }
+    },
+    "provenance": {
+      "source": "manual-contract",
+      "confidence": "high"
+    },
+    "children": [
+      {
+        "id": "intensity",
+        "type": "component",
+        "role": "intensity_slider",
+        "layout": {
+          "position": "flow",
+          "width": { "mode": "fill" },
+          "height": { "mode": "fixed", "value": 64 }
+        },
+        "style": {
+          "horizontal_margin_token": "spacing.page.horizontal"
+        },
+        "component": {
+          "design_id": "Control/Slider/Intensity",
+          "semantic_role": "intensity_slider",
+          "reuse_policy": "required",
+          "bindings": [
+            {
+              "framework": "UIKit",
+              "symbol": "SLIntensitySliderView",
+              "source": "Modules/LightingUI/Controls/SLIntensitySliderView.swift",
+              "availability": "iOS 17.0+"
+            }
+          ]
+        },
+        "state": {
+          "value": 0.8
+        },
+        "provenance": {
+          "source": "component-registry",
+          "confidence": "high"
+        },
+        "children": []
+      }
+    ]
+  },
+  "responsive": [
+    {
+      "when": { "horizontalSizeClass": "regular" },
+      "layout": { "maxWidth": 600, "horizontalMargin": 40 }
+    }
+  ],
+  "accessibility": {
+    "dynamic_type": true,
+    "voice_over": true,
+    "reduce_motion": true
+  },
+  "validation": {
+    "similarity_threshold": 0.985,
+    "required_regions": ["intensity"],
+    "ignore_regions": ["status_bar.time", "home_indicator"]
+  },
+  "unknowns": [
+    {
+      "path": "tree.intensity.motion.duration",
+      "reason": "The design source does not provide a motion duration.",
+      "severity": "non-blocking",
+      "source": "not-provided"
+    }
+  ]
+}

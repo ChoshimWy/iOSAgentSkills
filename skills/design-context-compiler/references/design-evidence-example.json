@@ -1,0 +1,44 @@
+{
+  "evidence_version": "1.0.0",
+  "source": {
+    "kind": "manual-evidence",
+    "document_id": "fixture-detail-design",
+    "node_id": "fixture-detail",
+    "version": "example-v1",
+    "captured_at": "2026-07-13T12:00:00+08:00",
+    "adapter": "manual-example",
+    "adapter_version": "1.0.0"
+  },
+  "snapshot": {
+    "reference_image": "source/reference.png",
+    "raw_export": null,
+    "viewport": { "width": 393, "height": 852 },
+    "scale": 3,
+    "appearance": "dark",
+    "locale": "en_US",
+    "evidence_hash": "sha256:example-only"
+  },
+  "extracted": {
+    "layers": [
+      { "id": "root", "type": "screen", "name": "Fixture Detail" },
+      { "id": "intensity", "type": "component", "name": "Control/Slider/Intensity" }
+    ],
+    "variables": [
+      { "id": "spacing.page.horizontal", "value": 24 }
+    ],
+    "styles": [],
+    "components": [
+      { "id": "Control/Slider/Intensity", "instance_node_id": "intensity" }
+    ],
+    "assets": [],
+    "interactions": []
+  },
+  "unknowns": [
+    {
+      "path": "extracted.interactions",
+      "reason": "The source packet does not include motion timing.",
+      "severity": "non-blocking",
+      "source": "not-provided"
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ios-agent-skills.local/schemas/design-evidence-v1.schema.json",
+  "title": "Design Evidence Snapshot v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["evidence_version", "source", "snapshot", "extracted", "unknowns"],
+  "properties": {
+    "evidence_version": { "const": "1.0.0" },
+    "source": {
+      "type": "object",
+      "required": ["kind", "document_id", "node_id", "version", "captured_at", "adapter", "adapter_version"],
+      "properties": {
+        "kind": { "enum": ["figma", "sketch", "manual-evidence"] },
+        "document_id": { "type": "string", "minLength": 1 },
+        "node_id": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 },
+        "captured_at": { "type": "string", "format": "date-time" },
+        "adapter": { "type": "string", "minLength": 1 },
+        "adapter_version": { "type": "string", "minLength": 1 }
+      }
+    },
+    "snapshot": {
+      "type": "object",
+      "required": ["reference_image", "viewport", "scale", "appearance", "locale", "evidence_hash"],
+      "properties": {
+        "reference_image": { "type": "string", "minLength": 1 },
+        "raw_export": { "type": ["string", "null"] },
+        "viewport": {
+          "type": "object",
+          "required": ["width", "height"],
+          "properties": {
+            "width": { "type": "number", "exclusiveMinimum": 0 },
+            "height": { "type": "number", "exclusiveMinimum": 0 }
+          }
+        },
+        "scale": { "type": "number", "exclusiveMinimum": 0 },
+        "appearance": { "enum": ["light", "dark"] },
+        "locale": { "type": "string", "minLength": 2 },
+        "evidence_hash": { "type": "string", "minLength": 8 }
+      }
+    },
+    "extracted": {
+      "type": "object",
+      "required": ["layers", "variables", "styles", "components", "assets", "interactions"],
+      "properties": {
+        "layers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "type", "name"],
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "type": { "type": "string", "minLength": 1 },
+              "name": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "variables": { "type": "array", "items": { "type": "object" } },
+        "styles": { "type": "array", "items": { "type": "object" } },
+        "components": { "type": "array", "items": { "type": "object" } },
+        "assets": { "type": "array", "items": { "type": "object" } },
+        "interactions": { "type": "array", "items": { "type": "object" } }
+      }
+    },
+    "unknowns": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "reason", "severity", "source"],
+        "properties": {
+          "path": { "type": "string" },
+          "reason": { "type": "string" },
+          "severity": { "enum": ["blocking", "non-blocking"] },
+          "source": { "type": "string" }
+        }
+      }
+    }
+  }
+}

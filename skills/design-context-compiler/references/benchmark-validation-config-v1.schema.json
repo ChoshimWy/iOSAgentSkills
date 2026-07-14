@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ios-agent-skills.local/schemas/benchmark-validation-config-v1.schema.json",
+  "title": "Design Context Benchmark Validation Config v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "config_version",
+    "reference_viewport",
+    "reference_scale",
+    "appearance",
+    "locale",
+    "required_regions",
+    "reference_regions",
+    "required_bindings",
+    "required_anchors",
+    "ignore_regions",
+    "pixel_diff",
+    "metrics",
+    "thresholds"
+  ],
+  "properties": {
+    "config_version": { "const": "1.1.0" },
+    "reference_viewport": { "$ref": "#/$defs/size" },
+    "reference_scale": { "type": "number", "exclusiveMinimum": 0 },
+    "appearance": { "enum": ["light", "dark"] },
+    "locale": { "type": "string", "minLength": 2 },
+    "required_regions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/identifier" }
+    },
+    "reference_regions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "frame", "runtime_type", "accessibility_identifier", "parent_id", "child_ids"],
+        "properties": {
+          "id": { "$ref": "#/$defs/identifier" },
+          "frame": { "$ref": "#/$defs/frame" },
+          "runtime_type": { "type": "string", "minLength": 1 },
+          "accessibility_identifier": { "type": "string", "minLength": 1 },
+          "parent_id": { "oneOf": [{ "$ref": "#/$defs/identifier" }, { "type": "null" }] },
+          "child_ids": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": { "$ref": "#/$defs/identifier" }
+          }
+        }
+      }
+    },
+    "required_bindings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "registry_entry_id", "code_symbol", "source", "region_id", "runtime_type"],
+        "properties": {
+          "id": { "$ref": "#/$defs/identifier" },
+          "registry_entry_id": { "$ref": "#/$defs/identifier" },
+          "code_symbol": { "type": "string", "minLength": 1 },
+          "source": { "type": "string", "minLength": 1 },
+          "region_id": { "$ref": "#/$defs/identifier" },
+          "runtime_type": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "required_anchors": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["region_id", "anchors"],
+        "properties": {
+          "region_id": { "$ref": "#/$defs/identifier" },
+          "anchors": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "metric"],
+              "properties": {
+                "id": { "$ref": "#/$defs/identifier" },
+                "metric": { "enum": ["position", "size", "spacing"] },
+                "relative_to_region_id": { "$ref": "#/$defs/identifier" },
+                "region_edge": { "$ref": "#/$defs/edge" },
+                "relative_edge": { "$ref": "#/$defs/edge" },
+                "reference_value": { "type": "number" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "ignore_regions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "frame"],
+        "properties": {
+          "id": { "$ref": "#/$defs/identifier" },
+          "frame": { "$ref": "#/$defs/frame" }
+        }
+      }
+    },
+    "pixel_diff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_channel_delta", "max_different_pixel_ratio"],
+      "properties": {
+        "max_channel_delta": { "type": "integer", "minimum": 0, "maximum": 255 },
+        "max_different_pixel_ratio": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["layout_deviation", "component_reuse", "magic_numbers", "repair_iterations", "input_tokens", "manual_minutes"],
+      "properties": {
+        "layout_deviation": { "type": "string", "minLength": 1 },
+        "component_reuse": { "type": "string", "minLength": 1 },
+        "magic_numbers": { "type": "string", "minLength": 1 },
+        "repair_iterations": { "type": "string", "minLength": 1 },
+        "input_tokens": { "type": "string", "minLength": 1 },
+        "manual_minutes": { "type": "string", "minLength": 1 }
+      }
+    },
+    "thresholds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_layout_deviation_pt",
+        "min_component_reuse_rate",
+        "max_repair_iterations",
+        "max_input_tokens",
+        "max_magic_numbers",
+        "max_manual_minutes",
+        "min_ui_ir_layout_improvement_pt",
+        "min_binding_reuse_gain"
+      ],
+      "properties": {
+        "max_layout_deviation_pt": { "type": "number", "minimum": 0 },
+        "min_component_reuse_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "max_repair_iterations": { "type": "integer", "minimum": 0 },
+        "max_input_tokens": { "type": "integer", "minimum": 1 },
+        "max_magic_numbers": { "type": "integer", "minimum": 0 },
+        "max_manual_minutes": { "type": "number", "minimum": 0 },
+        "min_ui_ir_layout_improvement_pt": { "type": "number", "minimum": 0 },
+        "min_binding_reuse_gain": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    }
+  },
+  "$defs": {
+    "identifier": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$" },
+    "size": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width", "height"],
+      "properties": {
+        "width": { "type": "number", "exclusiveMinimum": 0 },
+        "height": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+    "frame": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "width", "height"],
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "width": { "type": "number", "minimum": 0 },
+        "height": { "type": "number", "minimum": 0 }
+      }
+    },
+    "edge": { "enum": ["min_x", "mid_x", "max_x", "min_y", "mid_y", "max_y"] }
+  }
+}

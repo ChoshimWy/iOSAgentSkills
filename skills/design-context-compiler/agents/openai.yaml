@@ -1,0 +1,4 @@
+interface:
+  display_name: "Design Context Compiler"
+  short_description: "把设计证据编译为低 Token 的 iOS UI IR 与 Agent Packet"
+  default_prompt: "使用 $design-context-compiler 将明确的 Figma/Sketch 设计证据归一化为 Canonical UI IR，解析 iOS Component Registry，并按当前 screen、region 或 component 生成受 context budget 约束的 Agent Packet；不要直接编写 UIKit/SwiftUI 产品代码，完成后交给 $ios-feature-implementation。"

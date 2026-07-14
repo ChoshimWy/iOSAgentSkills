@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ios-agent-skills.local/schemas/component-registry-v1.schema.json",
+  "title": "iOS Design Component Registry v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["registry_version", "generated_at", "source_roots", "entries"],
+  "properties": {
+    "registry_version": { "const": "1.0.0" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "source_roots": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "entries": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/entry" }
+    }
+  },
+  "$defs": {
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "framework", "symbol", "module", "source", "declaration_hash"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "framework": { "enum": ["UIKit", "SwiftUI"] },
+        "symbol": { "type": "string", "minLength": 1 },
+        "module": { "type": "string", "minLength": 1 },
+        "source": { "type": "string", "minLength": 1 },
+        "availability": { "type": "string" },
+        "declaration_line": { "type": "integer", "minimum": 1 },
+        "declaration_hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "confidence"],
+      "properties": {
+        "source": { "enum": ["source-index", "manual-contract"] },
+        "confidence": { "enum": ["exact", "heuristic"] }
+      }
+    },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "design_id", "semantic_role", "reuse_policy", "status", "bindings", "provenance"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "design_id": { "type": "string", "minLength": 1 },
+        "semantic_role": { "type": "string", "minLength": 1 },
+        "reuse_policy": { "enum": ["required", "preferred", "native", "custom-allowed", "asset-only"] },
+        "status": { "enum": ["active", "stale", "pending-review"] },
+        "bindings": { "type": "array", "items": { "$ref": "#/$defs/binding" } },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "status": { "const": "active" } },
+            "required": ["status"]
+          },
+          "then": {
+            "properties": {
+              "provenance": {
+                "type": "object",
+                "properties": {
+                  "source": { "const": "manual-contract" },
+                  "confidence": { "const": "exact" }
+                },
+                "required": ["source", "confidence"]
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

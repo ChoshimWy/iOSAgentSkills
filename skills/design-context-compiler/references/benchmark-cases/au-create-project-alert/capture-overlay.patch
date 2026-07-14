@@ -1,0 +1,267 @@
+diff --git a/Acrux/Acrux/Other/AppDelegate.swift b/Acrux/Acrux/Other/AppDelegate.swift
+index e3897071c..d61d3832d 100644
+--- a/Acrux/Acrux/Other/AppDelegate.swift
++++ b/Acrux/Acrux/Other/AppDelegate.swift
+@@ -15,6 +15,7 @@ import SLAppServiceKit
+ 
+ enum AUUITestLaunchContext {
+     static let cueSmokeArgument = "-AcruxUICueSmoke"
++    static let designCaptureArgument = "-AcruxUIDesignCapture"
+ 
+     static var arguments: Set<String> {
+         Set(ProcessInfo.processInfo.arguments)
+@@ -24,8 +25,12 @@ enum AUUITestLaunchContext {
+         arguments.contains(cueSmokeArgument)
+     }
+ 
++    static var isDesignCaptureEnabled: Bool {
++        arguments.contains(designCaptureArgument)
++    }
++
+     static var isActive: Bool {
+-        isCueSmokeEnabled
++        isCueSmokeEnabled || isDesignCaptureEnabled
+     }
+ }
+ 
+@@ -36,7 +41,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
+     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+         // Override point for customization after application launch.
+ 
+-        if AUUITestLaunchContext.isActive {
++        if AUUITestLaunchContext.isDesignCaptureEnabled {
++            initConfig(skipRuntimeObservers: true, skipPermissionChecks: true)
++            return true
++        } else if AUUITestLaunchContext.isActive {
+             initConfig(skipRuntimeObservers: true, skipPermissionChecks: true)
+         } else {
+             initConfig()
+diff --git a/Acrux/Acrux/Other/SceneDelegate.swift b/Acrux/Acrux/Other/SceneDelegate.swift
+index 9605581fe..c9e11ddc4 100644
+--- a/Acrux/Acrux/Other/SceneDelegate.swift
++++ b/Acrux/Acrux/Other/SceneDelegate.swift
+@@ -37,7 +37,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+ 
+     func initViewController() {
+         let nav: UIViewController
+-        if AUUITestLaunchContext.isCueSmokeEnabled {
++        if AUUITestLaunchContext.isDesignCaptureEnabled {
++            nav = AUCreateProjectDesignCaptureViewController()
++        } else if AUUITestLaunchContext.isCueSmokeEnabled {
+             nav = UINavigationController(rootViewController: AUCueUITestHarnessViewController())
+         } else {
+             nav = AUAPPManagerController()
+@@ -53,6 +55,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+     }
+     
+     func loadData() {
++        guard !AUUITestLaunchContext.isDesignCaptureEnabled else { return }
+         if !AUUITestLaunchContext.isActive {
+             self.loadPrivacyData()
+         }
+@@ -354,6 +357,176 @@ extension SceneDelegate {
+     
+ }
+ 
++private final class AUCreateProjectDesignCaptureViewController: UIViewController {
++    private let canvasSize = CGSize(width: 728, height: 471)
++    private let readyLabel = UILabel()
++    private lazy var alertView = AUCreateProjectAlertView(text: "Scene 01") { _, _ in }
++
++    override func viewDidLoad() {
++        super.viewDidLoad()
++        overrideUserInterfaceStyle = .dark
++        view.backgroundColor = .black
++        alertView.frame.origin = .zero
++        view.addSubview(alertView)
++
++        readyLabel.accessibilityIdentifier = "design.capture.pending"
++        readyLabel.isAccessibilityElement = true
++        readyLabel.textColor = .white
++        readyLabel.frame = CGRect(x: 0, y: canvasSize.height + 8, width: 200, height: 30)
++        view.addSubview(readyLabel)
++    }
++
++    override func viewDidAppear(_ animated: Bool) {
++        super.viewDidAppear(animated)
++        DispatchQueue.main.async { [weak self] in
++            self?.writeCapture()
++        }
++    }
++
++    private func writeCapture() {
++        alertView.setNeedsLayout()
++        alertView.layoutIfNeeded()
++        guard
++            let nameInput = descendant(identifier: "project.alert.create.input.container", in: alertView),
++            let cancel = descendant(identifier: "project.alert.create.cancel", in: alertView),
++            let confirm = descendant(identifier: "project.alert.create.confirm", in: alertView)
++        else {
++            setCaptureError()
++            return
++        }
++        let entries = (0..<4).compactMap {
++            descendant(identifier: "project.alert.create.entry.\($0)", in: alertView)
++        }
++        guard entries.count == 4 else {
++            setCaptureError()
++            return
++        }
++        guard let fixtureEntry = entries[0] as? UIControl else {
++            setCaptureError()
++            return
++        }
++        fixtureEntry.sendActions(for: .touchUpInside)
++        alertView.layoutIfNeeded()
++        guard fixtureEntry.isSelected,
++              entries.dropFirst().allSatisfy({ ($0 as? UIControl)?.isSelected == false }) else {
++            setCaptureError()
++            return
++        }
++
++        let format = UIGraphicsImageRendererFormat()
++        format.scale = 1
++        format.opaque = true
++        let image = UIGraphicsImageRenderer(size: canvasSize, format: format).image { context in
++            UIColor.black.setFill()
++            context.fill(CGRect(origin: .zero, size: canvasSize))
++            alertView.layer.render(in: context.cgContext)
++        }
++        guard let png = image.pngData() else {
++            setCaptureError()
++            return
++        }
++
++        let regions: [[String: Any]] = [
++            region(id: "create-project-alert", view: alertView, root: alertView,
++                   runtimeType: String(describing: type(of: alertView)),
++                   accessibilityIdentifier: alertView.accessibilityIdentifier ?? "",
++                   parentID: nil, childIDs: ["name-input", "entry-mode-grid", "footer-actions"]),
++            region(id: "name-input", view: nameInput, root: alertView,
++                   runtimeType: String(describing: type(of: nameInput)),
++                   accessibilityIdentifier: nameInput.accessibilityIdentifier ?? "",
++                   parentID: "create-project-alert", childIDs: []),
++            unionRegion(id: "entry-mode-grid", views: entries, root: alertView,
++                        runtimeType: "\(String(describing: type(of: entries[0])))[]",
++                        accessibilityIdentifier: "project.alert.create.entry.*"),
++            unionRegion(id: "footer-actions", views: [cancel, confirm], root: alertView,
++                        runtimeType: "\(String(describing: type(of: cancel)))[]",
++                        accessibilityIdentifier: "project.alert.create.cancel+project.alert.create.confirm")
++        ]
++        let payload: [String: Any] = [
++            "capture_raw_version": "1.0.0",
++            "environment": [
++                "viewport": ["width": Int(canvasSize.width), "height": Int(canvasSize.height)],
++                "scale": 1,
++                "appearance": "dark",
++                "locale": "en_US"
++            ],
++            "state": ["id": "fixture-selected", "selected_entry_index": 0],
++            "regions": regions,
++            "bindings": [[
++                "id": "binding.create-project-alert.uikit",
++                "region_id": "create-project-alert",
++                "runtime_type": String(describing: type(of: alertView))
++            ]]
++        ]
++        do {
++            let documents = try FileManager.default.url(for: .documentDirectory,
++                                                        in: .userDomainMask,
++                                                        appropriateFor: nil,
++                                                        create: true)
++            try png.write(to: documents.appendingPathComponent("dcc-au-create-project-alert-actual.png"), options: .atomic)
++            let json = try JSONSerialization.data(withJSONObject: payload, options: [.prettyPrinted, .sortedKeys])
++            try json.write(to: documents.appendingPathComponent("dcc-au-create-project-alert-raw.json"), options: .atomic)
++            readyLabel.text = "capture ready"
++            readyLabel.accessibilityIdentifier = "design.capture.ready"
++        } catch {
++            setCaptureError()
++        }
++    }
++
++    private func setCaptureError() {
++        readyLabel.text = "capture error"
++        readyLabel.accessibilityIdentifier = "design.capture.error"
++    }
++
++    private func descendant(identifier: String, in root: UIView) -> UIView? {
++        if root.accessibilityIdentifier == identifier { return root }
++        for child in root.subviews {
++            if let match = descendant(identifier: identifier, in: child) { return match }
++        }
++        return nil
++    }
++
++    private func region(id: String,
++                        view: UIView,
++                        root: UIView,
++                        runtimeType: String,
++                        accessibilityIdentifier: String,
++                        parentID: String?,
++                        childIDs: [String]) -> [String: Any] {
++        let frame = view.convert(view.bounds, to: root)
++        return [
++            "id": id,
++            "frame": framePayload(frame),
++            "runtime_type": runtimeType,
++            "accessibility_identifier": accessibilityIdentifier,
++            "visible": !view.isHidden && view.alpha > 0.01,
++            "parent_id": parentID.map { $0 as Any } ?? NSNull(),
++            "child_ids": childIDs
++        ]
++    }
++
++    private func unionRegion(id: String,
++                             views: [UIView],
++                             root: UIView,
++                             runtimeType: String,
++                             accessibilityIdentifier: String) -> [String: Any] {
++        let frame = views.map { $0.convert($0.bounds, to: root) }.reduce(CGRect.null) { $0.union($1) }
++        return [
++            "id": id,
++            "frame": framePayload(frame),
++            "runtime_type": runtimeType,
++            "accessibility_identifier": accessibilityIdentifier,
++            "visible": views.allSatisfy { !$0.isHidden && $0.alpha > 0.01 },
++            "parent_id": "create-project-alert",
++            "child_ids": []
++        ]
++    }
++
++    private func framePayload(_ frame: CGRect) -> [String: CGFloat] {
++        ["x": frame.minX, "y": frame.minY, "width": frame.width, "height": frame.height]
++    }
++}
++
+ private final class AUCueUITestHarnessViewController: UIViewController {
+     private let titleLabel = UILabel()
+     private let subtitleLabel = UILabel()
+@@ -541,4 +714,3 @@ private final class AUCueUITestHarnessViewController: UIViewController {
+         return fixture
+     }
+ }
+-
+diff --git a/Acrux/AcruxUITests/AcruxUITests.swift b/Acrux/AcruxUITests/AcruxUITests.swift
+index 39c44aed1..df5c0106e 100644
+--- a/Acrux/AcruxUITests/AcruxUITests.swift
++++ b/Acrux/AcruxUITests/AcruxUITests.swift
+@@ -97,3 +97,19 @@ final class HomeToProjectFlowUITests: UITestBaseCase {
+         XCTAssertFalse(deleted.waitForExistence(timeout: 8), "UI_E2E project should be deleted: \(name)")
+     }
+ }
++
++final class AUCreateProjectAlertDesignCaptureUITests: XCTestCase {
++    func test_fixtureSelected_writesCanonicalCaptureArtifacts() {
++        let app = XCUIApplication()
++        app.launchArguments = [
++            "-AcruxUIDesignCapture",
++            "-AppleLanguages", "(en)",
++            "-AppleLocale", "en_US"
++        ]
++        app.launch()
++        XCTAssertTrue(
++            app.staticTexts["design.capture.ready"].waitForExistence(timeout: 20),
++            "Design capture fixture did not produce its canonical artifacts.\n\(app.debugDescription)"
++        )
++    }
++}

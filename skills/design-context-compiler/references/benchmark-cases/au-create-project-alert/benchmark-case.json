@@ -1,0 +1,166 @@
+{
+  "case_version": "1.0.0",
+  "case_id": "siduslinkpro.au-create-project-alert.fixture-selected",
+  "readiness_status": "ready",
+  "workspace_roots": [
+    { "id": "repository", "path": "." },
+    { "id": "siduslinkpro", "path": "../../Projects/SidusLinkPro" }
+  ],
+  "source": {
+    "design": {
+      "file": {
+        "root": "siduslinkpro",
+        "path": "DesignSourceFile/SLP_014.sketch",
+        "sha256": "2377f359847721c627a65b2feb14665b2355593ad07d70d4f4f052ccad69b224"
+      },
+      "node_id": "C9A8ED98-5762-4416-B165-ECE0335FE955",
+      "document_version": "0084dbb83e2b0080e3e432dc9eb350d39784ad6b",
+      "reference_export": {
+        "tool": "sketchtool",
+        "format": "png",
+        "scale": 1,
+        "expected_output": "reference.png",
+        "expected_sha256": "41d9300ecab9e26050cd0374fbaded9cd926b39e9c183610b879336b101a979e",
+        "expected_viewport": { "width": 728, "height": 471 }
+      }
+    },
+    "code": {
+      "root": "siduslinkpro",
+      "git_commit": "4cf733453b8ad4a90d9e88f4b633e4c3f1c32a43",
+      "provider_source_scope": {
+        "mode": "allowlist",
+        "entries": [
+          { "kind": "directory", "path": "Acrux/Acrux/ViewController/Project" },
+          { "kind": "directory", "path": "Acrux/Acrux/Other/Assets.xcassets/General/fixture_view.imageset" },
+          { "kind": "directory", "path": "Acrux/Acrux/Other/Assets.xcassets/General/layout_view.imageset" },
+          { "kind": "directory", "path": "Acrux/Acrux/Other/Assets.xcassets/General/3d_view.imageset" },
+          { "kind": "directory", "path": "Acrux/Acrux/Other/Assets.xcassets/General/sidusbt_view.imageset" }
+        ],
+        "expected_file_count": 95,
+        "expected_total_bytes": 1442225,
+        "expected_content_sha256": "11e0f25f75e8861a84121b9ba4cdb78ae17191699a25d7a7ee2ae162f01ad818"
+      },
+      "files": [
+        {
+          "root": "siduslinkpro",
+          "path": "Acrux/Acrux/ViewController/Project/ViewController/Project/AUCreateProjectAlertView.swift",
+          "sha256": "bfd426623300605c7803c0227ee9ab859b6bd2db5a2cd9bec83062c5120080bb"
+        },
+        {
+          "root": "siduslinkpro",
+          "path": "Acrux/Acrux/Other/Assets.xcassets/General/fixture_view.imageset/Contents.json",
+          "sha256": "af2747942aa6069bd189782ec4e40af686b97ebd1eaacccc7cc93260dfa1088e"
+        },
+        {
+          "root": "siduslinkpro",
+          "path": "Acrux/Acrux/Other/Assets.xcassets/General/fixture_view.imageset/fixture_view@2x.png",
+          "sha256": "a81c72df8e79accb1bff9b67f5b942ffbd3f8703407599ad32cd79915d0abd1f"
+        },
+        {
+          "root": "siduslinkpro",
+          "path": "Acrux/Acrux/Other/Assets.xcassets/General/fixture_view.imageset/fixture_view@3x.png",
+          "sha256": "5366e37ec95a8ee7a887ecaec01bd6575e38402bee2ae247a6776388a2a3fc92"
+        },
+        {
+          "root": "siduslinkpro",
+          "path": "Acrux/Acrux/Other/Assets.xcassets/General/layout_view.imageset/Contents.json",
+          "sha256": "58db3170d255a1b562292d2eb4b90cb61585e8a346cdc75c78d1f99f7dee1adc"
+        },
+        {
+          "root": "siduslinkpro",
+          "path": "Acrux/Acrux/Other/Assets.xcassets/General/layout_view.imageset/layout_view@2x.png",
+          "sha256": "22cf341376d5bb6bef66805cf6d1f1b4b5df2a0fa0bb9fbc6a13b1c98819f920"
+        },
+        {
+          "root": "siduslinkpro",
+          "path": "Acrux/Acrux/Other/Assets.xcassets/General/layout_view.imageset/layout_view@3x.png",
+          "sha256": "c458d117add3e5f4b0485a73c3df07fe827937bb9d42888a0002a13b93f970dc"
+        },
+        {
+          "root": "siduslinkpro",
+          "path": "Acrux/Acrux/Other/Assets.xcassets/General/3d_view.imageset/Contents.json",
+          "sha256": "a33854a06fb987f5104b1c4cd0f15ac86cd22089ceb386bba4aec7b696866c50"
+        },
+        {
+          "root": "siduslinkpro",
+          "path": "Acrux/Acrux/Other/Assets.xcassets/General/3d_view.imageset/3d_view@2x.png",
+          "sha256": "6f4929eab9a6d1bf6c07867b4b73167c455f4cf0ef1b3f13c8a40fd342c47ad2"
+        },
+        {
+          "root": "siduslinkpro",
+          "path": "Acrux/Acrux/Other/Assets.xcassets/General/3d_view.imageset/3d_view@3x.png",
+          "sha256": "486e75c2846368575b439392816fd1365f283b28ecada0004a384e7a709dee88"
+        },
+        {
+          "root": "siduslinkpro",
+          "path": "Acrux/Acrux/Other/Assets.xcassets/General/sidusbt_view.imageset/Contents.json",
+          "sha256": "36842a0676506f11592331fb79fd213be67dc59bb6f5f320df870cefbc4d929b"
+        },
+        {
+          "root": "siduslinkpro",
+          "path": "Acrux/Acrux/Other/Assets.xcassets/General/sidusbt_view.imageset/sidusbt_view@2x.png",
+          "sha256": "07294a9dddd429c1543126faf292c39a409a3747dea40c2d02cab55c4296fb3a"
+        },
+        {
+          "root": "siduslinkpro",
+          "path": "Acrux/Acrux/Other/Assets.xcassets/General/sidusbt_view.imageset/sidusbt_view@3x.png",
+          "sha256": "d723c0063e0f8611f29a581bbf83faea6c7708dbda7fff3407169c734bc420a5"
+        }
+      ]
+    }
+  },
+  "contracts": {
+    "design_evidence": { "path": "design-evidence.json", "sha256": "800a03c4286d95f7d7d46c96be2ee26d20c56231ebfa0a64a1a9e5ab2b46c8f6" },
+    "ui_ir": { "path": "ui-ir.json", "sha256": "f2e3a1008c7124a734e952a32b5d1300f9a2a225db072d1d417be489aa407f7c" },
+    "ui_ir_unbound": { "projection": "strip-component-bindings", "sha256": "24c9b77b518170f7fcc0fa92d26cfb986d1e9186714bb8689ae095e8fe5893f0" },
+    "component_registry": { "path": "component-registry.json", "sha256": "d5d153cb0c2d2a719f05b52e0546d88d84893ac791b57a6242bbad3a50bde13a" },
+    "agent_packet": { "path": "agent-packet.json", "sha256": "1153d53e97f6940d78eeebecbcbe02c3542a76554d5a0899e346a4732f9154e0" }
+  },
+  "benchmark": {
+    "shared_prompt": { "path": "shared-prompt.md", "sha256": "e75c5c53e32f742c54eed93500ea3c05991a93221eab33964b689b8e9e2bca64" },
+    "validation_config": { "path": "validation-config.json", "sha256": "a436e736066057b078354bca431065b02b6a42dc53f2cc0a1779b2449d924bd5" },
+    "environment": {
+      "task_mode": "reuse-conformance",
+      "screen": "create-project-alert",
+      "state": "fixture-selected",
+      "viewport": { "width": 728, "height": 471 },
+      "scale": 1,
+      "appearance": "dark",
+      "locale": "en_US",
+      "ui_framework": "UIKit"
+    },
+    "variants": [
+      {
+        "variant": "screenshot-only",
+        "inputs": [
+          { "kind": "reference", "artifact": { "source": "generated-reference" } },
+          { "kind": "shared-prompt", "artifact": { "source": "shared_prompt" } },
+          { "kind": "validation-config", "artifact": { "source": "validation_config" } }
+        ]
+      },
+      {
+        "variant": "ui-ir",
+        "inputs": [
+          { "kind": "reference", "artifact": { "source": "generated-reference" } },
+          { "kind": "shared-prompt", "artifact": { "source": "shared_prompt" } },
+          { "kind": "validation-config", "artifact": { "source": "validation_config" } },
+          { "kind": "ui-ir", "artifact": { "source": "generated-ui-ir-unbound" } }
+        ]
+      },
+      {
+        "variant": "ui-ir-with-binding",
+        "inputs": [
+          { "kind": "reference", "artifact": { "source": "generated-reference" } },
+          { "kind": "shared-prompt", "artifact": { "source": "shared_prompt" } },
+          { "kind": "validation-config", "artifact": { "source": "validation_config" } },
+          { "kind": "agent-packet", "artifact": { "source": "agent_packet" } }
+        ]
+      }
+    ]
+  },
+  "readiness": {
+    "ready": true,
+    "blocking_unknowns": [],
+    "measured_results": false
+  }
+}

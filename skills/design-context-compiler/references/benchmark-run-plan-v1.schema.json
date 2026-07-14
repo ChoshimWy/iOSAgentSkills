@@ -1,0 +1,212 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ios-agent-skills.local/schemas/benchmark-run-plan-v1.schema.json",
+  "title": "Design Context Benchmark Run Plan v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["run_plan_version", "plan_id", "evidence_status", "case", "executor", "validator", "isolation"],
+  "properties": {
+    "run_plan_version": { "const": "1.2.0" },
+    "plan_id": { "$ref": "#/$defs/identifier" },
+    "evidence_status": { "enum": ["synthetic-example", "measured"] },
+    "case": { "$ref": "#/$defs/fileEvidence" },
+    "executor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model", "reasoning", "synthetic", "provider_cli", "adapter", "implementation_command", "timeout_seconds", "environment"],
+      "properties": {
+        "model": { "type": "string", "minLength": 1 },
+        "reasoning": { "type": "string", "minLength": 1 },
+        "synthetic": { "type": "boolean" },
+        "provider_cli": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "version", "launcher_path", "native_path", "launcher_sha256", "native_sha256", "package_json_sha256"],
+          "properties": {
+            "name": { "enum": ["openai-codex-cli", "synthetic-test-adapter"] },
+            "version": { "type": "string", "minLength": 1 },
+            "launcher_path": { "type": "string", "minLength": 1 },
+            "native_path": { "type": "string", "minLength": 1 },
+            "launcher_sha256": { "$ref": "#/$defs/sha256" },
+            "native_sha256": { "$ref": "#/$defs/sha256" },
+            "package_json_sha256": { "$ref": "#/$defs/sha256" }
+          }
+        },
+        "adapter": { "$ref": "#/$defs/fileEvidence" },
+        "implementation_command": { "$ref": "#/$defs/command" },
+        "timeout_seconds": { "type": "integer", "minimum": 1, "maximum": 86400 },
+        "environment": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+    "validator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "synthetic", "capture_adapter", "capture_overlay", "capture_runtime", "capture_command", "adapter", "command", "timeout_seconds", "environment"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "synthetic": { "type": "boolean" },
+        "capture_adapter": { "$ref": "#/$defs/fileEvidence" },
+        "capture_overlay": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["mode"],
+              "properties": { "mode": { "const": "none" } }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["mode", "artifact"],
+              "properties": {
+                "mode": { "const": "git-patch" },
+                "artifact": { "$ref": "#/$defs/fileEvidence" }
+              }
+            }
+          ]
+        },
+        "capture_runtime": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["mode"],
+              "properties": { "mode": { "const": "none" } }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["mode", "verification_wrapper", "simctl", "workspace", "scheme", "destination", "test_selector", "app_bundle_id", "artifacts"],
+              "properties": {
+                "mode": { "const": "ios-simulator" },
+                "verification_wrapper": { "$ref": "#/$defs/fileEvidence" },
+                "simctl": { "$ref": "#/$defs/fileEvidence" },
+                "workspace": { "type": "string", "pattern": "^[^/].*\\.xcworkspace$" },
+                "scheme": { "type": "string", "minLength": 1 },
+                "destination": {
+                  "type": "object", "additionalProperties": false,
+                  "required": ["udid", "runtime", "runtime_version", "runtime_build_version", "device_name", "device_type_identifier"],
+                  "properties": {
+                    "udid": { "type": "string", "pattern": "^[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12}$" },
+                    "runtime": { "type": "string", "minLength": 1 },
+                    "runtime_version": { "type": "string", "minLength": 1 },
+                    "runtime_build_version": { "type": "string", "minLength": 1 },
+                    "device_name": { "type": "string", "minLength": 1 },
+                    "device_type_identifier": { "type": "string", "minLength": 1 }
+                  }
+                },
+                "test_selector": { "type": "string", "minLength": 1 },
+                "app_bundle_id": { "type": "string", "minLength": 1 },
+                "artifacts": {
+                  "type": "object", "additionalProperties": false,
+                  "required": ["screenshot", "raw_probe"],
+                  "properties": {
+                    "screenshot": { "type": "string", "pattern": "^[A-Za-z0-9._-]+$" },
+                    "raw_probe": { "type": "string", "pattern": "^[A-Za-z0-9._-]+$" }
+                  }
+                },
+                "evaluator_dependency_setup": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["mode"],
+                      "properties": { "mode": { "const": "none" } }
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["mode", "generator", "clang", "sdk", "xcframework_path", "pod_copy_script_path", "baseline", "product"],
+                      "properties": {
+                        "mode": { "const": "unityframework-arm64-simulator-stub-v1" },
+                        "generator": { "$ref": "#/$defs/fileEvidence" },
+                        "clang": { "$ref": "#/$defs/fileEvidence" },
+                        "sdk": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": ["path", "version", "build_version", "settings_sha256"],
+                          "properties": {
+                            "path": { "type": "string", "pattern": "^/.*\\.sdk$" },
+                            "version": { "type": "string", "minLength": 1 },
+                            "build_version": { "type": "string", "minLength": 1 },
+                            "settings_sha256": { "$ref": "#/$defs/sha256" }
+                          }
+                        },
+                        "xcframework_path": { "$ref": "#/$defs/relativePath" },
+                        "pod_copy_script_path": { "$ref": "#/$defs/relativePath" },
+                        "baseline": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": ["xcframework_info_sha256", "pod_copy_script_sha256"],
+                          "properties": {
+                            "xcframework_info_sha256": { "$ref": "#/$defs/sha256" },
+                            "pod_copy_script_sha256": { "$ref": "#/$defs/sha256" }
+                          }
+                        },
+                        "product": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": ["binary_sha256", "header_sha256", "modulemap_sha256", "framework_info_sha256"],
+                          "properties": {
+                            "binary_sha256": { "$ref": "#/$defs/sha256" },
+                            "header_sha256": { "$ref": "#/$defs/sha256" },
+                            "modulemap_sha256": { "$ref": "#/$defs/sha256" },
+                            "framework_info_sha256": { "$ref": "#/$defs/sha256" }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "capture_command": { "$ref": "#/$defs/command" },
+        "adapter": { "$ref": "#/$defs/fileEvidence" },
+        "command": { "$ref": "#/$defs/command" },
+        "timeout_seconds": { "type": "integer", "minimum": 1, "maximum": 86400 },
+        "environment": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    },
+    "isolation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["strategy", "run_order", "clean_checkout"],
+      "properties": {
+        "strategy": { "enum": ["git-shared-clone", "git-pinned-tree-slice"] },
+        "run_order": {
+          "type": "array",
+          "minItems": 3,
+          "items": { "enum": ["screenshot-only", "ui-ir", "ui-ir-with-binding"] }
+        },
+        "clean_checkout": { "const": true }
+      }
+    }
+  },
+  "$defs": {
+    "identifier": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$" },
+    "relativePath": { "type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$" },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "fileEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "command": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  }
+}

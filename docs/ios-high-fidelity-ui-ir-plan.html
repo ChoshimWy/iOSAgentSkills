@@ -1,0 +1,766 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>iOS 高保真 UI 开发与 Design Context Compiler 建设方案</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --panel-muted: #f3f5f7;
+      --text: #182230;
+      --muted: #667085;
+      --border: #dfe3e8;
+      --accent: #2563eb;
+      --accent-soft: #eaf2ff;
+      --code-bg: #111827;
+      --code-text: #e5e7eb;
+      --callout-info-bg: #eff6ff;
+      --callout-info-border: #93c5fd;
+      --callout-warn-bg: #fff7ed;
+      --callout-warn-border: #fdba74;
+      --callout-success-bg: #ecfdf5;
+      --callout-success-border: #86efac;
+      --danger-bg: #fff1f2;
+      --danger-border: #fda4af;
+      --shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+        --bg: #0b1020;
+        --panel: #111827;
+        --panel-muted: #1f2937;
+        --text: #e5e7eb;
+        --muted: #a3adbd;
+        --border: #374151;
+        --accent: #60a5fa;
+        --accent-soft: rgba(96, 165, 250, 0.16);
+        --code-bg: #020617;
+        --code-text: #e2e8f0;
+        --callout-info-bg: rgba(37, 99, 235, 0.18);
+        --callout-info-border: rgba(147, 197, 253, 0.55);
+        --callout-warn-bg: rgba(245, 158, 11, 0.16);
+        --callout-warn-border: rgba(251, 191, 36, 0.55);
+        --callout-success-bg: rgba(16, 185, 129, 0.15);
+        --callout-success-border: rgba(110, 231, 183, 0.5);
+        --danger-bg: rgba(244, 63, 94, 0.14);
+        --danger-border: rgba(251, 113, 133, 0.5);
+        --shadow: none;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.72;
+    }
+    a { color: var(--accent); text-underline-offset: 3px; }
+    h1, h2, h3, h4 { line-height: 1.3; letter-spacing: -0.015em; }
+    h2 { margin-top: 2.4rem; padding-top: 0.5rem; border-top: 1px solid var(--border); }
+    h3 { margin-top: 1.7rem; }
+    main { width: min(1120px, calc(100% - 32px)); margin: 32px auto 64px; }
+    .hero, .panel, .toc {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+    }
+    .hero { padding: 42px; }
+    .hero h1 { margin: 0 0 12px; font-size: clamp(2rem, 4vw, 3rem); }
+    .hero .lead { max-width: 900px; margin: 0 0 28px; color: var(--muted); font-size: 1.08rem; }
+    .meta { display: grid; grid-template-columns: 132px 1fr; gap: 7px 14px; margin: 0; }
+    .meta dt { color: var(--muted); }
+    .meta dd { margin: 0; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 0; }
+    .chip { padding: 4px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 0.86rem; font-weight: 650; }
+    .toc { margin-top: 20px; padding: 24px 30px; }
+    .toc h2 { margin: 0 0 10px; padding: 0; border: 0; font-size: 1.1rem; }
+    .toc ol { columns: 2; column-gap: 40px; margin: 0; padding-left: 22px; }
+    .toc li { break-inside: avoid; margin: 5px 0; }
+    article { margin-top: 20px; padding: 10px 42px 42px; }
+    .panel { margin: 18px 0; padding: 20px 24px; }
+    .callout { margin: 18px 0; padding: 16px 20px; border: 1px solid; border-left-width: 4px; border-radius: 10px; }
+    .callout strong { display: block; margin-bottom: 4px; }
+    .callout.info { background: var(--callout-info-bg); border-color: var(--callout-info-border); }
+    .callout.warn { background: var(--callout-warn-bg); border-color: var(--callout-warn-border); }
+    .callout.success { background: var(--callout-success-bg); border-color: var(--callout-success-border); }
+    .callout.danger { background: var(--danger-bg); border-color: var(--danger-border); }
+    .muted { color: var(--muted); }
+    .table-wrap { overflow-x: auto; margin: 18px 0; border: 1px solid var(--border); border-radius: 12px; }
+    table { width: 100%; border-collapse: collapse; min-width: 720px; background: var(--panel); }
+    th, td { padding: 12px 14px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--border); }
+    th { background: var(--panel-muted); font-size: 0.9rem; }
+    tr:last-child td { border-bottom: 0; }
+    code { padding: 0.16em 0.38em; border-radius: 5px; background: var(--panel-muted); color: var(--text); font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.88em; }
+    pre { overflow-x: auto; padding: 18px 20px; border-radius: 12px; background: var(--code-bg); color: var(--code-text); line-height: 1.55; }
+    pre code { padding: 0; background: transparent; color: inherit; font-size: 0.9rem; }
+    .flow { white-space: pre; text-align: center; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .metric { padding: 16px 18px; border: 1px solid var(--border); border-radius: 12px; background: var(--panel-muted); }
+    .metric strong { display: block; font-size: 1.05rem; }
+    .checklist { list-style: none; padding: 0; }
+    .checklist li { position: relative; padding: 7px 0 7px 30px; }
+    .checklist li::before { content: "□"; position: absolute; left: 2px; top: 6px; color: var(--accent); font-weight: 750; }
+    .checklist li.done::before { content: "√"; }
+    footer { margin-top: 28px; color: var(--muted); text-align: center; font-size: 0.9rem; }
+    @media (max-width: 760px) {
+      main { width: min(100% - 20px, 1120px); margin-top: 10px; }
+      .hero { padding: 26px 22px; }
+      article { padding: 6px 22px 30px; }
+      .toc ol { columns: 1; }
+      .meta { grid-template-columns: 1fr; }
+      .meta dt { margin-top: 5px; }
+      .grid { grid-template-columns: 1fr; }
+    }
+    @media print {
+      body { background: #fff; color: #111; }
+      main { width: 100%; margin: 0; }
+      .hero, .panel, .toc { box-shadow: none; }
+      a { color: inherit; text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header class="hero">
+      <h1>iOS 高保真 UI 开发与 Design Context Compiler 建设方案</h1>
+      <p class="lead">面向 UIKit / SwiftUI 的设计语义编译、任务级上下文裁剪、组件复用、状态驱动实现与视觉验收规范。目标是把“看图猜实现”升级为低 Token、可解析、可校验、可增量维护的工程化链路。</p>
+      <dl class="meta">
+        <dt>创建日期</dt><dd>2026-07-13</dd>
+        <dt>更新日期</dt><dd>2026-07-13</dd>
+        <dt>作者</dt><dd>choshim</dd>
+        <dt>文档状态</dt><dd>Active / Phase 1–3 基础工具已实现，Phase 0 真实 case 已就绪、三组模型运行待执行</dd>
+        <dt>适用范围</dt><dd>iOS / iPadOS，UIKit / SwiftUI / mixed-ui</dd>
+        <dt>仓库</dt><dd>iOSAgentSkills</dd>
+        <dt>事实来源</dt><dd>用户需求、现有 Design-to-Code Spec、Skill 路由与仓库工作流合同</dd>
+      </dl>
+      <div class="chips">
+        <span class="chip">UI IR</span>
+        <span class="chip">Context Compiler</span>
+        <span class="chip">Design-to-iOS</span>
+        <span class="chip">UIKit</span>
+        <span class="chip">SwiftUI</span>
+        <span class="chip">High Fidelity</span>
+      </div>
+    </header>
+
+    <nav class="toc" aria-label="文档目录">
+      <h2>目录</h2>
+      <ol>
+        <li><a href="#conclusion">结论先行</a></li>
+        <li><a href="#background">背景与问题</a></li>
+        <li><a href="#goals">目标、非目标与原则</a></li>
+        <li><a href="#architecture">总体架构</a></li>
+        <li><a href="#artifacts">页面设计包合同</a></li>
+        <li><a href="#schema">UI IR v1 数据模型</a></li>
+        <li><a href="#layout">布局与 Geometry Intent</a></li>
+        <li><a href="#tokens">Design Token</a></li>
+        <li><a href="#registry">Component Registry</a></li>
+        <li><a href="#context-compiler">Task Context Compiler</a></li>
+        <li><a href="#state">State 与 Responsive</a></li>
+        <li><a href="#implementation">UIKit / SwiftUI 实现规范</a></li>
+        <li><a href="#workflow">实施流程与 Checkpoint</a></li>
+        <li><a href="#validation">高保真验收</a></li>
+        <li><a href="#integration">iOSAgentSkills 集成边界</a></li>
+        <li><a href="#milestones">里程碑与交付物</a></li>
+        <li><a href="#risks">风险与回退</a></li>
+        <li><a href="#dod">Definition of Done</a></li>
+      </ol>
+    </nav>
+
+    <article class="panel">
+      <section id="conclusion">
+        <h2>1. 结论先行</h2>
+        <div class="callout success">
+          <strong>核心决策</strong>
+          设计源文件是事实来源，Canonical UI IR 是稳定语义合同，iOS Binding 是组件复用合同，Task Context Compiler 负责为单次任务生成最小 Agent Packet，Implementation Manifest 负责设计到代码的增量追踪，截图 Diff 只承担视觉验收反馈。
+        </div>
+        <p>高保真 UI 的关键不是向模型提供更多截图或完整 Figma / Sketch JSON，而是把设计工具数据转换成模型可稳定消费的设计语义：页面结构、布局意图、样式 token、组件角色、响应式规则和业务状态。</p>
+        <p>本方案要求：<strong>没有经过 Schema 校验的 Canonical UI IR、明确的设计证据、组件映射、任务级 Agent Packet 和状态矩阵，不得直接进入 SwiftUI/UIKit 高保真实现。</strong></p>
+        <p>v1.1 的建设重点不再只是“生成 UI IR”，而是形成 <strong>Design Evidence → Canonical UI IR → iOS Binding → Task Context Compiler → Agent Packet → Implementation Manifest → Semantic Visual Validation</strong> 的完整编译链路。</p>
+      </section>
+
+      <section id="background">
+        <h2>2. 背景与问题</h2>
+        <p>现有 AI UI 开发通常走“截图 → 代码 → 人工调样式”的路径。截图可以表达最终视觉，却不能可靠表达父子关系、约束意图、组件复用、尺寸变化规则或业务可见条件。另一方面，完整设计工具 JSON 含有大量渲染边界、不可见图层、向量节点、插件数据与实例 override，会显著增加上下文成本。</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>输入方式</th><th>优势</th><th>核心缺陷</th><th>定位</th></tr></thead>
+            <tbody>
+              <tr><td>整屏截图</td><td>直观、保留视觉目标</td><td>缺少布局、状态与组件语义</td><td>视觉证据</td></tr>
+              <tr><td>完整 Figma / Sketch JSON</td><td>信息完整</td><td>噪声高、token 成本大、耦合设计工具模型</td><td>Parser 输入</td></tr>
+              <tr><td>人工标注</td><td>能补业务意图</td><td>不稳定、难自动校验、易遗漏</td><td>补充说明</td></tr>
+              <tr><td>UI IR</td><td>结构化、可校验、模型无关</td><td>需要编译器、Schema 和 Registry 建设</td><td>实现合同</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="goals">
+        <h2>3. 目标、非目标与原则</h2>
+        <h3>3.1 目标</h3>
+        <ul>
+          <li>建立 Figma / Sketch 到 UIKit / SwiftUI 的稳定设计语义通道。</li>
+          <li>让 Codex、Claude Code、Gemini CLI 等模型消费同一份基础上下文。</li>
+          <li>优先复用现有业务组件与 Design System，减少重复实现。</li>
+          <li>把设计状态、响应式和无障碍约束纳入首轮实现，而不是截图修正阶段。</li>
+          <li>形成可 lint、可 diff、可回归、可追溯的工程资产。</li>
+        </ul>
+        <h3>3.2 非目标</h3>
+        <ul>
+          <li>不设计面向 Web/CSS 的通用 UI Schema。</li>
+          <li>不试图在 v1 自动还原所有复杂矢量、Metal、3D 或视频效果。</li>
+          <li>不以像素截图替代真实可交互控件。</li>
+          <li>不新增第二套 iOS 代码实施入口。</li>
+        </ul>
+        <h3>3.3 原则</h3>
+        <div class="grid">
+          <div class="metric"><strong>语义优先</strong><span class="muted">Constraint Intent 高于绝对 Frame。</span></div>
+          <div class="metric"><strong>真源优先</strong><span class="muted">设计文件和目标 Node/Artboard 必须可追溯。</span></div>
+          <div class="metric"><strong>复用优先</strong><span class="muted">现有业务组件高于重新创建相似控件。</span></div>
+          <div class="metric"><strong>状态优先</strong><span class="muted">页面由业务状态驱动，而不是复刻单张画板。</span></div>
+          <div class="metric"><strong>未知显式化</strong><span class="muted">不确定值写入 unknowns，禁止静默猜测。</span></div>
+          <div class="metric"><strong>最窄闭环</strong><span class="muted">先锚点状态，再扩展状态矩阵和设备族。</span></div>
+        </div>
+      </section>
+
+      <section id="architecture">
+        <h2>4. 总体架构</h2>
+        <pre class="flow"><code>Figma / Sketch
+      ↓
+Design Evidence Snapshot
+      ↓
+Design Parser → Semantic Normalizer
+      ↓
+Canonical UI IR ─────────→ design-tokens.json
+      ↓
+iOS Binding Resolver ────→ ios-component-registry.json
+      ↓
+Task Context Compiler
+      ↓
+Agent Packet + reference crop + task instructions
+      ↓
+Codex / Claude Code
+      ↓
+UIKit / SwiftUI / mixed-ui
+      ↓
+Implementation Manifest
+      ↓
+Semantic Validation + Visual Diff + Review Gate</code></pre>
+        <p>建议将产物分为五层：</p>
+        <ul>
+          <li><strong>Design Evidence：</strong>保存可重新解析、可审计的原始设计事实、截图和版本信息。</li>
+          <li><strong>Canonical UI IR：</strong>与设计工具无关，描述结构、布局、样式、状态、交互和响应式。</li>
+          <li><strong>iOS Binding：</strong>与代码仓有关，描述 UIKit/SwiftUI 类型、源码路径、资产、复用策略和平台限制。</li>
+          <li><strong>Agent Packet：</strong>只包含当前任务引用到的节点、token、组件、状态、代码锚点和 reference crop。</li>
+          <li><strong>Implementation Manifest：</strong>保存 Design Node、代码符号、PreviewScene、测试和 Diff Region 的双向映射。</li>
+        </ul>
+        <p>这种拆分既能保持 IR 的模型可复用性，也能避免将完整 UI IR 直接塞给模型，并支持设计变更后的增量影响面计算。</p>
+      </section>
+
+      <section id="artifacts">
+        <h2>5. 页面设计包合同</h2>
+        <pre><code>DesignSpecs/fixture-detail/
+├── source/
+│   ├── design-evidence.json
+│   ├── reference.png
+│   └── assets/
+├── ir/
+│   ├── ui-ir.json
+│   └── ui-ir.yaml
+├── bindings/
+│   └── ios-bindings.json
+├── states/
+│   └── scene-fixtures.json
+├── agent/
+│   └── agent-packet.json
+└── validation/
+    ├── visual-baseline.json
+    └── implementation-manifest.json
+
+DesignSystem/
+├── design-tokens.json
+├── ios-component-registry.json
+└── ui-ir.schema.json</code></pre>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>产物</th><th>职责</th><th>必须项</th></tr></thead>
+            <tbody>
+              <tr><td><code>design-evidence.json</code></td><td>未经语义重写的设计证据快照</td><td>source version、Node ID、截图 hash、Parser version 可追溯</td></tr>
+              <tr><td><code>reference.png</code></td><td>最终视觉目标</td><td>设备、scale、appearance、locale 可追溯</td></tr>
+              <tr><td><code>ui-ir.json</code></td><td>Canonical UI IR 单一事实源</td><td>通过 v1 Schema 校验并可稳定 hash/diff</td></tr>
+              <tr><td><code>ui-ir.yaml</code></td><td>面向人和模型的生成视图</td><td>由 JSON 自动生成，不得手工形成第二真源</td></tr>
+              <tr><td><code>ios-bindings.json</code></td><td>页面节点到 iOS 代码的绑定</td><td>类型、源码路径、复用策略、availability</td></tr>
+              <tr><td><code>scene-fixtures.json</code></td><td>确定性状态输入</td><td>不依赖随机数、当前时间、真实网络或硬件</td></tr>
+              <tr><td><code>agent-packet.json</code></td><td>当前任务的最小充分上下文</td><td>包含 context budget、引用闭包、unknown 和 reference crop</td></tr>
+              <tr><td><code>implementation-manifest.json</code></td><td>设计到代码、Preview 和验证区域的映射</td><td>支持增量影响面和回归选择</td></tr>
+              <tr><td><code>design-tokens.json</code></td><td>设计系统视觉事实</td><td>语义名、原值、light/dark、来源</td></tr>
+              <tr><td><code>ios-component-registry.json</code></td><td>设计组件与 iOS 代码映射</td><td>类型、源码路径、复用策略、失效检查信息</td></tr>
+              <tr><td><code>visual-baseline.json</code></td><td>截图验收合同</td><td>阈值、忽略区域、设计版本、环境</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="schema">
+        <h2>6. Canonical UI IR v1.1 数据模型</h2>
+        <div class="callout info">
+          <strong>单一事实源</strong>
+          Canonical UI IR 使用 JSON 保存；YAML 只作为自动生成的可读视图。工具、lint、hash、diff 和版本迁移一律以 JSON 为准。
+        </div>
+        <h3>6.1 顶层结构</h3>
+        <pre><code>version: 1
+source: {}
+reference: {}
+environment: {}
+screen: {}
+state: {}
+interactions: {}
+tokens: {}
+tree: {}
+responsive: {}
+accessibility: {}
+validation: {}
+unknowns: []</code></pre>
+        <h3>6.2 七类最小完整上下文</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>类别</th><th>AI 必须理解的内容</th><th>重要度</th></tr></thead>
+            <tbody>
+              <tr><td>Visual Reference</td><td>最终视觉目标、层级、氛围、复杂背景和效果</td><td>★★★★★</td></tr>
+              <tr><td>Layout Tree</td><td>screen → region → component → primitive 父子结构</td><td>★★★★★</td></tr>
+              <tr><td>Geometry</td><td>尺寸模式、间距、相对约束、优先级和 safe area</td><td>★★★★★</td></tr>
+              <tr><td>Style</td><td>字体、颜色、圆角、边框、阴影、模糊和透明度</td><td>★★★★★</td></tr>
+              <tr><td>Component Semantics</td><td>业务角色、iOS 类型、源码位置和复用政策</td><td>★★★★★</td></tr>
+              <tr><td>Responsive Rules</td><td>尺寸变化、size class、iPad、横竖屏和 Dynamic Type</td><td>★★★★</td></tr>
+              <tr><td>State</td><td>业务数据、显示条件、交互、加载、错误和空状态</td><td>★★★★</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>6.3 Provenance 与可信度</h3>
+        <p>每个可能经过推断的值应记录来源和可信度，避免模型把推断当成设计事实。</p>
+        <pre><code>corner_radius:
+  token: radius.card
+  value: 16
+  source: design-variable
+  confidence: exact
+
+motion:
+  duration: null
+  source: not-provided
+  confidence: unknown</code></pre>
+        <p>建议支持的 <code>source</code>：<code>design-variable</code>、<code>design-node</code>、<code>component-registry</code>、<code>manual-contract</code>、<code>inferred</code>、<code>not-provided</code>。枚举统一使用 kebab-case。</p>
+        <h3>6.4 版本与迁移</h3>
+        <p>Schema 使用语义版本；新增可选字段可升级 minor，删除、改名或改变语义必须升级 major。Compiler 必须记录 <code>schema_version</code>、<code>parser_version</code> 和迁移记录，避免旧 Agent Packet 静默消费新语义。</p>
+      </section>
+
+      <section id="layout">
+        <h2>7. 布局与 Geometry Intent</h2>
+        <div class="callout info">
+          <strong>约束</strong>
+          UI IR 记录“为什么是这个尺寸”，而不是只记录设计稿在某个 viewport 下的绝对坐标。
+        </div>
+        <p>布局字段至少应支持：</p>
+        <ul>
+          <li><code>fill</code>、<code>fixed</code>、<code>intrinsic</code>、<code>hug</code>、<code>min</code>、<code>max</code></li>
+          <li><code>leading</code>、<code>trailing</code>、<code>top</code>、<code>bottom</code> 和相对节点</li>
+          <li>axis、alignment、distribution、spacing、margin、padding</li>
+          <li>safe area、scroll、sticky、overlay、floating</li>
+          <li>Content Hugging、Compression Resistance、layout priority</li>
+        </ul>
+        <pre><code>layout:
+  position: flow
+  width:
+    mode: fill
+  height:
+    mode: fixed
+    value: 64
+  margin:
+    horizontal: 24
+  top:
+    relative_to: mode_selector.bottom
+    value: 16</code></pre>
+        <h3>7.1 绝对布局例外</h3>
+        <p>只有装饰图形、Canvas、特殊 Overlay、设计明确要求的自由定位或底层渲染控件可以使用绝对坐标，并必须提供 <code>reason</code> 与适配策略。</p>
+      </section>
+
+      <section id="tokens">
+        <h2>8. Design Token 规范</h2>
+        <p>至少建立 Color、Typography、Spacing、Radius、Border、Shadow、Blur、Opacity、Motion、Icon Size 和 Control Height token。所有可复用视觉属性必须先进入 token，再被组件引用。</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Token 类型</th><th>最小字段</th><th>iOS 映射</th></tr></thead>
+            <tbody>
+              <tr><td>Color</td><td>语义名、RGBA、appearance、来源</td><td><code>UIColor</code> / <code>Color</code></td></tr>
+              <tr><td>Typography</td><td>family、size、weight、line height、letter spacing</td><td><code>UIFont</code> / <code>Font</code></td></tr>
+              <tr><td>Spacing / Radius</td><td>语义名、pt 值、使用范围</td><td>Design System 常量</td></tr>
+              <tr><td>Shadow / Blur</td><td>x/y/blur/spread/color/material</td><td><code>CALayer</code> / SwiftUI modifier</td></tr>
+              <tr><td>Motion</td><td>duration、curve、reduce-motion fallback</td><td><code>UIViewPropertyAnimator</code> / <code>Animation</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout danger">
+          <strong>禁止</strong>
+          不得在页面代码中散落可复用的 HEX、字号、边距、圆角或阴影 magic number。一次性值也必须在页面局部 token 中命名并说明来源。
+        </div>
+      </section>
+
+      <section id="registry">
+        <h2>9. Component Registry 规范</h2>
+        <p>组件匹配顺序固定为：</p>
+        <pre><code>现有业务组件
+→ App Design System 组件
+→ Apple 原生组件
+→ 新建自定义组件</code></pre>
+        <pre><code>Control/Slider/Intensity:
+  semantic_role: intensity_slider
+  reuse_policy: required
+  uikit:
+    type: SLIntensitySliderView
+    source: Modules/LightingUI/Controls/SLIntensitySliderView.swift
+  swiftui:
+    type: SLIntensitySlider
+    source: Modules/LightingUI/SwiftUI/SLIntensitySlider.swift</code></pre>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>reuse_policy</th><th>含义</th></tr></thead>
+            <tbody>
+              <tr><td><code>required</code></td><td>必须复用，不得重新实现</td></tr>
+              <tr><td><code>preferred</code></td><td>优先复用，偏离必须说明原因</td></tr>
+              <tr><td><code>native</code></td><td>使用 Apple 原生组件</td></tr>
+              <tr><td><code>custom-allowed</code></td><td>允许新增自定义组件</td></tr>
+              <tr><td><code>asset-only</code></td><td>必须使用设计资产，不应代码重绘</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>9.1 自动索引与失效检查</h3>
+        <p>Registry 不应完全依赖人工维护。建议通过 Swift 源码或代码索引采集类型名、模块、源码路径、UIKit/SwiftUI、访问级别、initializer、Configuration、Preview、availability 和最后修改版本，再由人工确认设计映射。</p>
+        <ul>
+          <li>源码路径或 symbol 不存在时标记 <code>stale</code>。</li>
+          <li><code>required</code> 组件不可访问时阻断 Agent Packet 生成。</li>
+          <li>跨模块或 availability 不满足时输出 binding conflict，不得静默改为新建组件。</li>
+        </ul>
+      </section>
+
+      <section id="context-compiler">
+        <h2>10. Task Context Compiler 与 Agent Packet</h2>
+        <div class="callout success">
+          <strong>v1.1 最重要的优化</strong>
+          AI 不直接消费完整 UI IR。Task Context Compiler 按当前 screen、region、component 或 state 计算引用闭包，只输出实现所需的最小充分上下文。
+        </div>
+        <h3>10.1 裁剪输入</h3>
+        <ul>
+          <li>当前任务的目标 node、完整子树、全部祖先和递归约束依赖节点。</li>
+          <li>目标节点实际引用到的 token、asset 和 Registry binding。</li>
+          <li>相关业务状态、事件、可见条件和响应式规则。</li>
+          <li>与目标节点对应的 reference crop、现有代码符号和源码切片。</li>
+          <li>阻塞性 unknown、推断项和设计冲突。</li>
+        </ul>
+        <h3>10.2 Context Budget</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>任务粒度</th><th>建议预算</th><th>超限策略</th></tr></thead>
+            <tbody>
+              <tr><td>单组件</td><td>2K–6K tokens</td><td>裁掉未引用状态和 token</td></tr>
+              <tr><td>单区域</td><td>6K–12K tokens</td><td>按 component subtree 分片</td></tr>
+              <tr><td>单页面</td><td>8K–20K tokens</td><td>按 region / state 分阶段实现</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>10.3 Agent Packet 最小合同</h3>
+        <pre><code>{
+  "task": { "screen": "fixture-detail", "region": "intensity" },
+  "reference": { "image": "reference-crop.png" },
+  "nodes": [],
+  "tokens": [],
+  "bindings": [],
+  "states": [],
+  "interactions": [],
+  "code_anchors": [],
+  "unknowns": [],
+  "acceptance": {},
+  "context_budget": { "estimated_tokens": 4200 }
+}</code></pre>
+      </section>
+
+      <section id="state">
+        <h2>11. State、Interaction、Responsive 与 Accessibility</h2>
+        <h3>11.1 状态矩阵</h3>
+        <p>一个画板不能代表完整页面。每个页面至少审查 default、selected、pressed、disabled、loading、empty、error、offline、keyboard shown、modal presented、light/dark、超长文案和业务特有状态。</p>
+        <pre><code>visibility:
+  ota_button:
+    when: ota.available &amp;&amp; !ota.updating
+  ota_progress:
+    when: ota.updating</code></pre>
+        <h3>11.2 Interaction Graph</h3>
+        <p>静态 scene 之外必须表达 event、from/to state、navigation/presentation、side effect、animation 和失败恢复，防止 AI 只还原单张画板。</p>
+        <pre><code>transitions:
+  - event: tap_ota
+    from: ota_available
+    to: ota_confirming
+  - event: confirm_update
+    from: ota_confirming
+    to: ota_updating
+    side_effect: start_firmware_update
+  - event: update_failed
+    from: ota_updating
+    to: ota_failed</code></pre>
+        <h3>11.3 响应式</h3>
+        <ul>
+          <li>记录 compact / regular size class、iPhone / iPad、横竖屏规则。</li>
+          <li>记录 safe area、键盘、滚动区域、固定区域和最大内容宽度。</li>
+          <li>尺寸必须表达为关系，例如 <code>parent - 48</code>，而不是固定 <code>345</code>。</li>
+        </ul>
+        <h3>11.4 无障碍</h3>
+        <ul>
+          <li>Dynamic Type、最小点击区域、VoiceOver label/value/hint。</li>
+          <li>颜色对比度、Reduce Motion、Differentiate Without Color。</li>
+          <li>无障碍阅读顺序应与 Layout Tree 的语义顺序一致，特殊情况显式覆盖。</li>
+        </ul>
+      </section>
+
+      <section id="implementation">
+        <h2>12. UIKit / SwiftUI 实现规范</h2>
+        <h3>12.1 通用规范</h3>
+        <ul>
+          <li>页面必须由 ViewModel / State 驱动，不得把参考截图中的示例状态写死。</li>
+          <li>实现顺序固定为 tokens → primitive → component → screen → state variants。</li>
+          <li>UI IR 的 node ID、scene ID 应能映射到 PreviewScene、测试或截图命名。</li>
+          <li>新增组件前必须完成 Registry 查询；命中 <code>required</code> 时禁止重建。</li>
+          <li>所有 unknown 在编码前明确为阻塞、可接受推断或后续项。</li>
+        </ul>
+        <h3>12.2 UIKit</h3>
+        <ul>
+          <li>优先使用 <code>NSLayoutAnchor</code>、<code>UILayoutGuide</code>、<code>layoutMarginsGuide</code>、<code>safeAreaLayoutGuide</code>。</li>
+          <li>正确使用 <code>intrinsicContentSize</code>、Hugging 与 Compression Resistance。</li>
+          <li>不得把设计稿 x/y/width/height 直接翻译为固定 <code>frame</code>。</li>
+          <li>状态变化统一由配置方法、content configuration 或状态模型驱动。</li>
+        </ul>
+        <h3>12.3 SwiftUI</h3>
+        <ul>
+          <li>优先使用 <code>VStack</code>、<code>HStack</code>、<code>Grid</code>、<code>Layout</code>、<code>ViewThatFits</code>。</li>
+          <li>通过 <code>frame(maxWidth:)</code>、<code>padding</code>、<code>safeAreaInset</code> 表达约束意图。</li>
+          <li>避免为复刻单一设备截图滥用 <code>GeometryReader</code> 或绝对 offset。</li>
+          <li>Preview 必须注入确定性 fixture，不依赖真实服务。</li>
+        </ul>
+        <h3>12.4 Implementation Manifest</h3>
+        <p>实现完成后必须回写设计节点到代码和验证证据的映射，供设计变更影响面分析和最窄回归选择使用。</p>
+        <pre><code>{
+  "designNodeId": "42:18",
+  "semanticRole": "intensity_slider",
+  "codeSymbol": "SLIntensitySliderView",
+  "sourceFile": "FixtureDetailViewController.swift",
+  "previewScene": "FixtureDetail/default",
+  "validationRegion": "intensity"
+}</code></pre>
+      </section>
+
+      <section id="workflow">
+        <h2>13. 实施流程与 Checkpoint</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Checkpoint</th><th>必须锁定</th><th>退出条件</th></tr></thead>
+            <tbody>
+              <tr><td>CP0 Intent Lock</td><td>设计文件、Node/Artboard、版本、设备、状态、UI 框架、兼容边界</td><td>目标与非目标无歧义</td></tr>
+              <tr><td>CP1 Anchor Slice</td><td>根布局、核心组件映射、主要 token、一个 PreviewScene</td><td>锚点状态方向正确</td></tr>
+              <tr><td>CP2 Validation Baseline Freeze</td><td>UI IR、reference、fixture、Diff 环境、ignore mask、阈值</td><td>验收输入稳定可复现</td></tr>
+              <tr><td>CP3 Final Gate</td><td>状态、响应式、无障碍、视觉 Diff、独立 review</td><td>DoD 全部满足</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>13.1 标准执行顺序</h3>
+        <ol>
+          <li>读取设计真源与目标画板，采集 screenshot、layer tree、variables、styles、symbols。</li>
+          <li>生成 Design Evidence Snapshot；Parser 生成 Canonical UI IR，Normalizer 清理设计工具噪声。</li>
+          <li>读取现有代码，Registry Resolver 补齐 UIKit / SwiftUI 映射。</li>
+          <li>运行 Schema lint，由 Task Context Compiler 生成受预算约束的 Agent Packet。</li>
+          <li>实现一个 Anchor Slice 并生成 PreviewScene 截图。</li>
+          <li>冻结 baseline 后扩展状态矩阵、响应式与无障碍。</li>
+          <li>生成 Implementation Manifest，完成结构、语义、视觉三层验收和独立 code-review。</li>
+        </ol>
+      </section>
+
+      <section id="validation">
+        <h2>14. 高保真验收</h2>
+        <h3>14.1 三层验收</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>验收层</th><th>检查内容</th><th>不能被替代</th></tr></thead>
+            <tbody>
+              <tr><td>结构验收</td><td>Layout Tree、Registry 复用、token、绝对布局例外</td><td>不能被截图相似度替代</td></tr>
+              <tr><td>语义验收</td><td>状态、显示条件、响应式、多语言、无障碍</td><td>不能被单一画板替代</td></tr>
+              <tr><td>视觉验收</td><td>geometry、spacing、typography、color、asset、z-order</td><td>不能只靠人工观感</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>14.2 建议初始阈值</h3>
+        <ul>
+          <li>参考 viewport 下关键尺寸和间距偏差不超过 1pt。</li>
+          <li>字体、字重、行高、文本截断规则精确匹配。</li>
+          <li>整体截图相似度可从 0.985 起步，但关键组件必须单独设区域门禁。</li>
+          <li>状态栏时间、动态网络数据、Home Indicator 等忽略项必须进入白名单。</li>
+          <li>baseline 更新必须关联设计版本变化，不得只为消除失败而更新。</li>
+        </ul>
+        <h3>14.3 语义辅助 Diff</h3>
+        <p>Diff 失败时应结合 UI IR Geometry、Accessibility Tree 和 Implementation Manifest 定位到具体 node、偏差类型、token 和源码 owner，而不是只返回一张热力图。</p>
+        <pre><code>node: intensity_label
+design_frame: [24, 612, 80, 20]
+actual_frame: [24, 614, 80, 19]
+difference: { y: 2, height: -1 }
+type: typography / geometry
+suggested_owner:
+  token: typography.bodyMedium
+  source: FixtureDetailViewController.swift</code></pre>
+        <h3>14.4 PreviewScene 命名</h3>
+        <pre><code>FixtureDetail/default
+FixtureDetail/offline
+FixtureDetail/otaAvailable
+FixtureDetail/otaUpdating
+FixtureDetail/error
+FixtureDetail/extraLargeText
+FixtureDetail/iPadRegular</code></pre>
+      </section>
+
+      <section id="integration">
+        <h2>15. iOSAgentSkills 集成边界</h2>
+        <div class="callout info">
+          <strong>边界决策</strong>
+          不新增与 <code>ios-feature-implementation</code> 并列的第二个代码实施 Skill。若新增 <code>design-to-ios</code>，其职责应限定为 Design Evidence、UI IR 编译、Context Compiler、Registry 解析和 Agent Packet 交付编排。
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>模块 / Skill</th><th>职责</th><th>输出</th></tr></thead>
+            <tbody>
+              <tr><td><code>ui-ux-design-system</code></td><td>设计源解析、Design-to-Code Spec、UI IR 规则</td><td>设计事实、UI IR source packet</td></tr>
+              <tr><td>Design Context Compiler</td><td>Evidence、Adapter、Parser、Normalizer、Schema lint、Registry resolve、上下文裁剪</td><td><code>ui-ir.json</code> 与 <code>agent-packet.json</code></td></tr>
+              <tr><td><code>ios-feature-implementation</code></td><td>UIKit / SwiftUI / mixed-ui 代码实施</td><td>生产代码与测试代码</td></tr>
+              <tr><td><code>ios-automation</code></td><td>截图、UI smoke、无障碍树、设备证据</td><td>运行截图与自动化证据</td></tr>
+              <tr><td><code>ios-verification</code></td><td>选择最窄验证并裁决证据</td><td>验证结论</td></tr>
+              <tr><td><code>code-review</code></td><td>独立审查组件复用、状态、布局和回归风险</td><td>阻塞问题与剩余风险</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>若未来新增或修改 Skill 职责边界，应同步更新 <a href="../skills/TAXONOMY.md"><code>skills/TAXONOMY.md</code></a>，并按仓库规则执行 Skill Schema lint。</p>
+      </section>
+
+      <section id="milestones">
+        <h2>16. 里程碑与交付物</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>阶段</th><th>范围</th><th>主要交付</th><th>验收</th></tr></thead>
+            <tbody>
+              <tr><td>Phase 0：收益基准</td><td>选择真实页面，人工构造高质量 Agent Packet</td><td>screenshot-only / UI IR / UI IR+Binding 对照报告</td><td>首轮偏差、复用率、token、修正轮次可量化</td></tr>
+              <tr><td>Phase 1：Schema</td><td>基于试点冻结 UI IR v1 最小字段</td><td><code>ui-ir.schema.json</code>、JSON/YAML 示例、lint 规则</td><td>合法/非法样例和版本迁移校验通过</td></tr>
+              <tr><td>Phase 2：Context Compiler</td><td>按 component/region/screen 计算引用闭包</td><td><code>agent-packet.json</code>、预算与分片策略</td><td>最小上下文仍能完整实施 Anchor Slice</td></tr>
+              <tr><td>Phase 3：Registry Index</td><td>索引真实页面和 5–10 个核心组件</td><td><code>ios-component-registry.json</code> 与失效检查</td><td>实现不重复创建 required 组件</td></tr>
+              <tr><td>Phase 4：Sketch Adapter</td><td>读取目标 Artboard、styles、symbols、截图</td><td>Sketch → Evidence → UI IR 原型</td><td>真实页面端到端可实施</td></tr>
+              <tr><td>Phase 5：语义验证闭环</td><td>Implementation Manifest、PreviewScene、语义 Diff</td><td>可重复视觉与影响面回归管线</td><td>关键状态三层验收通过</td></tr>
+              <tr><td>Phase 6：Figma Adapter</td><td>Auto Layout、Variables、Instances</td><td>Figma → Evidence → UI IR 原型</td><td>同一 Canonical Schema 兼容两种来源</td></tr>
+              <tr><td>Phase 7：Skill 集成</td><td>路由、handoff、示例和文档</td><td>Skill/脚本/参考材料</td><td>Schema lint 与独立 review 通过</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout warn">
+          <strong>建议首个切片</strong>
+          不要先建设通用大而全 Parser。先用人工 Agent Packet 对照 screenshot-only 基线，证明 UI IR、Binding 和上下文裁剪能提升首轮准确率并降低 token，再投入 Sketch Adapter；Figma Adapter 后置。
+        </div>
+        <h3>16.1 当前实施状态（2026-07-14）</h3>
+        <ul class="checklist">
+          <li class="done">全局任务已登记，benchmark-first 路线已锁定。</li>
+          <li class="done"><code>design-context-compiler</code> Skill 与路由边界已建立。</li>
+          <li class="done">Design Evidence、Canonical UI IR、Agent Packet、benchmark 与结构化 Run Artifact Schema 已建立。</li>
+          <li class="done">无第三方依赖的 Schema/跨引用校验、Packet 单根无环门禁、结构化 evidence hash 链、分阶段 benchmark scorer 与对抗 self-test 已建立。</li>
+          <li class="done">Component Registry 与 Implementation Manifest 合同已建立；Swift UIKit/SwiftUI 候选索引固定输出 <code>pending-review</code>，禁止把启发式候选直接当成 active binding。</li>
+          <li class="done">Task Context Compiler 已实现目标子树、祖先、递归相对布局依赖、局部 style/state/component、token、基于 requested state seeds 的连通 state/interaction、环境/viewport、responsive、accessibility、人工确认的 active binding 与 blocking unknown 的闭包裁剪；validator 会独立重算 acceptance regions 与确定性 context budget。</li>
+          <li class="done">Implementation Manifest 草稿初始化、逐 region Semantic Visual Validation Artifact 与 complete 门禁已实现；草稿默认 blocked，完成态必须补齐 PreviewScene，并校验实际 UI IR、Agent Packet、全部 required regions 的结构/语义/视觉证据、环境及 SHA-256。</li>
+          <li class="done">本轮 Registry / Context Compiler / Manifest 工具已完成独立 reviewer 对抗复审，阻塞问题：无。</li>
+          <li class="done">已冻结 SidusLinkPro <code>AUCreateProjectAlertView</code> 真实 reuse/conformance Anchor Slice：Sketch Node、728 × 471 参考图、代码/资源 commit 基线、Design Evidence、UI IR、active binding、Agent Packet、公共 prompt 与验证配置均由 SHA-256 及跨合同环境门禁关联；准备器可重导并生成三组隔离输入，其中 UI IR 对照组会确定性移除全部 code binding。该 case 衡量既有组件发现、复用与必要校准，不冒充 greenfield 首次生成实验。</li>
+          <li class="done">通用 benchmark runner 与版本化运行合同已实现：<code>run-plan</code> 固定模型、推理等级及三个互异的 executor / capture / validator adapters；<code>input-context</code> 归档 plan、case、三类 adapter 和 variant 精确输入；<code>run-result</code> 关联 provider run 与逐 region 证据。runner 会从 pinned commit 建立三组 clean checkout，按 implementation → capture → validation 顺序执行，每阶段重验 HEAD、精确 object set、冻结输入与 implementation patch；三阶段 stdout/stderr 全部进入 hash 证据链。</li>
+          <li class="done">scorer 不再信任 run-result 自报指标：组件复用与 magic number 来自 Probe 运行时 identity 和源码声明，布局偏差从 reference/actual frames 重放，pixel ratio 从冻结 reference/actual PNG（含 alpha）再解码，token、repair 和人工时长来自 Run Observation；三组必须共享 plan/case/executor/capture/validator hash、appearance、UI framework 和基线，provider run ID 必须全局唯一。每组 <code>validation_status</code> 必须在 candidate、Run Artifact、Run Result 三层一致；前两组失败仍可比较，但最终 UI IR+Binding 未通过语义视觉验证时必须 <code>revise</code>。空 JSON、自报 metric/anchor/pixel ratio、异构 plan、adapter 篡改、HEAD 移动、输入污染、绝对路径与不完整 PNG 均有阻断负例。</li>
+          <li class="done">本轮独立 review 首轮识别的 command identity、pinned HEAD、self-reported metrics 与跨组异构四项阻塞面，以及复审新增的 mixed-ui、binding/anchor 分母完整性、阶段 ownership、extra-input 和 checkout/patch linkage 问题均已修复；第 2 轮独立复审通过，阻塞问题：无。该结论仅代表 runner / pre-measurement infrastructure ready，本阶段仍未产生真实模型收益数据。</li>
+          <li class="done">真实 Codex executor adapter 与 measured 信任链已完成第三轮独立复审，阻塞问题：无。reference 以 image attachment 输入，UI IR / Agent Packet 仅在对应组内联；evaluator 使用只含 pinned commit + tree/blob closure 的完整 checkout，provider 则进入按冻结 manifest 生成的最小 Git worktree。两者都拒绝 parent history、额外 object、refs、remote 和 alternates；provider patch 以禁用 external diff、textconv 与 rename detection 的 full object ID binary diff 冻结，再精确回放到完整 checkout，避免 repository attribute/driver、rename heuristics 或最小与完整对象库不同的 SHA 自动缩写长度改变证据；patch bytes、hash 与 changed paths 任一不一致即阻断。</li>
+          <li class="done"><strong>Provider 最小可读面（2026-07-14）：</strong>真实 case 已冻结 <code>provider_source_scope</code> allowlist，只包含 Project 域和四组必要 image set。在 commit <code>4cf733453b8ad4a90d9e88f4b633e4c3f1c32a43</code> 上共 95 个文件、1,442,225 bytes，canonical manifest identity 为 <code>11e0f25f75e8861a84121b9ba4cdb78ae17191699a25d7a7ee2ae162f01ad818</code>；case 中 13 个 <code>source.code.files</code> 仍只是完整性锚点。完整 evaluator checkout、validation config、capture overlay/runtime/dependency setup 与期望证据在 provider 活跃期间不可读。Input Context 强制显式记录 <code>full-tree | allowlist</code>；allowlist 还冻结最小 worktree baseline commit、精确 object set 与全量 Git metadata fingerprint。runner 和 standalone scorer 都会重算 manifest files canonical identity、baseline tree、实际文件系统范围和 provider/evaluator 双侧 patch，scope 重叠、空匹配、symlink 等 unsupported entry、三组 coherent manifest 篡改、<code>.git/info/exclude</code> 隐藏越界写、metadata/HEAD/object 漂移、patch 回放不一致和跨候选 identity 漂移均 fail-closed。</li>
+          <li class="done">Provider source scope hardening 已完成独立 reviewer 两轮审查：首轮识别 Input Context 静默降级、standalone scorer 未独立重算最小 worktree、Git ignore metadata 可隐藏越界写三项阻塞；全部修复并补齐 coherent 对抗测试后复审通过，<strong>阻塞问题：无</strong>。后续又将排序/唯一性、scope 精确单匹配、空 entry 和 canonical identity 重算从 scorer 私有实现下沉到共享 manifest validator，使 prepare、runner、standalone scorer 与通用 CLI 使用同一语义合同。保真归档仍不得改写 <code>.git</code> metadata mode，否则按设计 fail-closed。</li>
+          <li class="done">真实外发授权已于 2026-07-14 按上述 95 文件 / 1,442,225 bytes 源码范围，以及各候选实际可见的 reference、公共 Prompt、UI IR 或 Agent Packet 精确取得；授权还冻结 commit、模型 <code>gpt-5.6-sol</code>、reasoning <code>high</code>、Codex CLI、capture runtime 与 evaluator-only 边界。任何源码范围、agent-visible 输入或 provider identity 扩大都必须重新披露。通用 runner 未声明 scope 时仍兼容完整 pinned tree，可用于本地场景，但不能被描述成源码最小披露。</li>
+          <li class="done">Provider Receipt v1.1 冻结 CLI version、launcher/native 绝对路径与双 hash、<code>@openai/codex/package.json</code> hash；launcher 只做 package provenance，<code>--version</code> 与 measured turn 都直接调用冻结 native binary，不经 PATH、JS launcher 或 <code>/usr/bin/env node</code>。只接受一个有序且成功的 thread/turn，记录 input/cached/output/reasoning token；runner 绑定 canonical JSONL hash，standalone scorer 独立重放 stdout 并重算 ID/usage。</li>
+          <li class="done">measured 的 plan/case/contracts/executor/capture/validator 必须同属一个与代码源仓不重叠的审核仓，output 位于全部 source/plan repo 之外；provider 活跃期间 workspace 真源、plan repo、prepared、先前 run 与 evaluator-only 文件均不可读。partial shield、restore 单项失败、pre-execute 异常、timeout descendants、历史 secret、extra object、fake Codex/fake Node 均已有阻断负例。</li>
+          <li>剩余显式信任边界：经审核 Run Plan、本机 Codex 安装来源与 Codex <code>workspace-write</code> sandbox 是信任根；<code>chmod(0)</code> 只是附加防线，不单独构成同 UID 对抗隔离。相同内容但无路径关联的 evaluator 人工副本及具备本机写权限的并发 TOCTOU 攻击不在当前自动门禁覆盖内。</li>
+          <li class="done">独立验证合同已进入下一阶段：新增 <code>benchmark-validator-probe-v1</code>，要求 capture adapter 先冻结 actual screenshot hash、viewport/scale/appearance/locale、逐 required region 的实际 frame、runtime type、accessibility identifier、visibility 与 parent/children，以及 required binding 的运行时 region/type identity；Probe 明确禁止写 structure/semantic pass/fail，validator 与 scorer必须分别从冻结期望和原始观察派生结论。</li>
+          <li class="done">Validation Config 已升级为可计算几何合同：每个 required region 必须有 reference frame；position/size anchor 从 reference/actual frame 计算，spacing anchor 必须冻结相对 region、双方 edge 和 reference value；required binding 必须冻结 owner source、region 和 runtime type。只有 Probe 实际观察到该类型且 owner declaration 有效时才能计入复用率，已有声明本身不等于本次实现实际复用。</li>
+          <li class="done">独立 <code>ios_semantic_visual_validator.py</code> 已实现：只读取冻结 Probe/PNG/源码/Run Observation，输出 Semantic Evidence、Visual Diff 与 Run Result；支持无第三方依赖的 8-bit PNG 解码、逐 region 像素阈值、ignore frame、binding owner declaration、anchor deviation 与新增 Swift 数值字面量派生。validator 修改 capture evidence 会被 runner 阻断，scorer 会再次重放像素与几何结果。</li>
+          <li class="done"><code>create_benchmark_run_plan.py</code> 已实现：从当前机器冻结 Codex launcher/native/package identity、真实 executor、经审核项目 capture adapter 与 validator，拒绝跨审核仓或手工散落 hash。synthetic runner 使用独立 fake capture 验证三阶段 ownership，但不得成为 measured evidence。</li>
+          <li class="done">Run Plan / Input Context / Run Artifact / Aggregate 已升级为 v1.2 evaluator overlay 合同：可冻结 <code>capture_overlay = none | git-patch</code>。runner 在 provider 前只在 evaluator 父进程内冻结 bytes/hash，不在 run directory 物化归档 patch；provider 退出且 implementation patch 冻结后才晚绑定归档并临时应用 overlay，仅 capture 阶段可见。capture 成功、失败或篡改后都必须在 validator 前还原；若反向 patch 冲突或仍有 overlay 外 mutation，runner 只在隔离 checkout 内 reset/clean 并重放冻结实现 patch，同时判定该 run 无效。还原后 patch hash、三组 overlay identity 与 Plan/Input/Artifact/Aggregate linkage 均需一致；正向时序、capture 失败、overlay 外 mutation、reverse conflict、apply conflict、归档 bytes 篡改、合同 linkage 漂移及单候选 identity 漂移均有 deterministic self-test。</li>
+          <li class="done">SidusLinkPro <code>AUCreateProjectAlertView</code> evaluator-only <code>capture-overlay.patch</code> 已落地：只在 capture 阶段临时增加 <code>-AcruxUIDesignCapture</code> route 和一个精确 UI test，直接构造 728 × 471、dark、<code>en_US</code>、fixture-selected 状态，从真实 UIKit hierarchy 导出 PNG 与 raw region/binding observation；overlay 可在 pinned commit 上通过 <code>git apply --check</code>，新增 Swift 通过 <code>swiftc -parse</code>。</li>
+          <li class="done">项目专用 <code>capture_adapter.py</code> 与 typed <code>ios-simulator</code> runtime freezer 已落地：冻结 <code>codex_verify</code> / <code>simctl</code> 路径和 hash、runtime/UDID/device、workspace/scheme/test selector/bundle ID，只通过 wrapper 队列运行一个 UI test，再从 app data container 搬运两份项目原始产物；不得正常登录导航、从 validation config 伪造 frame 或直接调用 <code>xcodebuild</code>。</li>
+          <li class="done">pinned <code>UnityFramework.xcframework</code> 仅含 device arm64 与 Simulator x86_64，当前 iOS 26.5 Simulator 只能运行 arm64；已新增独立 <code>unityframework-arm64-simulator-stub-v1</code> evaluator dependency setup。runtime 冻结 generator、clang、SDK version/build/settings、原始 XCFramework/Pod copy script 与确定性 product hash；stub 只提供编译 ABI，全部 Unity 入口均 trap。它在 provider patch 冻结后仅于 capture adapter 的 <code>try/finally</code> 中注入，结束后校验原 hash 并删除生成 slice，既不暴露给 provider，也不计为实现收益。</li>
+          <li class="done">真实定向验证已于 2026-07-13 通过 <code>codex_verify → build-queue → XCTest</code>：<code>AcruxUITests/AUCreateProjectAlertDesignCaptureUITests/test_fixtureSelected_writesCanonicalCaptureArtifacts</code> 成功执行；正式 adapter 完成 setup apply/restore，得到 fresh 728 × 471 PNG（SHA-256 <code>1d6f88b4abf11ccb03d979532759c442d258fac6a5740adef6916457487363f5</code>）及 4 region / 1 binding Probe，隔离 checkout 仅保留原三项 capture overlay 改动。该证据只证明 capture 链路 ready，尚未产生 measured ROI。</li>
+          <li><strong>授权实测状态（2026-07-14）：</strong>首轮在 screenshot-only provider 完成后，因最小 provider 仓库与完整 evaluator 仓库自动选择不同 Git object ID 缩写长度而触发 patch byte gate；该轮无 capture/scorer 证据，已判无效。runner/scorer 现统一使用禁用 external diff、textconv、rename detection 的 full-index binary patch，真实失败产物与完整 self-test 均证明 provider/full/scorer identity 一致。第二轮已越过 replay gate，但 shared build-queue 中 52 个缺少元数据的历史目录被旧 wrapper 语义误判为 queued，daemon 无法启动；dependency setup 已完整 restore，本轮同样无 measured 证据。跨 job 的 queue 状态恢复仍等待单独明确授权，不得用独立 queue 或直跑 <code>xcodebuild</code> 绕过。</li>
+          <li>使用同一模型、推理等级和代码起点执行 screenshot-only / UI IR / UI IR+Binding 三组运行，生成真实 Run Artifact 与 measured benchmark；ready case 不作为 ROI 证据。</li>
+          <li>用真实源码确认首批 5–10 个 active Registry 映射，并执行 Anchor Slice。</li>
+          <li>实现 Sketch Adapter、PreviewScene 接入与语义辅助 Diff。</li>
+        </ul>
+      </section>
+
+      <section id="risks">
+        <h2>17. 风险与回退</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>风险</th><th>影响</th><th>控制措施</th><th>回退</th></tr></thead>
+            <tbody>
+              <tr><td>设计层级语义差</td><td>Parser 生成错误组件树</td><td>Normalizer + 人工确认 Anchor Slice</td><td>保留 source node 与 unknown</td></tr>
+              <tr><td>Registry 陈旧</td><td>AI 复用错误或不存在的组件</td><td>源码路径校验、owner/version、CI lint</td><td>标记 unresolved，禁止静默新建</td></tr>
+              <tr><td>过度追求像素一致</td><td>破坏响应式和无障碍</td><td>结构、语义、视觉三层门禁</td><td>以语义和平台约束优先</td></tr>
+              <tr><td>Schema 过早复杂化</td><td>开发和维护成本过高</td><td>v1 只覆盖最小完整上下文</td><td>扩展字段放入 namespaced extension</td></tr>
+              <tr><td>Agent Packet 过度裁剪</td><td>AI 缺失关键父级、状态或代码上下文</td><td>引用闭包校验和 context coverage 指标</td><td>扩大到 region/screen 级 Packet</td></tr>
+              <tr><td>JSON/YAML 双真源漂移</td><td>工具与人工看到的语义不一致</td><td>JSON 为唯一真源，YAML 只允许自动生成</td><td>删除生成视图并重新导出</td></tr>
+              <tr><td>模型对 IR 理解不一致</td><td>跨模型输出波动</td><td>稳定示例、明确枚举、Schema lint</td><td>生成模型专用精简 view，不改变真源</td></tr>
+              <tr><td>Diff 环境不稳定</td><td>误报和 baseline 漂移</td><td>固定设备、OS、locale、scale、fixture</td><td>降级为人工视觉审查并记录缺口</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="dod">
+        <h2>18. Definition of Done</h2>
+        <ul class="checklist">
+          <li>设计文件、页面、Node/Artboard ID 和版本已锁定。</li>
+          <li>Design Evidence Snapshot 包含设计版本、截图 hash 和 Parser version。</li>
+          <li>reference screenshot 与环境信息完整。</li>
+          <li>Canonical <code>ui-ir.json</code> 通过 Schema 校验，YAML 与 JSON 不形成双真源。</li>
+          <li>不存在未裁决的阻塞性 unknown。</li>
+          <li>核心组件完成 Registry 映射，required 组件均被复用。</li>
+          <li>Agent Packet 满足 context budget 且引用闭包完整。</li>
+          <li>布局表达 Constraint Intent，不依赖单一 viewport 的绝对 frame。</li>
+          <li>Design Token、状态矩阵、响应式与无障碍规则完整。</li>
+          <li>关键交互具有 event、transition、side effect 和失败恢复合同。</li>
+          <li>关键状态均具有确定性 PreviewScene。</li>
+          <li>Implementation Manifest 可从 Design Node 定位到代码、Preview 和 Diff Region。</li>
+          <li>结构、语义、视觉三层验收通过。</li>
+          <li>试点对照报告已记录首轮偏差、组件复用率、token 与人工修正轮次。</li>
+          <li>独立 reviewer 的 code-review 无阻塞问题。</li>
+          <li>设计变更后，UI IR、fixture 和 baseline 已同步更新。</li>
+        </ul>
+        <h3>参考仓库合同</h3>
+        <ul>
+          <li><a href="../AGENTS.md"><code>AGENTS.md</code></a></li>
+          <li><a href="../skills/ui-ux-design-system/SKILL.md"><code>skills/ui-ux-design-system/SKILL.md</code></a></li>
+          <li><a href="../skills/ui-ux-design-system/references/sketch-to-code-spec.md"><code>sketch-to-code-spec.md</code></a></li>
+          <li><a href="../skills/TAXONOMY.md"><code>skills/TAXONOMY.md</code></a></li>
+        </ul>
+      </section>
+    </article>
+
+    <footer>iOSAgentSkills · iOS 高保真 UI 开发与 Design Context Compiler 建设方案 · 2026-07-13</footer>
+  </main>
+</body>
+</html>

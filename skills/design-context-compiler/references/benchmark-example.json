@@ -1,0 +1,102 @@
+{
+  "benchmark_version": "1.2.0",
+  "case_id": "synthetic-fixture-detail-example",
+  "evidence_status": "synthetic-example",
+  "environment": {
+    "task_mode": "reuse-conformance",
+    "screen": "fixture-detail",
+    "state": "default",
+    "viewport": "393x852@3x",
+    "appearance": "dark",
+    "locale": "en_US",
+    "ui_framework": "UIKit",
+    "adapter_runtime": "/usr/bin/python3",
+    "adapter_runtime_version": "3.x",
+    "provider_cli_name": "synthetic-test-adapter",
+    "provider_cli_version": "1.0.0",
+    "provider_cli_launcher_path": "/synthetic/codex",
+    "provider_cli_native_path": "/synthetic/codex",
+    "provider_cli_launcher_hash": "9999999999999999999999999999999999999999999999999999999999999999",
+    "provider_cli_native_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "provider_cli_package_json_hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "code_baseline": "synthetic-example",
+    "code_baseline_hash": "4444444444444444444444444444444444444444444444444444444444444444",
+    "model": "synthetic-model",
+    "reasoning": "synthetic",
+    "shared_prompt_hash": "1111111111111111111111111111111111111111111111111111111111111111",
+    "design_source_hash": "2222222222222222222222222222222222222222222222222222222222222222",
+    "validation_config_hash": "3333333333333333333333333333333333333333333333333333333333333333",
+    "run_plan_hash": "5555555555555555555555555555555555555555555555555555555555555555",
+    "benchmark_case_hash": "6666666666666666666666666666666666666666666666666666666666666666",
+    "executor_adapter_hash": "7777777777777777777777777777777777777777777777777777777777777777",
+    "validator_id": "synthetic-validator",
+    "capture_adapter_hash": "9999999999999999999999999999999999999999999999999999999999999999",
+    "capture_overlay_mode": "none",
+    "capture_overlay_hash": null,
+    "capture_runtime_hash": "7f517f97e00a688b0b402e4005866127e5c928bf44a94ca53477ac34e24b5ef1",
+    "validator_adapter_hash": "8888888888888888888888888888888888888888888888888888888888888888"
+  },
+  "thresholds": {
+    "max_layout_deviation_pt": 1,
+    "min_component_reuse_rate": 0.8,
+    "max_repair_iterations": 2,
+    "max_input_tokens": 20000,
+    "max_magic_numbers": 3,
+    "max_manual_minutes": 45,
+    "min_ui_ir_layout_improvement_pt": 1,
+    "min_binding_reuse_gain": 0.3
+  },
+  "candidates": [
+    {
+      "variant": "screenshot-only",
+      "validation_status": "failed",
+      "layout_deviation_pt": 4.5,
+      "component_reuse_rate": 0.2,
+      "magic_numbers": 18,
+      "repair_iterations": 5,
+      "input_tokens": 2600,
+      "manual_minutes": 95,
+      "run": {
+        "id": "synthetic-screenshot-only",
+        "started_at": "2026-07-13T12:00:00+08:00",
+        "completed_at": "2026-07-13T12:10:00+08:00",
+        "artifact_path": "synthetic/screenshot-only.json",
+        "artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    },
+    {
+      "variant": "ui-ir",
+      "validation_status": "failed",
+      "layout_deviation_pt": 1.6,
+      "component_reuse_rate": 0.5,
+      "magic_numbers": 7,
+      "repair_iterations": 3,
+      "input_tokens": 9400,
+      "manual_minutes": 55,
+      "run": {
+        "id": "synthetic-ui-ir",
+        "started_at": "2026-07-13T12:20:00+08:00",
+        "completed_at": "2026-07-13T12:30:00+08:00",
+        "artifact_path": "synthetic/ui-ir.json",
+        "artifact_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      }
+    },
+    {
+      "variant": "ui-ir-with-binding",
+      "validation_status": "passed",
+      "layout_deviation_pt": 0.8,
+      "component_reuse_rate": 1.0,
+      "magic_numbers": 2,
+      "repair_iterations": 1,
+      "input_tokens": 7200,
+      "manual_minutes": 28,
+      "run": {
+        "id": "synthetic-ui-ir-with-binding",
+        "started_at": "2026-07-13T12:40:00+08:00",
+        "completed_at": "2026-07-13T12:50:00+08:00",
+        "artifact_path": "synthetic/ui-ir-with-binding.json",
+        "artifact_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      }
+    }
+  ]
+}

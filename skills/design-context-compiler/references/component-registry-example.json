@@ -1,0 +1,29 @@
+{
+  "registry_version": "1.0.0",
+  "generated_at": "2026-07-13T12:00:00+08:00",
+  "source_roots": ["Modules/LightingUI"],
+  "entries": [
+    {
+      "id": "component.intensity-slider",
+      "design_id": "Control/Slider/Intensity",
+      "semantic_role": "intensity_slider",
+      "reuse_policy": "required",
+      "status": "active",
+      "bindings": [
+        {
+          "id": "binding.intensity.uikit",
+          "framework": "UIKit",
+          "symbol": "SLIntensitySliderView",
+          "module": "LightingUI",
+          "source": "Modules/LightingUI/Controls/SLIntensitySliderView.swift",
+          "availability": "iOS 17.0+",
+          "declaration_hash": "sha256:6c4dd934e45e66320c241f9c6f89b7ad4b7ad23f02fd5e4166e44d9859f5a8c2"
+        }
+      ],
+      "provenance": {
+        "source": "manual-contract",
+        "confidence": "exact"
+      }
+    }
+  ]
+}

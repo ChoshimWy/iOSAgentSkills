@@ -154,10 +154,12 @@
 
 ### 输出
 - `design_source`
+- `design_evidence`
 - `artboards_and_states`
 - `layout_and_tokens`
 - `assets_and_interactions`
 - `implementation_contract`
+- `canonical_ui_ir_handoff`
 - `ambiguities`
 - `checkpoint_status`
 - `first_failure`

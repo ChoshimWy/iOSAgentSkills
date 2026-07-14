@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ios-agent-skills.local/schemas/benchmark-v1.schema.json",
+  "title": "Design Context Benchmark v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["benchmark_version", "case_id", "evidence_status", "environment", "thresholds", "candidates"],
+  "properties": {
+    "benchmark_version": { "const": "1.2.0" },
+    "case_id": { "type": "string", "minLength": 1 },
+    "evidence_status": { "enum": ["synthetic-example", "measured"] },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["task_mode", "screen", "state", "viewport", "appearance", "locale", "ui_framework", "adapter_runtime", "adapter_runtime_version", "provider_cli_name", "provider_cli_version", "provider_cli_launcher_path", "provider_cli_native_path", "provider_cli_launcher_hash", "provider_cli_native_hash", "provider_cli_package_json_hash", "code_baseline", "code_baseline_hash", "model", "reasoning", "shared_prompt_hash", "design_source_hash", "validation_config_hash", "run_plan_hash", "benchmark_case_hash", "executor_adapter_hash", "validator_id", "capture_adapter_hash", "capture_overlay_mode", "capture_overlay_hash", "capture_runtime_hash", "validator_adapter_hash"],
+      "properties": {
+        "task_mode": { "type": "string", "minLength": 1 },
+        "screen": { "type": "string" },
+        "state": { "type": "string" },
+        "viewport": { "type": "string" },
+        "appearance": { "enum": ["light", "dark"] },
+        "locale": { "type": "string" },
+        "ui_framework": { "enum": ["UIKit", "SwiftUI", "mixed-ui"] },
+        "adapter_runtime": { "type": "string", "minLength": 1 },
+        "adapter_runtime_version": { "type": "string", "minLength": 1 },
+        "provider_cli_name": { "type": "string", "minLength": 1 },
+        "provider_cli_version": { "type": "string", "minLength": 1 },
+        "provider_cli_launcher_path": { "type": "string", "minLength": 1 },
+        "provider_cli_native_path": { "type": "string", "minLength": 1 },
+        "provider_cli_launcher_hash": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+        "provider_cli_native_hash": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+        "provider_cli_package_json_hash": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+        "code_baseline": { "type": "string", "minLength": 1 },
+        "code_baseline_hash": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+        "model": { "type": "string", "minLength": 1 },
+        "reasoning": { "type": "string", "minLength": 1 },
+        "shared_prompt_hash": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+        "design_source_hash": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+        "validation_config_hash": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+        "run_plan_hash": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+        "benchmark_case_hash": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+        "executor_adapter_hash": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+        "validator_id": { "type": "string", "minLength": 1 },
+        "capture_adapter_hash": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+        "capture_overlay_mode": { "enum": ["none", "git-patch"] },
+        "capture_overlay_hash": { "type": ["string", "null"], "pattern": "^[a-fA-F0-9]{64}$" },
+        "capture_runtime_hash": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+        "validator_adapter_hash": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" }
+      }
+    },
+    "thresholds": {
+      "type": "object",
+      "required": ["max_layout_deviation_pt", "min_component_reuse_rate", "max_repair_iterations", "max_input_tokens", "max_magic_numbers", "max_manual_minutes", "min_ui_ir_layout_improvement_pt", "min_binding_reuse_gain"],
+      "properties": {
+        "max_layout_deviation_pt": { "type": "number", "minimum": 0 },
+        "min_component_reuse_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "max_repair_iterations": { "type": "integer", "minimum": 0 },
+        "max_input_tokens": { "type": "integer", "minimum": 1 },
+        "max_magic_numbers": { "type": "integer", "minimum": 0 },
+        "max_manual_minutes": { "type": "number", "minimum": 0 },
+        "min_ui_ir_layout_improvement_pt": { "type": "number", "minimum": 0 },
+        "min_binding_reuse_gain": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "candidates": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "required": ["variant", "validation_status", "layout_deviation_pt", "component_reuse_rate", "magic_numbers", "repair_iterations", "input_tokens", "manual_minutes", "run"],
+        "properties": {
+          "variant": { "enum": ["screenshot-only", "ui-ir", "ui-ir-with-binding"] },
+          "validation_status": { "enum": ["passed", "failed"] },
+          "layout_deviation_pt": { "type": "number", "minimum": 0 },
+          "component_reuse_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+          "magic_numbers": { "type": "integer", "minimum": 0 },
+          "repair_iterations": { "type": "integer", "minimum": 0 },
+          "input_tokens": { "type": "integer", "minimum": 0 },
+          "manual_minutes": { "type": "number", "minimum": 0 },
+          "run": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "started_at", "completed_at", "artifact_path", "artifact_sha256"],
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "started_at": { "type": "string", "format": "date-time" },
+              "completed_at": { "type": "string", "format": "date-time" },
+              "artifact_path": { "type": "string", "minLength": 1 },
+              "artifact_sha256": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

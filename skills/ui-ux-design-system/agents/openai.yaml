@@ -1,4 +1,4 @@
 interface:
   display_name: "UI/UX 设计系统"
   short_description: "拆解视觉方向、设计系统与 Sketch 高保真实现规格"
-  default_prompt: "使用 $ui-ux-design-system 生成当前产品的视觉方向、设计系统、色板、排版与交互规则；当输入是 Sketch 源文件、SketchMCP、蓝湖/Figma 标注或 PNG 时，先按 sketch-to-code-spec 模式读取设计源，输出 Design-to-Code Spec、tokens、组件树、状态矩阵、资源清单、unknowns 与视觉验收标准，再交给实现链路。不要直接承担 SwiftUI 或 UIKit API 级实现；如果需要正式 HTML 设计说明、PRD 或评审文档，最终文档生成交给 $html-docs。"
+  default_prompt: "使用 $ui-ux-design-system 生成当前产品的视觉方向、设计系统、色板、排版与交互规则；当输入是 Sketch 源文件、SketchMCP、蓝湖/Figma 标注或 PNG 时，先按 sketch-to-code-spec 模式读取设计源，输出可追溯 Design Evidence / Design-to-Code source packet、tokens、组件树、状态矩阵、资源清单、unknowns 与视觉验收标准。iOS 高保真实现前交给 $design-context-compiler 生成 Canonical UI IR、iOS bindings 和 Agent Packet；不要直接承担 SwiftUI 或 UIKit API 级实现。正式 HTML 文档交给 $html-docs。"

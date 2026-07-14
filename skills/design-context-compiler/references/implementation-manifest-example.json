@@ -1,0 +1,37 @@
+{
+  "manifest_version": "1.0.0",
+  "status": "complete",
+  "screen": "fixture-detail",
+  "source": {
+    "ui_ir": {
+      "path": "ui-ir-example.json",
+      "sha256": "sha256:6d5aaac34ee1b91d0bf990b14fa89158d80b2c9d300e4bcc71ba3fa6f4faa44d"
+    },
+    "agent_packet": {
+      "path": "agent-packet-example.json",
+      "sha256": "sha256:dd7fa3ec78596503576203b51e1bee3ab6488f6db123193df50789a9fd0d1171"
+    }
+  },
+  "mappings": [
+    {
+      "design_node_id": "intensity",
+      "semantic_role": "intensity_slider",
+      "binding_id": "binding.intensity.uikit",
+      "framework": "UIKit",
+      "code_symbol": "SLIntensitySliderView",
+      "source_file": "Modules/LightingUI/Controls/SLIntensitySliderView.swift",
+      "preview_scene": "FixtureDetailPreview.intensity",
+      "validation_region": "intensity"
+    }
+  ],
+  "validation": {
+    "status": "passed",
+    "evidence": [
+      {
+        "kind": "semantic-visual-validation",
+        "path": "implementation-validation-example.json",
+        "sha256": "sha256:6c99a9e0b20995389364ee7c876e3a85cbba609472a83c5c2519e7b0e0801f50"
+      }
+    ]
+  }
+}
