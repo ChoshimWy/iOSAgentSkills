@@ -2,6 +2,11 @@
 
 本项目为 Apple 平台开发相关的 Agent Skills 集合，适用于 Claude（`.claude/skills`）与 Codex（`.codex/skills`）AI 助手。
 
+> **仓库状态说明**
+> - 本仓库后续将停止维护并归档。
+> - 请改用新仓库：<https://github.com/ChoshimWy/AgentDevelopmentSkills>
+> - 后续文档、规则与技能更新将以新仓库为准。
+
 ## 目录结构
 
 ### Shared Config
@@ -52,7 +57,7 @@ bash install-local-agent-config.sh --ccswitch
 - 对于 Codex：复制到 `.codex/skills`
 - 或使用软连接：
 ```bash
-ln -s iOSAgentSkills/skills .claude/skills
+ln -s AgentDevelopmentSkills/skills .claude/skills
 ```
 
 ## 多角色配置（按图示结构补齐）
